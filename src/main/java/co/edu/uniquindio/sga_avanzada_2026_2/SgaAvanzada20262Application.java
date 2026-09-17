@@ -9,5 +9,4 @@ public class SgaAvanzada20262Application {
     public static void main(String[] args) {
         SpringApplication.run(SgaAvanzada20262Application.class, args);
     }
-
 }
