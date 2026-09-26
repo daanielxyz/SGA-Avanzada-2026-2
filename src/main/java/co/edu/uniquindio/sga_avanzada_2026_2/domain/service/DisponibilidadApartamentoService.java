@@ -2,7 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.service;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.entity.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.entity.Bloqueo;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.entity.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.entity.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.exception.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.repository.BloqueoRepository;
@@ -44,7 +44,7 @@ public class DisponibilidadApartamentoService {
         //RN-07
         List<Bloqueo> bloqueos=bloqueoRepository.buscarVigentesByApartamento(apartamento.getIdentificacion());
         for(Bloqueo otroBloqueo:bloqueos){
-            if(bloqueo.impide(estancia)) throw new ReglaDominioException("El apartamento tiene un bloqueo en esas fechas");
+            if(otroBloqueo.impide(estancia)) throw new ReglaDominioException("El apartamento tiene un bloqueo en esas fechas");
         }
     }
 }

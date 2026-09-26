@@ -1,10 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.entity;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.exception.ReglaDominioException;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.CanalOrigen;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.CodigoReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.EstadoReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.FechaCreacion;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.valueobject.*;
 
 import java.util.List;
 import java.util.Objects;
