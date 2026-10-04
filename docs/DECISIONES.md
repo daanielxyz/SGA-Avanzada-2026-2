@@ -1,0 +1,32 @@
+# Decisiones de diseño acordadas
+
+Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y por qué. Si una decisión cambia, se edita aquí (no se acumulan versiones).
+
+## Estructura y dominio
+- **DEC-01 · Paquete raíz** `co.edu.uniquindio.sga_avanzada_2026_2`, clase principal `SgaAvanzada20262Application`. Se conserva el nombre original para no romper el trabajo del equipo.
+- **DEC-02 · Paquetes por agregado** (`domain/apartamento`, `domain/reserva`…). Cada agregado contiene su raíz, hijos, VO, enums, ids y **su puerto `XRepository`** (no hay carpeta `puerto` separada: el repositorio es parte del contrato del agregado).
+- **DEC-03 · `domain/compartido`** guarda lo que usan varios agregados: `ReglaDominioException`, `Dinero`, `Noche`, `Estancia`, `Documento`/`TipoDocumento`, `Correo`, `Porcentaje`, `MedioPago`, `UsuarioId`.
+- **DEC-04 · Ids tipados** `record XId(String valor)`, no vacíos. Formato validado donde está definido: `ReservaId` = `RES-\d{4}-\d{5}`, `ApartamentoId` = `APT-\d+`. Las entidades internas también tienen id tipado (`BloqueoId`, `OcupanteId`, `RegistroId`, `SalidaId`, `CargoId`, `PagoId`, `ServicioAdicionalId`, `EventoCanalId`).
+- **DEC-05 · Desglose congelado** de la Reserva = `List<LineaCotizacion>` (paquete `tarifa`); `Cotizacion` y `Disponibilidad` son calculados y no se persisten.
+- **DEC-06 · Crear vs. reconstruir.** El constructor público de cada entidad solo reconstruye (lo usa el mapper al cargar de BD) y **no** aplica reglas de creación. Las reglas de creación viven en la fábrica `crear(…)` (p. ej. RN-04 entrada ≥ hoy, que fallaría al cargar reservas pasadas).
+- **DEC-07 · Accesores de lectura** estilo record (`codigo()`, `estado()`) permitidos en el dominio; **nunca setters**. Listas expuestas con `List.copyOf`.
+- **DEC-08 · Javadoc**: una línea por clase (qué es + regla). Javadoc completo (regla con ID del Excel, `@throws` con cuándo rechaza) en cada método de negocio al implementarlo. Nada en atributos ni getters; atributos no obvios con comentario corto en línea (`// congelado`, `// opcional`).
+- **DEC-09 · Valores asumidos, por confirmar con el equipo** (marcados `TODO(equipo)` donde aplica): `GravedadNovedad` = BAJA, MEDIA, ALTA; `TipoDocumento` = CC, CE, PASAPORTE, TI; `Rol` = ADMINISTRADOR, RECEPCIONISTA, PERSONAL_SERVICIO (USU-03).
+
+## Aplicación
+- **DEC-10 · `@Service` y `@Transactional` permitidos en `application`** (el dominio sigue sin Spring). Una transacción = un agregado, salvo D-02.
+
+## Persistencia
+- **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:
+  - `src/main/resources/application.properties` → PostgreSQL, credenciales por variables de entorno (`${DB_USER}`, `${DB_PASSWORD}`), `ddl-auto=validate`, Flyway activo.
+  - `src/test/resources/application.properties` → H2 en memoria, Flyway desactivado, `ddl-auto=create-drop`.
+- **DEC-12 · Flyway sencillo**: scripts `db/migration/Vn__<agregado>.sql`, uno por incremento.
+- **DEC-13 · Adaptador por agregado** en `infrastructure/persistencia/<agregado>/`: `XJpa` (@Entity), `XJpaRepository` (Spring Data), `XMapper` (dominio ⇄ JPA), `XRepositoryJpa` (implementa el puerto). Los casos de uso solo conocen el puerto.
+- **DEC-14 · Relaciones**: dentro del agregado `@OneToMany` con cascada; entre agregados solo columna de id, **sin `@ManyToOne`**.
+- **DEC-15 · Carga del agregado** = raíz + hijos que pertenecen a esa unidad y que la operación necesita (p. ej. Reserva con ocupantes, registro, salida, desglose). Nunca arrastrar otros agregados.
+- **DEC-16 · Tipos**: `Dinero` → `NUMERIC(15,0)`; enums → `VARCHAR` con `@Enumerated(STRING)`; `Duration` → minutos.
+- **DEC-17 · Defensa del riesgo central en BD**: `@Version` en Reserva y Apartamento; `UNIQUE (canal_id, id_externo)` (RN-19); en PostgreSQL `EXCLUDE USING gist (apartamento_id WITH =, daterange(entrada, salida) WITH &&) WHERE estado activo` (RN-01; no aplica en H2).
+- **DEC-18 · Paginación**: el puerto devuelve un tipo propio `Pagina<T>`; `Page`/`Pageable` de Spring quedan en el adaptador.
+
+## Forma de trabajo
+- **DEC-19 · Desarrollo incremental** según `docs/PLAN.md`: dominio primero, agregado por agregado, y la persistencia de cada agregado entra en cuanto está estable (no al final). Cada incremento se detiene para revisión; los commits los hace el usuario.
