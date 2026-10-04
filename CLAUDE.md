@@ -2,16 +2,17 @@
 
 Proyecto de Programación Avanzada (Universidad del Quindío). Backend de un único alojamiento ("Puerta al Sol", 10 apartamentos) aunque en este caso solo se usara un alojamiento la idea es generar un producto comerciable a diferentes alojamientos por medio de SaaS que gestiona apartamentos, tarifas por temporada, disponibilidad, reservas, check-in/out, folio y 3 canales de venta (PORTAL, DIRECTO, EXTERNO). **Riesgo central: vender dos veces la misma noche.**
 Modelo completo (clases, agregados, servicios, reglas): `docs/MODELO.md` — léelo solo cuando necesites atributos/firmas/reglas. Fuente de las reglas detalladas: `docs/Entidad__Objeto_de_valor_corregido.xlsx` (buscar por ID: `RES-01`, `FOL-03`, `RN-17`).
+**Al iniciar trabajo nuevo, leer `docs/PLAN.md`** (plan incremental y en qué incremento vamos) y `docs/DECISIONES.md` (decisiones acordadas `DEC-nn`: estructura, persistencia, Javadoc). Actualizar `PLAN.md` al cerrar cada incremento.
 
 ## Stack
-Java 25 · Spring Boot 4.1.x · **Gradle Groovy** (`build.gradle`, nunca `.kts`) · H2 en memoria (`jdbc:h2:mem:sgadb`) · JUnit 5 · Lombok (solo fuera de `domain`).
+Java 25 · Spring Boot 4.1.x · **Gradle Groovy** (`build.gradle`, nunca `.kts`) · JPA/Hibernate · PostgreSQL (principal) + Flyway · H2 en memoria solo para pruebas (DEC-11) · JUnit 5 · Lombok (solo fuera de `domain`).
 Boot 4: `spring-boot-starter-webmvc` (no `-web`), `spring-boot-h2console` explícito, un `*-test` por cada starter.
 Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanzada20262Application`). Nada de secretos en git.
 
 ## Arquitectura hexagonal
 `infrastructure → application → domain` (las dependencias solo apuntan al dominio).
 - **domain**: Java puro (sin Spring, JPA, Lombok, Jackson, Bean Validation, DTOs). Entidades sin setters, cambios por métodos del negocio, colecciones con `List.copyOf`. VO = `record` que valida en el constructor; valores cerrados = `enum` con su lógica. Excepciones de negocio extienden `ReglaDominioException`. Contiene también los **puertos** (`XRepository`, uno por agregado) y los servicios de dominio.
-- **application**: un caso de uso por clase, en verbo (`CrearReserva`). Flujo: cargar por puertos → invocar dominio → guardar → efectos. **Cero `if` de negocio.** Config llega por constructor.
+- **application**: un caso de uso por clase, en verbo (`CrearReserva`). Flujo: cargar por puertos → invocar dominio → guardar → efectos. **Cero `if` de negocio.** Config llega por constructor. Se permiten `@Service` y `@Transactional` (DEC-10).
 - **infrastructure**: REST + DTO (`record`), adaptadores JPA con entidades JPA **separadas** del dominio y mapeadores, seguridad JWT, externos, config. Usuario/Rol viven aquí.
 - Agregado: una raíz, hijos sin repositorio, referencias a otros agregados **solo por id tipado**. Una transacción = un agregado (excepción documentada D-02: llegada y salida tocan Reserva+Apartamento(+Folio)).
 - Servicio de dominio: sin estado, solo reglas que cruzan agregados, **recibe los datos por parámetro** (no usa repositorios).
