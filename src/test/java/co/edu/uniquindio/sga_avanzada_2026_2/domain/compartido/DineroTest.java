@@ -39,18 +39,23 @@ class DineroTest {
 
     @Test
     @Tag("DIN-03")
-    void deberiaPermitirResultadoNegativoParaQueElConsumidorDecida() {
-        Dinero saldo = Dinero.de(50_000).restar(Dinero.de(80_000));
-
-        assertTrue(saldo.esNegativo());
-        assertEquals(Dinero.de(-30_000), saldo);
+    void deberiaRechazarMontoNegativo() {
+        assertThrows(ReglaDominioException.class, () -> Dinero.de(-1));
+        assertThrows(ReglaDominioException.class, () -> new Dinero(new BigDecimal("-0.6")));
     }
 
     @Test
     @Tag("DIN-03")
-    void deberiaIndicarSignoDelMonto() {
-        assertTrue(Dinero.CERO.esCero());
+    void deberiaRechazarRestaConResultadoNegativo() {
+        assertThrows(ReglaDominioException.class, () -> Dinero.de(50_000).restar(Dinero.de(80_000)));
+    }
+
+    @Test
+    @Tag("DIN-03")
+    void deberiaPermitirRestaHastaCero() {
+        Dinero resultado = Dinero.de(50_000).restar(Dinero.de(50_000));
+
+        assertTrue(resultado.esCero());
         assertTrue(Dinero.de(1).esPositivo());
-        assertTrue(Dinero.de(-1).esNegativo());
     }
 }

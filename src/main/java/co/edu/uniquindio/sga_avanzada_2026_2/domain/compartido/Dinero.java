@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /**
  * VO: valor en pesos colombianos (COP), sin decimales y con precisión exacta (DIN-01).
- * Puede ser negativo; cada consumidor decide si lo admite (DIN-03: solo ajustes y saldo a favor).
+ * Nunca es negativo (DIN-03 · DEC-20).
  */
 public record Dinero(BigDecimal monto) {
 
@@ -19,6 +19,10 @@ public record Dinero(BigDecimal monto) {
             throw new ReglaDominioException("El monto es obligatorio");
         }
         monto = monto.setScale(0, RoundingMode.HALF_UP);
+        // DIN-03 · DEC-20
+        if (monto.signum() < 0) {
+            throw new ReglaDominioException("El dinero no puede ser negativo: " + monto);
+        }
     }
 
     public static Dinero de(long pesos) {
@@ -36,9 +40,10 @@ public record Dinero(BigDecimal monto) {
     }
 
     /**
-     * Resta dos valores (DIN-02). El resultado puede ser negativo (DIN-03).
+     * Resta dos valores (DIN-02).
      *
      * @return un Dinero nuevo; los operandos no cambian
+     * @throws ReglaDominioException si {@code otro} es mayor y el resultado sería negativo (DIN-03)
      */
     public Dinero restar(Dinero otro) {
         Objects.requireNonNull(otro, "otro");
@@ -52,10 +57,6 @@ public record Dinero(BigDecimal monto) {
      */
     public Dinero multiplicar(int factor) {
         return new Dinero(monto.multiply(BigDecimal.valueOf(factor)));
-    }
-
-    public boolean esNegativo() {
-        return monto.signum() < 0;
     }
 
     public boolean esPositivo() {

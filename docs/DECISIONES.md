@@ -11,6 +11,7 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
 - **DEC-06 · Crear vs. reconstruir.** El constructor público de cada entidad solo reconstruye (lo usa el mapper al cargar de BD) y **no** aplica reglas de creación. Las reglas de creación viven en la fábrica `crear(…)` (p. ej. RN-04 entrada ≥ hoy, que fallaría al cargar reservas pasadas).
 - **DEC-07 · Accesores de lectura** estilo record (`codigo()`, `estado()`) permitidos en el dominio; **nunca setters**. Listas expuestas con `List.copyOf`.
 - **DEC-08 · Javadoc**: una línea por clase (qué es + regla). Javadoc completo (regla con ID del Excel, `@throws` con cuándo rechaza) en cada método de negocio al implementarlo. Nada en atributos ni getters; atributos no obvios con comentario corto en línea (`// congelado`, `// opcional`).
+- **DEC-20 · `Dinero` nunca es negativo** (reemplaza la parte de DIN-03 que lo permitía): el constructor y `restar` rechazan resultados < 0. La dirección se expresa con un indicador, igual que el REVERSO de pago. Propuesta para A5: el cargo AJUSTE lleva monto positivo y un sentido (`AUMENTA`/`DISMINUYE`) (CAR-06); `Folio.saldo()` devuelve `Saldo(monto, situacion)` con situación `PENDIENTE`/`A_FAVOR`/`AL_DIA` (SLD-03), y el folio compara totales antes de restar.
 - **DEC-09 · Valores asumidos, por confirmar con el equipo** (marcados `TODO(equipo)` donde aplica): `GravedadNovedad` = BAJA, MEDIA, ALTA; `TipoDocumento` = CC, CE, PASAPORTE, TI; `Rol` = ADMINISTRADOR, RECEPCIONISTA, PERSONAL_SERVICIO (USU-03).
 
 ## Aplicación

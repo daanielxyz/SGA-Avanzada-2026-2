@@ -12,13 +12,13 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 
 ## Etapa A — Dominio + persistencia por agregado
 - [x] **A00 · Esqueleto**: paquetes, entidades con atributos y constructor, VO con validación, enums, puertos y servicios vacíos. Compila.
-- [ ] **A0 · Compartido**: `Dinero` (sumar, restar, multiplicar), `Estancia` (noches, cantidadNoches, seSolapaCon), `Noche` comparable. Pruebas RN-03 y solape `[entrada, salida)`.
+- [x] **A0 · Compartido**: `Dinero` (sumar, restar, multiplicar, esCero/esPositivo; redondeo HALF_UP al construir; nunca negativo, DEC-20), `Estancia` (noches, cantidadNoches, seSolapaCon), `Noche`. 15 pruebas (DIN-01..03, RN-03/EST-02, EST-03, EST-04, NOC-01, NOC-02).
 - [ ] **A1 · Apartamento**: `Capacidad.admite`, `EstadoOperativo.puedePasarA/permiteRegistro`, `Bloqueo.cubre/levantar`, métodos de `Apartamento`, invariantes (1..10 imágenes con una principal, ≥1 característica).
 - [ ] **A1-P · Primer corte de persistencia**: PostgreSQL + Flyway en Gradle, properties main/test, `V1__apartamento.sql`, adaptador JPA de Apartamento, prueba de ida y vuelta en H2.
 - [ ] **A2 · Alojamiento**: parámetros, medios de pago (≥2), servicios adicionales (≥1), ubicación. + persistencia V2.
 - [ ] **A3 · Temporada y Tarifa**: `cubre/seSolapaCon`, base obligatoria, `nuevaVersion`; `TarificacionDomainService` (RN-05, 06), `ActivadorApartamentoService` (TAR-03, APA-11). + persistencia V3. `TODO(equipo)` Temporada Media.
 - [ ] **A4 · Reserva**: `EstadoReserva`, `Ocupante`, `Registro`, `Salida`, `Reserva.crear/modificar/confirmar/cancelar/declararNoShow/expirar/registrarLlegada/registrarSalida`; `DisponibilidadDomainService`, `BloqueoOperativoDomainService`, `BajaApartamentoDomainService`. + persistencia V4 con `@Version`, `UNIQUE(canal, idExterno)` y `EXCLUDE` (DEC-17).
-- [ ] **A5 · Política y Folio**: `retencionPara/nuevaVersion`; `Folio.agregarCargo/registrarPago/ajustarMovimiento/saldo/cerrar`; `CancelacionDomainService`, `NoShowDomainService`. + persistencia V5. `TODO(equipo)` tramos.
+- [ ] **A5 · Política y Folio**: `retencionPara/nuevaVersion`; `Folio.agregarCargo/registrarPago/ajustarMovimiento/saldo/cerrar`; `CancelacionDomainService`, `NoShowDomainService`. + persistencia V5. `TODO(equipo)` tramos. Aplicar DEC-20: sentido del AJUSTE y VO `Saldo`.
 - [ ] **A6 · Llegada y salida (D-02)**: `RegistroLlegadaDomainService`, `SalidaOperativaDomainService`.
 - [ ] **A7 · Canales, Titular, Novedad**: `Canal.desactivar`, `ConflictoCanal.resolver`, `EventoCanal`, `SincronizacionCanalDomainService`, `Titular.actualizarDatos`, `Novedad`. + persistencia V6.
 

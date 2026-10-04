@@ -42,7 +42,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 ### Folio
 - **R Folio**: id · reservaId · cargos: Cargo[] · pagos: Pago[] · cerrado · autorizacion?.
   `agregarCargo(c)` · `registrarPago(p)` · `ajustarMovimiento(movimiento, motivo)` · `saldo(): Dinero` (calculado) · `cerrar(autorizacion?)`. No existe editar/eliminar cargo o pago.
-- **E Cargo**: id · tipo · concepto · valor: Dinero (puede ser negativo solo en AJUSTE) · fecha. `esAjuste()`
+- **E Cargo**: id · tipo · concepto · valor: Dinero (nunca negativo; el AJUSTE indica si aumenta o disminuye — DEC-20) · fecha. `esAjuste()`
 - **E Pago**: id · medio: MedioPago · monto: Dinero (>0) · tipo: TipoPago · fecha · reversaDe: PagoId? `esReverso()`
 - **VO AutorizacionCierre**(autor: UsuarioId, motivo, fechaHora) · **VO MedioPago**(nombre; validado contra el catálogo habilitado del Alojamiento)
 - **EN TipoCargo**: HOSPEDAJE, SERVICIO_ADICIONAL, PENALIDAD_CANCELACION, AJUSTE · **EN TipoPago**: ABONO, REVERSO (el reverso mantiene el monto positivo y resta en el reporte de ingresos)
@@ -62,7 +62,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · fechaInicio · fechaFin · estado (PENDIENTE|RESUELTO) · resolucion. `resolver(autor, decision)`
 - **R EventoCanal** (bitácora): id · canalId · operacion · sentido (ENTRANTE|SALIENTE) · fechaHora · cargaUtil · resultado. Solo se crea; nunca guarda credenciales.
 - **R Novedad**: id · apartamentoId · fecha · autor · descripcion · gravedad (enum cerrado) · estado (ABIERTA→EN_REVISION→CERRADA). No se elimina, se cierra.
-- **VO Dinero**(monto: BigDecimal COP sin decimales) `sumar` · `restar` · `multiplicar(n)`
+- **VO Dinero**(monto: BigDecimal COP sin decimales, ≥ 0 — DEC-20) `sumar` · `restar` · `multiplicar(n)`
 - **VO Documento**(tipo, número, no vacío) · **VO Correo**(formato válido, normalizado) · ids tipados (`ReservaId`, `ApartamentoId`, `FolioId`, `TitularId`, `TemporadaId`, `TarifaId`, `PoliticaId`, `CanalId`, `ConflictoId`, `NovedadId`, `UsuarioId`…)
 - **Calculados**: `Disponibilidad`(apartamentoId, estancia, disponible, motivo) · `Cotizacion`(desglose: línea por noche {noche, temporada, tarifa, ocupantesFacturables, subtotal}, total: Dinero).
 
