@@ -6,7 +6,7 @@ Modelo completo (clases, agregados, servicios, reglas): `docs/MODELO.md` — lé
 ## Stack
 Java 25 · Spring Boot 4.1.x · **Gradle Groovy** (`build.gradle`, nunca `.kts`) · H2 en memoria (`jdbc:h2:mem:sgadb`) · JUnit 5 · Lombok (solo fuera de `domain`).
 Boot 4: `spring-boot-starter-webmvc` (no `-web`), `spring-boot-h2console` explícito, un `*-test` por cada starter.
-Paquete raíz `co.edu.uniquindio.sga`. Nada de secretos en git.
+Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanzada20262Application`). Nada de secretos en git.
 
 ## Arquitectura hexagonal
 `infrastructure → application → domain` (las dependencias solo apuntan al dominio).

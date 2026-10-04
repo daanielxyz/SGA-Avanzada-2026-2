@@ -9,5 +9,4 @@ class SgaAvanzada20262ApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }
