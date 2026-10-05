@@ -12,8 +12,8 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 ## Arquitectura hexagonal
 `infrastructure → application → domain` (las dependencias solo apuntan al dominio).
 - **domain**: Java puro (sin Spring, JPA, Lombok, Jackson, Bean Validation, DTOs). Entidades sin setters, cambios por métodos del negocio, colecciones con `List.copyOf`. VO = `record` que valida en el constructor; valores cerrados = `enum` con su lógica. Excepciones de negocio extienden `ReglaDominioException`. Contiene también los **puertos** (`XRepository`, uno por agregado) y los servicios de dominio.
-- **application**: un caso de uso por clase, en verbo (`CrearReserva`). Flujo: cargar por puertos → invocar dominio → guardar → efectos. **Cero `if` de negocio.** Config llega por constructor. Se permiten `@Service` y `@Transactional` (DEC-10).
-- **infrastructure**: REST + DTO (`record`), adaptadores JPA con entidades JPA **separadas** del dominio y mapeadores, seguridad JWT, externos, config. Usuario/Rol viven aquí.
+- **application**: un caso de uso por clase, en verbo (`CrearReserva`). Entrada `XCommand`, salida `XResult` (`record`, sin HTTP — DEC-31). Flujo: cargar por puertos → invocar dominio → guardar → efectos. **Cero `if` de negocio.** Config llega por constructor. Se permiten `@Service` y `@Transactional` (DEC-10).
+- **infrastructure**: REST con `XRequest` (Bean Validation, 400) / `XResponse` y manejador global de errores 400/404/409 (DEC-31..33); el controlador nunca recibe ni devuelve entidades del dominio. Adaptadores JPA con entidades JPA **separadas** del dominio y mapeadores, seguridad JWT, externos, config. Usuario/Rol viven aquí.
 - Agregado: una raíz, hijos sin repositorio, referencias a otros agregados **solo por id tipado**. Una transacción = un agregado (excepción documentada D-02: llegada y salida tocan Reserva+Apartamento(+Folio)).
 - Servicio de dominio: sin estado, solo reglas que cruzan agregados, **recibe los datos por parámetro** (no usa repositorios).
 - Validación: formato en el borde (400); reglas de negocio siempre en el dominio (409).
@@ -25,7 +25,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 `domain/{compartido, apartamento, reserva, folio, titular, tarifa, politica, canal, alojamiento, novedad, servicio}` · `application/<agregado>` · `infrastructure/{rest, persistencia, seguridad, externos, config}`. Pruebas en `src/test` espejo de `domain`.
 
 ## Convenciones
-- Código del dominio **en español** (Apartamento, Reserva, Estancia, Folio, Cargo, Pago, Saldo, Titular, Ocupante, Noche, Canal, Novedad; check-in = *Registro*, check-out = *Salida*). Nada de room/booking/user. Estructura y palabras clave en inglés. No mezclar idiomas en un nombre.
+- Código del dominio **en español** (Apartamento, Reserva, Estancia, Folio, Cargo, Pago, Saldo, Titular, Ocupante, Noche, Canal, Novedad; check-in = *Registro*, check-out = *Salida*). Nada de room/booking/user. Estructura y palabras clave en inglés. No mezclar idiomas en un nombre, salvo el sufijo del rol técnico (`ReservaRepository`, `ReservaJpa`, `CrearReservaRequest/Command`, `ReservaResult/Response` — DEC-32).
 - Ids tipados con código de negocio (`ReservaId` = `RES-2026-00042`, `ApartamentoId` = `APT-101`).
 - Comentar la regla que implementa cada método (`// RN-02 · CAP-02`); pruebas con `@Tag("RN-02")`, caso feliz **y** violación.
 - API por acciones de negocio: `PUT /api/reservas/{codigo}/cancelar`. Prohibido `PATCH /estado` y `DELETE` físico.

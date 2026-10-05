@@ -26,6 +26,13 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
 
 ## Aplicación
 - **DEC-10 · `@Service` y `@Transactional` permitidos en `application`** (el dominio sigue sin Spring). Una transacción = un agregado, salvo D-02.
+- **DEC-31 · Objetos de datos en dos fronteras**: `Request → Command → dominio → Result → Response`.
+  - `infrastructure/rest/<agregado>/`: `XRequest` (entrada HTTP, Bean Validation de **formato** → 400) y `XResponse` (lo que ve el cliente). El controlador convierte Request→Command y Result→Response.
+  - `application/<agregado>/`: `XCommand` (entrada del caso de uso) y `XResult` (salida), `record` sin anotaciones web. El caso de uso crea los VO desde el Command (que vuelven a validar, DEC-06) y arma el Result desde el agregado.
+  - Motivo: los casos de uso tienen tres entradas — REST, adaptador de canal externo (CU-12) y planificador (RN-21) — y ninguna debe depender de clases HTTP; además el controlador nunca recibe una entidad del dominio, así que no puede saltarse el caso de uso.
+  - El dominio sigue sin DTO. Las consultas de listado devuelven `Pagina<XResult>` (DEC-18).
+- **DEC-32 · Nombres**: nombre de negocio en español + sufijo técnico en inglés, igual que `XRepository`/`XJpa`/`XMapper`: `CrearReservaRequest`, `ReservaResponse`, `CrearReservaCommand`, `ReservaResult`. El caso de uso es el verbo sin sufijo (`CrearReserva`).
+- **DEC-33 · Errores HTTP uniformes**: un `@RestControllerAdvice` en `infrastructure/rest` responde con `ErrorResponse` (código, mensaje, regla si aplica): validación del Request → **400**, recurso inexistente → **404**, `ReglaDominioException` → **409**. Ningún controlador captura excepciones por su cuenta.
 
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:
