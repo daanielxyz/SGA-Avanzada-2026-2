@@ -49,8 +49,9 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 
 ### Titular, tarifas y política
 - **R Titular**: id · nombre · documento · correo · telefono. `actualizarDatos(…)`
-- **R Temporada**: id · nombre · fechaInicio · fechaFin (inclusiva; null si es la base) · esBase · estanciaMinimaNoches. `cubre(noche)` · `seSolapaCon(t)`. No se solapan entre sí; la base cubre lo no asignado y es obligatoria.
-- **R Tarifa**: id · apartamentoId · temporadaId · valorPorOcupante: Dinero · version · vigenteDesde. `nuevaVersion(valor)`. Todo apartamento activo tiene tarifa en todas las temporadas.
+- **R CalendarioTemporadas** (DEC-28, uno por alojamiento): alojamientoId · temporadas: Temporada[]. `agregarTemporada(id, nombre, ini, fin, estanciaMinima)` · `cambiarFechas(id, ini, fin)` · `desactivarTemporada(id)` · `temporadaDe(noche)` · `temporadasActivas()` · `cantidadTemporadasEspecificas()`. Exactamente una base; las específicas no se solapan.
+- **E Temporada**: id · nombre · fechaInicio · fechaFin (inclusiva; ambas null si es la base) · esBase · estanciaMinimaNoches (0 = sin mínimo) · activa. `cubre(noche)` · `seSolapaCon(t)`. La base cubre lo no asignado y no se desactiva.
+- **R Tarifa**: id · apartamentoId · temporadaId · valorPorOcupante: Dinero (> 0) · version · vigenteDesde. `nuevaVersion(nuevoId, valor, desde)` · `aplicaA(apartamento, temporada)`. Todo apartamento activo tiene tarifa en todas las temporadas activas. Vigente = versión más alta que ya rige (DEC-30).
 - **R PoliticaCancelacion**: id · alojamientoId · version · tramos: TramoCancelacion[] (≥2) · retencionNoShow: Porcentaje · vigente. `retencionPara(diasAntelacion)` · `nuevaVersion(tramos)`
 - **VO TramoCancelacion**(antelacionMinDias, retencion: Porcentaje; retención + devolución = 100) · **VO Porcentaje**(0..100)
 
@@ -72,7 +73,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 | Servicio | Método principal | Reglas | Cruza |
 |---|---|---|---|
 | DisponibilidadDomainService | `verificarDisponibilidad(apartamento, estancia, nOcupantes, reservasActivas)` | RN-01, 07, 20 | Apartamento + Reservas |
-| TarificacionDomainService | `calcularValorEstancia(estancia, ocupantes, temporadas, tarifas)` → Cotizacion | RN-05, 06 | Temporada + Tarifa + Ocupantes |
+| TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
 | CancelacionDomainService | `procesarCancelacion(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
 | NoShowDomainService | `declararNoShow(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
 | RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, hoy)` | RN-08, 10, 11 | Reserva + Apartamento |
@@ -80,7 +81,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 | SincronizacionCanalDomainService | `integrarReservaExterna(datos, canalId, reservasActivas)` | RN-01, 18, 19 | Reserva + ConflictoCanal |
 | BloqueoOperativoDomainService | `registrarBloqueo(apartamento, ini, fin, motivo, reservasActivas)` | RN-07 | Apartamento + Reservas |
 | BajaApartamentoDomainService | `retirarDeVenta(apartamento, reservasActivas)` | APA-16 | Apartamento + Reservas |
-| ActivadorApartamentoService | `puedeActivarse(apartamento, temporadas, tarifas)` | TAR-03, APA-11 | Apartamento + Temporada + Tarifa |
+| ActivadorApartamentoService | `puedeActivarse(apartamento, calendario, tarifas, minimoTemporadas)` | TAR-03, APA-11, TEM-04 | Apartamento + CalendarioTemporadas + Tarifa |
 
 **Casos de uso (application), no servicios de dominio:** `CrearReserva`, `ModificarReserva` (la regla vive en `Reserva.crear/modificar`), `VencerReservasPendientes` (usa `Reserva.expirar`; lo dispara un planificador). Lista completa `CU-nn` en el Excel.
 Las 6 validaciones de crear reserva, en este orden: salida>entrada (Estancia) · entrada≥hoy (Reserva) · apartamento activo con tarifas completas (Apartamento) · capacidad (Reserva/Apartamento) · sin solape con reservas ni bloqueos (Disponibilidad) · tiempo de preparación (Disponibilidad).

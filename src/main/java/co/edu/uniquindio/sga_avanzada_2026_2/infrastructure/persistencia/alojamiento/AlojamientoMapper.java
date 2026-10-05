@@ -32,7 +32,8 @@ final class AlojamientoMapper {
                 jpa.getHoraLimiteNoShow(),
                 new Porcentaje(jpa.getAnticipoPct()),
                 jpa.getMinimoMediosPago(),
-                jpa.getMinimoServiciosAdicionales());
+                jpa.getMinimoServiciosAdicionales(),
+                jpa.getMinimoTemporadas());
         return new Alojamiento(
                 new AlojamientoId(jpa.getId()),
                 jpa.getNombre(),
@@ -71,6 +72,7 @@ final class AlojamientoMapper {
         jpa.setAnticipoPct(p.anticipo().valor());
         jpa.setMinimoMediosPago(p.minimoMediosPago());
         jpa.setMinimoServiciosAdicionales(p.minimoServiciosAdicionales());
+        jpa.setMinimoTemporadas(p.minimoTemporadas());
         jpa.getServiciosAdicionales().clear();
         alojamiento.serviciosAdicionales().forEach(s -> jpa.getServiciosAdicionales().add(new ServicioAdicionalJpa(
                 s.id().valor(), s.nombre(), s.generaCargo(), s.valor().monto(), s.activo())));

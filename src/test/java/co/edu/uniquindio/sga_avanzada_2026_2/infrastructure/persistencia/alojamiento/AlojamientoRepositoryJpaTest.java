@@ -35,7 +35,7 @@ class AlojamientoRepositoryJpaTest {
     private static final AlojamientoId ID = new AlojamientoId("ALO-1");
     private static final ParametrosAlojamiento PARAMETROS = new ParametrosAlojamiento(12, LocalTime.of(15, 0),
             LocalTime.of(11, 0), Duration.ofHours(3), Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30),
-            2, 1);
+            2, 1, 2);
 
     @Autowired
     private AlojamientoRepositoryJpa repositorio;

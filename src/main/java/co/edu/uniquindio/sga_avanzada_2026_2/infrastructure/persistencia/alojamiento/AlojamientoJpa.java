@@ -50,6 +50,7 @@ public class AlojamientoJpa {
     private int anticipoPct;
     private int minimoMediosPago;
     private int minimoServiciosAdicionales;
+    private int minimoTemporadas;
 
     @Version
     private Long version;

@@ -14,13 +14,15 @@ import java.time.LocalTime;
  * @param anticipo                   0 significa que no se exige anticipo
  * @param minimoMediosPago           mínimo de la Ficha del curso, configurable (ALO-06 · MPAG-01)
  * @param minimoServiciosAdicionales mínimo de la Ficha del curso, configurable (ALO-06 · SERV-05)
+ * @param minimoTemporadas           temporadas específicas exigidas, además de la base, para activar
+ *                                   apartamentos (TEM-04 · DEC-28)
  */
 public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                     Duration tiempoPreparacion, Duration plazoConfirmacion,
                                     LocalTime horaLimiteNoShow, Porcentaje anticipo, int minimoMediosPago,
-                                    int minimoServiciosAdicionales) {
+                                    int minimoServiciosAdicionales, int minimoTemporadas) {
 
-    // ALO-02 · ALO-03 · ALO-06 · TPRE-01
+    // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04
     public ParametrosAlojamiento {
         if (horaEntrada == null || horaSalida == null || horaLimiteNoShow == null) {
             throw new ReglaDominioException("Las horas de entrada, salida y límite de no-show son obligatorias");
@@ -37,8 +39,8 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         if (anticipo == null) {
             throw new ReglaDominioException("El anticipo es obligatorio (0 si no se exige)");
         }
-        if (minimoMediosPago < 0 || minimoServiciosAdicionales < 0) {
-            throw new ReglaDominioException("Los mínimos de medios de pago y servicios no pueden ser negativos");
+        if (minimoMediosPago < 0 || minimoServiciosAdicionales < 0 || minimoTemporadas < 0) {
+            throw new ReglaDominioException("Los mínimos de medios de pago, servicios y temporadas no pueden ser negativos");
         }
     }
 }
