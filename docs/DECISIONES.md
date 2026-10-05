@@ -17,6 +17,9 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
 - **DEC-22 · Permisos por rol fuera del dominio**: reglas como EOPE-04 (solo el admin declara FUERA_DE_SERVICIO) y BLO-04 (solo el admin bloquea) se controlan en la aplicación/seguridad; el dominio no conoce usuarios.
 - **DEC-23 · Hijos mutables encapsulados**: los métodos que cambian una entidad hija (p. ej. `Bloqueo.levantar()`) son de paquete; solo la raíz los invoca. Las listas se exponen como copias inmutables.
 - **DEC-24 · Apartamento sin imágenes**: puede existir con 0 imágenes, pero no activarse (IMG-01: "menos de una impide publicarlo").
+- **DEC-25 · Parámetros del alojamiento en la tabla** (ALO-03, prevalece sobre la nota de MODELO.md): `ParametrosAlojamiento` se guarda como columnas de `alojamiento` y el admin lo edita desde la app; `sga.*` solo da los valores iniciales al crear el alojamiento (B1). Incluye los **mínimos de la Ficha** (`minimoMediosPago` = 2, `minimoServiciosAdicionales` = 1) para que un hotel real pueda operar con menos (ALO-06).
+- **DEC-26 · `alojamientoId` en todo agregado** (ALO-07 · D-04): se agrega a cada agregado cuando se implemente (Temporada, Titular, Reserva, Canal, Novedad…). Con un único alojamiento (ALO-01) el valor es constante.
+- **DEC-27 · Catálogo de medios de pago = solo los habilitados** (MPAG-06): habilitar agrega, deshabilitar quita; los pagos históricos conservan el nombre del medio (MPAG-03). En BD es un conjunto (PK alojamiento + nombre), sin columna de orden.
 
 ## Aplicación
 - **DEC-10 · `@Service` y `@Transactional` permitidos en `application`** (el dominio sigue sin Spring). Una transacción = un agregado, salvo D-02.
@@ -28,7 +31,7 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - H2 es solo dependencia de pruebas (`testRuntimeOnly`); se quitó `spring-boot-h2console`.
 - **DEC-12 · Flyway sencillo**: scripts `db/migration/Vn__<agregado>.sql`, uno por incremento, en SQL que entiendan PostgreSQL y H2. Cuando haga falta SQL exclusivo de PostgreSQL (la restricción `EXCLUDE` de A4) irá en una carpeta por motor (`db/migration/postgresql`).
 - **DEC-13 · Adaptador por agregado** en `infrastructure/persistencia/<agregado>/`: `XJpa` (@Entity, con Lombok), `XJpaRepository` (Spring Data, de paquete), `XMapper` (dominio ⇄ JPA, de paquete), `XRepositoryJpa` (implementa el puerto). Los casos de uso solo conocen el puerto. Los hijos que solo viven dentro del agregado se mapean como `@ElementCollection` de `@Embeddable` con `@OrderColumn`, sin entidad JPA propia.
-- **DEC-14 · Relaciones**: dentro del agregado `@OneToMany` con cascada; entre agregados solo columna de id, **sin `@ManyToOne`**.
+- **DEC-14 · Relaciones**: dentro del agregado `@OneToMany` con cascada; entre agregados solo columna de id, **sin `@ManyToOne` ni FK en la BD** (cada agregado se guarda y prueba de forma independiente).
 - **DEC-15 · Carga del agregado** = raíz + hijos que pertenecen a esa unidad y que la operación necesita (p. ej. Reserva con ocupantes, registro, salida, desglose). Nunca arrastrar otros agregados.
 - **DEC-16 · Tipos**: `Dinero` → `NUMERIC(15,0)`; enums → `VARCHAR` con `@Enumerated(STRING)`; `Duration` → minutos.
 - **DEC-17 · Defensa del riesgo central en BD**: `@Version` en Reserva y Apartamento (la versión vive solo en la fila JPA, no en el dominio: `guardar` reutiliza la fila cargada en la transacción del caso de uso, así un cambio concurrente da conflicto en vez de sobrescribirse); `UNIQUE (canal_id, id_externo)` (RN-19); en PostgreSQL `EXCLUDE USING gist (apartamento_id WITH =, daterange(entrada, salida) WITH &&) WHERE estado activo` (RN-01; no aplica en H2).

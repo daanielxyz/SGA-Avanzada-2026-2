@@ -56,7 +56,8 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 
 ### Alojamiento, canales y otros
 - **R Alojamiento**: id · nombre · descripcion · ciudad · direccion · ubicacion · normas · parametros: ParametrosAlojamiento · serviciosAdicionales: ServicioAdicional[] (≥1) · mediosPago: MedioPago[] (≥2).
-- **VO ParametrosAlojamiento**: umbralEdadFacturable · horaEntrada · horaSalida · tiempoPreparacion (Duration) · plazoConfirmacion (Duration) · horaLimiteNoShow · anticipo (Porcentaje; 0 = no se exige). Valores reales en `application.properties` (`sga.*`), no en código.
+- **R Alojamiento** métodos: `cambiarParametros(p)` · `cambiarUbicacion(u)` · `habilitarMedioPago(m)` · `deshabilitarMedioPago(m)` · `aceptaMedioPago(m)` · `agregarServicioAdicional(s)` · `cambiarValorServicio(id, valor)` · `desactivarServicio(id)`.
+- **VO ParametrosAlojamiento**: umbralEdadFacturable · horaEntrada · horaSalida · tiempoPreparacion (Duration, horas enteras) · plazoConfirmacion (Duration) · horaLimiteNoShow · anticipo (Porcentaje; 0 = no se exige) · minimoMediosPago · minimoServiciosAdicionales. Se guarda en la tabla `alojamiento`; `sga.*` solo da los valores iniciales (DEC-25).
 - **E ServicioAdicional**: id · nombre · generaCargo · valor: Dinero (≥0) · activo (el valor se congela en el Cargo) · **VO Ubicacion**(latitud −90..90, longitud −180..180)
 - **R Canal**: id · nombre · tipo: CanalOrigen · credencial (externa, no versionada) · activo. `desactivar()`
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · fechaInicio · fechaFin · estado (PENDIENTE|RESUELTO) · resolucion. `resolver(autor, decision)`

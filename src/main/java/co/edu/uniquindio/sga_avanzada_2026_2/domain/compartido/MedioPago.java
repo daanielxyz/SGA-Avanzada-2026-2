@@ -1,7 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido;
 
 /**
- * VO: medio de pago. Se valida contra el catálogo habilitado del Alojamiento, no aquí.
+ * VO: forma de liquidar un pago, normalizada en mayúsculas. No es enum: el catálogo lo configura cada alojamiento
+ * (MPAG-06) y es él quien decide si está habilitado (MPAG-02).
  */
 public record MedioPago(String nombre) {
 

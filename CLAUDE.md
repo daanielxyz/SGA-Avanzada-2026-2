@@ -18,7 +18,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - Servicio de dominio: sin estado, solo reglas que cruzan agregados, **recibe los datos por parámetro** (no usa repositorios).
 - Validación: formato en el borde (400); reglas de negocio siempre en el dominio (409).
 - Reloj inyectado (`fechaHoy`/`ahora` por parámetro); nunca `now()` en el dominio.
-- Todo valor que cambia entre alojamientos es **configuración** (`ParametrosAlojamiento`, props `sga.*`), no constante.
+- Todo valor que cambia entre alojamientos es **configuración** (`ParametrosAlojamiento`, guardado con el Alojamiento; `sga.*` solo valores iniciales — DEC-25), no constante.
 - Eliminación lógica; listados paginados de 10; `Dinero` = `BigDecimal` COP sin decimales (nunca float/double), redondeo al final de cada cargo.
 
 ## Paquetes
