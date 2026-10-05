@@ -24,13 +24,14 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:
   - `src/main/resources/application.properties` → PostgreSQL, credenciales por variables de entorno (`${DB_USER}`, `${DB_PASSWORD}`), `ddl-auto=validate`, Flyway activo.
-  - `src/test/resources/application.properties` → H2 en memoria, Flyway desactivado, `ddl-auto=create-drop`.
-- **DEC-12 · Flyway sencillo**: scripts `db/migration/Vn__<agregado>.sql`, uno por incremento.
-- **DEC-13 · Adaptador por agregado** en `infrastructure/persistencia/<agregado>/`: `XJpa` (@Entity), `XJpaRepository` (Spring Data), `XMapper` (dominio ⇄ JPA), `XRepositoryJpa` (implementa el puerto). Los casos de uso solo conocen el puerto.
+  - `src/test/resources/application.properties` → H2 en memoria en `MODE=PostgreSQL`, **Flyway activo y `ddl-auto=validate`**: las pruebas aplican las mismas migraciones y fallan si una entidad JPA no coincide con el SQL (más seguro que `create-drop`, que ocultaría errores del script).
+  - H2 es solo dependencia de pruebas (`testRuntimeOnly`); se quitó `spring-boot-h2console`.
+- **DEC-12 · Flyway sencillo**: scripts `db/migration/Vn__<agregado>.sql`, uno por incremento, en SQL que entiendan PostgreSQL y H2. Cuando haga falta SQL exclusivo de PostgreSQL (la restricción `EXCLUDE` de A4) irá en una carpeta por motor (`db/migration/postgresql`).
+- **DEC-13 · Adaptador por agregado** en `infrastructure/persistencia/<agregado>/`: `XJpa` (@Entity, con Lombok), `XJpaRepository` (Spring Data, de paquete), `XMapper` (dominio ⇄ JPA, de paquete), `XRepositoryJpa` (implementa el puerto). Los casos de uso solo conocen el puerto. Los hijos que solo viven dentro del agregado se mapean como `@ElementCollection` de `@Embeddable` con `@OrderColumn`, sin entidad JPA propia.
 - **DEC-14 · Relaciones**: dentro del agregado `@OneToMany` con cascada; entre agregados solo columna de id, **sin `@ManyToOne`**.
 - **DEC-15 · Carga del agregado** = raíz + hijos que pertenecen a esa unidad y que la operación necesita (p. ej. Reserva con ocupantes, registro, salida, desglose). Nunca arrastrar otros agregados.
 - **DEC-16 · Tipos**: `Dinero` → `NUMERIC(15,0)`; enums → `VARCHAR` con `@Enumerated(STRING)`; `Duration` → minutos.
-- **DEC-17 · Defensa del riesgo central en BD**: `@Version` en Reserva y Apartamento; `UNIQUE (canal_id, id_externo)` (RN-19); en PostgreSQL `EXCLUDE USING gist (apartamento_id WITH =, daterange(entrada, salida) WITH &&) WHERE estado activo` (RN-01; no aplica en H2).
+- **DEC-17 · Defensa del riesgo central en BD**: `@Version` en Reserva y Apartamento (la versión vive solo en la fila JPA, no en el dominio: `guardar` reutiliza la fila cargada en la transacción del caso de uso, así un cambio concurrente da conflicto en vez de sobrescribirse); `UNIQUE (canal_id, id_externo)` (RN-19); en PostgreSQL `EXCLUDE USING gist (apartamento_id WITH =, daterange(entrada, salida) WITH &&) WHERE estado activo` (RN-01; no aplica en H2).
 - **DEC-18 · Paginación**: el puerto devuelve un tipo propio `Pagina<T>`; `Page`/`Pageable` de Spring quedan en el adaptador.
 
 ## Forma de trabajo

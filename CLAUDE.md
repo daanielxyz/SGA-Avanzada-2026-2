@@ -6,7 +6,7 @@ Modelo completo (clases, agregados, servicios, reglas): `docs/MODELO.md` — lé
 
 ## Stack
 Java 25 · Spring Boot 4.1.x · **Gradle Groovy** (`build.gradle`, nunca `.kts`) · JPA/Hibernate · PostgreSQL (principal) + Flyway · H2 en memoria solo para pruebas (DEC-11) · JUnit 5 · Lombok (solo fuera de `domain`).
-Boot 4: `spring-boot-starter-webmvc` (no `-web`), `spring-boot-h2console` explícito, un `*-test` por cada starter.
+Boot 4: `spring-boot-starter-webmvc` (no `-web`), `spring-boot-starter-flyway`, un `*-test` por cada starter; `@DataJpaTest` está en `org.springframework.boot.data.jpa.test.autoconfigure`.
 Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanzada20262Application`). Nada de secretos en git.
 
 ## Arquitectura hexagonal
