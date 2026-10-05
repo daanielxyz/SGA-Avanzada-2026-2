@@ -41,6 +41,28 @@ class ApartamentoTest {
         return LocalDate.of(2026, 10, d);
     }
 
+    // --- Creación
+
+    @Test
+    @Tag("APA-11")
+    @Tag("RN-11")
+    void deberiaNacerInactivoSinBloqueosYPendienteDePreparacion() {
+        Apartamento nuevo = Apartamento.crear(new ApartamentoId("APT-101"), new AlojamientoId("ALO-1"), "Apto 101",
+                null, new Capacidad(4), new Dormitorio(2), List.of(PRINCIPAL), CARACTERISTICAS);
+
+        assertFalse(nuevo.activo());
+        assertTrue(nuevo.bloqueos().isEmpty());
+        assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, nuevo.estadoOperativo());
+    }
+
+    @Test
+    @Tag("CARAC-01")
+    void deberiaRechazarCrearConDatosInvalidos() {
+        assertThrows(ReglaDominioException.class, () -> Apartamento.crear(new ApartamentoId("APT-101"),
+                new AlojamientoId("ALO-1"), "Apto 101", null, new Capacidad(4), new Dormitorio(2),
+                List.of(PRINCIPAL), List.of()));
+    }
+
     // --- Invariantes de construcción
 
     @Test

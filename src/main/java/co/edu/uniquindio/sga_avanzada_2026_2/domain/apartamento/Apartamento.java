@@ -64,6 +64,20 @@ public class Apartamento {
     }
 
     /**
+     * Crea un apartamento nuevo: nace inactivo (se activa con tarifas completas, APA-11), sin bloqueos y en
+     * PENDIENTE_PREPARACION, para que nunca se entregue sin revisar (RN-11 · DEC-34). Las invariantes de imágenes
+     * y características las valida el constructor (IMG-01 · IMG-02 · CARAC-01).
+     *
+     * @throws ReglaDominioException si algún dato viola una invariante del apartamento
+     */
+    public static Apartamento crear(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre,
+                                    String descripcion, Capacidad capacidad, Dormitorio dormitorios,
+                                    List<Imagen> imagenes, List<Caracteristica> caracteristicas) {
+        return new Apartamento(codigo, alojamientoId, nombre, descripcion, capacidad, dormitorios,
+                EstadoOperativo.PENDIENTE_PREPARACION, imagenes, caracteristicas, List.of(), false);
+    }
+
+    /**
      * Publica el apartamento para la venta.
      *
      * @param tarifasCompletas resultado de {@code ActivadorApartamentoService}: tiene tarifa en todas las

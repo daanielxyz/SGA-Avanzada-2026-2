@@ -23,7 +23,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 
 ### Apartamento
 - **R Apartamento**: codigo: ApartamentoId · alojamientoId · nombre · descripcion · capacidad: Capacidad · dormitorios: Dormitorio · estadoOperativo · imagenes: Imagen[] (1..10, una principal) · caracteristicas: Caracteristica[] (≥1) · bloqueos: Bloqueo[] · activo.
-  `activar(tarifasCompletas)` · `retirarDeVenta(hayReservasActivas)` · `cambiarCapacidad(c)` · `cambiarEstadoOperativo(e)` · `registrarBloqueo(ini, fin, motivo)` · `levantarBloqueo(id)` · `tieneBloqueoEn(noche)` · `admite(nOcupantes)`
+  `crear(…)` (inactivo, PENDIENTE_PREPARACION — DEC-34) · `activar(tarifasCompletas)` · `retirarDeVenta(hayReservasActivas)` · `cambiarCapacidad(c)` · `cambiarEstadoOperativo(e)` · `registrarBloqueo(ini, fin, motivo)` · `levantarBloqueo(id)` · `tieneBloqueoEn(noche)` · `admite(nOcupantes)`
 - **E Bloqueo**: id · fechaInicio · fechaFin (exclusiva, como la Estancia) · motivo · vigente. `levantar()` · `cubre(noche)`
 - **VO Capacidad**(valor ≥1) `admite(n)` · **VO Dormitorio**(cantidad ≥1) · **VO Imagen**(url, principal) · **VO Caracteristica**(nombre)
 - **EN EstadoOperativo**: PREPARADO, OCUPADO, PENDIENTE_PREPARACION, EN_PREPARACION, FUERA_DE_SERVICIO. `puedePasarA(e)` · `permiteRegistro()`

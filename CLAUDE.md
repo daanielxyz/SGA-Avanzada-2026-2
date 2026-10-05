@@ -22,7 +22,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - Eliminación lógica; listados paginados de 10; `Dinero` = `BigDecimal` COP sin decimales (nunca float/double), redondeo al final de cada cargo.
 
 ## Paquetes
-`domain/{compartido, apartamento, reserva, folio, titular, tarifa, politica, canal, alojamiento, novedad, servicio}` · `application/<agregado>` · `infrastructure/{rest, persistencia, seguridad, externos, config}`. Pruebas en `src/test` espejo de `domain`.
+`domain/{compartido, apartamento, reserva, folio, titular, tarifa, politica, canal, alojamiento, novedad, servicio}` · `application/{<agregado>, compartido}` · `infrastructure/{rest, persistencia, seguridad, externos, config}`. Pruebas en `src/test` espejo de `domain`.
 
 ## Convenciones
 - Código del dominio **en español** (Apartamento, Reserva, Estancia, Folio, Cargo, Pago, Saldo, Titular, Ocupante, Noche, Canal, Novedad; check-in = *Registro*, check-out = *Salida*). Nada de room/booking/user. Estructura y palabras clave en inglés. No mezclar idiomas en un nombre, salvo el sufijo del rol técnico (`ReservaRepository`, `ReservaJpa`, `CrearReservaRequest/Command`, `ReservaResult/Response` — DEC-32).
