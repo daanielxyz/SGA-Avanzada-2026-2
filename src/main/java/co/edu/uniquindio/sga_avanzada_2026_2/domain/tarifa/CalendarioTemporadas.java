@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 
@@ -89,6 +90,20 @@ public class CalendarioTemporadas {
                 .filter(t -> t.cubre(noche))
                 .findFirst()
                 .orElseGet(this::base);
+    }
+
+    /**
+     * Estancia mínima que exige una estancia: la mayor de las temporadas que toca al menos una de sus noches
+     * (RP-01 · TEM-07). El resultado se pasa a {@code Reserva.crear/modificar}.
+     *
+     * @return noches mínimas; 0 si ninguna temporada de la estancia exige mínimo
+     */
+    public int estanciaMinimaPara(Estancia estancia) {
+        Objects.requireNonNull(estancia, "estancia");
+        return estancia.noches().stream()
+                .mapToInt(noche -> temporadaDe(noche).estanciaMinimaNoches())
+                .max()
+                .orElse(0);
     }
 
     /**

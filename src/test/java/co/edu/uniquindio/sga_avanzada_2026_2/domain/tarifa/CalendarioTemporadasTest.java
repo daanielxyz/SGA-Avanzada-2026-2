@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import org.junit.jupiter.api.Tag;
@@ -130,6 +131,16 @@ class CalendarioTemporadasTest {
     @Tag("TEM-10")
     void deberiaRechazarDesactivarLaBase() {
         assertThrows(ReglaDominioException.class, () -> calendario().desactivarTemporada(BASE));
+    }
+
+    @Test
+    @Tag("RP-01")
+    @Tag("TEM-07")
+    void deberiaExigirElMinimoSiAlgunaNocheCaeEnTemporadaConMinimo() {
+        CalendarioTemporadas calendario = calendario();
+
+        assertEquals(3, calendario.estanciaMinimaPara(new Estancia(dia(12, 14), dia(12, 16))));
+        assertEquals(0, calendario.estanciaMinimaPara(new Estancia(dia(12, 10), dia(12, 15))));
     }
 
     @Test

@@ -51,6 +51,16 @@ class DineroTest {
     }
 
     @Test
+    @Tag("DIN-02")
+    @Tag("RES-15")
+    void deberiaCalcularUnPorcentajeRedondeandoUnaSolaVez() {
+        assertEquals(Dinero.de(120_000), Dinero.de(400_000).porcentaje(new Porcentaje(30)));
+        assertEquals(Dinero.de(5), Dinero.de(15).porcentaje(new Porcentaje(30)));  // 4,5 → 5
+        assertEquals(Dinero.CERO, Dinero.de(400_000).porcentaje(new Porcentaje(0)));
+        assertTrue(Dinero.de(119_999).esMenorQue(Dinero.de(120_000)));
+    }
+
+    @Test
     @Tag("DIN-03")
     void deberiaPermitirRestaHastaCero() {
         Dinero resultado = Dinero.de(50_000).restar(Dinero.de(50_000));

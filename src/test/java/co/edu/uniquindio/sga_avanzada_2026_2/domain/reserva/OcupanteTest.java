@@ -1,6 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -51,6 +53,19 @@ class OcupanteTest {
 
         assertEquals(25, ocupante.edadA(LocalDate.of(2026, 5, 9)));
         assertEquals(26, ocupante.edadA(LocalDate.of(2026, 5, 10)));
+    }
+
+    @Test
+    @Tag("OCU-05")
+    void deberiaDetectarDuplicadoPorDocumentoOPorNombreYFecha() {
+        Documento cc = new Documento(TipoDocumento.CC, "1094");
+        Ocupante ana = new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 3, 1), cc, null);
+
+        assertTrue(ana.esDuplicadoDe(new Ocupante(new OcupanteId("OCU-2"), "Otra", LocalDate.of(1980, 1, 1), cc, null)));
+        assertTrue(ana.esDuplicadoDe(new Ocupante(new OcupanteId("OCU-2"), "ana", LocalDate.of(1990, 3, 1), null, null)));
+        assertFalse(ana.esDuplicadoDe(new Ocupante(new OcupanteId("OCU-2"), "Ana", LocalDate.of(1990, 3, 1),
+                new Documento(TipoDocumento.CC, "2000"), null)));
+        assertFalse(ana.esDuplicadoDe(new Ocupante(new OcupanteId("OCU-2"), "Ana", LocalDate.of(1991, 3, 1), null, null)));
     }
 
     @Test

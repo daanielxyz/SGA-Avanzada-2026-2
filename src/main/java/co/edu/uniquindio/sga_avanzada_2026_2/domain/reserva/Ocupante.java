@@ -9,8 +9,8 @@ import java.util.Objects;
 
 /**
  * Entidad interna de Reserva. Se guarda la fecha de nacimiento, nunca la edad (OCU-01). Todos cuentan para la
- * capacidad (CAP-03); solo los facturables pagan (OCU-09). Que la fecha de nacimiento no sea futura (OCU-12) se
- * valida al agregarlo a la reserva, porque depende de la fecha actual (DEC-06).
+ * capacidad (CAP-03); solo los facturables pagan (OCU-09). Que la fecha de nacimiento no sea futura (OCU-12) y que
+ * no esté repetido (OCU-05) lo valida la Reserva, porque depende de la fecha actual y del resto del grupo (DEC-06).
  */
 public class Ocupante {
 
@@ -53,6 +53,20 @@ public class Ocupante {
      */
     public boolean esFacturableA(LocalDate fechaEntrada, int umbral) {
         return edadA(fechaEntrada) >= umbral;
+    }
+
+    /**
+     * Detecta si otro registro es la misma persona: por documento si ambos lo tienen; si no, por nombre (sin
+     * distinguir mayúsculas) y fecha de nacimiento (OCU-05).
+     *
+     * @return {@code true} si no pueden estar los dos en la misma reserva
+     */
+    public boolean esDuplicadoDe(Ocupante otro) {
+        Objects.requireNonNull(otro, "otro");
+        if (documento != null && otro.documento != null) {
+            return documento.equals(otro.documento);
+        }
+        return nombre.equalsIgnoreCase(otro.nombre) && fechaNacimiento.equals(otro.fechaNacimiento);
     }
 
     public OcupanteId id() {

@@ -59,6 +59,22 @@ public record Dinero(BigDecimal monto) {
         return new Dinero(monto.multiply(BigDecimal.valueOf(factor)));
     }
 
+    /**
+     * Fracción porcentual del valor, p. ej. el anticipo sobre el total de la reserva (RES-15). Se redondea una sola
+     * vez, al construir el resultado (DIN-02).
+     *
+     * @return un Dinero nuevo; el operando no cambia
+     */
+    public Dinero porcentaje(Porcentaje porcentaje) {
+        Objects.requireNonNull(porcentaje, "porcentaje");
+        return new Dinero(monto.multiply(BigDecimal.valueOf(porcentaje.valor())).divide(BigDecimal.valueOf(100)));
+    }
+
+    public boolean esMenorQue(Dinero otro) {
+        Objects.requireNonNull(otro, "otro");
+        return monto.compareTo(otro.monto) < 0;
+    }
+
     public boolean esPositivo() {
         return monto.signum() > 0;
     }

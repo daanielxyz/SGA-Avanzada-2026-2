@@ -29,9 +29,9 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **EN EstadoOperativo**: PREPARADO, OCUPADO, PENDIENTE_PREPARACION, EN_PREPARACION, FUERA_DE_SERVICIO. `puedePasarA(e)` · `permiteRegistro()`
 
 ### Reserva
-- **R Reserva**: codigo: ReservaId · apartamentoId · titularId · estancia · estado · canalOrigen · canalId? · idExterno? · ocupantes: Ocupante[] · registro: Registro? · salida: Salida? · horaEstimadaLlegada: LocalTime · valorTotal: Dinero (congelado) · desglose (por noche, congelado) · politicaVersionId (congelada).
-  `crear(…, fechaHoy)` · `agregarOcupante(o)` · `modificar(estancia, ocupantes, apartamentoId)` · `confirmar()` · `cancelar(ahora)` · `declararNoShow(ahora, horaLimite)` · `expirar(ahora, plazo)` · `registrarLlegada(hoy)` · `registrarSalida()` · `estaActiva()`
-- **E Ocupante**: id · nombre · fechaNacimiento (no futura) · documento? · nacionalidad? (String). `edadA(fecha)` · `esFacturableA(fechaEntrada, umbral)`
+- **R Reserva**: codigo: ReservaId · apartamentoId · titularId · estancia · estado · canalOrigen · canalId? · idExterno? (ambos solo si EXTERNO) · ocupantes: Ocupante[] (≥1, sin repetidos) · registro: Registro? · salida: Salida? · horaEstimadaLlegada: LocalTime? · valorTotal: Dinero (congelado) · desglose (por noche, congelado) · politicaVersionId (congelada) · creadaEn: LocalDateTime (plazo de confirmación).
+  `crear(codigo, apartamentoId, titularId, estancia, canalOrigen, canalId, idExterno, ocupantes, horaEstimada, cotizacion, politicaId, capacidad, estanciaMinima, ahora)` · `modificar(estancia, ocupantes, apartamentoId, cotizacion, capacidad, estanciaMinima, hoy)` (reemplaza a `agregarOcupante` — DEC-38) · `indicarHoraEstimadaLlegada(h)` · `confirmar(anticipo, pagado)` · `cancelar()` · `declararNoShow(ahora, horaLimite)` · `expirar(ahora, plazo)` · `registrarLlegada(id, ahora, autor)` · `registrarSalida(id, ahora, autor)` · `estaActiva()` · `retieneNochesDe(estancia)`
+- **E Ocupante**: id · nombre · fechaNacimiento (no futura) · documento? · nacionalidad? (String). `edadA(fecha)` · `esFacturableA(fechaEntrada, umbral)` · `esDuplicadoDe(o)` (OCU-05)
 - **E Registro** (check-in): id · fechaHora real · autor: UsuarioId · anulado. Un solo registro vigente; uno equivocado se anula con evento de corrección, no se borra ni revierte el estado.
 - **E Salida** (check-out): id · fechaHora real (no anterior al registro) · autor: UsuarioId.
 - **VO Estancia**(entrada, salida > entrada) `noches(): Noche[]` · `cantidadNoches()` · `seSolapaCon(otra)`
@@ -49,7 +49,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 
 ### Titular, tarifas y política
 - **R Titular**: id · nombre · documento · correo · telefono. `actualizarDatos(…)`
-- **R CalendarioTemporadas** (DEC-28, uno por alojamiento): alojamientoId · temporadas: Temporada[]. `agregarTemporada(id, nombre, ini, fin, estanciaMinima)` · `cambiarFechas(id, ini, fin)` · `desactivarTemporada(id)` · `temporadaDe(noche)` · `temporadasActivas()` · `cantidadTemporadasEspecificas()`. Exactamente una base; las específicas no se solapan.
+- **R CalendarioTemporadas** (DEC-28, uno por alojamiento): alojamientoId · temporadas: Temporada[]. `agregarTemporada(id, nombre, ini, fin, estanciaMinima)` · `cambiarFechas(id, ini, fin)` · `desactivarTemporada(id)` · `temporadaDe(noche)` · `estanciaMinimaPara(estancia)` (RP-01) · `temporadasActivas()` · `cantidadTemporadasEspecificas()`. Exactamente una base; las específicas no se solapan.
 - **E Temporada**: id · nombre · fechaInicio · fechaFin (inclusiva; ambas null si es la base) · esBase · estanciaMinimaNoches (0 = sin mínimo) · activa. `cubre(noche)` · `seSolapaCon(t)`. La base cubre lo no asignado y no se desactiva.
 - **R Tarifa**: id · apartamentoId · temporadaId · valorPorOcupante: Dinero (> 0) · version · vigenteDesde. `nuevaVersion(nuevoId, valor, desde)` · `aplicaA(apartamento, temporada)`. Todo apartamento activo tiene tarifa en todas las temporadas activas. Vigente = versión más alta que ya rige (DEC-30).
 - **R PoliticaCancelacion**: id · alojamientoId · version · tramos: TramoCancelacion[] (≥2) · retencionNoShow: Porcentaje · vigente. `retencionPara(diasAntelacion)` · `nuevaVersion(tramos)`
@@ -64,27 +64,28 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · fechaInicio · fechaFin · estado (PENDIENTE|RESUELTO) · resolucion. `resolver(autor, decision)`
 - **R EventoCanal** (bitácora): id · canalId · operacion · sentido (ENTRANTE|SALIENTE) · fechaHora · cargaUtil · resultado. Solo se crea; nunca guarda credenciales.
 - **R Novedad**: id · apartamentoId · fecha · autor · descripcion · gravedad (enum cerrado) · estado (ABIERTA→EN_REVISION→CERRADA). No se elimina, se cierra.
-- **VO Dinero**(monto: BigDecimal COP sin decimales, ≥ 0 — DEC-20) `sumar` · `restar` · `multiplicar(n)`
+- **VO Dinero**(monto: BigDecimal COP sin decimales, ≥ 0 — DEC-20) `sumar` · `restar` · `multiplicar(n)` · `porcentaje(p)` · `esMenorQue(d)`
 - **VO Documento**(tipo, número, no vacío) · **VO Correo**(formato válido, normalizado) · ids tipados (`ReservaId`, `ApartamentoId`, `FolioId`, `TitularId`, `TemporadaId`, `TarifaId`, `PoliticaId`, `CanalId`, `ConflictoId`, `NovedadId`, `UsuarioId`…)
-- **Calculados**: `Disponibilidad`(apartamentoId, estancia, disponible, motivo) · `Cotizacion`(desglose: línea por noche {noche, temporada, tarifa, ocupantesFacturables, subtotal}, total: Dinero).
+- **Calculados**: `Disponibilidad`(apartamentoId, estancia, disponible, motivo) `exigir()` (DEC-36) · `Cotizacion`(desglose: línea por noche {noche, temporada, tarifa, ocupantesFacturables, subtotal}, total: Dinero).
 
 ## 3. Servicios de dominio (`domain.servicio`)
 
 | Servicio | Método principal | Reglas | Cruza |
 |---|---|---|---|
-| DisponibilidadDomainService | `verificarDisponibilidad(apartamento, estancia, nOcupantes, reservasActivas)` | RN-01, 07, 20 | Apartamento + Reservas |
+| DisponibilidadDomainService | `verificarDisponibilidad(apartamento, estancia, nOcupantes, reservas, parametros)` → Disponibilidad · `verificarParaModificar(reserva, …)` | RN-01, 07, 20, DISP-02 | Apartamento + Reservas |
 | TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
 | CancelacionDomainService | `procesarCancelacion(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
 | NoShowDomainService | `declararNoShow(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
 | RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, hoy)` | RN-08, 10, 11 | Reserva + Apartamento |
 | SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, autorizacion?)` | RN-08, 17 | Reserva + Apartamento + Folio |
 | SincronizacionCanalDomainService | `integrarReservaExterna(datos, canalId, reservasActivas)` | RN-01, 18, 19 | Reserva + ConflictoCanal |
-| BloqueoOperativoDomainService | `registrarBloqueo(apartamento, ini, fin, motivo, reservasActivas)` | RN-07 | Apartamento + Reservas |
-| BajaApartamentoDomainService | `retirarDeVenta(apartamento, reservasActivas)` | APA-16 | Apartamento + Reservas |
+| BloqueoOperativoDomainService | `registrarBloqueo(apartamento, id, ini, fin, motivo, reservas)` | BLO-01, RN-07 | Apartamento + Reservas |
+| BajaApartamentoDomainService | `retirarDeVenta(apartamento, reservas)` | APA-16 | Apartamento + Reservas |
 | ActivadorApartamentoService | `puedeActivarse(apartamento, calendario, tarifas, minimoTemporadas)` | TAR-03, APA-11, TEM-04 | Apartamento + CalendarioTemporadas + Tarifa |
 
 **Casos de uso (application), no servicios de dominio:** `CrearReserva`, `ModificarReserva` (la regla vive en `Reserva.crear/modificar`), `VencerReservasPendientes` (usa `Reserva.expirar`; lo dispara un planificador). Lista completa `CU-nn` en el Excel.
 Las 6 validaciones de crear reserva, en este orden: salida>entrada (Estancia) · entrada≥hoy (Reserva) · apartamento activo con tarifas completas (Apartamento) · capacidad (Reserva/Apartamento) · sin solape con reservas ni bloqueos (Disponibilidad) · tiempo de preparación (Disponibilidad).
+Flujo de `CrearReserva` (DEC-36, DEC-37): cargar apartamento, reservas activas, calendario, tarifas y parámetros → `disponibilidad.verificarDisponibilidad(…).exigir()` → `tarificacion.calcularValorEstancia(…)` → `Reserva.crear(…, calendario.estanciaMinimaPara(estancia), ahora)` → guardar. Sin `if` en la aplicación.
 
 ## 4. Reglas invariantes del enunciado
 
