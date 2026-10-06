@@ -63,7 +63,7 @@ class ApartamentoControllerTest {
         alojamientos.guardar(new Alojamiento(new AlojamientoId("ALO-1"), "Puerta al Sol", "Frente al mar",
                 "Santa Marta", "Calle 1 # 2-3", new Ubicacion(11.24, -74.21), null,
                 new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0), Duration.ofHours(3),
-                        Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), 2, 1, 2),
+                        Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), 2, 1, 2, 2),
                 List.of(new ServicioAdicional(new ServicioAdicionalId("SRV-1"), "Desayuno", true, Dinero.de(25_000), true)),
                 List.of(new MedioPago("EFECTIVO"), new MedioPago("TARJETA"))));
     }

@@ -26,7 +26,7 @@ class AlojamientoTest {
 
     private static ParametrosAlojamiento parametros(int minimoMedios, int minimoServicios) {
         return new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0), Duration.ofHours(3),
-                Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), minimoMedios, minimoServicios, 2);
+                Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), minimoMedios, minimoServicios, 2, 2);
     }
 
     private static ServicioAdicional servicio(ServicioAdicionalId id) {

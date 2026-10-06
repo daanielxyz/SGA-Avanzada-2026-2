@@ -57,7 +57,7 @@ final class ReservasDePrueba {
     static ParametrosAlojamiento parametros(int horasPreparacion) {
         return new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0),
                 Duration.ofHours(horasPreparacion), Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30),
-                2, 1, 2);
+                2, 1, 2, 2);
     }
 
     static Reserva reserva(String codigo, ApartamentoId apartamento, int entrada, int salida, EstadoReserva estado) {

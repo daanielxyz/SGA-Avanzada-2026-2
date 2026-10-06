@@ -16,13 +16,16 @@ import java.time.LocalTime;
  * @param minimoServiciosAdicionales mínimo de la Ficha del curso, configurable (ALO-06 · SERV-05)
  * @param minimoTemporadas           temporadas específicas exigidas, además de la base, para activar
  *                                   apartamentos (TEM-04 · DEC-28)
+ * @param minimoTramosCancelacion    tramos que debe tener cada versión de la política de cancelación; mínimo de la
+ *                                   Ficha del curso, configurable (POL-01 · DEC-41)
  */
 public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                     Duration tiempoPreparacion, Duration plazoConfirmacion,
                                     LocalTime horaLimiteNoShow, Porcentaje anticipo, int minimoMediosPago,
-                                    int minimoServiciosAdicionales, int minimoTemporadas) {
+                                    int minimoServiciosAdicionales, int minimoTemporadas,
+                                    int minimoTramosCancelacion) {
 
-    // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04
+    // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04 · POL-01
     public ParametrosAlojamiento {
         if (horaEntrada == null || horaSalida == null || horaLimiteNoShow == null) {
             throw new ReglaDominioException("Las horas de entrada, salida y límite de no-show son obligatorias");
@@ -41,6 +44,9 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         }
         if (minimoMediosPago < 0 || minimoServiciosAdicionales < 0 || minimoTemporadas < 0) {
             throw new ReglaDominioException("Los mínimos de medios de pago, servicios y temporadas no pueden ser negativos");
+        }
+        if (minimoTramosCancelacion < 1) {
+            throw new ReglaDominioException("La política de cancelación necesita al menos un tramo");
         }
     }
 }

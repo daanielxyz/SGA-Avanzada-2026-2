@@ -40,10 +40,11 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **EN CanalOrigen**: PORTAL, DIRECTO, EXTERNO
 
 ### Folio
-- **R Folio**: id · reservaId · cargos: Cargo[] · pagos: Pago[] · cerrado · autorizacion?.
-  `agregarCargo(c)` · `registrarPago(p)` · `ajustarMovimiento(movimiento, motivo)` · `saldo(): Dinero` (calculado) · `cerrar(autorizacion?)`. No existe editar/eliminar cargo o pago.
-- **E Cargo**: id · tipo · concepto · valor: Dinero (nunca negativo; el AJUSTE indica si aumenta o disminuye — DEC-20) · fecha. `esAjuste()`
-- **E Pago**: id · medio: MedioPago · monto: Dinero (>0) · tipo: TipoPago · fecha · reversaDe: PagoId? `esReverso()`
+- **R Folio**: id · reservaId · cargos: Cargo[] · pagos: Pago[] · cerrado · autorizacion?. Ids de movimientos `CAR-n`/`PAG-n` numerados por el folio (DEC-43).
+  `abrir(id, reservaId, valorAlojamiento, fecha)` · `agregarServicioAdicional(concepto, valor, fecha)` · `registrarPago(medio, monto, fecha, hoy, mediosHabilitados)` · `registrarDevolucion(…)` · `revertirPago(pagoId, fecha, hoy)` · `revertirCargo(cargoId, motivo, fecha)` · `ajustarPorModificacion(anterior, nuevo, fecha)` · `liquidarPenalidad(valorEstancia, penalidad, motivo, fecha)` · `saldo(): Saldo` · `totalPagado()` · `cerrar()` · `cerrar(autorizacion)`. No existe editar/eliminar cargo o pago.
+- **E Cargo**: id · tipo · concepto · valor: Dinero (> 0) · sentido: SentidoAjuste? (solo AJUSTE — DEC-20) · fecha · corrigeA: CargoId?. `aumentaSaldo()` · `esAjuste()`
+- **E Pago**: id · medio: MedioPago · monto: Dinero (>0) · tipo: TipoPago · fecha · reversaDe: PagoId? (null en una devolución). `esReverso()`
+- **VO Saldo**(monto ≥ 0, situacion: PENDIENTE | A_FAVOR | AL_DIA) — calculado, nunca se guarda · **EN SentidoAjuste**: AUMENTA, DISMINUYE
 - **VO AutorizacionCierre**(autor: UsuarioId, motivo, fechaHora) · **VO MedioPago**(nombre; validado contra el catálogo habilitado del Alojamiento)
 - **EN TipoCargo**: HOSPEDAJE, SERVICIO_ADICIONAL, PENALIDAD_CANCELACION, AJUSTE · **EN TipoPago**: ABONO, REVERSO (el reverso mantiene el monto positivo y resta en el reporte de ingresos)
 
@@ -52,13 +53,13 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **R CalendarioTemporadas** (DEC-28, uno por alojamiento): alojamientoId · temporadas: Temporada[]. `agregarTemporada(id, nombre, ini, fin, estanciaMinima)` · `cambiarFechas(id, ini, fin)` · `desactivarTemporada(id)` · `temporadaDe(noche)` · `estanciaMinimaPara(estancia)` (RP-01) · `temporadasActivas()` · `cantidadTemporadasEspecificas()`. Exactamente una base; las específicas no se solapan.
 - **E Temporada**: id · nombre · fechaInicio · fechaFin (inclusiva; ambas null si es la base) · esBase · estanciaMinimaNoches (0 = sin mínimo) · activa. `cubre(noche)` · `seSolapaCon(t)`. La base cubre lo no asignado y no se desactiva.
 - **R Tarifa**: id · apartamentoId · temporadaId · valorPorOcupante: Dinero (> 0) · version · vigenteDesde. `nuevaVersion(nuevoId, valor, desde)` · `aplicaA(apartamento, temporada)`. Todo apartamento activo tiene tarifa en todas las temporadas activas. Vigente = versión más alta que ya rige (DEC-30).
-- **R PoliticaCancelacion**: id · alojamientoId · version · tramos: TramoCancelacion[] (≥2) · retencionNoShow: Porcentaje · vigente. `retencionPara(diasAntelacion)` · `nuevaVersion(tramos)`
-- **VO TramoCancelacion**(antelacionMinDias, retencion: Porcentaje; retención + devolución = 100) · **VO Porcentaje**(0..100)
+- **R PoliticaCancelacion** (una por versión, inmutable; vigente = versión más alta — DEC-42): id · alojamientoId · version · tramos: TramoCancelacion[] (≥ mínimo configurable, uno desde 0 h) · penalizacionNoShow: Penalizacion. `crear(…, minimoTramos)` · `nuevaVersion(nuevoId, tramos, noShow, minimoTramos)` · `penalizacionPara(horasAntelacion)`
+- **VO TramoCancelacion**(antelacionMinHoras, penalizacion) · **VO Penalizacion**(base: BaseRetencion, porcentaje? | montoFijo?) `calcular(valorTotal, pagado, anticipoExigido)` · **EN BaseRetencion**: VALOR_TOTAL, PAGADO, ANTICIPO_EXIGIDO (DEC-41) · **VO Porcentaje**(0..100)
 
 ### Alojamiento, canales y otros
 - **R Alojamiento**: id · nombre · descripcion · ciudad · direccion · ubicacion · normas · parametros: ParametrosAlojamiento · serviciosAdicionales: ServicioAdicional[] (≥1) · mediosPago: MedioPago[] (≥2).
 - **R Alojamiento** métodos: `cambiarParametros(p)` · `cambiarUbicacion(u)` · `habilitarMedioPago(m)` · `deshabilitarMedioPago(m)` · `aceptaMedioPago(m)` · `agregarServicioAdicional(s)` · `cambiarValorServicio(id, valor)` · `desactivarServicio(id)`.
-- **VO ParametrosAlojamiento**: umbralEdadFacturable · horaEntrada · horaSalida · tiempoPreparacion (Duration, horas enteras) · plazoConfirmacion (Duration) · horaLimiteNoShow · anticipo (Porcentaje; 0 = no se exige) · minimoMediosPago · minimoServiciosAdicionales. Se guarda en la tabla `alojamiento`; `sga.*` solo da los valores iniciales (DEC-25).
+- **VO ParametrosAlojamiento**: umbralEdadFacturable · horaEntrada · horaSalida · tiempoPreparacion (Duration, horas enteras) · plazoConfirmacion (Duration) · horaLimiteNoShow · anticipo (Porcentaje; 0 = no se exige) · minimoMediosPago · minimoServiciosAdicionales · minimoTemporadas · minimoTramosCancelacion (DEC-41). Se guarda en la tabla `alojamiento`; `sga.*` solo da los valores iniciales (DEC-25).
 - **E ServicioAdicional**: id · nombre · generaCargo · valor: Dinero (≥0) · activo (el valor se congela en el Cargo) · **VO Ubicacion**(latitud −90..90, longitud −180..180)
 - **R Canal**: id · nombre · tipo: CanalOrigen · credencial (externa, no versionada) · activo. `desactivar()`
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · fechaInicio · fechaFin · estado (PENDIENTE|RESUELTO) · resolucion. `resolver(autor, decision)`
@@ -74,8 +75,8 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 |---|---|---|---|
 | DisponibilidadDomainService | `verificarDisponibilidad(apartamento, estancia, nOcupantes, reservas, parametros)` → Disponibilidad · `verificarParaModificar(reserva, …)` | RN-01, 07, 20, DISP-02 | Apartamento + Reservas |
 | TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
-| CancelacionDomainService | `procesarCancelacion(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
-| NoShowDomainService | `declararNoShow(reserva, politica, ahora)` | RN-08, 12, 13 | Reserva + Folio + Política |
+| CancelacionDomainService | `procesarCancelacion(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13 | Reserva + Folio + Política (DEC-44) |
+| NoShowDomainService | `declararNoShow(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13, POL-06 | Reserva + Folio + Política (DEC-44) |
 | RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, hoy)` | RN-08, 10, 11 | Reserva + Apartamento |
 | SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, autorizacion?)` | RN-08, 17 | Reserva + Apartamento + Folio |
 | SincronizacionCanalDomainService | `integrarReservaExterna(datos, canalId, reservasActivas)` | RN-01, 18, 19 | Reserva + ConflictoCanal |
@@ -85,7 +86,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 
 **Casos de uso (application), no servicios de dominio:** `CrearReserva`, `ModificarReserva` (la regla vive en `Reserva.crear/modificar`), `VencerReservasPendientes` (usa `Reserva.expirar`; lo dispara un planificador). Lista completa `CU-nn` en el Excel.
 Las 6 validaciones de crear reserva, en este orden: salida>entrada (Estancia) · entrada≥hoy (Reserva) · apartamento activo con tarifas completas (Apartamento) · capacidad (Reserva/Apartamento) · sin solape con reservas ni bloqueos (Disponibilidad) · tiempo de preparación (Disponibilidad).
-Flujo de `CrearReserva` (DEC-36, DEC-37): cargar apartamento, reservas activas, calendario, tarifas y parámetros → `disponibilidad.verificarDisponibilidad(…).exigir()` → `tarificacion.calcularValorEstancia(…)` → `Reserva.crear(…, calendario.estanciaMinimaPara(estancia), ahora)` → guardar. Sin `if` en la aplicación.
+Flujo de `CrearReserva` (DEC-36, DEC-37): cargar apartamento, reservas activas, calendario, tarifas y parámetros → `disponibilidad.verificarDisponibilidad(…).exigir()` → `tarificacion.calcularValorEstancia(…)` → `Reserva.crear(…, politicaVigente.id(), …, calendario.estanciaMinimaPara(estancia), ahora)` → `Folio.abrir(…, reserva.valorTotal(), hoy)` (FOL-01) → guardar ambos. Sin `if` en la aplicación.
 
 ## 4. Reglas invariantes del enunciado
 

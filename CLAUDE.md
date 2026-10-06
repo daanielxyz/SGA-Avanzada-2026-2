@@ -14,7 +14,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - **domain**: Java puro (sin Spring, JPA, Lombok, Jackson, Bean Validation, DTOs). Entidades sin setters, cambios por métodos del negocio, colecciones con `List.copyOf`. VO = `record` que valida en el constructor; valores cerrados = `enum` con su lógica. Excepciones de negocio extienden `ReglaDominioException`. Contiene también los **puertos** (`XRepository`, uno por agregado) y los servicios de dominio.
 - **application**: un caso de uso por clase, en verbo (`CrearReserva`). Entrada `XCommand`, salida `XResult` (`record`, sin HTTP — DEC-31). Flujo: cargar por puertos → invocar dominio → guardar → efectos. **Cero `if` de negocio.** Config llega por constructor. Se permiten `@Service` y `@Transactional` (DEC-10).
 - **infrastructure**: REST con `XRequest` (Bean Validation, 400) / `XResponse` y manejador global de errores 400/404/409 (DEC-31..33); el controlador nunca recibe ni devuelve entidades del dominio. Adaptadores JPA con entidades JPA **separadas** del dominio y mapeadores, seguridad JWT, externos, config. Usuario/Rol viven aquí.
-- Agregado: una raíz, hijos sin repositorio, referencias a otros agregados **solo por id tipado**. Una transacción = un agregado (excepción documentada D-02: llegada y salida tocan Reserva+Apartamento(+Folio)).
+- Agregado: una raíz, hijos sin repositorio, referencias a otros agregados **solo por id tipado**. Una transacción = un agregado (excepciones documentadas: D-02, llegada y salida tocan Reserva+Apartamento(+Folio); DEC-44, crear, cancelar y no-show tocan Reserva+Folio).
 - Servicio de dominio: sin estado, solo reglas que cruzan agregados, **recibe los datos por parámetro** (no usa repositorios).
 - Validación: formato en el borde (400); reglas de negocio siempre en el dominio (409).
 - Reloj inyectado (`fechaHoy`/`ahora` por parámetro); nunca `now()` en el dominio.
@@ -42,4 +42,5 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - Integraciones externas siempre tras un puerto, con implementación local alternativa y sin impedir reservar/cobrar. La IA es no bloqueante.
 
 ## Pendientes (no resolver por cuenta propia; dejar `// TODO(equipo)` o preguntame cuando sea necesario)
-- Tarifa de Temporada Media y tramos restantes de la política de cancelación: por definir. 
+- Tarifa de Temporada Media: por definir.
+- La política de cancelación (tramos por horas, porcentaje o monto fijo, base de cálculo, no-show) la configura cada alojamiento (DEC-41); solo faltan sus valores iniciales para `sga.*` (B1). 
