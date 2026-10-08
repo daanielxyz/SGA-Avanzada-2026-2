@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +20,7 @@ public interface ReservaRepository {
      * disponibilidad, bloqueo y baja.
      */
     List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId);
+
+    /** La reserva que un canal externo ya envió con ese identificador, para no duplicarla (RN-19 · CAN-04). */
+    Optional<Reserva> buscarPorCanalEIdExterno(CanalId canalId, String idExterno);
 }

@@ -75,7 +75,8 @@ class ReservaRepositoryJpaTest {
                         Dinero.de(150_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), apartamento, new TitularId("TIT-1"), estancia, estado, canal,
-                canalId, idExterno, List.of(ANA, NINO), registros == null ? List.of() : registros, salidaReal, LocalTime.of(15, 30),
+                canalId, idExterno, List.of(ANA, NINO), registros == null ? List.of() : registros,
+                salidaReal, LocalTime.of(15, 30),
                 Dinero.de(150_000L * desglose.size()), desglose, new PoliticaId("POL-1"), CREADA);
     }
 
@@ -192,6 +193,18 @@ class ReservaRepositoryJpaTest {
         repositorio.guardar(externa("RES-2026-00002", "BK-77"));
 
         assertThrows(PersistenceException.class, this::sincronizar);
+    }
+
+    @Test
+    @Tag("RN-19")
+    void deberiaEncontrarLaReservaQueElCanalYaEnvio() {
+        repositorio.guardar(externa("RES-2026-00001", "BK-77"));
+        sincronizar();
+
+        assertEquals(new ReservaId("RES-2026-00001"),
+                repositorio.buscarPorCanalEIdExterno(new CanalId("CAN-1"), "BK-77").orElseThrow().codigo());
+        assertTrue(repositorio.buscarPorCanalEIdExterno(new CanalId("CAN-1"), "BK-01").isEmpty());
+        assertTrue(repositorio.buscarPorCanalEIdExterno(new CanalId("CAN-2"), "BK-77").isEmpty());
     }
 
     @Test

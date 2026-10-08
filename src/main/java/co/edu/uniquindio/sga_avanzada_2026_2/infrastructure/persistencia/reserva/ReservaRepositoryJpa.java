@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
@@ -54,5 +55,11 @@ public class ReservaRepositoryJpa implements ReservaRepository {
         return filas.findByApartamentoCodigoAndEstadoIn(apartamentoId.valor(), ACTIVOS).stream()
                 .map(ReservaMapper::aDominio)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Reserva> buscarPorCanalEIdExterno(CanalId canalId, String idExterno) {
+        return filas.findByCanalIdAndIdExterno(canalId.valor(), idExterno).map(ReservaMapper::aDominio);
     }
 }

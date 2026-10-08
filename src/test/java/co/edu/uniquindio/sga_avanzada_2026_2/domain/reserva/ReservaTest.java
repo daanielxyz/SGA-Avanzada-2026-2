@@ -1,10 +1,12 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Capacidad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -15,6 +17,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Cotizacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.LineaCotizacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TemporadaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReservaTest {
 
+    private static final AlojamientoId ALO = new AlojamientoId("ALO-1");
+
     private static final LocalDate HOY = LocalDate.of(2026, 12, 1);
     private static final LocalDateTime AHORA = HOY.atTime(10, 0);
     private static final Estancia ESTANCIA = new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12));
@@ -46,8 +51,11 @@ class ReservaTest {
 
     private static final Ocupante ANA = new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 3, 1),
             new Documento(TipoDocumento.CC, "1094"), null);
+    private static final int UMBRAL = 12;
     private static final Ocupante LUIS = new Ocupante(new OcupanteId("OCU-2"), "Luis", LocalDate.of(1992, 7, 9),
             null, null);
+    private static final Titular TITULAR = new Titular(new TitularId("TIT-1"), ALO, "Ana", ANA.documento(),
+            new Correo("ana@correo.co"), null);
 
     /** Cotización de 100.000 por ocupante y noche, con todos facturables. */
     private static Cotizacion cotizacion(Estancia estancia, int ocupantes) {
@@ -60,9 +68,9 @@ class ReservaTest {
 
     private static Reserva crear(Estancia estancia, List<Ocupante> ocupantes, LocalTime horaEstimada,
                                  int estanciaMinima) {
-        return Reserva.crear(new ReservaId("RES-2026-00001"), APT, new TitularId("TIT-1"), estancia,
+        return Reserva.crear(new ReservaId("RES-2026-00001"), APT, TITULAR, estancia,
                 CanalOrigen.PORTAL, null, null, ocupantes, horaEstimada, cotizacion(estancia, ocupantes.size()),
-                POLITICA, CAPACIDAD, estanciaMinima, AHORA);
+                POLITICA, CAPACIDAD, estanciaMinima, UMBRAL, AHORA);
     }
 
     private static Reserva pendiente() {
@@ -191,8 +199,8 @@ class ReservaTest {
         assertDoesNotThrow(() -> externa(new CanalId("CAN-1"), "BK-77"));
         assertThrows(ReglaDominioException.class, () -> externa(null, null));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
-                new TitularId("TIT-1"), ESTANCIA, CanalOrigen.DIRECTO, new CanalId("CAN-1"), "BK-77", List.of(ANA),
-                null, cotizacion(ESTANCIA, 1), POLITICA, CAPACIDAD, 0, AHORA));
+                TITULAR, ESTANCIA, CanalOrigen.DIRECTO, new CanalId("CAN-1"), "BK-77", List.of(ANA),
+                null, cotizacion(ESTANCIA, 1), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
     }
 
     @Test
@@ -200,8 +208,35 @@ class ReservaTest {
         Estancia otra = new Estancia(ESTANCIA.entrada(), ESTANCIA.salida().plusDays(1));
 
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
-                new TitularId("TIT-1"), ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA), null,
-                cotizacion(otra, 1), POLITICA, CAPACIDAD, 0, AHORA));
+                TITULAR, ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA), null,
+                cotizacion(otra, 1), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
+    }
+
+    @Test
+    @Tag("TIT-01")
+    void deberiaExigirQueElTitularSeaUnOcupanteFacturable() {
+        Ocupante nino = new Ocupante(new OcupanteId("OCU-3"), "Tomás", LocalDate.of(2020, 6, 1),
+                new Documento(TipoDocumento.TI, "777"), null);
+        Titular titularMenor = new Titular(new TitularId("TIT-2"), ALO, "Tomás", nino.documento(), null, "3001234567");
+
+        assertThrows(ReglaDominioException.class, () -> crear(ESTANCIA, List.of(LUIS), null, 0));
+        assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
+                titularMenor, ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA, nino), null,
+                cotizacion(ESTANCIA, 2), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
+    }
+
+    @Test
+    @Tag("TIT-01")
+    void unaModificacionNoPuedeDejarAfueraAlTitularNiCambiarlo() {
+        Reserva reserva = pendiente();
+        Titular otro = new Titular(new TitularId("TIT-9"), ALO, "Luis", new Documento(TipoDocumento.CC, "555"), null,
+                "3001234567");
+
+        assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(LUIS), APT,
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, HOY));
+        assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, otro, UMBRAL, HOY));
+        assertEquals(2, reserva.ocupantes().size());
     }
 
     // --- Confirmar ---
@@ -484,7 +519,8 @@ class ReservaTest {
         Estancia masLarga = new Estancia(ESTANCIA.entrada(), ESTANCIA.salida().plusDays(1));
         ApartamentoId otro = new ApartamentoId("APT-102");
 
-        reserva.modificar(masLarga, List.of(ANA), otro, cotizacion(masLarga, 1), CAPACIDAD, 0, HOY);
+        reserva.modificar(masLarga, List.of(ANA), otro, cotizacion(masLarga, 1), CAPACIDAD, 0, TITULAR, UMBRAL,
+                HOY);
 
         assertEquals(masLarga, reserva.estancia());
         assertEquals(otro, reserva.apartamentoId());
@@ -502,9 +538,9 @@ class ReservaTest {
                 ocupante("OCU-5", "Leo"));
 
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, cinco, APT,
-                cotizacion(ESTANCIA, 5), CAPACIDAD, 0, HOY));
+                cotizacion(ESTANCIA, 5), CAPACIDAD, 0, TITULAR, UMBRAL, HOY));
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 3, HOY));
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 3, TITULAR, UMBRAL, HOY));
         assertEquals(Dinero.de(400_000), reserva.valorTotal());
         assertEquals(2, reserva.ocupantes().size());
     }
@@ -515,7 +551,7 @@ class ReservaTest {
         Reserva reserva = enCurso();
 
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, ESTANCIA.entrada()));
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, ESTANCIA.entrada()));
     }
 
     // --- Reconstrucción ---
@@ -530,9 +566,9 @@ class ReservaTest {
     }
 
     private static Reserva externa(CanalId canal, String idExterno) {
-        return Reserva.crear(new ReservaId("RES-2026-00001"), APT, new TitularId("TIT-1"), ESTANCIA,
+        return Reserva.crear(new ReservaId("RES-2026-00001"), APT, TITULAR, ESTANCIA,
                 CanalOrigen.EXTERNO, canal, idExterno, List.of(ANA), null, cotizacion(ESTANCIA, 1), POLITICA,
-                CAPACIDAD, 0, AHORA);
+                CAPACIDAD, 0, UMBRAL, AHORA);
     }
 
     private static Ocupante ocupante(String id, String nombre) {

@@ -12,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Cotizacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.LineaCotizacion;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 
 import java.time.Duration;
@@ -92,21 +93,26 @@ public class Reserva {
      *
      * @param cotizacion           de {@code TarificacionDomainService} para esta estancia y estos ocupantes
      * @param capacidad            capacidad actual del apartamento (RN-02)
+     * @param titular              responsable de la reserva; debe ser uno de los ocupantes facturables (TIT-01)
      * @param estanciaMinimaNoches de {@code CalendarioTemporadas.estanciaMinimaPara} (RP-01)
+     * @param umbralEdadFacturable {@code ParametrosAlojamiento.umbralEdadFacturable} (OCU-11)
      * @param ahora                fecha y hora actuales en Colombia, inyectadas (EST-06)
      * @throws ReglaDominioException si la entrada es anterior a hoy (RN-04), el grupo excede la capacidad (RN-02),
-     *                               no hay ocupantes (OCU-02), hay uno repetido (OCU-05) o nacido en el futuro
-     *                               (OCU-12), no se cumple la estancia mínima (RP-01), el canal externo no trae su
-     *                               referencia (CORI-03) o la cotización no corresponde a la estancia
+     *                               no hay ocupantes (OCU-02), el titular no es un ocupante facturable (TIT-01),
+     *                               hay uno repetido (OCU-05) o nacido en el futuro (OCU-12), no se cumple la
+     *                               estancia mínima (RP-01), el canal externo no trae su referencia (CORI-03) o la
+     *                               cotización no corresponde a la estancia
      */
-    public static Reserva crear(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId,
+    public static Reserva crear(ReservaId codigo, ApartamentoId apartamentoId, Titular titular,
                                 Estancia estancia, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
                                 List<Ocupante> ocupantes, LocalTime horaEstimadaLlegada, Cotizacion cotizacion,
                                 PoliticaId politicaVersionId, Capacidad capacidad, int estanciaMinimaNoches,
-                                LocalDateTime ahora) {
+                                int umbralEdadFacturable, LocalDateTime ahora) {
         Objects.requireNonNull(ahora, "ahora");
+        Objects.requireNonNull(titular, "titular");
         validarCondiciones(estancia, ocupantes, cotizacion, capacidad, estanciaMinimaNoches, ahora.toLocalDate());
-        return new Reserva(codigo, apartamentoId, titularId, estancia, EstadoReserva.PENDIENTE, canalOrigen,
+        validarTitular(titular, ocupantes, estancia, umbralEdadFacturable);
+        return new Reserva(codigo, apartamentoId, titular.id(), estancia, EstadoReserva.PENDIENTE, canalOrigen,
                 canalId, idExterno, ocupantes, List.of(), null, horaEstimadaLlegada, cotizacion.total(),
                 cotizacion.desglose(), politicaVersionId, ahora);
     }
@@ -120,18 +126,27 @@ public class Reserva {
      * @param cotizacion           con las tarifas vigentes al momento de la modificación
      * @param capacidad            capacidad actual del apartamento destino (RN-02)
      * @param estanciaMinimaNoches de {@code CalendarioTemporadas.estanciaMinimaPara} para la nueva estancia (RP-01)
+     * @param titular              el titular de esta reserva; debe seguir entre los ocupantes facturables (TIT-01)
+     * @param umbralEdadFacturable {@code ParametrosAlojamiento.umbralEdadFacturable} (OCU-11)
      * @param hoy                  fecha actual en Colombia, inyectada
-     * @throws ReglaDominioException si la reserva no está PENDIENTE ni CONFIRMADA, o si los nuevos datos violan
-     *                               alguna condición de creación (RN-04 · RN-02 · OCU-02 · OCU-05 · OCU-12 · RP-01)
+     * @throws ReglaDominioException si la reserva no está PENDIENTE ni CONFIRMADA, el titular no es el de la reserva,
+     *                               o los nuevos datos violan alguna condición de creación (RN-04 · RN-02 · OCU-02 ·
+     *                               OCU-05 · OCU-12 · RP-01 · TIT-01)
      */
     public void modificar(Estancia nuevaEstancia, List<Ocupante> nuevosOcupantes, ApartamentoId nuevoApartamentoId,
-                          Cotizacion cotizacion, Capacidad capacidad, int estanciaMinimaNoches, LocalDate hoy) {
+                          Cotizacion cotizacion, Capacidad capacidad, int estanciaMinimaNoches, Titular titular,
+                          int umbralEdadFacturable, LocalDate hoy) {
         if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException("Solo se modifica una reserva PENDIENTE o CONFIRMADA; está " + estado);
         }
         Objects.requireNonNull(nuevoApartamentoId, "nuevoApartamentoId");
         Objects.requireNonNull(hoy, "hoy");
+        Objects.requireNonNull(titular, "titular");
+        if (!titular.id().equals(titularId)) {
+            throw new ReglaDominioException("El titular " + titular.id().valor() + " no es el de la reserva");
+        }
         validarCondiciones(nuevaEstancia, nuevosOcupantes, cotizacion, capacidad, estanciaMinimaNoches, hoy);
+        validarTitular(titular, nuevosOcupantes, nuevaEstancia, umbralEdadFacturable);
         estancia = nuevaEstancia;
         ocupantes = List.copyOf(nuevosOcupantes);
         apartamentoId = nuevoApartamentoId;
@@ -221,7 +236,8 @@ public class Reserva {
             throw new ReglaDominioException("Solo vence una reserva PENDIENTE; está " + estado);
         }
         if (!ahora.isAfter(creadaEn.plus(plazo))) {
-            throw new ReglaDominioException("La reserva " + codigo.valor() + " no ha superado el plazo de confirmación");
+            throw new ReglaDominioException("La reserva " + codigo.valor()
+                    + " no ha superado el plazo de confirmación");
         }
         estado = EstadoReserva.CANCELADA;
     }
@@ -363,11 +379,21 @@ public class Reserva {
         }
     }
 
+    // TIT-01 · OCU-02: el titular se reconoce entre los ocupantes por su documento y debe ser facturable
+    private static void validarTitular(Titular titular, List<Ocupante> ocupantes, Estancia estancia, int umbral) {
+        boolean esOcupanteFacturable = ocupantes.stream()
+                .anyMatch(o -> titular.documento().equals(o.documento())
+                        && o.esFacturableA(estancia.entrada(), umbral));
+        if (!esOcupanteFacturable) {
+            throw new ReglaDominioException("El titular " + titular.nombre()
+                    + " debe ser uno de los ocupantes facturables, identificado por su documento");
+        }
+    }
+
     // OCU-02 · OCU-05
     private static void validarGrupo(List<Ocupante> ocupantes) {
         Objects.requireNonNull(ocupantes, "ocupantes");
         if (ocupantes.isEmpty()) {
-            // TODO(equipo): que el titular sea uno de los ocupantes (OCU-02 · TIT-01) se verifica con Titular en A7
             throw new ReglaDominioException("La reserva debe tener al menos un ocupante");
         }
         for (int i = 0; i < ocupantes.size(); i++) {

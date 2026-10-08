@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spring Data sobre la tabla {@code reserva}. Solo lo usa {@link ReservaRepositoryJpa}.
@@ -12,4 +13,6 @@ import java.util.List;
 interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String> {
 
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
+
+    Optional<ReservaJpa> findByCanalIdAndIdExterno(String canalId, String idExterno);
 }
