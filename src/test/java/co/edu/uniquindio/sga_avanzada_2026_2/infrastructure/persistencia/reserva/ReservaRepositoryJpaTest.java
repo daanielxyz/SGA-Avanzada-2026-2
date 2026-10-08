@@ -68,14 +68,14 @@ class ReservaRepositoryJpaTest {
 
     private static Reserva reserva(String codigo, ApartamentoId apartamento, int entrada, int salida,
                                    EstadoReserva estado, CanalOrigen canal, CanalId canalId, String idExterno,
-                                   Registro registro, Salida salidaReal) {
+                                   List<Registro> registros, Salida salidaReal) {
         Estancia estancia = new Estancia(LocalDate.of(2026, 12, entrada), LocalDate.of(2026, 12, salida));
         List<LineaCotizacion> desglose = estancia.noches().stream()
                 .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-ALTA"), Dinero.de(150_000), 1,
                         Dinero.de(150_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), apartamento, new TitularId("TIT-1"), estancia, estado, canal,
-                canalId, idExterno, List.of(ANA, NINO), registro, salidaReal, LocalTime.of(15, 30),
+                canalId, idExterno, List.of(ANA, NINO), registros == null ? List.of() : registros, salidaReal, LocalTime.of(15, 30),
                 Dinero.de(150_000L * desglose.size()), desglose, new PoliticaId("POL-1"), CREADA);
     }
 
@@ -97,11 +97,13 @@ class ReservaRepositoryJpaTest {
 
     @Test
     void deberiaCargarElAgregadoCompletoTalComoSeGuardo() {
-        Registro registro = new Registro(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 15, 40), RECEPCION,
-                false);
+        Registro equivocado = new Registro(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 15, 40),
+                RECEPCION, true, null);
+        Registro registro = new Registro(new RegistroId("REG-2"), LocalDateTime.of(2026, 12, 10, 14, 50),
+                RECEPCION, false, "Hora mal digitada");
         Salida salida = new Salida(new SalidaId("SAL-1"), LocalDateTime.of(2026, 12, 13, 10, 5), RECEPCION);
         repositorio.guardar(reserva("RES-2026-00001", APT, 10, 13, EstadoReserva.FINALIZADA, CanalOrigen.EXTERNO,
-                new CanalId("CAN-1"), "BK-77", registro, salida));
+                new CanalId("CAN-1"), "BK-77", List.of(equivocado, registro), salida));
         sincronizar();
 
         Reserva cargada = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
@@ -123,6 +125,9 @@ class ReservaRepositoryJpaTest {
         assertEquals(registro.fechaHora(), cargada.registro().fechaHora());
         assertEquals(RECEPCION, cargada.registro().autor());
         assertFalse(cargada.registro().anulado());
+        assertEquals("Hora mal digitada", cargada.registro().motivoCorreccion());
+        assertEquals(2, cargada.registros().size());
+        assertTrue(cargada.registros().getFirst().anulado());
         assertEquals(salida.fechaHora(), cargada.salida().fechaHora());
         Ocupante ana = cargada.ocupantes().getFirst();
         assertEquals(ANA.documento(), ana.documento());

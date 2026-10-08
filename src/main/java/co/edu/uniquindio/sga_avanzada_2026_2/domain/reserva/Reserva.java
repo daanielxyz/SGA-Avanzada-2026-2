@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,7 +38,7 @@ public class Reserva {
     private final CanalId canalId;     // solo si EXTERNO (CORI-03)
     private final String idExterno;    // solo si EXTERNO (CORI-03)
     private List<Ocupante> ocupantes;
-    private Registro registro;         // opcional
+    private final List<Registro> registros; // historial; a lo sumo uno vigente (REG-06)
     private Salida salida;             // opcional
     private LocalTime horaEstimadaLlegada; // opcional hasta confirmar (RN-09)
     private Dinero valorTotal;               // congelado
@@ -45,22 +46,24 @@ public class Reserva {
     private final PoliticaId politicaVersionId; // congelada
     private final LocalDateTime creadaEn;       // desde aquí corre el plazo de confirmación (RN-21)
 
-    // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · SAL-01
+    // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · REG-06 · SAL-01
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
                    EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
-                   List<Ocupante> ocupantes, Registro registro, Salida salida, LocalTime horaEstimadaLlegada,
-                   Dinero valorTotal, List<LineaCotizacion> desglose, PoliticaId politicaVersionId,
-                   LocalDateTime creadaEn) {
+                   List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
+                   LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
+                   PoliticaId politicaVersionId, LocalDateTime creadaEn) {
         if (codigo == null || apartamentoId == null || titularId == null || estancia == null || estado == null
-                || canalOrigen == null || ocupantes == null || valorTotal == null || desglose == null
-                || politicaVersionId == null || creadaEn == null) {
+                || canalOrigen == null || ocupantes == null || registros == null || valorTotal == null
+                || desglose == null || politicaVersionId == null || creadaEn == null) {
             throw new ReglaDominioException("Faltan datos obligatorios de la reserva");
         }
         validarOrigen(canalOrigen, canalId, idExterno);
         validarGrupo(ocupantes);
         new Cotizacion(desglose, valorTotal); // el total congelado es la suma del desglose (RN-05)
         boolean inicio = estado == EstadoReserva.EN_CURSO || estado == EstadoReserva.FINALIZADA;
-        if (inicio != (registro != null) || (estado == EstadoReserva.FINALIZADA) != (salida != null)) {
+        long vigentes = registros.stream().filter(r -> !r.anulado()).count();
+        if (vigentes != (inicio ? 1 : 0) || (!inicio && !registros.isEmpty())
+                || (estado == EstadoReserva.FINALIZADA) != (salida != null)) {
             throw new ReglaDominioException("El registro y la salida no corresponden al estado " + estado);
         }
         this.codigo = codigo;
@@ -72,7 +75,7 @@ public class Reserva {
         this.canalId = canalId;
         this.idExterno = idExterno;
         this.ocupantes = List.copyOf(ocupantes);
-        this.registro = registro;
+        this.registros = new ArrayList<>(registros);
         this.salida = salida;
         this.horaEstimadaLlegada = horaEstimadaLlegada;
         this.valorTotal = valorTotal;
@@ -104,7 +107,7 @@ public class Reserva {
         Objects.requireNonNull(ahora, "ahora");
         validarCondiciones(estancia, ocupantes, cotizacion, capacidad, estanciaMinimaNoches, ahora.toLocalDate());
         return new Reserva(codigo, apartamentoId, titularId, estancia, EstadoReserva.PENDIENTE, canalOrigen,
-                canalId, idExterno, ocupantes, null, null, horaEstimadaLlegada, cotizacion.total(),
+                canalId, idExterno, ocupantes, List.of(), null, horaEstimadaLlegada, cotizacion.total(),
                 cotizacion.desglose(), politicaVersionId, ahora);
     }
 
@@ -241,28 +244,73 @@ public class Reserva {
             throw new ReglaDominioException("No se puede registrar la llegada antes de la fecha de entrada "
                     + estancia.entrada());
         }
-        registro = new Registro(id, ahora, autor, false);
+        registros.add(new Registro(id, ahora, autor, false, null));
         estado = EstadoReserva.EN_CURSO;
+    }
+
+    /**
+     * Corrige un registro de llegada equivocado: el vigente queda anulado como historial y se agrega uno nuevo con la
+     * fecha, hora y autor correctos. La reserva sigue EN_CURSO: no existe transición hacia atrás (REG-06 · RN-08 ·
+     * DEC-45).
+     *
+     * @param fechaHoraCorrecta cuándo llegó realmente el grupo
+     * @param ahora             fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si la reserva no está EN_CURSO, falta el motivo, el id ya existe, o la fecha
+     *                               corregida es anterior a la entrada (REG-02) o posterior a ahora
+     */
+    public void corregirRegistro(RegistroId nuevoId, LocalDateTime fechaHoraCorrecta, UsuarioId autor, String motivo,
+                                 LocalDateTime ahora) {
+        Objects.requireNonNull(fechaHoraCorrecta, "fechaHoraCorrecta");
+        Objects.requireNonNull(ahora, "ahora");
+        if (estado != EstadoReserva.EN_CURSO) {
+            throw new ReglaDominioException("Solo se corrige el registro de una reserva EN_CURSO; está " + estado);
+        }
+        if (motivo == null || motivo.isBlank()) {
+            throw new ReglaDominioException("La corrección del registro requiere un motivo");
+        }
+        if (registros.stream().anyMatch(r -> r.id().equals(nuevoId))) {
+            throw new ReglaDominioException("Ya existe el registro " + nuevoId.valor());
+        }
+        if (fechaHoraCorrecta.toLocalDate().isBefore(estancia.entrada())) {
+            throw new ReglaDominioException("La llegada corregida no puede ser anterior a la fecha de entrada "
+                    + estancia.entrada());
+        }
+        if (fechaHoraCorrecta.isAfter(ahora)) {
+            throw new ReglaDominioException("La llegada corregida no puede ser posterior a este momento");
+        }
+        Registro corregido = new Registro(nuevoId, fechaHoraCorrecta, autor, false, motivo);
+        registro().anular();
+        registros.add(corregido);
     }
 
     /**
      * Registra la salida (check-out) y pasa a FINALIZADA, liberando las noches restantes (RN-08 · RN-12 · SAL-06).
      * Una salida anticipada no es cancelación (SAL-04). El folio cerrado (SAL-02) y el apartamento a
-     * PENDIENTE_PREPARACION (SAL-03) los coordina {@code SalidaOperativaDomainService} (A6).
+     * PENDIENTE_PREPARACION (SAL-03) los coordina {@code SalidaOperativaDomainService}.
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
      * @throws ReglaDominioException si no está EN_CURSO (SAL-01) o la hora es anterior a la del registro (SAL-05)
      */
     public void registrarSalida(SalidaId id, LocalDateTime ahora, UsuarioId autor) {
+        validarSalida(ahora);
+        salida = new Salida(id, ahora, autor);
+        estado = EstadoReserva.FINALIZADA;
+    }
+
+    /**
+     * Verifica, sin cambiar nada, que la salida se puede registrar en este momento. Permite a
+     * {@code SalidaOperativaDomainService} rechazar antes de cerrar el folio (D-02).
+     *
+     * @throws ReglaDominioException si no está EN_CURSO (SAL-01) o la hora es anterior a la del registro (SAL-05)
+     */
+    public void validarSalida(LocalDateTime ahora) {
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.EN_CURSO) {
             throw new ReglaDominioException("Solo se registra la salida de una reserva EN_CURSO; está " + estado);
         }
-        if (ahora.isBefore(registro.fechaHora())) {
+        if (ahora.isBefore(registro().fechaHora())) {
             throw new ReglaDominioException("La salida no puede ser anterior al registro de llegada");
         }
-        salida = new Salida(id, ahora, autor);
-        estado = EstadoReserva.FINALIZADA;
     }
 
     /**
@@ -377,8 +425,15 @@ public class Reserva {
         return ocupantes;
     }
 
+    /**
+     * El registro de llegada vigente (el único no anulado, REG-06); {@code null} si la estancia no ha iniciado.
+     */
     public Registro registro() {
-        return registro;
+        return registros.stream().filter(r -> !r.anulado()).findFirst().orElse(null);
+    }
+
+    public List<Registro> registros() {
+        return List.copyOf(registros);
     }
 
     public Salida salida() {

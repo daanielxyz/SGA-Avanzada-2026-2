@@ -40,8 +40,10 @@ final class ReservaMapper {
                 jpa.getCanalId() == null ? null : new CanalId(jpa.getCanalId()),
                 jpa.getIdExterno(),
                 jpa.getOcupantes().stream().map(ReservaMapper::ocupante).toList(),
-                jpa.getRegistroId() == null ? null : new Registro(new RegistroId(jpa.getRegistroId()),
-                        jpa.getRegistroFechaHora(), new UsuarioId(jpa.getRegistroAutor()), jpa.getRegistroAnulado()),
+                jpa.getRegistros().stream()
+                        .map(r -> new Registro(new RegistroId(r.getId()), r.getFechaHora(), new UsuarioId(r.getAutor()),
+                                r.isAnulado(), r.getMotivoCorreccion()))
+                        .toList(),
                 jpa.getSalidaId() == null ? null : new Salida(new SalidaId(jpa.getSalidaId()),
                         jpa.getSalidaFechaHora(), new UsuarioId(jpa.getSalidaAutor())),
                 jpa.getHoraEstimadaLlegada(),
@@ -72,11 +74,9 @@ final class ReservaMapper {
         jpa.setValorTotal(reserva.valorTotal().monto());
         jpa.setPoliticaVersionId(reserva.politicaVersionId().valor());
         jpa.setCreadaEn(reserva.creadaEn());
-        Registro registro = reserva.registro();
-        jpa.setRegistroId(registro == null ? null : registro.id().valor());
-        jpa.setRegistroFechaHora(registro == null ? null : registro.fechaHora());
-        jpa.setRegistroAutor(registro == null ? null : registro.autor().valor());
-        jpa.setRegistroAnulado(registro == null ? null : registro.anulado());
+        jpa.getRegistros().clear();
+        reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
+                r.autor().valor(), r.anulado(), r.motivoCorreccion())));
         Salida salida = reserva.salida();
         jpa.setSalidaId(salida == null ? null : salida.id().valor());
         jpa.setSalidaFechaHora(salida == null ? null : salida.fechaHora());

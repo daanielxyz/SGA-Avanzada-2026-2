@@ -409,6 +409,72 @@ class ReservaTest {
         assertEquals(EstadoReserva.FINALIZADA, reserva.estado());
     }
 
+    // --- Corrección del registro (REG-06) ---
+
+    @Test
+    @Tag("REG-06")
+    void deberiaCorregirUnRegistroEquivocadoSinCambiarElEstado() {
+        Reserva reserva = enCurso(); // registrada a las 15:30
+        UsuarioId supervisor = new UsuarioId("USR-2");
+        LocalDateTime real = ESTANCIA.entrada().atTime(14, 0);
+
+        reserva.corregirRegistro(new RegistroId("REG-2"), real, supervisor, "Hora mal digitada",
+                ESTANCIA.entrada().atTime(18, 0));
+
+        assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
+        assertEquals(new RegistroId("REG-2"), reserva.registro().id());
+        assertEquals(real, reserva.registro().fechaHora());
+        assertEquals(supervisor, reserva.registro().autor());
+        assertTrue(reserva.registro().esCorreccion());
+        assertEquals(2, reserva.registros().size());
+        assertTrue(reserva.registros().getFirst().anulado()); // el equivocado no se borra
+    }
+
+    @Test
+    @Tag("REG-06")
+    void laSalidaSeComparaConElRegistroCorregido() {
+        Reserva reserva = enCurso(); // registrada a las 15:30
+        reserva.corregirRegistro(new RegistroId("REG-2"), ESTANCIA.entrada().atTime(14, 0), RECEPCION, "Error",
+                ESTANCIA.entrada().atTime(18, 0));
+
+        reserva.registrarSalida(new SalidaId("SAL-1"), ESTANCIA.entrada().atTime(14, 30), RECEPCION);
+
+        assertEquals(EstadoReserva.FINALIZADA, reserva.estado());
+    }
+
+    @Test
+    @Tag("REG-06")
+    void deberiaRechazarCorreccionesInvalidas() {
+        Reserva reserva = enCurso();
+        LocalDateTime ahora = ESTANCIA.entrada().atTime(18, 0);
+        LocalDateTime real = ESTANCIA.entrada().atTime(14, 0);
+
+        assertThrows(ReglaDominioException.class,
+                () -> reserva.corregirRegistro(new RegistroId("REG-2"), real, RECEPCION, " ", ahora));
+        assertThrows(ReglaDominioException.class, () -> reserva.corregirRegistro(new RegistroId("REG-2"),
+                ESTANCIA.entrada().minusDays(1).atTime(20, 0), RECEPCION, "Error", ahora));
+        assertThrows(ReglaDominioException.class, () -> reserva.corregirRegistro(new RegistroId("REG-2"),
+                ahora.plusMinutes(1), RECEPCION, "Error", ahora));
+        assertThrows(ReglaDominioException.class,
+                () -> reserva.corregirRegistro(new RegistroId("REG-1"), real, RECEPCION, "Error", ahora));
+        assertThrows(ReglaDominioException.class,
+                () -> confirmada().corregirRegistro(new RegistroId("REG-2"), real, RECEPCION, "Error", ahora));
+        assertEquals(1, reserva.registros().size());
+    }
+
+    @Test
+    @Tag("REG-06")
+    void noDeberiaReconstruirseConDosRegistrosVigentes() {
+        Cotizacion cotizacion = cotizacion(ESTANCIA, 1);
+        List<Registro> dosVigentes = List.of(
+                new Registro(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION, false, null),
+                new Registro(new RegistroId("REG-2"), ESTANCIA.entrada().atTime(16, 0), RECEPCION, false, "Error"));
+
+        assertThrows(ReglaDominioException.class, () -> new Reserva(new ReservaId("RES-2026-00001"), APT,
+                new TitularId("TIT-1"), ESTANCIA, EstadoReserva.EN_CURSO, CanalOrigen.PORTAL, null, null,
+                List.of(ANA), dosVigentes, null, null, cotizacion.total(), cotizacion.desglose(), POLITICA, AHORA));
+    }
+
     // --- Modificar ---
 
     @Test
@@ -460,7 +526,7 @@ class ReservaTest {
 
         assertThrows(ReglaDominioException.class, () -> new Reserva(new ReservaId("RES-2026-00001"), APT,
                 new TitularId("TIT-1"), ESTANCIA, EstadoReserva.EN_CURSO, CanalOrigen.PORTAL, null, null,
-                List.of(ANA), null, null, null, cotizacion.total(), cotizacion.desglose(), POLITICA, AHORA));
+                List.of(ANA), List.of(), null, null, cotizacion.total(), cotizacion.desglose(), POLITICA, AHORA));
     }
 
     private static Reserva externa(CanalId canal, String idExterno) {

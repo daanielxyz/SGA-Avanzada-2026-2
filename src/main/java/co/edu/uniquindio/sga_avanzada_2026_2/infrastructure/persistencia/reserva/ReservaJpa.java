@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tabla del agregado Reserva. Registro y salida (0..1) van como columnas de la raíz; ocupantes y desglose se cargan
- * siempre con ella (DEC-15).
+ * Tabla del agregado Reserva. La salida (0..1) va como columnas de la raíz; ocupantes, registros (historial, DEC-45)
+ * y desglose se cargan siempre con ella (DEC-15).
  */
 @Entity
 @Table(name = "reserva")
@@ -56,11 +56,6 @@ public class ReservaJpa {
     private String politicaVersionId;
     private LocalDateTime creadaEn;
 
-    private String registroId;
-    private LocalDateTime registroFechaHora;
-    private String registroAutor;
-    private Boolean registroAnulado;
-
     private String salidaId;
     private LocalDateTime salidaFechaHora;
     private String salidaAutor;
@@ -72,6 +67,11 @@ public class ReservaJpa {
     @CollectionTable(name = "reserva_ocupante", joinColumns = @JoinColumn(name = "reserva_codigo"))
     @OrderColumn(name = "orden")
     private List<OcupanteJpa> ocupantes = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "reserva_registro", joinColumns = @JoinColumn(name = "reserva_codigo"))
+    @OrderColumn(name = "orden")
+    private List<RegistroJpa> registros = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "reserva_desglose_noche", joinColumns = @JoinColumn(name = "reserva_codigo"))

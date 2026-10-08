@@ -20,8 +20,8 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 - [x] **A1-E · Primer corte de extremo a extremo** (DEC-31..35): `Apartamento.crear`; casos de uso `CrearApartamento` y `ConsultarApartamento` con `CrearApartamentoCommand`/`ApartamentoResult`; `POST /api/apartamentos` (201 + Location) y `GET /api/apartamentos/{codigo}` con `CrearApartamentoRequest`/`ApartamentoResponse` y Bean Validation; `ErrorResponse` + `ManejadorErrores` (400/404/409). 16 pruebas: dominio, casos de uso con repositorios en memoria y MockMvc contra H2. Sin seguridad todavía (B3). El bean `Clock` pasa al primer caso de uso que lo necesite (`CrearReserva`, B1).
 - [x] **A4 · Reserva** (DEC-36..40): `EstadoReserva.puedePasarA/retieneDisponibilidad`, `Ocupante.esDuplicadoDe` (OCU-05), `Registro`, `Salida`, `Reserva.crear/modificar/indicarHoraEstimadaLlegada/confirmar/cancelar/declararNoShow/expirar/registrarLlegada/registrarSalida/retieneNochesDe` con `creadaEn` (RN-21), RP-01 vía `CalendarioTemporadas.estanciaMinimaPara`, `Dinero.porcentaje` (RES-15); `DisponibilidadDomainService` (+ `Disponibilidad.exigir`), `BloqueoOperativoDomainService` (BLO-01), `BajaApartamentoDomainService` (APA-16) + persistencia V4 (`@Version`, `UNIQUE(canal_id, id_externo)`, registro/salida como columnas) y `db/postgresql/V4_1` con el `EXCLUDE`. 63 pruebas (RN-01/02/04/07/08/09/10/12/14/19/20/21/22, RES-15/16, OCU-02/05/12, RP-01, CORI-03, SAL-01/04/05, BLO-01, APA-16, EDO-02/03). Sin casos de uso ni REST: `CrearReserva` necesita la política vigente (A5). Pendiente: probar el `EXCLUDE` contra PostgreSQL real.
 - [x] **A5 · Política y Folio** (DEC-41..44): `PoliticaCancelacion.crear/nuevaVersion/penalizacionPara` con tramos por horas y `Penalizacion` (porcentaje o monto fijo sobre `BaseRetencion`) configurables por el alojamiento, vigente = versión más alta; `ParametrosAlojamiento.minimoTramosCancelacion` (POL-01); `Folio.abrir/agregarServicioAdicional/registrarPago/registrarDevolucion/revertirPago/revertirCargo/ajustarPorModificacion/liquidarPenalidad/saldo/totalPagado/cerrar`, `Cargo` con `SentidoAjuste` y `Saldo` (DEC-20 aplicado); `CancelacionDomainService` y `NoShowDomainService` (Reserva + Folio) + persistencia V5 (incluye `minimo_tramos_cancelacion`). 40 pruebas (RN-13/14/15/16/17, POL-01/02/03/04/06, FOL-01/02/05/06, CAR-02/03/04/06/07, PAG-03/05/06/07, TPAG-02, MPAG-02, SLD-03, RES-16). Los valores de los tramos ya no son `TODO(equipo)`: los configura cada alojamiento (los iniciales llegan en B1).
-- [ ] **A6 · Llegada y salida (D-02)**: `RegistroLlegadaDomainService`, `SalidaOperativaDomainService`. Anulación del registro (REG-06, DEC-40).
-- [ ] **A7 · Canales, Titular, Novedad**: `Canal.desactivar`, `ConflictoCanal.resolver`, `EventoCanal`, `SincronizacionCanalDomainService`, `Titular.actualizarDatos`, `Novedad`. + persistencia V6. Titular entre los ocupantes (OCU-02 · TIT-01, DEC-38).
+- [x] **A6 · Llegada y salida (D-02)** (DEC-45, DEC-46): `RegistroLlegadaDomainService.procesarCheckIn` (apartamento PREPARADO → OCUPADO, reserva EN_CURSO), `SalidaOperativaDomainService.procesarCheckOut` (cierra el folio si sigue abierto o acepta uno cerrado, con o sin autorización; reserva FINALIZADA, apartamento PENDIENTE_PREPARACION), `Reserva.corregirRegistro` (REG-06) y `validarSalida` + persistencia V6 (`reserva_registro` con historial, migra las columnas de V4). 15 pruebas (RN-10/11/17, REG-04/06, SAL-01/02/03/04, AUTC-04, FOL-02).
+- [ ] **A7 · Canales, Titular, Novedad**: `Canal.desactivar`, `ConflictoCanal.resolver`, `EventoCanal`, `SincronizacionCanalDomainService`, `Titular.actualizarDatos`, `Novedad`. + persistencia V7. Titular entre los ocupantes (OCU-02 · TIT-01, DEC-38).
 
 ## Etapa B — Aplicación, REST e infraestructura (con `domain` completo, replicando el patrón de A1-E)
 - [ ] **B1 · Casos de uso** (`@Service` + `@Transactional`) con su `XCommand`/`XResult` (DEC-31), generador de códigos de negocio tras un puerto. Crear el alojamiento con valores iniciales de `sga.*` (DEC-25) respetando ALO-01 (uno solo). CAP-05 (≥2 apartamentos con capacidades distintas) y APA-15 (advertir reservas afectadas al cambiar capacidad) van aquí. TAR-03 al crear temporada: se crea junto con las tarifas de todos los apartamentos activos o no se crea. Prueba de conflicto de bloqueo optimista entre dos transacciones. Política inicial del alojamiento desde `sga.*` (DEC-25, DEC-41) y caso de uso para que el admin publique versiones nuevas (CU-35). `CrearReserva` (con su folio, DEC-44)/`ModificarReserva` (+ `Folio.ajustarPorModificacion`)/`ConfirmarReserva` (`folio.totalPagado()`)/`CancelarReserva`/`DeclararNoShow` según el flujo de MODELO §3 (DEC-36, DEC-37) con el bean `Clock` en zona de Colombia (EST-06), y `ReservaRepository.buscarPendientesCreadasAntesDe` para el planificador.
@@ -36,6 +36,13 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RevertirPago` / `RevertirCargo` | `RevertirPagoCommand` / `RevertirCargoCommand` (id, motivo) | `FolioResult` |
     | `CerrarFolio` | `CerrarFolioCommand` (autorización opcional: autor, motivo) | `FolioResult` |
     | `CancelarReserva` / `DeclararNoShow` | `CancelarReservaCommand` | `CancelacionResult` (estado, retenido, saldo) |
+  - DTO de aplicación de A6 (Llegada y salida), en `application/reserva`; el autor sale del usuario autenticado (B3):
+
+    | Caso de uso | Command | Result |
+    |---|---|---|
+    | `RegistrarLlegada` (CU-21) | `RegistrarLlegadaCommand` (codigo de la reserva) | `EstanciaResult` (estado de la reserva, registro vigente, estado operativo del apartamento) |
+    | `CorregirRegistro` (REG-06) | `CorregirRegistroCommand` (fechaHora correcta, motivo) | `EstanciaResult` (+ historial de registros) |
+    | `RegistrarSalida` (CU-22, y CU-38 con autorización) | `RegistrarSalidaCommand` (motivo de autorización opcional) | `EstanciaResult` (+ salida, folio cerrado y saldo) |
 - [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `Pagina<T>` de 10. Pruebas MockMvc por endpoint.
   - Endpoints y DTO REST de A5 (Política y Folio):
 
@@ -50,6 +57,13 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/reservas/{codigo}/folio/cargos/{id}/revertir` | `RevertirCargoRequest` (motivo) | `FolioResponse` |
     | `PUT /api/reservas/{codigo}/folio/cerrar` | `CerrarFolioRequest` (autorización opcional) | `FolioResponse` |
     | `PUT /api/reservas/{codigo}/cancelar` · `PUT …/no-show` | — | `CancelacionResponse` |
+  - Endpoints y DTO REST de A6 (Llegada y salida):
+
+    | Endpoint | Request | Response |
+    |---|---|---|
+    | `PUT /api/reservas/{codigo}/registrar-llegada` | — | `EstanciaResponse` |
+    | `PUT /api/reservas/{codigo}/corregir-registro` | `CorregirRegistroRequest` (fechaHora, motivo) | `EstanciaResponse` |
+    | `PUT /api/reservas/{codigo}/registrar-salida` | `RegistrarSalidaRequest` (autorización opcional: motivo) | `EstanciaResponse` |
 - [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`).
 - [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador de `VencerReservasPendientes`.
 

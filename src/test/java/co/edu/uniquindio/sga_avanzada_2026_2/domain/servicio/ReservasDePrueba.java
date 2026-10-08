@@ -53,6 +53,12 @@ final class ReservasDePrueba {
         return apartamento(true, List.of());
     }
 
+    static Apartamento apartamentoEn(EstadoOperativo estado) {
+        return new Apartamento(APT, new AlojamientoId("ALO-1"), "Apto 101", null, new Capacidad(4),
+                new Dormitorio(2), estado, List.of(new Imagen("https://cdn.sga.co/apt-101.jpg", true)),
+                List.of(new Caracteristica("Balcón")), List.of(), true);
+    }
+
     /** Entrada 15:00, salida 11:00: ventana de 4 horas para preparar el apartamento el mismo día. */
     static ParametrosAlojamiento parametros(int horasPreparacion) {
         return new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0),
@@ -69,7 +75,7 @@ final class ReservasDePrueba {
         return new Reserva(new ReservaId(codigo), apartamento, new TitularId("TIT-1"), estancia, estado,
                 CanalOrigen.DIRECTO, null, null,
                 List.of(new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 1, 1), null, null)),
-                null, null, null, Dinero.de(100_000L * desglose.size()), desglose, new PoliticaId("POL-1"),
+                List.of(), null, null, Dinero.de(100_000L * desglose.size()), desglose, new PoliticaId("POL-1"),
                 dia(1).atStartOfDay());
     }
 

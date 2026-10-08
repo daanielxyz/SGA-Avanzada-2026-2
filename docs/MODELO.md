@@ -29,10 +29,10 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 - **EN EstadoOperativo**: PREPARADO, OCUPADO, PENDIENTE_PREPARACION, EN_PREPARACION, FUERA_DE_SERVICIO. `puedePasarA(e)` · `permiteRegistro()`
 
 ### Reserva
-- **R Reserva**: codigo: ReservaId · apartamentoId · titularId · estancia · estado · canalOrigen · canalId? · idExterno? (ambos solo si EXTERNO) · ocupantes: Ocupante[] (≥1, sin repetidos) · registro: Registro? · salida: Salida? · horaEstimadaLlegada: LocalTime? · valorTotal: Dinero (congelado) · desglose (por noche, congelado) · politicaVersionId (congelada) · creadaEn: LocalDateTime (plazo de confirmación).
-  `crear(codigo, apartamentoId, titularId, estancia, canalOrigen, canalId, idExterno, ocupantes, horaEstimada, cotizacion, politicaId, capacidad, estanciaMinima, ahora)` · `modificar(estancia, ocupantes, apartamentoId, cotizacion, capacidad, estanciaMinima, hoy)` (reemplaza a `agregarOcupante` — DEC-38) · `indicarHoraEstimadaLlegada(h)` · `confirmar(anticipo, pagado)` · `cancelar()` · `declararNoShow(ahora, horaLimite)` · `expirar(ahora, plazo)` · `registrarLlegada(id, ahora, autor)` · `registrarSalida(id, ahora, autor)` · `estaActiva()` · `retieneNochesDe(estancia)`
+- **R Reserva**: codigo: ReservaId · apartamentoId · titularId · estancia · estado · canalOrigen · canalId? · idExterno? (ambos solo si EXTERNO) · ocupantes: Ocupante[] (≥1, sin repetidos) · registros: Registro[] (historial; a lo sumo uno vigente — DEC-45) · salida: Salida? · horaEstimadaLlegada: LocalTime? · valorTotal: Dinero (congelado) · desglose (por noche, congelado) · politicaVersionId (congelada) · creadaEn: LocalDateTime (plazo de confirmación).
+  `crear(codigo, apartamentoId, titularId, estancia, canalOrigen, canalId, idExterno, ocupantes, horaEstimada, cotizacion, politicaId, capacidad, estanciaMinima, ahora)` · `modificar(estancia, ocupantes, apartamentoId, cotizacion, capacidad, estanciaMinima, hoy)` (reemplaza a `agregarOcupante` — DEC-38) · `indicarHoraEstimadaLlegada(h)` · `confirmar(anticipo, pagado)` · `cancelar()` · `declararNoShow(ahora, horaLimite)` · `expirar(ahora, plazo)` · `registrarLlegada(id, ahora, autor)` · `corregirRegistro(nuevoId, fechaHoraCorrecta, autor, motivo, ahora)` (REG-06) · `validarSalida(ahora)` · `registrarSalida(id, ahora, autor)` · `registro()` (vigente) · `registros()` · `estaActiva()` · `retieneNochesDe(estancia)`
 - **E Ocupante**: id · nombre · fechaNacimiento (no futura) · documento? · nacionalidad? (String). `edadA(fecha)` · `esFacturableA(fechaEntrada, umbral)` · `esDuplicadoDe(o)` (OCU-05)
-- **E Registro** (check-in): id · fechaHora real · autor: UsuarioId · anulado. Un solo registro vigente; uno equivocado se anula con evento de corrección, no se borra ni revierte el estado.
+- **E Registro** (check-in): id · fechaHora real · autor: UsuarioId · anulado · motivoCorreccion? (solo en una corrección). Un solo registro vigente; uno equivocado se anula y se reemplaza por una corrección, no se borra ni revierte el estado (DEC-45).
 - **E Salida** (check-out): id · fechaHora real (no anterior al registro) · autor: UsuarioId.
 - **VO Estancia**(entrada, salida > entrada) `noches(): Noche[]` · `cantidadNoches()` · `seSolapaCon(otra)`
 - **VO Noche**(fecha) — unidad de venta; Bloqueo y Temporada comparan por `Noche`.
@@ -77,8 +77,8 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 | TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
 | CancelacionDomainService | `procesarCancelacion(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13 | Reserva + Folio + Política (DEC-44) |
 | NoShowDomainService | `declararNoShow(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13, POL-06 | Reserva + Folio + Política (DEC-44) |
-| RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, hoy)` | RN-08, 10, 11 | Reserva + Apartamento |
-| SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, autorizacion?)` | RN-08, 17 | Reserva + Apartamento + Folio |
+| RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, registroId, ahora, autor)` | RN-08, 10, 11, REG-04 | Reserva + Apartamento (D-02) |
+| SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, salidaId, ahora, autor[, autorizacion])` | RN-08, 17, SAL-02, 03 | Reserva + Apartamento + Folio (D-02, DEC-46) |
 | SincronizacionCanalDomainService | `integrarReservaExterna(datos, canalId, reservasActivas)` | RN-01, 18, 19 | Reserva + ConflictoCanal |
 | BloqueoOperativoDomainService | `registrarBloqueo(apartamento, id, ini, fin, motivo, reservas)` | BLO-01, RN-07 | Apartamento + Reservas |
 | BajaApartamentoDomainService | `retirarDeVenta(apartamento, reservas)` | APA-16 | Apartamento + Reservas |
