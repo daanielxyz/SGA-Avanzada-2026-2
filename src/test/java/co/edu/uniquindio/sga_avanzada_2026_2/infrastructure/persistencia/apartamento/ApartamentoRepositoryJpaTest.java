@@ -11,7 +11,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Dormitorio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Imagen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -124,5 +127,40 @@ class ApartamentoRepositoryJpaTest {
     @Test
     void deberiaDevolverVacioSiNoExiste() {
         assertTrue(repositorio.buscarPorCodigo(new ApartamentoId("APT-999")).isEmpty());
+    }
+
+    private static Apartamento otro(String codigo, String alojamiento, boolean activo) {
+        return new Apartamento(new ApartamentoId(codigo), new AlojamientoId(alojamiento), "Apto", null,
+                new Capacidad(2), new Dormitorio(1), EstadoOperativo.PREPARADO, List.of(),
+                List.of(new Caracteristica("Balcón")), List.of(), activo);
+    }
+
+    @Test
+    @Tag("ALO-07")
+    void deberiaListarPorPaginasSoloLosDelAlojamiento() {
+        IntStream.rangeClosed(1, 11).forEach(i -> repositorio.guardar(otro("APT-" + (200 + i), "ALO-1", false)));
+        repositorio.guardar(otro("APT-900", "ALO-2", false));
+        sincronizar();
+
+        Pagina<Apartamento> primera = repositorio.listarPorAlojamiento(new AlojamientoId("ALO-1"), 0);
+        Pagina<Apartamento> segunda = repositorio.listarPorAlojamiento(new AlojamientoId("ALO-1"), 1);
+
+        assertEquals(11, primera.totalElementos());
+        assertEquals(Pagina.TAMANO, primera.contenido().size());
+        assertEquals("APT-201", primera.contenido().getFirst().codigo().valor());
+        assertEquals(List.of(new ApartamentoId("APT-211")),
+                segunda.contenido().stream().map(Apartamento::codigo).toList());
+    }
+
+    @Test
+    @Tag("TAR-03")
+    void deberiaBuscarSoloLosActivosDelAlojamiento() {
+        repositorio.guardar(otro("APT-201", "ALO-1", true));
+        repositorio.guardar(otro("APT-202", "ALO-1", false));
+        repositorio.guardar(otro("APT-901", "ALO-2", true));
+        sincronizar();
+
+        assertEquals(List.of(new ApartamentoId("APT-201")), repositorio.buscarActivos(new AlojamientoId("ALO-1"))
+                .stream().map(Apartamento::codigo).toList());
     }
 }

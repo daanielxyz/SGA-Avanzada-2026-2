@@ -4,6 +4,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioExcep
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,5 +40,25 @@ class CapacidadTest {
     @Tag("CAP-02")
     void noDeberiaAdmitirOcupantesPorEncimaDelTope() {
         assertFalse(new Capacidad(4).admite(5));
+    }
+
+    @Test
+    @Tag("CAP-05")
+    void deberiaAceptarActivosConCapacidadesDistintas() {
+        assertDoesNotThrow(() -> Capacidad.exigirVariedad(List.of(new Capacidad(2), new Capacidad(4)), 2));
+    }
+
+    @Test
+    @Tag("CAP-05")
+    void noDeberiaAceptarActivosSuficientesConLaMismaCapacidad() {
+        assertThrows(ReglaDominioException.class,
+                () -> Capacidad.exigirVariedad(List.of(new Capacidad(4), new Capacidad(4)), 2));
+    }
+
+    @Test
+    @Tag("CAP-05")
+    void noDeberiaExigirVariedadMientrasNoHayaActivosSuficientes() {
+        assertDoesNotThrow(() -> Capacidad.exigirVariedad(List.of(new Capacidad(4)), 2));
+        assertDoesNotThrow(() -> Capacidad.exigirVariedad(List.of(new Capacidad(4), new Capacidad(4)), 1));
     }
 }

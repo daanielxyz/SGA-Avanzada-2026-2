@@ -16,7 +16,7 @@ class ParametrosAlojamientoTest {
     private static ParametrosAlojamiento parametros(LocalTime horaEntrada, Duration preparacion, Duration plazo,
                                                     int minimoMedios) {
         return new ParametrosAlojamiento(12, horaEntrada, LocalTime.of(11, 0), preparacion, plazo,
-                LocalTime.of(22, 0), new Porcentaje(30), minimoMedios, 1, 2, 2);
+                LocalTime.of(22, 0), new Porcentaje(30), minimoMedios, 1, 2, 2, 2);
     }
 
     @Test
@@ -70,6 +70,6 @@ class ParametrosAlojamientoTest {
     void deberiaRechazarMinimoDeTemporadasNegativo() {
         assertThrows(ReglaDominioException.class, () -> new ParametrosAlojamiento(12, LocalTime.of(15, 0),
                 LocalTime.of(11, 0), Duration.ofHours(3), Duration.ofHours(24), LocalTime.of(22, 0),
-                new Porcentaje(30), 2, 1, -1, 2));
+                new Porcentaje(30), 2, 1, -1, 2, 2));
     }
 }

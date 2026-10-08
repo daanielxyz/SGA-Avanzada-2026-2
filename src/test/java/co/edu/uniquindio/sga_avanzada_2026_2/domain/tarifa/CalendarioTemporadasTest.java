@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -148,5 +149,28 @@ class CalendarioTemporadasTest {
     void deberiaRechazarOperarSobreUnaTemporadaInexistente() {
         assertThrows(ReglaDominioException.class,
                 () -> calendario().desactivarTemporada(new TemporadaId("NO-EXISTE")));
+    }
+
+    @Test
+    @Tag("TEM-08")
+    @Tag("TEM-03")
+    void deberiaCrearElCalendarioSoloConLaBaseQueCubreTodasLasNoches() {
+        CalendarioTemporadas nuevo = CalendarioTemporadas.crear(ALOJAMIENTO, BASE, "Temporada base");
+
+        assertEquals(1, nuevo.temporadas().size());
+        assertEquals(BASE, nuevo.temporadaDe(new Noche(dia(7, 20))).id());
+        assertEquals(0, nuevo.cantidadTemporadasEspecificas());
+    }
+
+    @Test
+    @Tag("TAR-01")
+    void deberiaAceptarTarifaSoloEnTemporadasActivas() {
+        CalendarioTemporadas calendario = calendario();
+        assertDoesNotThrow(() -> calendario.exigirTemporadaActiva(ALTA));
+
+        calendario.desactivarTemporada(ALTA);
+
+        assertThrows(ReglaDominioException.class, () -> calendario.exigirTemporadaActiva(ALTA));
+        assertThrows(ReglaDominioException.class, () -> calendario.exigirTemporadaActiva(MEDIA));
     }
 }

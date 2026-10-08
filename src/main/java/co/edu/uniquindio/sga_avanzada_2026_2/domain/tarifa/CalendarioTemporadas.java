@@ -43,6 +43,28 @@ public class CalendarioTemporadas {
     }
 
     /**
+     * Crea el calendario del alojamiento solo con su temporada base, que cubre todas las noches (TEM-03 · TEM-08 ·
+     * DEC-34). Las temporadas específicas se agregan después.
+     *
+     * @throws ReglaDominioException si falta el alojamiento, el id o el nombre de la base
+     */
+    public static CalendarioTemporadas crear(AlojamientoId alojamientoId, TemporadaId baseId, String nombreBase) {
+        return new CalendarioTemporadas(alojamientoId,
+                List.of(new Temporada(baseId, nombreBase, null, null, true, 0, true)));
+    }
+
+    /**
+     * Exige que la temporada exista y esté en uso, para ponerle tarifa (TAR-01 · TEM-06).
+     *
+     * @throws ReglaDominioException si el calendario no la tiene o está inactiva
+     */
+    public void exigirTemporadaActiva(TemporadaId id) {
+        if (!temporada(id).activa()) {
+            throw new ReglaDominioException("La temporada " + id.valor() + " está inactiva");
+        }
+    }
+
+    /**
      * Agrega una temporada específica activa. Reduce la cobertura de la base sin editarla (TEM-11). Que nazca con
      * las tarifas de todos los apartamentos activos (TAR-03) lo coordina el caso de uso.
      *

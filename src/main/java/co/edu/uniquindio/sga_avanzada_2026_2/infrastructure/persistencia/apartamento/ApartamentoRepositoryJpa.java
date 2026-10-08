@@ -1,11 +1,16 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.apartamento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -37,5 +42,22 @@ public class ApartamentoRepositoryJpa implements ApartamentoRepository {
     @Transactional(readOnly = true)
     public Optional<Apartamento> buscarPorCodigo(ApartamentoId codigo) {
         return filas.findById(codigo.valor()).map(ApartamentoMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Apartamento> listarPorAlojamiento(AlojamientoId alojamientoId, int numeroPagina) {
+        Page<ApartamentoJpa> pagina = filas.findByAlojamientoIdOrderByCodigo(alojamientoId.valor(),
+                PageRequest.of(numeroPagina, Pagina.TAMANO));
+        return new Pagina<>(pagina.getContent().stream().map(ApartamentoMapper::aDominio).toList(),
+                numeroPagina, Pagina.TAMANO, pagina.getTotalElements());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Apartamento> buscarActivos(AlojamientoId alojamientoId) {
+        return filas.findByAlojamientoIdAndActivoTrue(alojamientoId.valor()).stream()
+                .map(ApartamentoMapper::aDominio)
+                .toList();
     }
 }

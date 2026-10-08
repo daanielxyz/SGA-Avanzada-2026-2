@@ -69,4 +69,20 @@ class TarifaTest {
         assertThrows(ReglaDominioException.class,
                 () -> v1.nuevaVersion(new TarifaId("TAR-2"), Dinero.de(150_000), ENERO.minusDays(1)));
     }
+
+    @Test
+    @Tag("TAR-05")
+    void laPrimeraTarifaNaceEnLaVersionUno() {
+        Tarifa tarifa = Tarifa.crear(new TarifaId("TAR-1"), APT, ALTA, Dinero.de(120_000), ENERO);
+
+        assertEquals(1, tarifa.version());
+        assertEquals(ENERO, tarifa.vigenteDesde());
+    }
+
+    @Test
+    @Tag("TAR-02")
+    void laPrimeraTarifaTambienExigeValorPositivo() {
+        assertThrows(ReglaDominioException.class,
+                () -> Tarifa.crear(new TarifaId("TAR-1"), APT, ALTA, Dinero.CERO, ENERO));
+    }
 }

@@ -52,6 +52,7 @@ public class AlojamientoJpa {
     private int minimoServiciosAdicionales;
     private int minimoTemporadas;
     private int minimoTramosCancelacion;
+    private int minimoCapacidadesDistintas;
 
     @Version
     private Long version;

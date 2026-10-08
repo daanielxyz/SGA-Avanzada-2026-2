@@ -43,4 +43,4 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 
 ## Pendientes (no resolver por cuenta propia; dejar `// TODO(equipo)` o preguntame cuando sea necesario)
 - Tarifa de Temporada Media: por definir.
-- La política de cancelación (tramos por horas, porcentaje o monto fijo, base de cálculo, no-show) la configura cada alojamiento (DEC-41); solo faltan sus valores iniciales para `sga.*` (B1). 
+- La política de cancelación (tramos por horas, porcentaje o monto fijo, base de cálculo, no-show) la configura cada alojamiento (DEC-41); sus valores iniciales ya están en `sga.politica.*` (DEC-53). 

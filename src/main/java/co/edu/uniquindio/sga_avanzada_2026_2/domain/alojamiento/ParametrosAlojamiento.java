@@ -18,14 +18,16 @@ import java.time.LocalTime;
  *                                   apartamentos (TEM-04 · DEC-28)
  * @param minimoTramosCancelacion    tramos que debe tener cada versión de la política de cancelación; mínimo de la
  *                                   Ficha del curso, configurable (POL-01 · DEC-41)
+ * @param minimoCapacidadesDistintas capacidades distintas que deben tener los apartamentos activos; mínimo de la
+ *                                   Ficha del curso, configurable (CAP-05 · DEC-51)
  */
 public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                     Duration tiempoPreparacion, Duration plazoConfirmacion,
                                     LocalTime horaLimiteNoShow, Porcentaje anticipo, int minimoMediosPago,
                                     int minimoServiciosAdicionales, int minimoTemporadas,
-                                    int minimoTramosCancelacion) {
+                                    int minimoTramosCancelacion, int minimoCapacidadesDistintas) {
 
-    // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04 · POL-01
+    // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04 · POL-01 · CAP-05
     public ParametrosAlojamiento {
         if (horaEntrada == null || horaSalida == null || horaLimiteNoShow == null) {
             throw new ReglaDominioException("Las horas de entrada, salida y límite de no-show son obligatorias");
@@ -42,8 +44,10 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         if (anticipo == null) {
             throw new ReglaDominioException("El anticipo es obligatorio (0 si no se exige)");
         }
-        if (minimoMediosPago < 0 || minimoServiciosAdicionales < 0 || minimoTemporadas < 0) {
-            throw new ReglaDominioException("Los mínimos de medios de pago, servicios y temporadas no pueden ser negativos");
+        if (minimoMediosPago < 0 || minimoServiciosAdicionales < 0 || minimoTemporadas < 0
+                || minimoCapacidadesDistintas < 0) {
+            throw new ReglaDominioException(
+                    "Los mínimos de medios de pago, servicios, temporadas y capacidades no pueden ser negativos");
         }
         if (minimoTramosCancelacion < 1) {
             throw new ReglaDominioException("La política de cancelación necesita al menos un tramo");

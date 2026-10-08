@@ -57,6 +57,21 @@ public class Alojamiento {
     }
 
     /**
+     * Crea el alojamiento del despliegue con sus valores iniciales (DEC-25 · DEC-34). No hay reglas de nacimiento
+     * aparte de las invariantes, que valida el constructor; que exista uno solo es regla de despliegue (ALO-01).
+     *
+     * @throws ReglaDominioException si falta un dato obligatorio (ALO-02) o el catálogo no alcanza los mínimos
+     *                               (ALO-06 · MPAG-01 · SERV-05)
+     */
+    public static Alojamiento crear(AlojamientoId id, String nombre, String descripcion, String ciudad,
+                                    String direccion, Ubicacion ubicacion, String normas,
+                                    ParametrosAlojamiento parametros, List<ServicioAdicional> serviciosAdicionales,
+                                    List<MedioPago> mediosPago) {
+        return new Alojamiento(id, nombre, descripcion, ciudad, direccion, ubicacion, normas, parametros,
+                serviciosAdicionales, mediosPago);
+    }
+
+    /**
      * Reemplaza la configuración de negocio; aplica a operaciones futuras, no a reservas ya creadas (ALO-03 · ALO-04).
      *
      * @throws ReglaDominioException si los nuevos mínimos superan el catálogo actual (ALO-06)

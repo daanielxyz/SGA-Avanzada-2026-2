@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Datos comunes de las pruebas de los servicios que cruzan Apartamento y Reservas.
@@ -63,20 +64,28 @@ final class ReservasDePrueba {
     static ParametrosAlojamiento parametros(int horasPreparacion) {
         return new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0),
                 Duration.ofHours(horasPreparacion), Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30),
-                2, 1, 2, 2);
+                2, 1, 2, 2, 2);
     }
 
     static Reserva reserva(String codigo, ApartamentoId apartamento, int entrada, int salida, EstadoReserva estado) {
+        return reserva(codigo, apartamento, entrada, salida, estado, 1);
+    }
+
+    /** Reserva con un grupo de {@code personas} adultos. */
+    static Reserva reserva(String codigo, ApartamentoId apartamento, int entrada, int salida, EstadoReserva estado,
+                           int personas) {
         Estancia estancia = new Estancia(dia(entrada), dia(salida));
+        List<Ocupante> ocupantes = IntStream.rangeClosed(1, personas)
+                .mapToObj(i -> new Ocupante(new OcupanteId("OCU-" + i), i == 1 ? "Ana" : "Huésped " + i,
+                        LocalDate.of(1990, 1, i), null, null))
+                .toList();
         List<LineaCotizacion> desglose = estancia.noches().stream()
                 .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), Dinero.de(100_000), 1,
                         Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), apartamento, new TitularId("TIT-1"), estancia, estado,
-                CanalOrigen.DIRECTO, null, null,
-                List.of(new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 1, 1), null, null)),
-                List.of(), null, null, Dinero.de(100_000L * desglose.size()), desglose, new PoliticaId("POL-1"),
-                dia(1).atStartOfDay());
+                CanalOrigen.DIRECTO, null, null, ocupantes, List.of(), null, null,
+                Dinero.de(100_000L * desglose.size()), desglose, new PoliticaId("POL-1"), dia(1).atStartOfDay());
     }
 
     static Reserva confirmada(String codigo, int entrada, int salida) {

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.RepositoriosEnMemoria;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import org.junit.jupiter.api.Test;
 

@@ -24,13 +24,35 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 - [x] **A7 · Canales, Titular, Novedad** (DEC-47..50): `Canal.desactivar/exigirReservasExternas` (referencia a la credencial, no el secreto), `ConflictoCanal.registrar/resolver`, `EventoCanal` (bitácora con `OperacionCanal` y `ResultadoEvento`), `SincronizacionCanalDomainService.integrarReservaExterna` → `IntegracionExterna` (EXITOSO, DUPLICADO o CONFLICTO), `Titular` (nombre, documento y al menos un contacto; `actualizarDatos`), `Novedad.registrar/avanzar` con historial; TIT-01 en `Reserva.crear/modificar`; `alojamientoId` en Canal y Titular (DEC-26); `ReservaRepository.buscarPorCanalEIdExterno` + persistencia V7. 32 pruebas (RN-18/19, CAN-01/02/05, CONF-01/02/03/04, BIT-01/02, TIT-01/05, NOV-01/04/06, CORI-03).
 
 ## Etapa B — Aplicación, REST e infraestructura (con `domain` completo, replicando el patrón de A1-E)
-- [ ] **B1 · Casos de uso** (`@Service` + `@Transactional`) con su `XCommand`/`XResult` (DEC-31), generador de códigos de negocio tras un puerto. Crear el alojamiento con valores iniciales de `sga.*` (DEC-25) respetando ALO-01 (uno solo). CAP-05 (≥2 apartamentos con capacidades distintas) y APA-15 (advertir reservas afectadas al cambiar capacidad) van aquí. TAR-03 al crear temporada: se crea junto con las tarifas de todos los apartamentos activos o no se crea. Prueba de conflicto de bloqueo optimista entre dos transacciones. Política inicial del alojamiento desde `sga.*` (DEC-25, DEC-41) y caso de uso para que el admin publique versiones nuevas (CU-35). `CrearReserva` (con su folio, DEC-44)/`ModificarReserva` (+ `Folio.ajustarPorModificacion`)/`ConfirmarReserva` (`folio.totalPagado()`)/`CancelarReserva`/`DeclararNoShow` según el flujo de MODELO §3 (DEC-36, DEC-37) con el bean `Clock` en zona de Colombia (EST-06), y `ReservaRepository.buscarPendientesCreadasAntesDe` para el planificador.
+- **B1 · Casos de uso** (`@Service` + `@Transactional`) con su `XCommand`/`XResult` (DEC-31). Dividido en cuatro incrementos, un commit cada uno:
+- [x] **B1a · Base, alojamiento, política, apartamento, temporadas y tarifas** (DEC-51..55): bean `Clock` en zona de Colombia (EST-06), `ServiciosDominioConfig`, `Pagina<T>` (DEC-18), `GeneradorCodigos` con secuencias de la BD (DEC-52); `InicializarAlojamiento` desde `sga.*` al arrancar (ALO-01 · DEC-53: alojamiento + política inicial + calendario con la base); `CAP-05` como parámetro `minimoCapacidadesDistintas` exigido al activar o al cambiar la capacidad de un activo (DEC-51); `APA-15` (advertir reservas afectadas); `TAR-03` al crear temporada (DEC-54) + persistencia V8 (columna del parámetro, secuencias, índice de apartamentos por alojamiento). 62 pruebas (CAP-05, APA-11/15/16, TAR-01/02/03/05, TEM-02/03/05/06/07/08/10, ALO-01/03/06, MPAG-01/06, SERV-01/02/04/05, POL-01/03/04/06, BLO-01/06, EOPE-02, UBI-03).
+  - DTO de aplicación de B1a:
+
+    | Caso de uso | Command | Result |
+    |---|---|---|
+    | `InicializarAlojamiento` (arranque, DEC-53) | `InicializarAlojamientoCommand` (datos, `ParametrosCommand`, servicios, medios, tramos, no-show, temporada base) | `AlojamientoResult` |
+    | `ConsultarAlojamiento` (CU-50) | — | `AlojamientoResult` (datos, `ParametrosResult`, servicios, medios) |
+    | `CambiarParametrosAlojamiento` / `CambiarUbicacionAlojamiento` (CU-30) | `CambiarParametrosAlojamientoCommand` / `CambiarUbicacionAlojamientoCommand` | `AlojamientoResult` |
+    | `HabilitarMedioPago` / `DeshabilitarMedioPago` (CU-53) | `MedioPagoCommand` | `AlojamientoResult` |
+    | `AgregarServicioAdicional` / `CambiarValorServicio` / `DesactivarServicio` | `AgregarServicioAdicionalCommand` / `CambiarValorServicioCommand` / `DesactivarServicioCommand` | `AlojamientoResult` |
+    | `PublicarPolitica` (CU-35) / `ConsultarPoliticaVigente` | `PublicarPoliticaCommand` (tramos, `PenalizacionCommand`) | `PoliticaResult` |
+    | `ListarApartamentos` (CU-31) | — (página) | `Pagina<ApartamentoResult>` |
+    | `ActivarApartamento` / `RetirarApartamento` (CU-31) | — (código) | `ApartamentoResult` |
+    | `CambiarCapacidad` (APA-15) | `CambiarCapacidadCommand` | `CambioCapacidadResult` (apartamento + reservas afectadas) |
+    | `CambiarEstadoOperativo` (CU-40 · CU-42) | `CambiarEstadoOperativoCommand` | `ApartamentoResult` |
+    | `RegistrarBloqueo` (CU-32) / `LevantarBloqueo` (CU-52) | `RegistrarBloqueoCommand` / `LevantarBloqueoCommand` | `ApartamentoResult` |
+    | `ConsultarCalendario` / `CambiarFechasTemporada` / `DesactivarTemporada` (CU-33) | `CambiarFechasTemporadaCommand` / `DesactivarTemporadaCommand` | `CalendarioResult` |
+    | `AgregarTemporada` (CU-33 · TAR-03) | `AgregarTemporadaCommand` (+ tarifa por apartamento) | `TemporadaCreadaResult` |
+    | `DefinirTarifa` / `ConsultarTarifas` (CU-34) | `DefinirTarifaCommand` | `TarifaResult` / lista |
+- [ ] **B1b · Reserva**: `CrearReserva` (con su folio, DEC-44; `ReservaId` del generador), `CotizarEstancia` (CU-09), `BuscarDisponibles` (CU-07, solo activos), `ModificarReserva` (+ `Folio.ajustarPorModificacion`), `ConfirmarReserva` (`folio.totalPagado()`), `CancelarReserva`, `DeclararNoShow` según el flujo de MODELO §3 (DEC-36, DEC-37), `ReservaRepository.buscarPendientesCreadasAntesDe` para el planificador y prueba de conflicto de bloqueo optimista entre dos transacciones.
+- [ ] **B1c · Folio, llegada y salida**: casos de uso de las tablas de A5 (folio) y A6.
+- [ ] **B1d · Canales, Titular y Novedad**: casos de uso de la tabla de A7.
   - DTO de aplicación de A5 (Política y Folio), en `application/politica` y `application/folio`:
 
     | Caso de uso | Command | Result |
     |---|---|---|
-    | `PublicarPolitica` (CU-35, admin) | `PublicarPoliticaCommand` (tramos: horas, base, % o monto fijo; penalización de no-show) | `PoliticaResult` |
-    | `ConsultarPoliticaVigente` (la que acepta el huésped al reservar) | — | `PoliticaResult` |
+    | `PublicarPolitica` (CU-35, admin) — hecho en B1a | `PublicarPoliticaCommand` (tramos: horas, base, % o monto fijo; penalización de no-show) | `PoliticaResult` |
+    | `ConsultarPoliticaVigente` (la que acepta el huésped al reservar) — hecho en B1a | — | `PoliticaResult` |
     | `ConsultarFolio` | — | `FolioResult` (cargos, pagos, saldo y situación) |
     | `RegistrarPago` / `RegistrarDevolucion` | `RegistrarPagoCommand` (medio, monto, fecha) | `FolioResult` |
     | `RevertirPago` / `RevertirCargo` | `RevertirPagoCommand` / `RevertirCargoCommand` (id, motivo) | `FolioResult` |
@@ -54,7 +76,23 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RegistrarTitular` / `ActualizarTitular` | `RegistrarTitularCommand` (nombre, documento, correo, teléfono) | `TitularResult` |
     | `RegistrarNovedad` (CU-43) / `AvanzarNovedad` (CU-55) | `RegistrarNovedadCommand` (apartamento, descripción, gravedad) | `NovedadResult` (+ historial) |
     | `ConsultarNovedades` (CU-44) | — | `Pagina<NovedadResult>` |
-- [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `Pagina<T>` de 10. Pruebas MockMvc por endpoint.
+- [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `Pagina<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso.
+  - Endpoints y DTO REST de B1a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL):
+
+    | Endpoint | Request | Response |
+    |---|---|---|
+    | `GET /api/alojamiento` | — | `AlojamientoResponse` |
+    | `PUT /api/alojamiento/parametros` · `PUT /api/alojamiento/ubicacion` | `ParametrosRequest` · `UbicacionRequest` | `AlojamientoResponse` |
+    | `PUT /api/alojamiento/medios-pago/{medio}/habilitar` · `…/deshabilitar` | — | `AlojamientoResponse` |
+    | `POST /api/alojamiento/servicios` · `PUT …/servicios/{id}/valor` · `PUT …/servicios/{id}/desactivar` | `ServicioAdicionalRequest` · `ValorServicioRequest` | `AlojamientoResponse` |
+    | `GET /api/apartamentos?pagina=` | — | `Pagina<ApartamentoResponse>` |
+    | `PUT /api/apartamentos/{codigo}/activar` · `…/retirar` | — | `ApartamentoResponse` |
+    | `PUT /api/apartamentos/{codigo}/capacidad` | `CambiarCapacidadRequest` | `CambioCapacidadResponse` |
+    | `PUT /api/apartamentos/{codigo}/estado-operativo` | `CambiarEstadoOperativoRequest` | `ApartamentoResponse` |
+    | `POST /api/apartamentos/{codigo}/bloqueos` · `PUT …/bloqueos/{id}/levantar` | `RegistrarBloqueoRequest` | `ApartamentoResponse` |
+    | `GET /api/temporadas` · `POST /api/temporadas` | `AgregarTemporadaRequest` | `CalendarioResponse` · `TemporadaCreadaResponse` (201) |
+    | `PUT /api/temporadas/{id}/fechas` · `PUT /api/temporadas/{id}/desactivar` | `CambiarFechasTemporadaRequest` | `CalendarioResponse` |
+    | `GET /api/apartamentos/{codigo}/tarifas` · `PUT /api/apartamentos/{codigo}/tarifas/{temporada}` | `DefinirTarifaRequest` | `TarifaResponse` |
   - Endpoints y DTO REST de A5 (Política y Folio):
 
     | Endpoint | Request | Response |
@@ -93,6 +131,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 - **TRA (CU-VA-01)**: datos del reporte por **huésped** en el `Ocupante` (procedencia, motivo del viaje; documento y nacionalidad pasan a obligatorios), el huésped los diligencia y recepción verifica y envía tras un puerto; si el envío falla, no bloquea el check-in. Esperando la lista final de campos del equipo (DEC-49).
 - **Por validar con el docente**: REG-06 (corrección del registro, aplicada como DEC-45), CU-56 (anular también una *salida*: hoy no existe), TIT-06 (cambio de titular: no implementado), CAN-05 (canal desactivado), TEM-06.
 - **Gravedad de las novedades** (`TODO(equipo)`, DEC-09) y **Temporada Media** (`TODO(equipo)`).
+- **Valores iniciales de `sga.parametros`** (DEC-53): umbral 12 años, entrada 15:00, salida 11:00, preparación 3 h, confirmación 24 h, no-show 22:00, anticipo 30 %, medios EFECTIVO y TRANSFERENCIA, servicio Parqueadero sin cargo. Son supuestos para arrancar; el equipo puede cambiarlos en `application.properties` o el administrador en la aplicación.
 
 ## Verificación
 - Cada incremento: `./gradlew build`.

@@ -43,6 +43,17 @@ public class Tarifa {
     }
 
     /**
+     * Crea la primera versión de la tarifa de un apartamento en una temporada (TAR-01 · DEC-34).
+     *
+     * @param desde fecha desde la que rige (TAR-06)
+     * @throws ReglaDominioException si falta un dato o el valor no es positivo (TAR-02)
+     */
+    public static Tarifa crear(TarifaId id, ApartamentoId apartamentoId, TemporadaId temporadaId, Dinero valor,
+                               LocalDate desde) {
+        return new Tarifa(id, apartamentoId, temporadaId, valor, 1, desde);
+    }
+
+    /**
      * Crea la siguiente versión con un valor nuevo. Esta versión queda como histórico y las reservas ya creadas
      * conservan su valor congelado (TAR-05 · RN-22).
      *
