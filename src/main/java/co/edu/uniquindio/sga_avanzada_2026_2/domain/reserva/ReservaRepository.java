@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,10 @@ public interface ReservaRepository {
 
     /** La reserva que un canal externo ya envió con ese identificador, para no duplicarla (RN-19 · CAN-04). */
     Optional<Reserva> buscarPorCanalEIdExterno(CanalId canalId, String idExterno);
+
+    /**
+     * Reservas PENDIENTE creadas estrictamente antes de {@code limite} (= ahora − plazo de confirmación): las que ya
+     * vencieron (RN-21). Las usa el planificador (B4).
+     */
+    List<Reserva> buscarPendientesCreadasAntesDe(LocalDateTime limite);
 }

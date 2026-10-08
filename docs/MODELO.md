@@ -75,7 +75,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 |---|---|---|---|
 | DisponibilidadDomainService | `verificarDisponibilidad(apartamento, estancia, nOcupantes, reservas, parametros)` → Disponibilidad · `verificarParaModificar(reserva, …)` | RN-01, 07, 20, DISP-02 | Apartamento + Reservas |
 | TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
-| CancelacionDomainService | `procesarCancelacion(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13 | Reserva + Folio + Política (DEC-44) |
+| CancelacionDomainService | `procesarCancelacion(reserva, folio, politica, parametros, ahora)` → retenido · `procesarVencimiento(reserva, folio, parametros, ahora)` (sin penalidad) | RN-08, 12, 13, 21 | Reserva + Folio + Política (DEC-44, DEC-57) |
 | NoShowDomainService | `declararNoShow(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13, POL-06 | Reserva + Folio + Política (DEC-44) |
 | RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, registroId, ahora, autor)` | RN-08, 10, 11, REG-04 | Reserva + Apartamento (D-02) |
 | SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, salidaId, ahora, autor[, autorizacion])` | RN-08, 17, SAL-02, 03 | Reserva + Apartamento + Folio (D-02, DEC-46) |
@@ -85,7 +85,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
 | ActivadorApartamentoService | `puedeActivarse(apartamento, calendario, tarifas, minimoTemporadas)` · `activar(apartamento, calendario, tarifas, activos, parametros)` · `exigirTarifasDeTemporada(activos, temporadaId, tarifas)` | TAR-01, TAR-03, APA-11, TEM-04, CAP-05 | Apartamento (+ activos) + CalendarioTemporadas + Tarifa (DEC-51, DEC-54) |
 | CambioCapacidadDomainService | `cambiarCapacidad(apartamento, nueva, activos, reservas, minimoCapacidadesDistintas)` → reservas afectadas | CAP-04, CAP-05, APA-15 | Apartamento (+ activos) + Reservas (DEC-51) |
 
-**Casos de uso (application), no servicios de dominio:** `CrearReserva`, `ModificarReserva` (la regla vive en `Reserva.crear/modificar`), `VencerReservasPendientes` (usa `Reserva.expirar`; lo dispara un planificador). Lista completa `CU-nn` en el Excel.
+**Casos de uso (application), no servicios de dominio:** `CrearReserva`, `ModificarReserva` (la regla vive en `Reserva.crear/modificar`), `BuscarReservasVencidas` + `VencerReserva` (usa `CancelacionDomainService.procesarVencimiento`; lo dispara un planificador, DEC-57). Lista completa `CU-nn` en el Excel.
 Las 6 validaciones de crear reserva, en este orden: salida>entrada (Estancia) · entrada≥hoy (Reserva) · apartamento activo con tarifas completas (Apartamento) · capacidad (Reserva/Apartamento) · sin solape con reservas ni bloqueos (Disponibilidad) · tiempo de preparación (Disponibilidad).
 Flujo de `CrearReserva` (DEC-36, DEC-37): cargar apartamento, reservas activas, calendario, tarifas y parámetros → `disponibilidad.verificarDisponibilidad(…).exigir()` → `tarificacion.calcularValorEstancia(…)` → `Reserva.crear(…, politicaVigente.id(), …, calendario.estanciaMinimaPara(estancia), ahora)` → `Folio.abrir(…, reserva.valorTotal(), hoy)` (FOL-01) → guardar ambos. Sin `if` en la aplicación.
 

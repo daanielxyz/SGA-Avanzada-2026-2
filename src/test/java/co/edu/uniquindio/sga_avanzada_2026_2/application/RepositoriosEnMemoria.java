@@ -14,12 +14,16 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
@@ -27,10 +31,14 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Tarifa;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TarifaRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
 
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -191,6 +199,51 @@ public final class RepositoriosEnMemoria {
                     .filter(r -> Objects.equals(r.canalId(), canalId) && Objects.equals(r.idExterno(), idExterno))
                     .findFirst();
         }
+
+        @Override
+        public List<Reserva> buscarPendientesCreadasAntesDe(LocalDateTime limite) {
+            return guardadas.values().stream()
+                    .filter(r -> r.estado() == EstadoReserva.PENDIENTE && r.creadaEn().isBefore(limite))
+                    .sorted(Comparator.comparing(Reserva::creadaEn))
+                    .toList();
+        }
+    }
+
+    public static final class Folios implements FolioRepository {
+
+        public final Map<ReservaId, Folio> guardados = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(Folio folio) {
+            guardados.put(folio.reservaId(), folio);
+        }
+
+        @Override
+        public Optional<Folio> buscarPorReserva(ReservaId reservaId) {
+            return Optional.ofNullable(guardados.get(reservaId));
+        }
+    }
+
+    public static final class Titulares implements TitularRepository {
+
+        public final Map<TitularId, Titular> guardados = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(Titular titular) {
+            guardados.put(titular.id(), titular);
+        }
+
+        @Override
+        public Optional<Titular> buscarPorId(TitularId id) {
+            return Optional.ofNullable(guardados.get(id));
+        }
+
+        @Override
+        public Optional<Titular> buscarPorDocumento(AlojamientoId alojamientoId, Documento documento) {
+            return guardados.values().stream()
+                    .filter(t -> t.alojamientoId().equals(alojamientoId) && t.documento().equals(documento))
+                    .findFirst();
+        }
     }
 
     /** Numera cada serie desde 1, como las secuencias de la BD. */
@@ -200,7 +253,7 @@ public final class RepositoriosEnMemoria {
 
         @Override
         public String siguiente(SerieCodigo serie) {
-            return serie.prefijo() + "-" + ultimos.merge(serie, 1L, Long::sum);
+            return serie.formatear(ultimos.merge(serie, 1L, Long::sum), LocalDate.now(RELOJ));
         }
     }
 

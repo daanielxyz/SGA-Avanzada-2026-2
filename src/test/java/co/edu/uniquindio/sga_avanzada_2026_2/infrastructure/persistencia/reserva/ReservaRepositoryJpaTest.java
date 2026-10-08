@@ -221,4 +221,30 @@ class ReservaRepositoryJpaTest {
     void deberiaDevolverVacioSiNoExiste() {
         assertTrue(repositorio.buscarPorCodigo(new ReservaId("RES-2026-99999")).isEmpty());
     }
+
+    @Test
+    @Tag("RN-21")
+    void deberiaBuscarSoloLasPendientesCreadasAntesDelLimite() {
+        Reserva vieja = reservaCreadaEn("RES-2026-80001", LocalDate.of(2026, 10, 1).atTime(8, 0));
+        Reserva reciente = reservaCreadaEn("RES-2026-80002", LocalDate.of(2026, 10, 1).atTime(12, 0));
+        repositorio.guardar(vieja);
+        repositorio.guardar(reciente);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(List.of(new ReservaId("RES-2026-80001")),
+                repositorio.buscarPendientesCreadasAntesDe(LocalDate.of(2026, 10, 1).atTime(10, 0)).stream()
+                        .map(Reserva::codigo).toList());
+    }
+
+    private static Reserva reservaCreadaEn(String codigo, LocalDateTime creadaEn) {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 2));
+        List<LineaCotizacion> desglose = estancia.noches().stream()
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .toList();
+        return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-301"), new TitularId("TIT-1"), estancia,
+                EstadoReserva.PENDIENTE, CanalOrigen.DIRECTO, null, null,
+                List.of(new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 1, 1), null, null)),
+                List.of(), null, null, Dinero.de(100_000), desglose, new PoliticaId("POL-1"), creadaEn);
+    }
 }

@@ -40,12 +40,34 @@ public class CancelacionDomainService {
         return liquidar(reserva, folio, penalizacion, parametros, "cancelación", ahora);
     }
 
+    /**
+     * Cancela automáticamente una reserva PENDIENTE que superó el plazo de confirmación (RN-21 · RES-21, en
+     * {@code Reserva.expirar}) y anula su alojamiento en el folio sin penalidad: lo pagado queda a favor para la
+     * devolución (DEC-57).
+     *
+     * @param parametros plazo de confirmación del alojamiento
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), la reserva no está PENDIENTE o todavía
+     *                               no supera el plazo
+     */
+    public void procesarVencimiento(Reserva reserva, Folio folio, ParametrosAlojamiento parametros,
+                                    LocalDateTime ahora) {
+        validarFolio(reserva, folio);
+        reserva.expirar(ahora, parametros.plazoConfirmacion());
+        folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "vencimiento", ahora.toLocalDate());
+    }
+
     // RN-13 · FOL-02: la retención sale de la política que el huésped aceptó, nunca de la vigente
     static void validarCorrespondencia(Reserva reserva, Folio folio, PoliticaCancelacion politica) {
         if (!politica.id().equals(reserva.politicaVersionId())) {
             throw new ReglaDominioException("La reserva " + reserva.codigo().valor() + " congeló la política "
                     + reserva.politicaVersionId().valor() + ", no la " + politica.id().valor());
         }
+        validarFolio(reserva, folio);
+    }
+
+    // FOL-02
+    private static void validarFolio(Reserva reserva, Folio folio) {
         if (!folio.reservaId().equals(reserva.codigo())) {
             throw new ReglaDominioException("El folio " + folio.id().valor() + " no es de la reserva "
                     + reserva.codigo().valor());

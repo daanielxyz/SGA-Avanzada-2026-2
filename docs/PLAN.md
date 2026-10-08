@@ -44,7 +44,19 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `ConsultarCalendario` / `CambiarFechasTemporada` / `DesactivarTemporada` (CU-33) | `CambiarFechasTemporadaCommand` / `DesactivarTemporadaCommand` | `CalendarioResult` |
     | `AgregarTemporada` (CU-33 · TAR-03) | `AgregarTemporadaCommand` (+ tarifa por apartamento) | `TemporadaCreadaResult` |
     | `DefinirTarifa` / `ConsultarTarifas` (CU-34) | `DefinirTarifaCommand` | `TarifaResult` / lista |
-- [ ] **B1b · Reserva**: `CrearReserva` (con su folio, DEC-44; `ReservaId` del generador), `CotizarEstancia` (CU-09), `BuscarDisponibles` (CU-07, solo activos), `ModificarReserva` (+ `Folio.ajustarPorModificacion`), `ConfirmarReserva` (`folio.totalPagado()`), `CancelarReserva`, `DeclararNoShow` según el flujo de MODELO §3 (DEC-36, DEC-37), `ReservaRepository.buscarPendientesCreadasAntesDe` para el planificador y prueba de conflicto de bloqueo optimista entre dos transacciones.
+- [x] **B1b · Reserva** (DEC-56..59): `CrearReserva` con su folio y su titular nuevo o actualizado, `CotizarEstancia` (CU-09), `BuscarDisponibles` (CU-07, solo activos), `ModificarReserva` (+ ajuste en el folio), `IndicarHoraLlegada`, `ConfirmarReserva` (`folio.totalPagado()`), `CancelarReserva`, `DeclararNoShow`, `ConsultarReserva` (CU-49), `BuscarReservasVencidas` + `VencerReserva` (RN-21, anula sin penalidad; `CancelacionDomainService.procesarVencimiento`), `ReservaRepository.buscarPendientesCreadasAntesDe`, código `RES-aaaa-nnnnn` del generador + persistencia V9 (secuencias de titular, folio y reserva; índice por estado y creación) y prueba de bloqueo optimista entre dos transacciones. 22 pruebas (RN-01/02/05/06/09/13/14/21/22, RES-15/16, TIT-01/05, FOL-01, CAR-06, CORI-03, COT-02, DISP-02, POL-06, DEC-17).
+  - DTO de aplicación de B1b, en `application/reserva`:
+
+    | Caso de uso | Command | Result |
+    |---|---|---|
+    | `CrearReserva` (CU-10 · CU-11) | `CrearReservaCommand` (apartamento, fechas, canal, `TitularCommand`, `OcupanteCommand`[], hora opcional) | `ReservaResult` (estado, grupo, `CotizacionResult` congelada, política) |
+    | `CotizarEstancia` (CU-09) | `CotizarEstanciaCommand` (apartamento, fechas, fechas de nacimiento) | `CotizacionResult` (desglose por noche, total) |
+    | `BuscarDisponibles` (CU-07) | `BuscarDisponiblesCommand` (fechas, tamaño del grupo) | lista de `ApartamentoDisponibleResult` |
+    | `ModificarReserva` (CU-17) | `ModificarReservaCommand` (apartamento, fechas, ocupantes) | `ReservaResult` |
+    | `IndicarHoraLlegada` (RN-09) | `IndicarHoraLlegadaCommand` | `ReservaResult` |
+    | `ConfirmarReserva` (CU-18) / `ConsultarReserva` (CU-49) | — (código) | `ReservaResult` |
+    | `CancelarReserva` (CU-14 · CU-15) / `DeclararNoShow` (CU-19) / `VencerReserva` (CU-20) | — (código) | `CancelacionResult` (estado, retenido, saldo y situación) |
+    | `BuscarReservasVencidas` (CU-20, planificador) | — (alojamiento) | lista de códigos |
 - [ ] **B1c · Folio, llegada y salida**: casos de uso de las tablas de A5 (folio) y A6.
 - [ ] **B1d · Canales, Titular y Novedad**: casos de uso de la tabla de A7.
   - DTO de aplicación de A5 (Política y Folio), en `application/politica` y `application/folio`:
@@ -57,7 +69,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RegistrarPago` / `RegistrarDevolucion` | `RegistrarPagoCommand` (medio, monto, fecha) | `FolioResult` |
     | `RevertirPago` / `RevertirCargo` | `RevertirPagoCommand` / `RevertirCargoCommand` (id, motivo) | `FolioResult` |
     | `CerrarFolio` | `CerrarFolioCommand` (autorización opcional: autor, motivo) | `FolioResult` |
-    | `CancelarReserva` / `DeclararNoShow` | `CancelarReservaCommand` | `CancelacionResult` (estado, retenido, saldo) |
+    | `CancelarReserva` / `DeclararNoShow` — hechos en B1b | — (código) | `CancelacionResult` (estado, retenido, saldo) |
   - DTO de aplicación de A6 (Llegada y salida), en `application/reserva`; el autor sale del usuario autenticado (B3):
 
     | Caso de uso | Command | Result |
@@ -93,6 +105,15 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `GET /api/temporadas` · `POST /api/temporadas` | `AgregarTemporadaRequest` | `CalendarioResponse` · `TemporadaCreadaResponse` (201) |
     | `PUT /api/temporadas/{id}/fechas` · `PUT /api/temporadas/{id}/desactivar` | `CambiarFechasTemporadaRequest` | `CalendarioResponse` |
     | `GET /api/apartamentos/{codigo}/tarifas` · `PUT /api/apartamentos/{codigo}/tarifas/{temporada}` | `DefinirTarifaRequest` | `TarifaResponse` |
+  - Endpoints y DTO REST de B1b (un conflicto de bloqueo optimista, DEC-59, responde 409 como `REGLA_NEGOCIO` o un código propio):
+
+    | Endpoint | Request | Response |
+    |---|---|---|
+    | `GET /api/apartamentos/disponibles?entrada&salida&ocupantes` | — | lista de `ApartamentoDisponibleResponse` |
+    | `POST /api/cotizaciones` | `CotizarEstanciaRequest` | `CotizacionResponse` |
+    | `POST /api/reservas` · `GET /api/reservas/{codigo}` | `CrearReservaRequest` | `ReservaResponse` (201 + Location) |
+    | `PUT /api/reservas/{codigo}/modificar` | `ModificarReservaRequest` | `ReservaResponse` |
+    | `PUT /api/reservas/{codigo}/hora-llegada` · `PUT …/confirmar` | `HoraLlegadaRequest` | `ReservaResponse` |
   - Endpoints y DTO REST de A5 (Política y Folio):
 
     | Endpoint | Request | Response |
@@ -125,7 +146,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades` | — | `Pagina<NovedadResponse>` |
 - [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`).
-- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador de `VencerReservasPendientes`.
+- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57).
 
 ## Pendientes por definir (no tienen incremento todavía)
 - **TRA (CU-VA-01)**: datos del reporte por **huésped** en el `Ocupante` (procedencia, motivo del viaje; documento y nacionalidad pasan a obligatorios), el huésped los diligencia y recepción verifica y envía tras un puerto; si el envío falla, no bloquea el check-in. Esperando la lista final de campos del equipo (DEC-49).

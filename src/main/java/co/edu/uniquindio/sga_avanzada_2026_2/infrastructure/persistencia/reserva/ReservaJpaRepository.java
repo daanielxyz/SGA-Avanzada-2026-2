@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserv
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -15,4 +16,6 @@ interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String> {
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
 
     Optional<ReservaJpa> findByCanalIdAndIdExterno(String canalId, String idExterno);
+
+    List<ReservaJpa> findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva estado, LocalDateTime limite);
 }

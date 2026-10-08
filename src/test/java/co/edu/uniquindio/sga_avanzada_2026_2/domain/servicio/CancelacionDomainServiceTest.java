@@ -136,4 +136,31 @@ class CancelacionDomainServiceTest {
         assertThrows(ReglaDominioException.class,
                 () -> cancelar(reserva, ajeno, politicaCongelada(), dia(9).atTime(10, 0)));
     }
+
+    @Test
+    @Tag("RN-21")
+    void deberiaVencerUnaPendienteYAnularSuAlojamientoSinPenalidad() {
+        Reserva reserva = ReservasDePrueba.reserva("RES-2026-00001", ReservasDePrueba.APT, 10, 12,
+                EstadoReserva.PENDIENTE);
+        Folio folio = folioDe(reserva);
+        pagar(folio, 50_000);
+
+        servicio.procesarVencimiento(reserva, folio, parametros(3), dia(2).atTime(0, 1)); // creada el 1 a las 0:00
+
+        assertEquals(EstadoReserva.CANCELADA, reserva.estado());
+        assertEquals(new Saldo(Dinero.de(50_000), SituacionSaldo.A_FAVOR), folio.saldo());
+    }
+
+    @Test
+    @Tag("RN-21")
+    void noDeberiaVencerAntesDelPlazoNiTocarElFolio() {
+        Reserva reserva = ReservasDePrueba.reserva("RES-2026-00001", ReservasDePrueba.APT, 10, 12,
+                EstadoReserva.PENDIENTE);
+        Folio folio = folioDe(reserva);
+
+        assertThrows(ReglaDominioException.class,
+                () -> servicio.procesarVencimiento(reserva, folio, parametros(3), dia(2).atStartOfDay()));
+        assertEquals(EstadoReserva.PENDIENTE, reserva.estado());
+        assertEquals(1, folio.cargos().size());
+    }
 }

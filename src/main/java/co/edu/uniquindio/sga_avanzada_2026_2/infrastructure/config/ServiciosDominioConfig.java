@@ -4,6 +4,10 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ActivadorApartament
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BajaApartamentoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BloqueoOperativoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CambioCapacidadDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.NoShowDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,5 +36,25 @@ public class ServiciosDominioConfig {
     @Bean
     public CambioCapacidadDomainService cambioCapacidadDomainService() {
         return new CambioCapacidadDomainService();
+    }
+
+    @Bean
+    public DisponibilidadDomainService disponibilidadDomainService() {
+        return new DisponibilidadDomainService();
+    }
+
+    @Bean
+    public TarificacionDomainService tarificacionDomainService() {
+        return new TarificacionDomainService();
+    }
+
+    @Bean
+    public CancelacionDomainService cancelacionDomainService() {
+        return new CancelacionDomainService();
+    }
+
+    @Bean
+    public NoShowDomainService noShowDomainService() {
+        return new NoShowDomainService();
     }
 }

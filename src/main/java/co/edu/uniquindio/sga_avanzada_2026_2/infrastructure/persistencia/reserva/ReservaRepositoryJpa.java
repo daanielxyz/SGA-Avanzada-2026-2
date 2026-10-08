@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -61,5 +62,13 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     @Transactional(readOnly = true)
     public Optional<Reserva> buscarPorCanalEIdExterno(CanalId canalId, String idExterno) {
         return filas.findByCanalIdAndIdExterno(canalId.valor(), idExterno).map(ReservaMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reserva> buscarPendientesCreadasAntesDe(LocalDateTime limite) {
+        return filas.findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva.PENDIENTE, limite).stream()
+                .map(ReservaMapper::aDominio)
+                .toList();
     }
 }
