@@ -28,10 +28,11 @@ import java.util.Optional;
 
 /**
  * Carga por los puertos lo que necesitan los casos de uso de Reserva y traduce un faltante en
- * {@link RecursoNoEncontradoException} (404, DEC-35). No decide nada de negocio.
+ * {@link RecursoNoEncontradoException} (404, DEC-35). No decide nada de negocio. También lo usan los casos de uso del
+ * Folio, que se identifica por el código de su reserva (FOL-02).
  */
 @Component
-class CargadorReserva {
+public class CargadorReserva {
 
     private final ReservaRepository reservas;
     private final FolioRepository folios;
@@ -41,7 +42,7 @@ class CargadorReserva {
     private final TitularRepository titulares;
     private final GeneradorCodigos codigos;
 
-    CargadorReserva(ReservaRepository reservas, FolioRepository folios, ApartamentoRepository apartamentos,
+    public CargadorReserva(ReservaRepository reservas, FolioRepository folios, ApartamentoRepository apartamentos,
                     AlojamientoRepository alojamientos, CalendarioTemporadasRepository calendarios,
                     TitularRepository titulares, GeneradorCodigos codigos) {
         this.reservas = reservas;
@@ -53,45 +54,49 @@ class CargadorReserva {
         this.codigos = codigos;
     }
 
-    Reserva reserva(String codigo) {
+    public Reserva reserva(String codigo) {
         ReservaId id = new ReservaId(codigo);
         return reservas.buscarPorCodigo(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("la reserva", id.valor()));
     }
 
     /** El folio de la reserva; existe siempre desde que se creó (FOL-01 · FOL-02). */
-    Folio folioDe(Reserva reserva) {
+    public Folio folioDe(Reserva reserva) {
         return folios.buscarPorReserva(reserva.codigo())
                 .orElseThrow(() -> new RecursoNoEncontradoException("el folio de la reserva",
                         reserva.codigo().valor()));
     }
 
-    Apartamento apartamento(String codigo) {
+    public Apartamento apartamento(String codigo) {
         return apartamento(new ApartamentoId(codigo));
     }
 
-    Apartamento apartamento(ApartamentoId id) {
+    public Apartamento apartamento(ApartamentoId id) {
         return apartamentos.buscarPorCodigo(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el apartamento", id.valor()));
     }
 
     /** El alojamiento llega a través del apartamento: la reserva no repite su id (DEC-26). */
-    Alojamiento alojamientoDe(Apartamento apartamento) {
+    public Alojamiento alojamientoDe(Apartamento apartamento) {
         return alojamiento(apartamento.alojamientoId());
     }
 
-    Alojamiento alojamiento(AlojamientoId id) {
+    public Alojamiento alojamientoDe(Reserva reserva) {
+        return alojamientoDe(apartamento(reserva.apartamentoId()));
+    }
+
+    public Alojamiento alojamiento(AlojamientoId id) {
         return alojamientos.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el alojamiento", id.valor()));
     }
 
-    CalendarioTemporadas calendario(AlojamientoId id) {
+    public CalendarioTemporadas calendario(AlojamientoId id) {
         return calendarios.buscarPorAlojamiento(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el calendario de temporadas del alojamiento",
                         id.valor()));
     }
 
-    Titular titular(TitularId id) {
+    public Titular titular(TitularId id) {
         return titulares.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el titular", id.valor()));
     }
@@ -100,7 +105,7 @@ class CargadorReserva {
      * El titular con ese documento en el alojamiento, con sus datos actualizados a lo que llegó; o uno nuevo si es
      * la primera vez (TIT-05 · DEC-58). No se guarda aquí: lo guarda el caso de uso junto con la reserva.
      */
-    Titular titularPara(AlojamientoId alojamientoId, TitularCommand datos) {
+    public Titular titularPara(AlojamientoId alojamientoId, TitularCommand datos) {
         Documento documento = new Documento(TipoDocumento.valueOf(datos.tipoDocumento()), datos.numeroDocumento());
         Correo correo = Optional.ofNullable(datos.correo()).filter(c -> !c.isBlank()).map(Correo::new).orElse(null);
         return titulares.buscarPorDocumento(alojamientoId, documento)

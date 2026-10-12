@@ -5,8 +5,11 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BajaApartamentoDoma
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BloqueoOperativoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CambioCapacidadDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CargoServicioDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.NoShowDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SalidaOperativaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,5 +59,20 @@ public class ServiciosDominioConfig {
     @Bean
     public NoShowDomainService noShowDomainService() {
         return new NoShowDomainService();
+    }
+
+    @Bean
+    public RegistroLlegadaDomainService registroLlegadaDomainService() {
+        return new RegistroLlegadaDomainService();
+    }
+
+    @Bean
+    public SalidaOperativaDomainService salidaOperativaDomainService() {
+        return new SalidaOperativaDomainService();
+    }
+
+    @Bean
+    public CargoServicioDomainService cargoServicioDomainService() {
+        return new CargoServicioDomainService();
     }
 }

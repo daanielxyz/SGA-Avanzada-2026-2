@@ -57,26 +57,27 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `ConfirmarReserva` (CU-18) / `ConsultarReserva` (CU-49) | — (código) | `ReservaResult` |
     | `CancelarReserva` (CU-14 · CU-15) / `DeclararNoShow` (CU-19) / `VencerReserva` (CU-20) | — (código) | `CancelacionResult` (estado, retenido, saldo y situación) |
     | `BuscarReservasVencidas` (CU-20, planificador) | — (alojamiento) | lista de códigos |
-- [ ] **B1c · Folio, llegada y salida**: casos de uso de las tablas de A5 (folio) y A6.
+- [x] **B1c · Folio, llegada y salida** (DEC-60, DEC-61): `ConsultarFolio`, `RegistrarPago`, `RegistrarDevolucion`, `RevertirPago`, `RevertirCargo`, `CerrarFolio` (CU-28), `CargarServicioAdicional` (CAR-05, solo EN_CURSO; `CargoServicioDomainService` + `Alojamiento.servicioCobrable`), `RegistrarLlegada` (CU-21), `CorregirRegistro` (REG-06) y `RegistrarSalida` (CU-22 · CU-38). Sin migración. 29 pruebas (RN-10/11/12/15/16/17, REG-01/02/03/04/06, SAL-01/02/03/04/06, FOL-01/02/03/05/06, PAG-02/03/05/06/07, TPAG-02, MPAG-02, CAR-03/05, SERV-02/04, AUTC-01/04, D-02, DEC-44/60), entre ellas `EstanciaCompletaTest` con Spring y H2. Las tablas de DTO de A5 y A6 de abajo quedaron como se implementaron.
 - [ ] **B1d · Canales, Titular y Novedad**: casos de uso de la tabla de A7.
-  - DTO de aplicación de A5 (Política y Folio), en `application/politica` y `application/folio`:
+  - DTO de aplicación de A5 (Política y Folio), en `application/politica` y `application/folio`; el folio se identifica por el código de su reserva (DEC-61):
 
     | Caso de uso | Command | Result |
     |---|---|---|
     | `PublicarPolitica` (CU-35, admin) — hecho en B1a | `PublicarPoliticaCommand` (tramos: horas, base, % o monto fijo; penalización de no-show) | `PoliticaResult` |
     | `ConsultarPoliticaVigente` (la que acepta el huésped al reservar) — hecho en B1a | — | `PoliticaResult` |
-    | `ConsultarFolio` | — | `FolioResult` (cargos, pagos, saldo y situación) |
-    | `RegistrarPago` / `RegistrarDevolucion` | `RegistrarPagoCommand` (medio, monto, fecha) | `FolioResult` |
-    | `RevertirPago` / `RevertirCargo` | `RevertirPagoCommand` / `RevertirCargoCommand` (id, motivo) | `FolioResult` |
-    | `CerrarFolio` | `CerrarFolioCommand` (autorización opcional: autor, motivo) | `FolioResult` |
+    | `ConsultarFolio` — hecho en B1c | — (código de la reserva) | `FolioResult` (`CargoResult`[], `PagoResult`[], total pagado, saldo y situación, cerrado, `AutorizacionResult`) |
+    | `RegistrarPago` / `RegistrarDevolucion` — hechos en B1c | `RegistrarPagoCommand` (reserva, medio, monto, fecha) | `FolioResult` |
+    | `RevertirPago` / `RevertirCargo` — hechos en B1c | `RevertirPagoCommand` (reserva, pago) / `RevertirCargoCommand` (reserva, cargo, motivo) | `FolioResult` |
+    | `CargarServicioAdicional` (CAR-05 · DEC-60) — hecho en B1c | `CargarServicioAdicionalCommand` (reserva, servicio) | `FolioResult` |
+    | `CerrarFolio` (CU-28) — hecho en B1c | `CerrarFolioCommand` (reserva, autor, motivo de autorización opcional) | `FolioResult` |
     | `CancelarReserva` / `DeclararNoShow` — hechos en B1b | — (código) | `CancelacionResult` (estado, retenido, saldo) |
-  - DTO de aplicación de A6 (Llegada y salida), en `application/reserva`; el autor sale del usuario autenticado (B3):
+  - DTO de aplicación de A6 (Llegada y salida), en `application/reserva`, hechos en B1c; el Command lleva el `autor`, que en B3 sale del usuario autenticado (DEC-61):
 
     | Caso de uso | Command | Result |
     |---|---|---|
-    | `RegistrarLlegada` (CU-21) | `RegistrarLlegadaCommand` (codigo de la reserva) | `EstanciaResult` (estado de la reserva, registro vigente, estado operativo del apartamento) |
-    | `CorregirRegistro` (REG-06) | `CorregirRegistroCommand` (fechaHora correcta, motivo) | `EstanciaResult` (+ historial de registros) |
-    | `RegistrarSalida` (CU-22, y CU-38 con autorización) | `RegistrarSalidaCommand` (motivo de autorización opcional) | `EstanciaResult` (+ salida, folio cerrado y saldo) |
+    | `RegistrarLlegada` (CU-21) | `RegistrarLlegadaCommand` (código, autor) | `EstanciaResult` (estado de la reserva, estado operativo del apartamento, `RegistroResult`[], `SalidaResult`, folio cerrado, saldo y situación) |
+    | `CorregirRegistro` (REG-06) | `CorregirRegistroCommand` (código, fechaHora correcta, motivo, autor) | `EstanciaResult` |
+    | `RegistrarSalida` (CU-22, y CU-38 con autorización) | `RegistrarSalidaCommand` (código, autor, motivo de autorización opcional) | `EstanciaResult` |
   - DTO de aplicación de A7 (Canales, Titular, Novedad), en `application/canal`, `application/titular` y `application/novedad`:
 
     | Caso de uso | Command | Result |
@@ -114,7 +115,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/reservas` · `GET /api/reservas/{codigo}` | `CrearReservaRequest` | `ReservaResponse` (201 + Location) |
     | `PUT /api/reservas/{codigo}/modificar` | `ModificarReservaRequest` | `ReservaResponse` |
     | `PUT /api/reservas/{codigo}/hora-llegada` · `PUT …/confirmar` | `HoraLlegadaRequest` | `ReservaResponse` |
-  - Endpoints y DTO REST de A5 (Política y Folio):
+  - Endpoints y DTO REST de A5 (Política y Folio). El `autor` de los Commands nunca viene en el Request: lo pone el controlador con el usuario autenticado (B3, DEC-61); hasta B3, B2 usa un valor provisional:
 
     | Endpoint | Request | Response |
     |---|---|---|
@@ -125,7 +126,8 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/reservas/{codigo}/folio/devoluciones` | `RegistrarPagoRequest` | `FolioResponse` |
     | `POST /api/reservas/{codigo}/folio/pagos/{id}/revertir` | — | `FolioResponse` |
     | `POST /api/reservas/{codigo}/folio/cargos/{id}/revertir` | `RevertirCargoRequest` (motivo) | `FolioResponse` |
-    | `PUT /api/reservas/{codigo}/folio/cerrar` | `CerrarFolioRequest` (autorización opcional) | `FolioResponse` |
+    | `POST /api/reservas/{codigo}/folio/servicios` | `CargarServicioRequest` (servicioId) | `FolioResponse` |
+    | `PUT /api/reservas/{codigo}/folio/cerrar` | `CerrarFolioRequest` (motivo de autorización opcional; solo admin, B3) | `FolioResponse` |
     | `PUT /api/reservas/{codigo}/cancelar` · `PUT …/no-show` | — | `CancelacionResponse` |
   - Endpoints y DTO REST de A6 (Llegada y salida):
 
@@ -133,7 +135,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     |---|---|---|
     | `PUT /api/reservas/{codigo}/registrar-llegada` | — | `EstanciaResponse` |
     | `PUT /api/reservas/{codigo}/corregir-registro` | `CorregirRegistroRequest` (fechaHora, motivo) | `EstanciaResponse` |
-    | `PUT /api/reservas/{codigo}/registrar-salida` | `RegistrarSalidaRequest` (autorización opcional: motivo) | `EstanciaResponse` |
+    | `PUT /api/reservas/{codigo}/registrar-salida` | `RegistrarSalidaRequest` (motivo de autorización opcional; solo admin, B3) | `EstanciaResponse` |
   - Endpoints y DTO REST de A7 (Canales, Titular, Novedad):
 
     | Endpoint | Request | Response |

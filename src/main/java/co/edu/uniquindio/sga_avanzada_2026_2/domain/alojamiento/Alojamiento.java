@@ -159,6 +159,22 @@ public class Alojamiento {
         servicio.desactivar();
     }
 
+    /**
+     * El servicio del catálogo que se va a cobrar en un folio, con su valor de este momento (CAR-05 · SERV-02).
+     *
+     * @throws ReglaDominioException si no existe, está inactivo (SERV-04) o es un servicio que no genera cargo
+     */
+    public ServicioAdicional servicioCobrable(ServicioAdicionalId id) {
+        ServicioAdicional servicio = servicio(id);
+        if (!servicio.activo()) {
+            throw new ReglaDominioException("El servicio " + servicio.nombre() + " está inactivo");
+        }
+        if (!servicio.generaCargo()) {
+            throw new ReglaDominioException("El servicio " + servicio.nombre() + " no genera cargo");
+        }
+        return servicio;
+    }
+
     private ServicioAdicional servicio(ServicioAdicionalId id) {
         return serviciosAdicionales.stream()
                 .filter(s -> s.id().equals(id))
