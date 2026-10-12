@@ -12,7 +12,15 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Ubicacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanalRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EstadoConflicto;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
@@ -20,6 +28,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.Novedad;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
@@ -244,6 +255,94 @@ public final class RepositoriosEnMemoria {
                     .filter(t -> t.alojamientoId().equals(alojamientoId) && t.documento().equals(documento))
                     .findFirst();
         }
+    }
+
+    public static final class Canales implements CanalRepository {
+
+        public final Map<CanalId, Canal> guardados = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(Canal canal) {
+            guardados.put(canal.id(), canal);
+        }
+
+        @Override
+        public Optional<Canal> buscarPorId(CanalId id) {
+            return Optional.ofNullable(guardados.get(id));
+        }
+
+        @Override
+        public List<Canal> buscarPorAlojamiento(AlojamientoId alojamientoId) {
+            return guardados.values().stream().filter(c -> c.alojamientoId().equals(alojamientoId)).toList();
+        }
+    }
+
+    public static final class Conflictos implements ConflictoCanalRepository {
+
+        public final Map<ConflictoId, ConflictoCanal> guardados = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(ConflictoCanal conflicto) {
+            guardados.put(conflicto.id(), conflicto);
+        }
+
+        @Override
+        public Optional<ConflictoCanal> buscarPorId(ConflictoId id) {
+            return Optional.ofNullable(guardados.get(id));
+        }
+
+        @Override
+        public List<ConflictoCanal> buscarPendientes() {
+            return guardados.values().stream().filter(c -> c.estado() == EstadoConflicto.PENDIENTE).toList();
+        }
+    }
+
+    public static final class Eventos implements EventoCanalRepository {
+
+        public final List<EventoCanal> registrados = new ArrayList<>();
+
+        @Override
+        public void registrar(EventoCanal evento) {
+            registrados.add(evento);
+        }
+
+        @Override
+        public Pagina<EventoCanal> listarPorCanal(CanalId canalId, LocalDateTime desde, LocalDateTime hasta,
+                                                  int numeroPagina) {
+            return paginar(registrados.stream()
+                    .filter(e -> e.canalId().equals(canalId) && !e.fechaHora().isBefore(desde)
+                            && e.fechaHora().isBefore(hasta))
+                    .sorted(Comparator.comparing(EventoCanal::fechaHora).reversed())
+                    .toList(), numeroPagina);
+        }
+    }
+
+    public static final class Novedades implements NovedadRepository {
+
+        public final Map<NovedadId, Novedad> guardadas = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(Novedad novedad) {
+            guardadas.put(novedad.id(), novedad);
+        }
+
+        @Override
+        public Optional<Novedad> buscarPorId(NovedadId id) {
+            return Optional.ofNullable(guardadas.get(id));
+        }
+
+        @Override
+        public Pagina<Novedad> listarPorApartamento(ApartamentoId apartamentoId, int numeroPagina) {
+            return paginar(guardadas.values().stream()
+                    .filter(n -> n.apartamentoId().equals(apartamentoId))
+                    .sorted(Comparator.comparing(Novedad::registradaEn).reversed())
+                    .toList(), numeroPagina);
+        }
+    }
+
+    private static <T> Pagina<T> paginar(List<T> todos, int numeroPagina) {
+        List<T> pagina = todos.stream().skip((long) numeroPagina * Pagina.TAMANO).limit(Pagina.TAMANO).toList();
+        return new Pagina<>(pagina, numeroPagina, Pagina.TAMANO, todos.size());
     }
 
     /** Numera cada serie desde 1, como las secuencias de la BD. */

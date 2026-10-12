@@ -1,11 +1,13 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.canal;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,5 +35,13 @@ public class CanalRepositoryJpa implements CanalRepository {
     @Transactional(readOnly = true)
     public Optional<Canal> buscarPorId(CanalId id) {
         return filas.findById(id.valor()).map(CanalMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Canal> buscarPorAlojamiento(AlojamientoId alojamientoId) {
+        return filas.findByAlojamientoIdOrderById(alojamientoId.valor()).stream()
+                .map(CanalMapper::aDominio)
+                .toList();
     }
 }

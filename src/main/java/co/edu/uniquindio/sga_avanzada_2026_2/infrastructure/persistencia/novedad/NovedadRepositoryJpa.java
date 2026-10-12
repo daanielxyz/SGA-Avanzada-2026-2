@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.novedad;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.Novedad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadRepository;
@@ -38,13 +39,21 @@ public class NovedadRepositoryJpa implements NovedadRepository {
         return filas.findById(id.valor()).map(NovedadMapper::aDominio);
     }
 
-    /** La fecha de registro vive en el historial, así que el orden se aplica al cargar. */
+    /**
+     * La fecha de registro vive en el historial, así que el orden y el corte de la página se aplican al cargar las
+     * novedades del apartamento, que son pocas.
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<Novedad> buscarPorApartamento(ApartamentoId apartamentoId) {
-        return filas.findByApartamentoCodigo(apartamentoId.valor()).stream()
+    public Pagina<Novedad> listarPorApartamento(ApartamentoId apartamentoId, int numeroPagina) {
+        List<Novedad> todas = filas.findByApartamentoCodigo(apartamentoId.valor()).stream()
                 .map(NovedadMapper::aDominio)
                 .sorted(Comparator.comparing(Novedad::registradaEn).reversed())
                 .toList();
+        List<Novedad> pagina = todas.stream()
+                .skip((long) numeroPagina * Pagina.TAMANO)
+                .limit(Pagina.TAMANO)
+                .toList();
+        return new Pagina<>(pagina, numeroPagina, Pagina.TAMANO, todas.size());
     }
 }

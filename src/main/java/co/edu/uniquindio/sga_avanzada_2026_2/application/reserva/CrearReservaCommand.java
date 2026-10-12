@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Entrada de {@link CrearReserva} (CU-10 · CU-11). Las reservas EXTERNO llegan por {@code RecibirReservaExterna}
- * (B1d).
+ * (DEC-62).
  *
  * @param salida              exclusiva: esa noche no se ocupa (EST-01)
  * @param canalOrigen         PORTAL o DIRECTO

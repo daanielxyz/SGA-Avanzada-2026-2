@@ -72,6 +72,6 @@ class NovedadRepositoryJpaTest {
         sincronizar();
 
         assertEquals(List.of(new NovedadId("NOV-2"), new NovedadId("NOV-1")),
-                repositorio.buscarPorApartamento(APT).stream().map(Novedad::id).toList());
+                repositorio.listarPorApartamento(APT, 0).contenido().stream().map(Novedad::id).toList());
     }
 }

@@ -15,6 +15,10 @@ public enum SerieCodigo {
     BLOQUEO("BLO"),
     TITULAR("TIT"),
     FOLIO("FOL"),
+    CANAL("CAN"),
+    CONFLICTO("CON"),
+    EVENTO("EVT"),
+    NOVEDAD("NOV"),
     RESERVA("RES") {
         @Override
         public String formatear(long numero, LocalDate hoy) {

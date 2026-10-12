@@ -22,7 +22,7 @@ public record OcupanteCommand(String nombre, LocalDate fechaNacimiento, String t
      * Convierte el grupo completo. Los ids los numera la propia reserva en orden ({@code OCU-1}, {@code OCU-2}…),
      * porque solo deben ser únicos dentro de ella (DEC-56).
      */
-    static List<Ocupante> aDominio(List<OcupanteCommand> ocupantes) {
+    public static List<Ocupante> aDominio(List<OcupanteCommand> ocupantes) {
         return IntStream.range(0, ocupantes.size())
                 .mapToObj(i -> ocupantes.get(i).aDominio(new OcupanteId("OCU-" + (i + 1))))
                 .toList();

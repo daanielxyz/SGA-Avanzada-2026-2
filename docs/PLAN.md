@@ -58,7 +58,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `CancelarReserva` (CU-14 · CU-15) / `DeclararNoShow` (CU-19) / `VencerReserva` (CU-20) | — (código) | `CancelacionResult` (estado, retenido, saldo y situación) |
     | `BuscarReservasVencidas` (CU-20, planificador) | — (alojamiento) | lista de códigos |
 - [x] **B1c · Folio, llegada y salida** (DEC-60, DEC-61): `ConsultarFolio`, `RegistrarPago`, `RegistrarDevolucion`, `RevertirPago`, `RevertirCargo`, `CerrarFolio` (CU-28), `CargarServicioAdicional` (CAR-05, solo EN_CURSO; `CargoServicioDomainService` + `Alojamiento.servicioCobrable`), `RegistrarLlegada` (CU-21), `CorregirRegistro` (REG-06) y `RegistrarSalida` (CU-22 · CU-38). Sin migración. 29 pruebas (RN-10/11/12/15/16/17, REG-01/02/03/04/06, SAL-01/02/03/04/06, FOL-01/02/03/05/06, PAG-02/03/05/06/07, TPAG-02, MPAG-02, CAR-03/05, SERV-02/04, AUTC-01/04, D-02, DEC-44/60), entre ellas `EstanciaCompletaTest` con Spring y H2. Las tablas de DTO de A5 y A6 de abajo quedaron como se implementaron.
-- [ ] **B1d · Canales, Titular y Novedad**: casos de uso de la tabla de A7.
+- [x] **B1d · Canales, Titular y Novedad** (DEC-62, DEC-63): `RegistrarCanal`, `DesactivarCanal`, `ListarCanales`, `RecibirReservaExterna` (CU-12), `RegistrarEventoCanal`, `ConsultarBitacora` (CU-45), `ConsultarConflictosPendientes`, `ResolverConflicto`, `RegistrarTitular`, `ActualizarTitular`, `ConsultarTitular`, `RegistrarNovedad` (CU-43), `AvanzarNovedad` (CU-55) y `ConsultarNovedades` (CU-44). Persistencia V10 (secuencias de canal, conflicto, evento y novedad; índice de canal por alojamiento) y puertos de listado paginados. 20 pruebas (RN-01/02/18/19, CAN-01/02/04/05, CONF-01/02/04, BIT-01/03, CORI-03, TIT-01/03/05, NOV-01/03/04/05/06, FOL-01, DEC-18/26/48/49/62/63), dos de ellas con Spring y H2 en `EstanciaCompletaTest`. La tabla de DTO de A7 de abajo quedó como se implementó. Con esto termina B1.
   - DTO de aplicación de A5 (Política y Folio), en `application/politica` y `application/folio`; el folio se identifica por el código de su reserva (DEC-61):
 
     | Caso de uso | Command | Result |
@@ -78,17 +78,18 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RegistrarLlegada` (CU-21) | `RegistrarLlegadaCommand` (código, autor) | `EstanciaResult` (estado de la reserva, estado operativo del apartamento, `RegistroResult`[], `SalidaResult`, folio cerrado, saldo y situación) |
     | `CorregirRegistro` (REG-06) | `CorregirRegistroCommand` (código, fechaHora correcta, motivo, autor) | `EstanciaResult` |
     | `RegistrarSalida` (CU-22, y CU-38 con autorización) | `RegistrarSalidaCommand` (código, autor, motivo de autorización opcional) | `EstanciaResult` |
-  - DTO de aplicación de A7 (Canales, Titular, Novedad), en `application/canal`, `application/titular` y `application/novedad`:
+  - DTO de aplicación de A7 (Canales, Titular, Novedad), en `application/canal`, `application/titular` y `application/novedad`, hechos en B1d; donde hay `autor`, en B3 sale del usuario autenticado (DEC-61):
 
     | Caso de uso | Command | Result |
     |---|---|---|
-    | `RegistrarCanal` / `DesactivarCanal` (CU-54) | `RegistrarCanalCommand` (nombre, tipo, referencia de credencial) | `CanalResult` |
-    | `RecibirReservaExterna` (CU-12; lo invoca el adaptador del canal, B4) | `RecibirReservaExternaCommand` (idExterno, apartamento, estancia, titular, ocupantes) | `IntegracionExternaResult` (resultado, código de reserva o de conflicto) |
-    | `ConsultarConflictosPendientes` / `ResolverConflicto` (CONF-04) | `ResolverConflictoCommand` (decisión) | `ConflictoResult` |
-    | `ConsultarBitacora` (CU-45) | `ConsultarBitacoraCommand` (canal, desde, hasta) | `Pagina<EventoCanalResult>` |
-    | `RegistrarTitular` / `ActualizarTitular` | `RegistrarTitularCommand` (nombre, documento, correo, teléfono) | `TitularResult` |
-    | `RegistrarNovedad` (CU-43) / `AvanzarNovedad` (CU-55) | `RegistrarNovedadCommand` (apartamento, descripción, gravedad) | `NovedadResult` (+ historial) |
-    | `ConsultarNovedades` (CU-44) | — | `Pagina<NovedadResult>` |
+    | `RegistrarCanal` / `DesactivarCanal` / `ListarCanales` (CU-54) | `RegistrarCanalCommand` (alojamiento, nombre, tipo, referencia de credencial) | `CanalResult` / lista |
+    | `RecibirReservaExterna` (CU-12; lo invoca el adaptador del canal, B4) | `RecibirReservaExternaCommand` (canal, idExterno, apartamento, fechas, `TitularCommand`, `OcupanteCommand`[], carga útil) | `IntegracionExternaResult` (resultado, código de reserva, id del conflicto, detalle) |
+    | `RegistrarEventoCanal` (BIT-03; lo invoca el adaptador del canal, B4) | `RegistrarEventoCanalCommand` (canal, operación, sentido, carga útil, resultado, detalle) | `EventoCanalResult` |
+    | `ConsultarConflictosPendientes` / `ResolverConflicto` (CONF-04) | `ResolverConflictoCommand` (id, decisión, autor) | lista de `ConflictoResult` / `ConflictoResult` |
+    | `ConsultarBitacora` (CU-45) | `ConsultarBitacoraCommand` (canal, día desde, día hasta, página) | `Pagina<EventoCanalResult>` |
+    | `RegistrarTitular` / `ActualizarTitular` / `ConsultarTitular` | `RegistrarTitularCommand` (alojamiento, nombre, documento, correo, teléfono) / `ActualizarTitularCommand` (id, nombre, correo, teléfono) | `TitularResult` |
+    | `RegistrarNovedad` (CU-43) / `AvanzarNovedad` (CU-55) | `RegistrarNovedadCommand` (apartamento, descripción, gravedad, autor) / `AvanzarNovedadCommand` (id, autor) | `NovedadResult` (con `CambioResult`[] del historial) |
+    | `ConsultarNovedades` (CU-44) | — (apartamento, página) | `Pagina<NovedadResult>` |
 - [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `Pagina<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso.
   - Endpoints y DTO REST de B1a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL):
 
@@ -140,15 +141,15 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 
     | Endpoint | Request | Response |
     |---|---|---|
-    | `POST /api/canales` · `PUT /api/canales/{id}/desactivar` | `RegistrarCanalRequest` | `CanalResponse` |
-    | `POST /api/canales/{id}/reservas` (contrato del canal; credencial del canal, B4) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto) |
+    | `GET /api/canales` · `POST /api/canales` · `PUT /api/canales/{id}/desactivar` | `RegistrarCanalRequest` | lista de `CanalResponse` · `CanalResponse` |
+    | `POST /api/canales/{id}/reservas` (contrato del canal; credencial del canal, B4) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto; un rechazo por otra regla es el 409 `REGLA_NEGOCIO` de siempre, y el adaptador lo anota con `RegistrarEventoCanal`, DEC-62) |
     | `GET /api/conflictos?estado=PENDIENTE` · `PUT /api/conflictos/{id}/resolver` | `ResolverConflictoRequest` (decisión) | `ConflictoResponse` |
-    | `GET /api/canales/{id}/eventos?desde&hasta` | — | `Pagina<EventoCanalResponse>` |
-    | `POST /api/titulares` · `PUT /api/titulares/{id}` | `TitularRequest` | `TitularResponse` |
+    | `GET /api/canales/{id}/eventos?desde&hasta&pagina` (días) | — | `Pagina<EventoCanalResponse>` |
+    | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
-    | `GET /api/apartamentos/{codigo}/novedades` | — | `Pagina<NovedadResponse>` |
+    | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
 - [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`).
-- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57).
+- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador del canal autentica el mensaje (CAN-03), llama a `RecibirReservaExterna` y, si esta rechaza o falla, anota el RECHAZADO o el ERROR con `RegistrarEventoCanal` (DEC-62); un fallo de la bitácora no debe impedir la operación (BIT-06).
 
 ## Pendientes por definir (no tienen incremento todavía)
 - **TRA (CU-VA-01)**: datos del reporte por **huésped** en el `Ocupante` (procedencia, motivo del viaje; documento y nacionalidad pasan a obligatorios), el huésped los diligencia y recepción verifica y envía tras un puerto; si el envío falla, no bloquea el check-in. Esperando la lista final de campos del equipo (DEC-49).

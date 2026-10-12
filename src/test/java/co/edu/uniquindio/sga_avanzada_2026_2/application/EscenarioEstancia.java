@@ -72,6 +72,10 @@ public final class EscenarioEstancia {
     public final RepositoriosEnMemoria.Calendarios calendarios = new RepositoriosEnMemoria.Calendarios();
     public final RepositoriosEnMemoria.Tarifas tarifas = new RepositoriosEnMemoria.Tarifas();
     public final RepositoriosEnMemoria.Politicas politicas = new RepositoriosEnMemoria.Politicas();
+    public final RepositoriosEnMemoria.Canales canales = new RepositoriosEnMemoria.Canales();
+    public final RepositoriosEnMemoria.Conflictos conflictos = new RepositoriosEnMemoria.Conflictos();
+    public final RepositoriosEnMemoria.Eventos eventos = new RepositoriosEnMemoria.Eventos();
+    public final RepositoriosEnMemoria.Novedades novedades = new RepositoriosEnMemoria.Novedades();
     public final RepositoriosEnMemoria.Codigos codigos = new RepositoriosEnMemoria.Codigos();
     public final CargadorReserva cargador = new CargadorReserva(reservas, folios, apartamentos, alojamientos,
             calendarios, titulares, codigos);

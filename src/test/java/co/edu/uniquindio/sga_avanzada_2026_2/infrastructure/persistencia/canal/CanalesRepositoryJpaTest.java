@@ -118,7 +118,7 @@ class CanalesRepositoryJpaTest {
         eventos.registrar(evento("EVT-3", AHORA.plusDays(3)));
         sincronizar();
 
-        List<EventoCanal> delDia = eventos.buscarPorCanal(BOOKING, AHORA, AHORA.plusDays(1));
+        List<EventoCanal> delDia = eventos.listarPorCanal(BOOKING, AHORA, AHORA.plusDays(1), 0).contenido();
 
         assertEquals(List.of(new EventoCanalId("EVT-2"), new EventoCanalId("EVT-1")),
                 delDia.stream().map(EventoCanal::id).toList());
