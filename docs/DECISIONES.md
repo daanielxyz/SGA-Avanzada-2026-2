@@ -101,6 +101,14 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - Cada Response es un `record` propio aunque hoy coincida con su Result (DEC-31); la conversión `de(result)` y `aCommand(…)` viven en el Response y el Request, de paquete.
   - Pruebas: `@SpringBootTest` + MockMvc de extremo a extremo por controlador, con `AlojamientoDePrueba` (ids terminados en 900 para no chocar con las secuencias, que no se devuelven al deshacer la transacción). `ManejadorErroresTest` cubre con un controlador de mentira los errores que ningún endpoint provoca a voluntad.
   - `GET /api/apartamentos/{codigo}/tarifas` de un apartamento que no existe responde 200 con lista vacía: `ConsultarTarifas` no verifica el apartamento.
+- **DEC-65 · REST de la operación (B2b):**
+  - **Autor provisional**: `UsuarioActual` (`infrastructure/rest`) entrega el autor de registros, salidas y autorizaciones; hasta B3 devuelve el valor fijo `USR-PROVISIONAL` (`TODO(B3)`) y después, el usuario del token. Ningún Request trae autor (DEC-61).
+  - **Autorización sin control todavía**: `PUT …/folio/cerrar` y `PUT …/registrar-salida` aceptan un cuerpo opcional con `motivoAutorizacion`; sin cuerpo es la operación normal. Hasta B3 cualquiera puede enviarlo (AUTC-01 pendiente).
+  - **Canal de la reserva**: `CrearReservaRequest.canalOrigen` solo admite PORTAL o DIRECTO (400 si llega EXTERNO); las externas entran por el contrato del canal (DEC-62). En B3 se podrá deducir del rol.
+  - **Estados HTTP**: `POST /api/reservas` → 201 + `Location`; todo `POST` del folio (pago, devolución, reversos, servicio) → 201 con el folio completo, porque cada uno agrega un movimiento; `POST /api/cotizaciones` → 200, porque es un cálculo y no crea nada.
+  - **Rutas**: la búsqueda es `GET /api/apartamentos/disponibles` (`DisponibilidadController`, junto con la cotización); el folio cuelga de su reserva, `/api/reservas/{codigo}/folio`; llegada, corrección y salida van en `EstanciaController`, también bajo `/api/reservas/{codigo}`. `VencerReserva` no tiene endpoint: es del planificador (B4).
+  - `TitularReservaRequest` valida el formato del correo con `@Email` (400); el dominio lo vuelve a validar. `OcupanteRequest` y `TitularReservaRequest` son públicos para reutilizarlos en el contrato del canal (B2c).
+  - Pruebas: `PruebaRestDeReservas` es la base común (dos apartamentos listos para vender, reloj real, pasos previos por sus endpoints).
 
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:

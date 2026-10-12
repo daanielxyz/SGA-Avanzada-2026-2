@@ -92,7 +92,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `ConsultarNovedades` (CU-44) | — (apartamento, página) | `Pagina<NovedadResult>` |
 - [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `PaginaResponse<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso. Convenciones en DEC-64. Dividido en tres (decisión del equipo):
   - [x] **B2a · Configuración**: `AlojamientoController`, `PoliticaController`, `ApartamentoController` (listado, activar, retirar, capacidad, estado operativo, bloqueos), `TemporadaController` y `TarifaController`, con sus Request/Response (tabla de B1a abajo, ya implementada). Piezas comunes: `AlojamientoActual`, `PaginaResponse`, y en `ManejadorErrores` el 409 `CONCURRENCIA` y el 400 de parámetros de URL. 29 pruebas netas.
-  - [ ] **B2b · Operación**: búsqueda, cotización, reservas, folio, llegada y salida (tablas de B1b, A5 y A6).
+  - [x] **B2b · Operación** (DEC-65): `DisponibilidadController` (búsqueda y cotización), `ReservaController` (crear, consultar, modificar, hora de llegada, confirmar, cancelar, no-show), `EstanciaController` (llegada, corrección del registro, salida) y `FolioController` (consulta, pagos, devoluciones, reversos, servicios, cierre), con sus Request/Response (tablas de B1b, A5 y A6 abajo, ya implementadas). `UsuarioActual` entrega un autor provisional hasta B3. 29 pruebas.
   - [ ] **B2c · Canales, conflictos, bitácora, titulares y novedades** (tabla de A7).
   - Endpoints y DTO REST de B1a, hechos en B2a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL ni del cuerpo):
 
@@ -111,16 +111,16 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `PUT /api/temporadas/{id}/fechas` · `PUT /api/temporadas/{id}/desactivar` | `CambiarFechasTemporadaRequest` | `CalendarioResponse` |
     | `GET /api/apartamentos/{codigo}/tarifas` · `PUT /api/apartamentos/{codigo}/tarifas/{temporada}` | `DefinirTarifaRequest` | lista de `TarifaResponse` · `TarifaResponse` |
     | `POST /api/politicas` · `GET /api/politicas/vigente` | `PublicarPoliticaRequest` | `PoliticaResponse` (201 + Location a la vigente) |
-  - Endpoints y DTO REST de B1b (un conflicto de bloqueo optimista, DEC-59, responde 409 `CONCURRENCIA`, DEC-64):
+  - Endpoints y DTO REST de B1b, hechos en B2b (un conflicto de bloqueo optimista, DEC-59, responde 409 `CONCURRENCIA`, DEC-64):
 
     | Endpoint | Request | Response |
     |---|---|---|
     | `GET /api/apartamentos/disponibles?entrada&salida&ocupantes` | — | lista de `ApartamentoDisponibleResponse` |
-    | `POST /api/cotizaciones` | `CotizarEstanciaRequest` | `CotizacionResponse` |
+    | `POST /api/cotizaciones` | `CotizarEstanciaRequest` | `CotizacionResponse` (200) |
     | `POST /api/reservas` · `GET /api/reservas/{codigo}` | `CrearReservaRequest` | `ReservaResponse` (201 + Location) |
     | `PUT /api/reservas/{codigo}/modificar` | `ModificarReservaRequest` | `ReservaResponse` |
     | `PUT /api/reservas/{codigo}/hora-llegada` · `PUT …/confirmar` | `HoraLlegadaRequest` | `ReservaResponse` |
-  - Endpoints y DTO REST de A5 (Política y Folio). El `autor` de los Commands nunca viene en el Request: lo pone el controlador con el usuario autenticado (B3, DEC-61); hasta B3, B2 usa un valor provisional:
+  - Endpoints y DTO REST de A5 (Política y Folio). El `autor` de los Commands nunca viene en el Request: lo pone el controlador con `UsuarioActual`, que hasta B3 devuelve `USR-PROVISIONAL` (DEC-65). Folio hecho en B2b; cada `POST` responde 201 con el folio completo:
 
     | Endpoint | Request | Response |
     |---|---|---|
@@ -134,7 +134,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/reservas/{codigo}/folio/servicios` | `CargarServicioRequest` (servicioId) | `FolioResponse` |
     | `PUT /api/reservas/{codigo}/folio/cerrar` | `CerrarFolioRequest` (motivo de autorización opcional; solo admin, B3) | `FolioResponse` |
     | `PUT /api/reservas/{codigo}/cancelar` · `PUT …/no-show` | — | `CancelacionResponse` |
-  - Endpoints y DTO REST de A6 (Llegada y salida):
+  - Endpoints y DTO REST de A6 (Llegada y salida), hechos en B2b:
 
     | Endpoint | Request | Response |
     |---|---|---|
@@ -152,7 +152,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
-- [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`).
+- [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`). Pendientes que deja B2: `UsuarioActual` debe devolver el usuario del token (hoy `USR-PROVISIONAL`, DEC-65); solo el administrador puede enviar `motivoAutorizacion` al cerrar un folio o registrar una salida (AUTC-01), y las acciones de administrador de B2a (DEC-22).
 - [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador del canal autentica el mensaje (CAN-03), llama a `RecibirReservaExterna` y, si esta rechaza o falla, anota el RECHAZADO o el ERROR con `RegistrarEventoCanal` (DEC-62); un fallo de la bitácora no debe impedir la operación (BIT-06).
 
 ## Pendientes por definir (no tienen incremento todavía)

@@ -1,0 +1,58 @@
+package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
+
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistro;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalida;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Optional;
+
+/**
+ * Endpoints de la llegada, su corrección y la salida (CU-21 · CU-22 · CU-38). El autor es el usuario que hace la
+ * petición, nunca un dato del cuerpo (DEC-61). Solo traduce HTTP ⇄ caso de uso (DEC-33).
+ */
+@RestController
+@RequestMapping("/api/reservas/{codigo}")
+public class EstanciaController {
+
+    private final UsuarioActual usuario;
+    private final RegistrarLlegada registrarLlegada;
+    private final CorregirRegistro corregirRegistro;
+    private final RegistrarSalida registrarSalida;
+
+    public EstanciaController(UsuarioActual usuario, RegistrarLlegada registrarLlegada,
+                              CorregirRegistro corregirRegistro, RegistrarSalida registrarSalida) {
+        this.usuario = usuario;
+        this.registrarLlegada = registrarLlegada;
+        this.corregirRegistro = corregirRegistro;
+        this.registrarSalida = registrarSalida;
+    }
+
+    @PutMapping("/registrar-llegada")
+    public EstanciaResponse registrarLlegada(@PathVariable String codigo) {
+        return EstanciaResponse.de(registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, usuario.id())));
+    }
+
+    @PutMapping("/corregir-registro")
+    public EstanciaResponse corregirRegistro(@PathVariable String codigo,
+                                             @Valid @RequestBody CorregirRegistroRequest solicitud) {
+        return EstanciaResponse.de(corregirRegistro.ejecutar(solicitud.aCommand(codigo, usuario.id())));
+    }
+
+    /** Sin cuerpo es la salida normal; con motivo de autorización, la salida con saldo pendiente (RN-17). */
+    @PutMapping("/registrar-salida")
+    public EstanciaResponse registrarSalida(@PathVariable String codigo,
+                                            @Valid @RequestBody(required = false) RegistrarSalidaRequest solicitud) {
+        String motivo = Optional.ofNullable(solicitud).map(RegistrarSalidaRequest::motivoAutorizacion).orElse(null);
+        return EstanciaResponse.de(
+                registrarSalida.ejecutar(new RegistrarSalidaCommand(codigo, usuario.id(), motivo)));
+    }
+}

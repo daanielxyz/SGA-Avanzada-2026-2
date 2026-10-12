@@ -7,6 +7,14 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojam
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicional;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicionalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Ubicacion;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Capacidad;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Caracteristica;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Dormitorio;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Imagen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -18,10 +26,15 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.TramoCancelacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Tarifa;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TarifaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TarifaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TemporadaId;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -52,6 +65,25 @@ public final class AlojamientoDePrueba {
         politicas.guardar(PoliticaCancelacion.crear(new PoliticaId(POLITICA), ALO,
                 List.of(new TramoCancelacion(48, delTotal(0)), new TramoCancelacion(0, delTotal(50))), delTotal(100),
                 2));
+    }
+
+    /** Hoy en Colombia, como lo ve el reloj de la aplicación (EST-06). */
+    public static LocalDate hoy() {
+        return LocalDate.now(ZoneId.of("America/Bogota"));
+    }
+
+    /**
+     * Un apartamento listo para vender y entregar: activo, PREPARADO y con tarifa de 100.000 por ocupante en la
+     * temporada base.
+     */
+    public static void guardarApartamento(ApartamentoRepository apartamentos, TarifaRepository tarifas,
+                                          String codigo, int capacidad) {
+        ApartamentoId id = new ApartamentoId(codigo);
+        apartamentos.guardar(new Apartamento(id, ALO, "Apartamento " + codigo, null, new Capacidad(capacidad),
+                new Dormitorio(2), EstadoOperativo.PREPARADO, List.of(new Imagen("https://cdn.sga.co/apt.jpg", true)),
+                List.of(new Caracteristica("Balcón")), List.of(), true));
+        tarifas.guardar(Tarifa.crear(new TarifaId("TAR-900-" + codigo), id, new TemporadaId(TEMPORADA_BASE),
+                Dinero.de(100_000), hoy()));
     }
 
     private static Penalizacion delTotal(int porcentaje) {
