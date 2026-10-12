@@ -42,7 +42,6 @@ class ApartamentoControllerTest {
     private static final String VALIDO = """
             {
               "codigo": "APT-101",
-              "alojamientoId": "ALO-1",
               "nombre": "Apartamento 101",
               "descripcion": "Vista al mar",
               "capacidad": 4,
@@ -119,14 +118,6 @@ class ApartamentoControllerTest {
     @Test
     void deberiaResponder404SiElApartamentoNoExiste() throws Exception {
         mvc.perform(get("/api/apartamentos/APT-999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
-    }
-
-    @Test
-    void deberiaResponder404SiElAlojamientoNoExiste() throws Exception {
-        mvc.perform(post("/api/apartamentos").contentType(MediaType.APPLICATION_JSON)
-                        .content(VALIDO.replace("ALO-1", "ALO-9")))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
     }

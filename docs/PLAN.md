@@ -90,15 +90,18 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RegistrarTitular` / `ActualizarTitular` / `ConsultarTitular` | `RegistrarTitularCommand` (alojamiento, nombre, documento, correo, teléfono) / `ActualizarTitularCommand` (id, nombre, correo, teléfono) | `TitularResult` |
     | `RegistrarNovedad` (CU-43) / `AvanzarNovedad` (CU-55) | `RegistrarNovedadCommand` (apartamento, descripción, gravedad, autor) / `AvanzarNovedadCommand` (id, autor) | `NovedadResult` (con `CambioResult`[] del historial) |
     | `ConsultarNovedades` (CU-44) | — (apartamento, página) | `Pagina<NovedadResult>` |
-- [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `Pagina<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso.
-  - Endpoints y DTO REST de B1a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL):
+- [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `PaginaResponse<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso. Convenciones en DEC-64. Dividido en tres (decisión del equipo):
+  - [x] **B2a · Configuración**: `AlojamientoController`, `PoliticaController`, `ApartamentoController` (listado, activar, retirar, capacidad, estado operativo, bloqueos), `TemporadaController` y `TarifaController`, con sus Request/Response (tabla de B1a abajo, ya implementada). Piezas comunes: `AlojamientoActual`, `PaginaResponse`, y en `ManejadorErrores` el 409 `CONCURRENCIA` y el 400 de parámetros de URL. 29 pruebas netas.
+  - [ ] **B2b · Operación**: búsqueda, cotización, reservas, folio, llegada y salida (tablas de B1b, A5 y A6).
+  - [ ] **B2c · Canales, conflictos, bitácora, titulares y novedades** (tabla de A7).
+  - Endpoints y DTO REST de B1a, hechos en B2a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL ni del cuerpo):
 
     | Endpoint | Request | Response |
     |---|---|---|
     | `GET /api/alojamiento` | — | `AlojamientoResponse` |
     | `PUT /api/alojamiento/parametros` · `PUT /api/alojamiento/ubicacion` | `ParametrosRequest` · `UbicacionRequest` | `AlojamientoResponse` |
     | `PUT /api/alojamiento/medios-pago/{medio}/habilitar` · `…/deshabilitar` | — | `AlojamientoResponse` |
-    | `POST /api/alojamiento/servicios` · `PUT …/servicios/{id}/valor` · `PUT …/servicios/{id}/desactivar` | `ServicioAdicionalRequest` · `ValorServicioRequest` | `AlojamientoResponse` |
+    | `POST /api/alojamiento/servicios` · `PUT …/servicios/{id}/valor` · `PUT …/servicios/{id}/desactivar` | `ServicioAdicionalRequest` · `ValorServicioRequest` | `AlojamientoResponse` (201 al agregar) |
     | `GET /api/apartamentos?pagina=` | — | `Pagina<ApartamentoResponse>` |
     | `PUT /api/apartamentos/{codigo}/activar` · `…/retirar` | — | `ApartamentoResponse` |
     | `PUT /api/apartamentos/{codigo}/capacidad` | `CambiarCapacidadRequest` | `CambioCapacidadResponse` |
@@ -106,8 +109,9 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/apartamentos/{codigo}/bloqueos` · `PUT …/bloqueos/{id}/levantar` | `RegistrarBloqueoRequest` | `ApartamentoResponse` |
     | `GET /api/temporadas` · `POST /api/temporadas` | `AgregarTemporadaRequest` | `CalendarioResponse` · `TemporadaCreadaResponse` (201) |
     | `PUT /api/temporadas/{id}/fechas` · `PUT /api/temporadas/{id}/desactivar` | `CambiarFechasTemporadaRequest` | `CalendarioResponse` |
-    | `GET /api/apartamentos/{codigo}/tarifas` · `PUT /api/apartamentos/{codigo}/tarifas/{temporada}` | `DefinirTarifaRequest` | `TarifaResponse` |
-  - Endpoints y DTO REST de B1b (un conflicto de bloqueo optimista, DEC-59, responde 409 como `REGLA_NEGOCIO` o un código propio):
+    | `GET /api/apartamentos/{codigo}/tarifas` · `PUT /api/apartamentos/{codigo}/tarifas/{temporada}` | `DefinirTarifaRequest` | lista de `TarifaResponse` · `TarifaResponse` |
+    | `POST /api/politicas` · `GET /api/politicas/vigente` | `PublicarPoliticaRequest` | `PoliticaResponse` (201 + Location a la vigente) |
+  - Endpoints y DTO REST de B1b (un conflicto de bloqueo optimista, DEC-59, responde 409 `CONCURRENCIA`, DEC-64):
 
     | Endpoint | Request | Response |
     |---|---|---|
@@ -120,8 +124,8 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
 
     | Endpoint | Request | Response |
     |---|---|---|
-    | `POST /api/politicas` | `PublicarPoliticaRequest` | `PoliticaResponse` (201 + Location) |
-    | `GET /api/politicas/vigente` | — | `PoliticaResponse` |
+    | `POST /api/politicas` (hecho en B2a) | `PublicarPoliticaRequest` | `PoliticaResponse` (201 + Location) |
+    | `GET /api/politicas/vigente` (hecho en B2a) | — | `PoliticaResponse` |
     | `GET /api/reservas/{codigo}/folio` | — | `FolioResponse` |
     | `POST /api/reservas/{codigo}/folio/pagos` | `RegistrarPagoRequest` | `FolioResponse` |
     | `POST /api/reservas/{codigo}/folio/devoluciones` | `RegistrarPagoRequest` | `FolioResponse` |

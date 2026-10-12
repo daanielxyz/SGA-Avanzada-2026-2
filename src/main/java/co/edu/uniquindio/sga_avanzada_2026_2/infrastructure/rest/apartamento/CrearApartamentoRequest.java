@@ -14,15 +14,12 @@ import java.util.List;
 
 /**
  * Cuerpo de {@code POST /api/apartamentos}. Valida solo el formato (400); las reglas de negocio las valida el
- * dominio (409) (DEC-31).
+ * dominio (409) (DEC-31). El alojamiento es el del despliegue, no viene en el cuerpo (DEC-64).
  */
 public record CrearApartamentoRequest(
         @NotBlank(message = "es obligatorio")
         @Pattern(regexp = "APT-\\d+", message = "debe tener el formato APT-101")
         String codigo,
-
-        @NotBlank(message = "es obligatorio")
-        String alojamientoId,
 
         @NotBlank(message = "es obligatorio")
         @Size(max = 120, message = "admite máximo 120 caracteres")
@@ -55,7 +52,7 @@ public record CrearApartamentoRequest(
             boolean principal) {
     }
 
-    CrearApartamentoCommand aCommand() {
+    CrearApartamentoCommand aCommand(String alojamientoId) {
         return new CrearApartamentoCommand(codigo, alojamientoId, nombre, descripcion, capacidad, dormitorios,
                 imagenes.stream().map(i -> new CrearApartamentoCommand.ImagenCommand(i.url(), i.principal())).toList(),
                 caracteristicas);

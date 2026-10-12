@@ -90,6 +90,17 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - `RegistrarTitular` con un documento que ya existe en el alojamiento responde **409 DUPLICADO** (decisión del equipo); para cambiar sus datos está `ActualizarTitular`. Al crear una reserva se sigue reutilizando y actualizando el titular (DEC-58). Se agregó `ConsultarTitular`.
   - `RegistrarNovedad`, `AvanzarNovedad` y `ResolverConflicto` llevan `autor` en el Command, como en DEC-61.
   - Los puertos de listado pasaron a paginar (DEC-18): `NovedadRepository.listarPorApartamento` y `EventoCanalRepository.listarPorCanal` reemplazan a `buscarPorApartamento` y `buscarPorCanal`. Las novedades se ordenan y se cortan en memoria, porque su fecha vive en el historial y son pocas por apartamento. `CanalRepository` ganó `buscarPorAlojamiento`.
+- **DEC-64 · Convenciones REST de B2:**
+  - **Alojamiento del despliegue**: `AlojamientoActual` (`infrastructure/rest`) entrega el id de `sga.alojamiento.id`; ningún endpoint lo recibe por la URL ni por el cuerpo, así un cliente no opera sobre otro alojamiento (ALO-01). `POST /api/apartamentos` dejó de recibir `alojamientoId`.
+  - **Concurrencia** (decisión del equipo): un choque de bloqueo optimista (`OptimisticLockingFailureException`, DEC-17) responde **409 `CONCURRENCIA`**, distinto de `REGLA_NEGOCIO`, para que el cliente vuelva a consultar y reintente.
+  - **400 también fuera del cuerpo**: parámetro de URL inválido (`pagina=-1`, `pagina=dos`) o faltante → 400 `VALIDACION` con su detalle, igual que el cuerpo (DEC-33).
+  - **Enums**: el Request los recibe como texto con `@Pattern` de sus valores, así un valor que no existe es 400 y nunca llega a un `valueOf` del caso de uso; una transición o combinación no permitida sigue siendo 409 del dominio.
+  - **Dinero** en un Request: `BigDecimal` con `@Digits(fraction = 0)`; los decimales son error de formato (400).
+  - **Códigos de estado**: `POST` que crea → 201 (con `Location` cuando el recurso tiene su propio `GET`); las acciones `PUT …/verbo` → 200 con el recurso actualizado.
+  - **Listados**: `PaginaResponse<T>` (contenido, número, tamaño, total de elementos y de páginas) con `?pagina=` desde 0.
+  - Cada Response es un `record` propio aunque hoy coincida con su Result (DEC-31); la conversión `de(result)` y `aCommand(…)` viven en el Response y el Request, de paquete.
+  - Pruebas: `@SpringBootTest` + MockMvc de extremo a extremo por controlador, con `AlojamientoDePrueba` (ids terminados en 900 para no chocar con las secuencias, que no se devuelven al deshacer la transacción). `ManejadorErroresTest` cubre con un controlador de mentira los errores que ningún endpoint provoca a voluntad.
+  - `GET /api/apartamentos/{codigo}/tarifas` de un apartamento que no existe responde 200 con lista vacía: `ConsultarTarifas` no verifica el apartamento.
 
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:
