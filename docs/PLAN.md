@@ -90,10 +90,10 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `RegistrarTitular` / `ActualizarTitular` / `ConsultarTitular` | `RegistrarTitularCommand` (alojamiento, nombre, documento, correo, teléfono) / `ActualizarTitularCommand` (id, nombre, correo, teléfono) | `TitularResult` |
     | `RegistrarNovedad` (CU-43) / `AvanzarNovedad` (CU-55) | `RegistrarNovedadCommand` (apartamento, descripción, gravedad, autor) / `AvanzarNovedadCommand` (id, autor) | `NovedadResult` (con `CambioResult`[] del historial) |
     | `ConsultarNovedades` (CU-44) | — (apartamento, página) | `Pagina<NovedadResult>` |
-- [ ] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `PaginaResponse<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso. Convenciones en DEC-64. Dividido en tres (decisión del equipo):
+- [x] **B2 · REST** por acciones de negocio con `XRequest`/`XResponse` por endpoint (DEC-31, DEC-32), errores por el manejador global de A1-E (DEC-33), `PaginaResponse<T>` de 10. Pruebas MockMvc por endpoint. Un valor de enum inválido en el Request (`base`, `estado`) debe dar 400, no llegar al caso de uso. Convenciones en DEC-64. Dividido en tres (decisión del equipo):
   - [x] **B2a · Configuración**: `AlojamientoController`, `PoliticaController`, `ApartamentoController` (listado, activar, retirar, capacidad, estado operativo, bloqueos), `TemporadaController` y `TarifaController`, con sus Request/Response (tabla de B1a abajo, ya implementada). Piezas comunes: `AlojamientoActual`, `PaginaResponse`, y en `ManejadorErrores` el 409 `CONCURRENCIA` y el 400 de parámetros de URL. 29 pruebas netas.
   - [x] **B2b · Operación** (DEC-65): `DisponibilidadController` (búsqueda y cotización), `ReservaController` (crear, consultar, modificar, hora de llegada, confirmar, cancelar, no-show), `EstanciaController` (llegada, corrección del registro, salida) y `FolioController` (consulta, pagos, devoluciones, reversos, servicios, cierre), con sus Request/Response (tablas de B1b, A5 y A6 abajo, ya implementadas). `UsuarioActual` entrega un autor provisional hasta B3. 29 pruebas.
-  - [ ] **B2c · Canales, conflictos, bitácora, titulares y novedades** (tabla de A7).
+  - [x] **B2c · Canales, conflictos, bitácora, titulares y novedades** (DEC-66): `CanalController`, `ContratoCanalController` (el endpoint que usan los canales, aún sin credencial), `ConflictoController`, `TitularController` y `NovedadController`, con sus Request/Response (tabla de A7 abajo, ya implementada), y `ReceptorReservaExterna` en `infrastructure/externos`, que deja en la bitácora los mensajes rechazados. 18 pruebas.
   - Endpoints y DTO REST de B1a, hechos en B2a (el alojamiento es el del despliegue, ALO-01: su id sale de `sga.alojamiento.id`, no de la URL ni del cuerpo):
 
     | Endpoint | Request | Response |
@@ -141,19 +141,19 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `PUT /api/reservas/{codigo}/registrar-llegada` | — | `EstanciaResponse` |
     | `PUT /api/reservas/{codigo}/corregir-registro` | `CorregirRegistroRequest` (fechaHora, motivo) | `EstanciaResponse` |
     | `PUT /api/reservas/{codigo}/registrar-salida` | `RegistrarSalidaRequest` (motivo de autorización opcional; solo admin, B3) | `EstanciaResponse` |
-  - Endpoints y DTO REST de A7 (Canales, Titular, Novedad):
+  - Endpoints y DTO REST de A7 (Canales, Titular, Novedad), hechos en B2c:
 
     | Endpoint | Request | Response |
     |---|---|---|
     | `GET /api/canales` · `POST /api/canales` · `PUT /api/canales/{id}/desactivar` | `RegistrarCanalRequest` | lista de `CanalResponse` · `CanalResponse` |
-    | `POST /api/canales/{id}/reservas` (contrato del canal; credencial del canal, B4) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto; un rechazo por otra regla es el 409 `REGLA_NEGOCIO` de siempre, y el adaptador lo anota con `RegistrarEventoCanal`, DEC-62) |
-    | `GET /api/conflictos?estado=PENDIENTE` · `PUT /api/conflictos/{id}/resolver` | `ResolverConflictoRequest` (decisión) | `ConflictoResponse` |
+    | `POST /api/canales/{id}/reservas` (contrato del canal; hecho sin credencial, que es de B4) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto; un rechazo por otra regla es el 409 `REGLA_NEGOCIO` de siempre, y el adaptador lo anota con `RegistrarEventoCanal`, DEC-62) |
+    | `GET /api/conflictos/pendientes` · `PUT /api/conflictos/{id}/resolver` | `ResolverConflictoRequest` (decisión) | lista de `ConflictoResponse` · `ConflictoResponse` |
     | `GET /api/canales/{id}/eventos?desde&hasta&pagina` (días) | — | `Pagina<EventoCanalResponse>` |
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
 - [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`). Pendientes que deja B2: `UsuarioActual` debe devolver el usuario del token (hoy `USR-PROVISIONAL`, DEC-65); solo el administrador puede enviar `motivoAutorizacion` al cerrar un folio o registrar una salida (AUTC-01), y las acciones de administrador de B2a (DEC-22).
-- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador del canal autentica el mensaje (CAN-03), llama a `RecibirReservaExterna` y, si esta rechaza o falla, anota el RECHAZADO o el ERROR con `RegistrarEventoCanal` (DEC-62); un fallo de la bitácora no debe impedir la operación (BIT-06).
+- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa.
 
 ## Pendientes por definir (no tienen incremento todavía)
 - **TRA (CU-VA-01)**: datos del reporte por **huésped** en el `Ocupante` (procedencia, motivo del viaje; documento y nacionalidad pasan a obligatorios), el huésped los diligencia y recepción verifica y envía tras un puerto; si el envío falla, no bloquea el check-in. Esperando la lista final de campos del equipo (DEC-49).

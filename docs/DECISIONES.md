@@ -109,6 +109,14 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - **Rutas**: la búsqueda es `GET /api/apartamentos/disponibles` (`DisponibilidadController`, junto con la cotización); el folio cuelga de su reserva, `/api/reservas/{codigo}/folio`; llegada, corrección y salida van en `EstanciaController`, también bajo `/api/reservas/{codigo}`. `VencerReserva` no tiene endpoint: es del planificador (B4).
   - `TitularReservaRequest` valida el formato del correo con `@Email` (400); el dominio lo vuelve a validar. `OcupanteRequest` y `TitularReservaRequest` son públicos para reutilizarlos en el contrato del canal (B2c).
   - Pruebas: `PruebaRestDeReservas` es la base común (dos apartamentos listos para vender, reloj real, pasos previos por sus endpoints).
+- **DEC-66 · REST de canales, titulares y novedades (B2c):**
+  - **Contrato del canal expuesto sin credencial** (decisión del equipo): `POST /api/canales/{id}/reservas` (`ContratoCanalController`) ya funciona completo; verificar la credencial del canal queda para B4 (`TODO(B4)`, CAN-03 · DEC-47). Hasta B3/B4 ningún endpoint autentica.
+  - **Respuesta al canal**: EXITOSO → 201 + `Location` de la reserva; DUPLICADO → 200 con la reserva que ya existía; CONFLICTO → 409 con `ReservaExternaResponse` (resultado, id del conflicto y motivo), no con `ErrorResponse`. Un rechazo por otra regla es el 409 `REGLA_NEGOCIO` del manejador global, y un cuerpo mal formado, 400.
+  - **Adaptador de entrada**: `ReceptorReservaExterna` (`infrastructure/externos`) llama a `RecibirReservaExterna` y, si esta rechaza (regla de negocio o recurso inexistente) o falla, anota RECHAZADO o ERROR con `RegistrarEventoCanal` y deja pasar la misma excepción (DEC-62). Así el controlador sigue sin capturar excepciones (DEC-33). Si la bitácora falla, solo queda un aviso en el log y el canal recibe igual su respuesta (BIT-06); pasa, por ejemplo, cuando el canal de la URL no existe.
+  - **Carga útil**: el cuerpo recibido, vuelto a escribir como JSON; no lleva credenciales (BIT-04). Guarda datos personales del titular y los ocupantes: revisar si se depuran cuando se defina el TRA.
+  - `GET /api/conflictos/pendientes` reemplaza al `?estado=PENDIENTE` planeado: solo existe la consulta de pendientes.
+  - `POST /api/titulares` → 201 + `Location`; `POST /api/canales` y `POST …/novedades` → 201 sin `Location` (no tienen `GET` por id).
+  - En una prueba `@Transactional` el evento RECHAZADO no se puede ver (lo escribe otra transacción, que no ve el canal sin confirmar): por eso `ReceptorReservaExternaTest` lo prueba con repositorios en memoria.
 
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:
