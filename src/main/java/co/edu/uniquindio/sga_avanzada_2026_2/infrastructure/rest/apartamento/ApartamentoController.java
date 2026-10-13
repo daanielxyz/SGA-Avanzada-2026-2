@@ -13,6 +13,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RegistrarBl
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RetirarApartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.Set;
 
 /**
  * Endpoints de apartamentos. Solo traduce HTTP ⇄ caso de uso; los errores los responde el manejador global
@@ -37,7 +39,12 @@ import java.net.URI;
 @RequestMapping("/api/apartamentos")
 public class ApartamentoController {
 
+    /** Los estados entre los que se mueve el personal de servicio (EOPE-04). */
+    private static final Set<String> RUTA_DE_PREPARACION =
+            Set.of("PENDIENTE_PREPARACION", "EN_PREPARACION", "PREPARADO");
+
     private final AlojamientoActual alojamiento;
+    private final UsuarioActual usuario;
     private final CrearApartamento crearApartamento;
     private final ConsultarApartamento consultarApartamento;
     private final ListarApartamentos listarApartamentos;
@@ -48,12 +55,14 @@ public class ApartamentoController {
     private final RegistrarBloqueo registrarBloqueo;
     private final LevantarBloqueo levantarBloqueo;
 
-    public ApartamentoController(AlojamientoActual alojamiento, CrearApartamento crearApartamento,
-                                 ConsultarApartamento consultarApartamento, ListarApartamentos listarApartamentos,
+    public ApartamentoController(AlojamientoActual alojamiento, UsuarioActual usuario,
+                                 CrearApartamento crearApartamento, ConsultarApartamento consultarApartamento,
+                                 ListarApartamentos listarApartamentos,
                                  ActivarApartamento activarApartamento, RetirarApartamento retirarApartamento,
                                  CambiarCapacidad cambiarCapacidad, CambiarEstadoOperativo cambiarEstadoOperativo,
                                  RegistrarBloqueo registrarBloqueo, LevantarBloqueo levantarBloqueo) {
         this.alojamiento = alojamiento;
+        this.usuario = usuario;
         this.crearApartamento = crearApartamento;
         this.consultarApartamento = consultarApartamento;
         this.listarApartamentos = listarApartamentos;
@@ -100,9 +109,17 @@ public class ApartamentoController {
         return CambioCapacidadResponse.de(cambiarCapacidad.ejecutar(solicitud.aCommand(codigo)));
     }
 
+    /**
+     * El personal de servicio solo mueve el apartamento por la ruta de preparación; declararlo fuera de servicio,
+     * o devolverlo de ahí, es del administrador (EOPE-04 · DEC-22).
+     */
     @PutMapping("/{codigo}/estado-operativo")
     public ApartamentoResponse cambiarEstadoOperativo(@PathVariable String codigo,
                                                       @Valid @RequestBody CambiarEstadoOperativoRequest solicitud) {
+        String actual = consultarApartamento.ejecutar(codigo).estadoOperativo();
+        if (!RUTA_DE_PREPARACION.contains(actual) || !RUTA_DE_PREPARACION.contains(solicitud.estado())) {
+            usuario.exigirAdministrador("sacar un apartamento de la ruta de preparación o devolverlo a ella");
+        }
         return ApartamentoResponse.de(cambiarEstadoOperativo.ejecutar(solicitud.aCommand(codigo)));
     }
 

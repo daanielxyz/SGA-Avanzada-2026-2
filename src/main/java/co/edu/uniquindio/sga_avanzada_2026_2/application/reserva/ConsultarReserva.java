@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Caso de uso: ver el detalle de una reserva por su código (CU-49). Que un huésped solo vea las suyas lo controla
- * la seguridad (B3).
+ * la seguridad (USU-04, B3b).
  */
 @Service
 public class ConsultarReserva {

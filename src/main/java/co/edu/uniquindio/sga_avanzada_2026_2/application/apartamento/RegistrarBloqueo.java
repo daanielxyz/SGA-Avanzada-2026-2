@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Caso de uso: el administrador bloquea un apartamento en un rango de fechas (CU-32). Que solo el administrador
- * bloquee (BLO-04) lo controla la seguridad (B3 · DEC-22).
+ * bloquee (BLO-04) lo controla la seguridad (DEC-22 · DEC-67).
  */
 @Service
 public class RegistrarBloqueo {

@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Entrada de {@link CerrarFolio}.
  *
- * @param autor              usuario que cierra; en B3 sale del usuario autenticado (DEC-61)
+ * @param autor              usuario que cierra; es el usuario autenticado (DEC-61 · DEC-67)
  * @param motivoAutorizacion solo para cerrar con saldo distinto de cero (RN-17); vacío si el saldo está en cero
  */
 public record CerrarFolioCommand(String codigoReserva, String autor, String motivoAutorizacion) {

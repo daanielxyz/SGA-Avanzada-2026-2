@@ -3,6 +3,8 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoDuplicadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AccesoDenegadoException;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CredencialesInvalidasException;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -18,8 +20,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.util.List;
 
 /**
- * Traduce las excepciones a respuestas HTTP uniformes (DEC-33): formato → 400, no encontrado → 404, duplicado,
- * regla de negocio o choque de concurrencia → 409. Ningún controlador captura excepciones por su cuenta.
+ * Traduce las excepciones a respuestas HTTP uniformes (DEC-33): formato → 400, credenciales → 401, rol → 403, no
+ * encontrado → 404, duplicado, regla de negocio o choque de concurrencia → 409. Ningún controlador captura
+ * excepciones por su cuenta. El 401 y el 403 de una petición que no llega al controlador los responde
+ * {@code RespuestasDeSeguridad} (DEC-67).
  */
 @RestControllerAdvice
 public class ManejadorErrores {
@@ -61,6 +65,16 @@ public class ManejadorErrores {
     ResponseEntity<ErrorResponse> cuerpoIlegible(HttpMessageNotReadableException e) {
         return responder(HttpStatus.BAD_REQUEST, "VALIDACION", "El cuerpo de la solicitud no es un JSON válido",
                 List.of());
+    }
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    ResponseEntity<ErrorResponse> credencialesInvalidas(CredencialesInvalidasException e) {
+        return responder(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", e.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(AccesoDenegadoException.class)
+    ResponseEntity<ErrorResponse> sinPermiso(AccesoDenegadoException e) {
+        return responder(HttpStatus.FORBIDDEN, "SIN_PERMISO", e.getMessage(), List.of());
     }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)

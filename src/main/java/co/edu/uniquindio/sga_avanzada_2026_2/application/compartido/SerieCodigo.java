@@ -19,6 +19,7 @@ public enum SerieCodigo {
     CONFLICTO("CON"),
     EVENTO("EVT"),
     NOVEDAD("NOV"),
+    USUARIO("USR"),
     RESERVA("RES") {
         @Override
         public String formatear(long numero, LocalDate hoy) {

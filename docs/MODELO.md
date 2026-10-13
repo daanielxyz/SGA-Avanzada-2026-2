@@ -16,7 +16,8 @@ PoliticaCancelacion (una por versión) ─ TramoCancelacion, Porcentaje         
 Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPago(catálogo)
 Canal  ·  ConflictoCanal  ·  EventoCanal(bitácora, solo escritura)  ·  Novedad                →Id: canal, apartamento
 Transversales: Dinero, Noche, Documento, Correo, ids tipados.   Calculados (no se guardan): Disponibilidad, Cotizacion.
-Fuera del dominio (infrastructure.seguridad): Usuario, Rol.
+Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada, rol, eliminado),
+  Rol(HUESPED, RECEPCIONISTA, ADMINISTRADOR, PERSONAL_SERVICIO). Tabla usuario (V11); permisos en PermisosPorRol (DEC-67).
 ```
 
 ## 2. Clases

@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -41,7 +41,7 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.estadoOperativo").value("OCUPADO"))
                 .andExpect(jsonPath("$.registros", hasSize(1)))
                 .andExpect(jsonPath("$.registros[0].id").value("REG-1"))
-                .andExpect(jsonPath("$.registros[0].autor").value(UsuarioActual.PROVISIONAL))
+                .andExpect(jsonPath("$.registros[0].autor").value(SesionDePrueba.ADMINISTRADOR))
                 .andExpect(jsonPath("$.salida").value(nullValue()))
                 .andExpect(jsonPath("$.folioCerrado").value(false))
                 .andExpect(jsonPath("$.saldo").value(280000));
@@ -111,7 +111,7 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.estado").value("FINALIZADA"))
                 .andExpect(jsonPath("$.estadoOperativo").value("PENDIENTE_PREPARACION"))
                 .andExpect(jsonPath("$.salida.id").value("SAL-1"))
-                .andExpect(jsonPath("$.salida.autor").value(UsuarioActual.PROVISIONAL))
+                .andExpect(jsonPath("$.salida.autor").value(SesionDePrueba.ADMINISTRADOR))
                 .andExpect(jsonPath("$.folioCerrado").value(true))
                 .andExpect(jsonPath("$.situacionSaldo").value("AL_DIA"));
         mvc.perform(put(reserva(codigo) + "/registrar-salida"))

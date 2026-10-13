@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -145,7 +145,7 @@ class CanalesControllerTest extends PruebaRestDeReservas {
         enviar(put("/api/conflictos/" + conflicto + "/resolver"), "{\"decision\": \"Se reubicó en el APT-102\"}")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("RESUELTO"))
-                .andExpect(jsonPath("$.resueltoPor").value(UsuarioActual.PROVISIONAL))
+                .andExpect(jsonPath("$.resueltoPor").value(SesionDePrueba.ADMINISTRADOR))
                 .andExpect(jsonPath("$.decision").value("Se reubicó en el APT-102"));
         enviar(put("/api/conflictos/" + conflicto + "/resolver"), "{\"decision\": \"Otra\"}")
                 .andExpect(status().isConflict());

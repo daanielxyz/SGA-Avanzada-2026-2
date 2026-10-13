@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.novedad;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class NovedadControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.gravedad").value("MEDIA"))
                 .andExpect(jsonPath("$.estado").value("ABIERTA"))
                 .andExpect(jsonPath("$.historial", hasSize(1)))
-                .andExpect(jsonPath("$.historial[0].autor").value(UsuarioActual.PROVISIONAL));
+                .andExpect(jsonPath("$.historial[0].autor").value(SesionDePrueba.ADMINISTRADOR));
         mvc.perform(get("/api/apartamentos/APT-101"))
                 .andExpect(jsonPath("$.estadoOperativo").value("PREPARADO"))
                 .andExpect(jsonPath("$.bloqueos").isEmpty());

@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Caso de uso: avanzar la preparación de un apartamento (CU-42) o declararlo fuera de servicio (CU-40). Que solo el
- * administrador declare FUERA_DE_SERVICIO (EOPE-04) lo controla la seguridad (B3 · DEC-22).
+ * administrador declare FUERA_DE_SERVICIO (EOPE-04) lo controla la seguridad (DEC-22 · DEC-67).
  */
 @Service
 public class CambiarEstadoOperativo {

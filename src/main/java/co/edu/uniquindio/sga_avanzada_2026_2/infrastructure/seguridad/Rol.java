@@ -7,5 +7,10 @@ public enum Rol {
     HUESPED,
     ADMINISTRADOR,
     RECEPCIONISTA,
-    PERSONAL_SERVICIO
+    PERSONAL_SERVICIO;
+
+    /** Nombre con el que Spring Security conoce el rol. */
+    public String autoridad() {
+        return "ROLE_" + name();
+    }
 }

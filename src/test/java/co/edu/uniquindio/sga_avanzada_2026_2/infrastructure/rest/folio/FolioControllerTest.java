@@ -2,7 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -189,6 +189,6 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.cerrado").value(true))
                 .andExpect(jsonPath("$.saldo").value(400000))
                 .andExpect(jsonPath("$.autorizacion.motivo").value("Convenio con la empresa"))
-                .andExpect(jsonPath("$.autorizacion.autor").value(UsuarioActual.PROVISIONAL));
+                .andExpect(jsonPath("$.autorizacion.autor").value(SesionDePrueba.ADMINISTRADOR));
     }
 }

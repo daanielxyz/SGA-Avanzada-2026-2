@@ -9,7 +9,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 
 /**
- * Adaptador del puerto {@link GeneradorCodigos} con una secuencia de la BD por serie ({@code seq_<serie>}, V8, V9 y V10):
+ * Adaptador del puerto {@link GeneradorCodigos} con una secuencia de la BD por serie ({@code seq_<serie>}, V8 a V11):
  * la BD garantiza que no se repita entre transacciones concurrentes (DEC-52).
  */
 @Component

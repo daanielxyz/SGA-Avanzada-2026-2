@@ -152,16 +152,35 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
-- [ ] **B3 · Seguridad JWT** (`Usuario`, `Rol`). Pendientes que deja B2: `UsuarioActual` debe devolver el usuario del token (hoy `USR-PROVISIONAL`, DEC-65); solo el administrador puede enviar `motivoAutorizacion` al cerrar un folio o registrar una salida (AUTC-01), y las acciones de administrador de B2a (DEC-22).
+- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en dos incrementos, un commit cada uno:
+  - [x] **B3a · Acceso y permisos** (DEC-67): Spring Security con su soporte JWT; `Usuario` y `Rol` con la tabla `usuario` (V11, `seq_usuario`); `POST /api/auth/login`; primer administrador al arrancar desde variables de entorno; `PermisosPorRol` con la tabla de permisos de todos los endpoints; 401 `NO_AUTENTICADO` y 403 `SIN_PERMISO`; `UsuarioActual` entrega el usuario del token; AUTC-01 y EOPE-04 dentro del endpoint. 25 pruebas (CU-02, USU-01/02/05, ROL-02/04, CORR-01, AUTC-01, EOPE-04, BLO-04, REG-06, NOV-05, SAL-02, RN-17, CAN-03, DEC-22/61/66/67).
+    - DTO de B3a: ningún Request ni Response existente cambió de forma.
+
+      | Endpoint | Request | Response |
+      |---|---|---|
+      | `POST /api/auth/login` (público) | `IniciarSesionRequest` (correo, contraseña) | `SesionResponse` (token, tipo, vencimiento, usuario, nombre, rol) |
+  - [ ] **B3b · Cuentas y huésped**: registro público del huésped (CU-01), perfil y cambio de contraseña (CU-03, CU-04), recuperación con código de un solo uso de 15 minutos (CU-05 · USU-06 · USU-08), gestión de usuarios por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), cierre de sesión (CU-48) y huésped dueño de sus reservas y folios (USU-04 · ROL-04; `canalOrigen` deducido del rol, DEC-65). Decidir antes: cómo se enlaza el usuario huésped con su titular y por dónde sale el código de recuperación (no hay correo todavía).
+    - Endpoints y DTO previstos para B3b (hoja «APIs»):
+
+      | Endpoint | Request | Response |
+      |---|---|---|
+      | `POST /api/huespedes` (público) | `RegistrarHuespedRequest` (nombre, correo, contraseña, teléfono, documento, fecha de nacimiento) | `UsuarioResponse` |
+      | `PUT /api/usuarios/perfil` | `ActualizarPerfilRequest` (sin correo, USU-01) | `UsuarioResponse` |
+      | `PUT /api/usuarios/perfil/contrasena` | `CambiarContrasenaRequest` (actual, nueva) | — |
+      | `POST /api/auth/recuperar-contrasena` · `POST /api/auth/restablecer-contrasena` (públicos) | `RecuperarContrasenaRequest` (correo) · `RestablecerContrasenaRequest` (correo, código, nueva) | — (misma respuesta exista o no el correo) |
+      | `POST /api/auth/logout` | — | — |
+      | `POST /api/usuarios` · `GET /api/usuarios?pagina=` · `PUT /api/usuarios/{id}` · `PUT /api/usuarios/{id}/eliminar` (administrador) | `CrearUsuarioRequest` (con rol interno) · `ModificarUsuarioRequest` | `UsuarioResponse` · `Pagina<UsuarioResponse>` |
+      | `GET /api/reservas` (propias del huésped; todas para recepción) | — (filtros) | `Pagina<ReservaResponse>` |
 - [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa.
 
 ## Pendientes por definir (no tienen incremento todavía)
 - **TRA (CU-VA-01)**: datos del reporte por **huésped** en el `Ocupante` (procedencia, motivo del viaje; documento y nacionalidad pasan a obligatorios), el huésped los diligencia y recepción verifica y envía tras un puerto; si el envío falla, no bloquea el check-in. Esperando la lista final de campos del equipo (DEC-49).
 - **Por validar con el docente**: REG-06 (corrección del registro, aplicada como DEC-45), CU-56 (anular también una *salida*: hoy no existe), TIT-06 (cambio de titular: no implementado), CAN-05 (canal desactivado), TEM-06.
 - **Gravedad de las novedades** (`TODO(equipo)`, DEC-09) y **Temporada Media** (`TODO(equipo)`).
+- **Datos del portal**: `GET /api/apartamentos` y `GET /api/apartamentos/{codigo}` son públicos y hoy muestran también el estado operativo y los bloqueos; definir qué ve el público (DEC-67).
 - **Valores iniciales de `sga.parametros`** (DEC-53): umbral 12 años, entrada 15:00, salida 11:00, preparación 3 h, confirmación 24 h, no-show 22:00, anticipo 30 %, medios EFECTIVO y TRANSFERENCIA, servicio Parqueadero sin cargo. Son supuestos para arrancar; el equipo puede cambiarlos en `application.properties` o el administrador en la aplicación.
 
 ## Verificación
 - Cada incremento: `./gradlew build`.
-- Casos de uso: prueba con repositorio falso en memoria (sin Spring). REST: MockMvc contra H2 (códigos 2xx/400/404/409 y forma del JSON).
+- Casos de uso: prueba con repositorio falso en memoria (sin Spring). REST: MockMvc contra H2 (códigos 2xx/400/401/403/404/409 y forma del JSON), como administrador salvo que la prueba diga otro rol (`SesionDePrueba`, DEC-67).
 - Persistencia: prueba de ida y vuelta en H2 por agregado; contra PostgreSQL real (instalado o Docker), Flyway aplica `V1..Vn` y `ddl-auto=validate` confirma el esquema.

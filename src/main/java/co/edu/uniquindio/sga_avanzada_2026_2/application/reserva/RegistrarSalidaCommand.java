@@ -9,8 +9,8 @@ import java.util.Optional;
 /**
  * Entrada de {@link RegistrarSalida}.
  *
- * @param autor              usuario que registra la salida (SAL-05) y, si hay motivo, quien autoriza; en B3 sale del
- *                           usuario autenticado (DEC-61)
+ * @param autor              usuario que registra la salida (SAL-05) y, si hay motivo, quien autoriza; es el usuario
+ *                           autenticado (DEC-61 · DEC-67)
  * @param motivoAutorizacion solo para salir con saldo distinto de cero (CU-38 · RN-17); vacío en la salida normal
  */
 public record RegistrarSalidaCommand(String codigo, String autor, String motivoAutorizacion) {

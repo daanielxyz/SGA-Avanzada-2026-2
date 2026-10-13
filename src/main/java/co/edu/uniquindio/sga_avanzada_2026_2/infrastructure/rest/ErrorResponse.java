@@ -5,7 +5,8 @@ import java.util.List;
 /**
  * Cuerpo uniforme de todo error HTTP (DEC-33).
  *
- * @param codigo   VALIDACION, NO_ENCONTRADO, DUPLICADO o REGLA_NEGOCIO
+ * @param codigo   VALIDACION, CREDENCIALES_INVALIDAS, NO_AUTENTICADO, SIN_PERMISO, NO_ENCONTRADO, DUPLICADO,
+ *                 REGLA_NEGOCIO o CONCURRENCIA
  * @param detalles errores por campo cuando la validación del Request falla; vacío en los demás casos
  */
 public record ErrorResponse(int estado, String codigo, String mensaje, List<String> detalles) {

@@ -47,11 +47,17 @@ public class EstanciaController {
         return EstanciaResponse.de(corregirRegistro.ejecutar(solicitud.aCommand(codigo, usuario.id())));
     }
 
-    /** Sin cuerpo es la salida normal; con motivo de autorización, la salida con saldo pendiente (RN-17). */
+    /**
+     * Sin cuerpo es la salida normal; con motivo de autorización, la salida con saldo pendiente (RN-17), y eso solo
+     * lo puede el administrador (AUTC-01).
+     */
     @PutMapping("/registrar-salida")
     public EstanciaResponse registrarSalida(@PathVariable String codigo,
                                             @Valid @RequestBody(required = false) RegistrarSalidaRequest solicitud) {
         String motivo = Optional.ofNullable(solicitud).map(RegistrarSalidaRequest::motivoAutorizacion).orElse(null);
+        if (motivo != null) {
+            usuario.exigirAdministrador("autorizar una salida con saldo pendiente");
+        }
         return EstanciaResponse.de(
                 registrarSalida.ejecutar(new RegistrarSalidaCommand(codigo, usuario.id(), motivo)));
     }

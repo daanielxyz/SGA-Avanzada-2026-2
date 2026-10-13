@@ -94,11 +94,17 @@ public class FolioController {
         return FolioResponse.de(cargarServicio.ejecutar(solicitud.aCommand(codigo)));
     }
 
-    /** Sin cuerpo cierra con saldo en cero; con motivo de autorización, con saldo pendiente o a favor (RN-17). */
+    /**
+     * Sin cuerpo cierra con saldo en cero; con motivo de autorización, con saldo pendiente o a favor (RN-17), y eso
+     * solo lo puede el administrador (AUTC-01).
+     */
     @PutMapping("/cerrar")
     public FolioResponse cerrar(@PathVariable String codigo,
                                 @Valid @RequestBody(required = false) CerrarFolioRequest solicitud) {
         String motivo = Optional.ofNullable(solicitud).map(CerrarFolioRequest::motivoAutorizacion).orElse(null);
+        if (motivo != null) {
+            usuario.exigirAdministrador("autorizar el cierre de un folio con saldo");
+        }
         return FolioResponse.de(cerrarFolio.ejecutar(new CerrarFolioCommand(codigo, usuario.id(), motivo)));
     }
 }
