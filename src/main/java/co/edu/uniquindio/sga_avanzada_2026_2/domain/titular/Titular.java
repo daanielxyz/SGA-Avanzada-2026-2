@@ -6,9 +6,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 
 /**
- * Raíz del agregado Titular: responsable de la reserva y del pago de su folio (TIT-02). Puede existir sin usuario
- * del sistema (TIT-03) y lo es de varias reservas (TIT-05). Los datos del TRA son de cada ocupante, no de aquí
- * (DEC-49).
+ * Raíz del agregado Titular: responsable de la reserva y del pago de su folio (TIT-02) y lo es de varias reservas
+ * (TIT-05). Con correo, el titular es además la cuenta del huésped (DEC-68), que vive fuera del dominio; sin correo
+ * (p. ej. un canal externo que no lo envía) no tiene cuenta (TIT-03). Los datos del TRA son de cada ocupante.
  */
 public class Titular {
 
@@ -16,7 +16,7 @@ public class Titular {
     private final AlojamientoId alojamientoId; // DEC-26
     private String nombre;
     private final Documento documento; // lo identifica entre los ocupantes (TIT-01); no cambia
-    private Correo correo;             // opcional si hay teléfono
+    private Correo correo;             // opcional si hay teléfono; con él, el titular tiene cuenta (DEC-68)
     private String telefono;           // opcional si hay correo
 
     // TIT-01 · DEC-49
@@ -39,6 +39,29 @@ public class Titular {
      */
     public void actualizarDatos(String nuevoNombre, Correo nuevoCorreo, String nuevoTelefono) {
         asignarDatos(nuevoNombre, nuevoCorreo, nuevoTelefono);
+    }
+
+    /**
+     * Completa el contacto que le falte con lo que llegó en una nueva reserva, sin reemplazar el que ya tiene: quien
+     * conoce un documento no puede quedarse con la cuenta de otro cambiando su correo o su teléfono (DEC-69).
+     *
+     * @throws ReglaDominioException si el teléfono que completa es inválido
+     */
+    public void completarContacto(Correo correoRecibido, String telefonoRecibido) {
+        asignarDatos(nombre, correo == null ? correoRecibido : correo, telefono == null ? telefonoRecibido : telefono);
+    }
+
+    /**
+     * Cambia el correo, que es también el de su cuenta. Solo se llama después de verificar el PIN del cambio de
+     * correo o desde recepción (DEC-68 · DEC-69).
+     *
+     * @throws ReglaDominioException si el correo nuevo falta
+     */
+    public void cambiarCorreo(Correo nuevoCorreo) {
+        if (nuevoCorreo == null) {
+            throw new ReglaDominioException("El correo nuevo es obligatorio");
+        }
+        asignarDatos(nombre, nuevoCorreo, telefono);
     }
 
     // DEC-49: nombre y documento obligatorios, y al menos un contacto (correo o teléfono)

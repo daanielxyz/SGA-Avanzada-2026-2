@@ -2,10 +2,14 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserv
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,5 +74,14 @@ public class ReservaRepositoryJpa implements ReservaRepository {
         return filas.findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva.PENDIENTE, limite).stream()
                 .map(ReservaMapper::aDominio)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina) {
+        Page<ReservaJpa> pagina = filas.findByTitularIdOrderByCreadaEnDescCodigoDesc(titularId.valor(),
+                PageRequest.of(numeroPagina, Pagina.TAMANO));
+        return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
+                Pagina.TAMANO, pagina.getTotalElements());
     }
 }

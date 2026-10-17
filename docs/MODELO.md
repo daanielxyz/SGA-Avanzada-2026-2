@@ -17,7 +17,8 @@ Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPag
 Canal  ·  ConflictoCanal  ·  EventoCanal(bitácora, solo escritura)  ·  Novedad                →Id: canal, apartamento
 Transversales: Dinero, Noche, Documento, Correo, ids tipados.   Calculados (no se guardan): Disponibilidad, Cotizacion.
 Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada, rol, eliminado),
-  Rol(HUESPED, RECEPCIONISTA, ADMINISTRADOR, PERSONAL_SERVICIO). Tabla usuario (V11); permisos en PermisosPorRol (DEC-67).
+  Rol(HUESPED, RECEPCIONISTA, ADMINISTRADOR, PERSONAL_SERVICIO). Tabla usuario (V11), solo personal interno; permisos en
+  PermisosPorRol (DEC-67). La cuenta del huésped es su Titular (con correo); sus PIN en codigo_acceso (V12, DEC-69).
 ```
 
 ## 2. Clases

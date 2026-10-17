@@ -34,7 +34,8 @@ import java.util.List;
 /**
  * Caso de uso: crear una reserva por el portal (CU-10) o en recepción (CU-11), según el flujo de MODELO §3 (DEC-36 ·
  * DEC-37). Guarda en una transacción la reserva, su folio abierto con el cargo del alojamiento (FOL-01 · DEC-44) y el
- * titular nuevo o actualizado (DEC-58 · DEC-59).
+ * titular nuevo o con su contacto completado (DEC-58 · DEC-59 · DEC-69). Después avisa al titular por correo
+ * (DEC-68).
  */
 @Service
 public class CrearReserva {
@@ -48,12 +49,13 @@ public class CrearReserva {
     private final DisponibilidadDomainService disponibilidad;
     private final TarificacionDomainService tarificacion;
     private final GeneradorCodigos codigos;
+    private final AvisosReserva avisos;
     private final Clock reloj;
 
     public CrearReserva(CargadorReserva cargador, ReservaRepository reservas, FolioRepository folios,
                         TitularRepository titulares, TarifaRepository tarifas, PoliticaCancelacionRepository politicas,
                         DisponibilidadDomainService disponibilidad, TarificacionDomainService tarificacion,
-                        GeneradorCodigos codigos, Clock reloj) {
+                        GeneradorCodigos codigos, AvisosReserva avisos, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.folios = folios;
@@ -63,6 +65,7 @@ public class CrearReserva {
         this.disponibilidad = disponibilidad;
         this.tarificacion = tarificacion;
         this.codigos = codigos;
+        this.avisos = avisos;
         this.reloj = reloj;
     }
 
@@ -85,7 +88,8 @@ public class CrearReserva {
         LocalDateTime ahora = LocalDateTime.now(reloj);
         Estancia estancia = new Estancia(comando.entrada(), comando.salida());
         List<Ocupante> ocupantes = OcupanteCommand.aDominio(comando.ocupantes());
-        Titular titular = cargador.titularPara(alojamiento.id(), comando.titular());
+        TitularParaReserva paraReserva = cargador.titularPara(alojamiento.id(), comando.titular());
+        Titular titular = paraReserva.titular();
 
         disponibilidad.verificarDisponibilidad(apartamento, estancia, ocupantes.size(),
                 reservas.buscarActivasPorApartamento(apartamento.codigo()), parametros).exigir();
@@ -102,6 +106,7 @@ public class CrearReserva {
         titulares.guardar(titular);
         reservas.guardar(reserva);
         folios.guardar(folio);
-        return ReservaResult.de(reserva);
+        avisos.avisarCreacion(reserva, paraReserva, alojamiento.nombre());
+        return ReservaResult.de(reserva).conAvisoCuenta(avisos.avisoCuenta(paraReserva));
     }
 }

@@ -17,19 +17,21 @@ import java.util.List;
 public record ReservaResponse(String codigo, String apartamento, String titularId, LocalDate entrada,
                               LocalDate salida, String estado, String canalOrigen,
                               List<OcupanteResponse> ocupantes, LocalTime horaEstimadaLlegada,
-                              CotizacionResponse valor, String politicaId, LocalDateTime creadaEn) {
+                              CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
+                              String avisoCuenta) {
 
     public record OcupanteResponse(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                    String numeroDocumento, String nacionalidad) {
     }
 
-    static ReservaResponse de(ReservaResult r) {
+    public static ReservaResponse de(ReservaResult r) {
         return new ReservaResponse(r.codigo(), r.apartamento(), r.titularId(), r.entrada(), r.salida(), r.estado(),
                 r.canalOrigen(),
                 r.ocupantes().stream()
                         .map(o -> new OcupanteResponse(o.id(), o.nombre(), o.fechaNacimiento(), o.tipoDocumento(),
                                 o.numeroDocumento(), o.nacionalidad()))
                         .toList(),
-                r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn());
+                r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
+                r.avisoCuenta());
     }
 }

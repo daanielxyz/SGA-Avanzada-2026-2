@@ -73,7 +73,7 @@ public abstract class PruebaRestDeReservas {
                   "salida": "%s",
                   "canalOrigen": "DIRECTO",
                   "titular": {"nombre": "Ana Ríos", "tipoDocumento": "CC", "numeroDocumento": "1094",
-                              "correo": "ana@correo.co"},
+                              "correo": "ana@correo.co", "telefono": "300 123 4567"},
                   "ocupantes": [
                     {"nombre": "Ana Ríos", "fechaNacimiento": "1990-05-01", "tipoDocumento": "CC",
                      "numeroDocumento": "1094", "nacionalidad": "Colombiana"},

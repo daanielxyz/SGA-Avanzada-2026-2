@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.titula
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,4 +13,6 @@ interface TitularJpaRepository extends JpaRepository<TitularJpa, String> {
 
     Optional<TitularJpa> findByAlojamientoIdAndTipoDocumentoAndNumeroDocumento(String alojamientoId,
                                                                               TipoDocumento tipo, String numero);
+
+    List<TitularJpa> findByAlojamientoIdAndCorreo(String alojamientoId, String correo);
 }

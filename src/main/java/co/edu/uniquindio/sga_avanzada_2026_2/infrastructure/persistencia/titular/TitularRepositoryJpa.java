@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.titular;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
@@ -8,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -43,5 +45,13 @@ public class TitularRepositoryJpa implements TitularRepository {
         return filas.findByAlojamientoIdAndTipoDocumentoAndNumeroDocumento(alojamientoId.valor(), documento.tipo(),
                         documento.numero())
                 .map(TitularMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Titular> buscarPorCorreo(AlojamientoId alojamientoId, Correo correo) {
+        return filas.findByAlojamientoIdAndCorreo(alojamientoId.valor(), correo.valor()).stream()
+                .map(TitularMapper::aDominio)
+                .toList();
     }
 }

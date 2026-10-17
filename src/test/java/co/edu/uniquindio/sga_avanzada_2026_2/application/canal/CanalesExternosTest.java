@@ -59,7 +59,7 @@ class CanalesExternosTest {
         return new RecibirReservaExterna(escenario.cargador, escenario.canales, escenario.reservas, escenario.folios,
                 escenario.titulares, escenario.tarifas, escenario.politicas, escenario.conflictos, escenario.eventos,
                 new DisponibilidadDomainService(), new TarificacionDomainService(),
-                new SincronizacionCanalDomainService(), escenario.codigos, AL_CREAR);
+                new SincronizacionCanalDomainService(), escenario.codigos, escenario.avisos, AL_CREAR);
     }
 
     /** Ana y Luis, del día {@code desde} al {@code hasta} de la entrada del escenario. */
@@ -260,5 +260,22 @@ class CanalesExternosTest {
                 .contenido().isEmpty());
         assertThrows(RecursoNoEncontradoException.class,
                 () -> consultar.ejecutar(new ConsultarBitacoraCommand("CAN-99", HOY, HOY, 0)));
+    }
+
+    @Test
+    @Tag("DEC-68")
+    void laReservaExternaConCorreoLeAvisaAlTitularYSinCorreoNoCreaCuenta() {
+        recibir().ejecutar(pedido("BK-50", 0, 2));
+        RecibirReservaExternaCommand sinCorreo = new RecibirReservaExternaCommand(canal, "BK-51", "APT-101",
+                ENTRADA.plusDays(5), ENTRADA.plusDays(6), new TitularCommand("Luis Ríos", "CC", "2088", null,
+                "300 555 1234"), List.of(new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), "CC", "2088",
+                null)), "{}");
+
+        assertEquals("EXITOSO", recibir().ejecutar(sinCorreo).resultado());
+
+        assertEquals(2, escenario.notificaciones.enviados.size());
+        assertTrue(escenario.notificaciones.enviados.stream().allMatch(e -> e.destino().equals("ana@correo.co")));
+        assertTrue(escenario.titulares.guardados.values().stream()
+                .anyMatch(t -> t.nombre().equals("Luis Ríos") && t.correo() == null));
     }
 }

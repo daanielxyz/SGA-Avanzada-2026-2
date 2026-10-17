@@ -45,6 +45,19 @@ class TitularRepositoryJpaTest {
     }
 
     @Test
+    @Tag("DEC-68")
+    void deberiaEncontrarLosTitularesQueCompartenCorreo() {
+        repositorio.guardar(ana());
+        repositorio.guardar(new Titular(new TitularId("TIT-2"), ALOJAMIENTO, "Luis",
+                new Documento(TipoDocumento.CC, "2088"), new Correo("ana@correo.co"), null));
+        sincronizar();
+
+        assertEquals(2, repositorio.buscarPorCorreo(ALOJAMIENTO, new Correo("ANA@correo.co")).size());
+        assertTrue(repositorio.buscarPorCorreo(ALOJAMIENTO, new Correo("otra@correo.co")).isEmpty());
+        assertTrue(repositorio.buscarPorCorreo(new AlojamientoId("ALO-2"), new Correo("ana@correo.co")).isEmpty());
+    }
+
+    @Test
     @Tag("TIT-05")
     void deberiaEncontrarAlTitularPorIdYPorDocumento() {
         repositorio.guardar(ana());

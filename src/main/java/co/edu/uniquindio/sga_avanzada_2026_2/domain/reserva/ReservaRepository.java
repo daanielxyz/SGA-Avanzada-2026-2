@@ -2,6 +2,8 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,4 +32,12 @@ public interface ReservaRepository {
      * vencieron (RN-21). Las usa el planificador (B4).
      */
     List<Reserva> buscarPendientesCreadasAntesDe(LocalDateTime limite);
+
+    /**
+     * Reservas del titular, de la más reciente a la más antigua, de 10 en 10: las que ve el huésped en su cuenta
+     * (USU-04 · DEC-18).
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina);
 }

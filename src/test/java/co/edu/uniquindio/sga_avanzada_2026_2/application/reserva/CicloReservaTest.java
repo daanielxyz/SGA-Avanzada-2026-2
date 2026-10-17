@@ -48,6 +48,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -73,6 +74,7 @@ class CicloReservaTest {
     private RepositoriosEnMemoria.Tarifas tarifas;
     private RepositoriosEnMemoria.Politicas politicas;
     private RepositoriosEnMemoria.Codigos codigos;
+    private RepositoriosEnMemoria.Notificaciones notificaciones;
     private CargadorReserva cargador;
 
     @BeforeEach
@@ -86,6 +88,7 @@ class CicloReservaTest {
         tarifas = new RepositoriosEnMemoria.Tarifas();
         politicas = new RepositoriosEnMemoria.Politicas();
         codigos = new RepositoriosEnMemoria.Codigos();
+        notificaciones = new RepositoriosEnMemoria.Notificaciones();
         cargador = new CargadorReserva(reservas, folios, apartamentos, alojamientos, calendarios, titulares, codigos);
 
         alojamientos.guardar(RepositoriosEnMemoria.puertaAlSol("ALO-1"));
@@ -115,7 +118,8 @@ class CicloReservaTest {
         return Clock.fixed(momento.atZone(COLOMBIA).toInstant(), COLOMBIA);
     }
 
-    private static final TitularCommand ANA = new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", null);
+    private static final TitularCommand ANA = new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co",
+            "300 123 4567");
 
     private static OcupanteCommand ana() {
         return new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana");
@@ -133,7 +137,7 @@ class CicloReservaTest {
     private CrearReserva crearReserva() {
         return new CrearReserva(cargador, reservas, folios, titulares, tarifas, politicas,
                 new DisponibilidadDomainService(), new TarificacionDomainService(), codigos,
-                RepositoriosEnMemoria.RELOJ);
+                new AvisosReserva(notificaciones), RepositoriosEnMemoria.RELOJ);
     }
 
     private ReservaResult reservaDeDosAdultosPorTresNoches() {
@@ -165,16 +169,53 @@ class CicloReservaTest {
 
     @Test
     @Tag("TIT-05")
-    void unTitularQueYaExisteSeReutilizaConSusDatosActualizados() {
+    @Tag("DEC-69")
+    void unTitularQueYaExisteSeReutilizaSinCambiarSuCorreoNiSuTelefono() {
         titulares.guardar(new Titular(new TitularId("TIT-7"), ALO, "Ana R.", new Documento(TipoDocumento.CC, "1094"),
-                new Correo("vieja@correo.co"), null));
+                new Correo("vieja@correo.co"), "311 000 0000"));
 
         ReservaResult reserva = reservaDeDosAdultosPorTresNoches();
 
+        Titular ana = titulares.guardados.get(new TitularId("TIT-7"));
         assertEquals("TIT-7", reserva.titularId());
         assertEquals(1, titulares.guardados.size());
-        assertEquals("Ana Ríos", titulares.guardados.get(new TitularId("TIT-7")).nombre());
-        assertEquals(new Correo("ana@correo.co"), titulares.guardados.get(new TitularId("TIT-7")).correo());
+        assertEquals("Ana R.", ana.nombre());
+        assertEquals(new Correo("vieja@correo.co"), ana.correo());
+        assertEquals("311 000 0000", ana.telefono());
+        assertTrue(reserva.avisoCuenta().contains("v***@correo.co"));
+        assertTrue(notificaciones.enviados.stream().allMatch(e -> e.destino().equals("vieja@correo.co")));
+    }
+
+    @Test
+    @Tag("DEC-68")
+    void unaReservaNuevaCreaLaCuentaYEnviaLosDosCorreos() {
+        ReservaResult reserva = reservaDeDosAdultosPorTresNoches();
+
+        assertNull(reserva.avisoCuenta());
+        assertEquals(2, notificaciones.enviados.size());
+        assertEquals("Tu reserva " + reserva.codigo() + " en Puerta al Sol", notificaciones.enviados.get(0).asunto());
+        assertTrue(notificaciones.enviados.get(0).cuerpo().contains("Valor total: $600.000"));
+        assertEquals("Ya tienes una cuenta en Puerta al Sol", notificaciones.enviados.get(1).asunto());
+        assertTrue(notificaciones.enviados.stream().allMatch(e -> e.destino().equals("ana@correo.co")));
+    }
+
+    @Test
+    @Tag("DEC-68")
+    @Tag("DEC-69")
+    void quienYaTeniaCuentaRecibeElRecordatorioYQuienNoTeniaCorreoLaEstrena() {
+        titulares.guardar(new Titular(new TitularId("TIT-7"), ALO, "Ana Ríos", new Documento(TipoDocumento.CC, "1094"),
+                new Correo("ana@correo.co"), null));
+        reservaDeDosAdultosPorTresNoches();
+        titulares.guardar(new Titular(new TitularId("TIT-8"), ALO, "Ana Ríos", new Documento(TipoDocumento.CC, "1094"),
+                null, "311 000 0000"));
+        titulares.guardados.remove(new TitularId("TIT-7"));
+        crearReserva().ejecutar(comando("APT-102", 1, List.of(ana())));
+
+        assertEquals("Gestiona tus reservas en Puerta al Sol", notificaciones.enviados.get(1).asunto());
+        assertEquals("Ya tienes una cuenta en Puerta al Sol", notificaciones.enviados.get(3).asunto());
+        Titular sinCorreoAntes = titulares.guardados.get(new TitularId("TIT-8"));
+        assertEquals(new Correo("ana@correo.co"), sinCorreoAntes.correo());
+        assertEquals("311 000 0000", sinCorreoAntes.telefono());
     }
 
     @Test

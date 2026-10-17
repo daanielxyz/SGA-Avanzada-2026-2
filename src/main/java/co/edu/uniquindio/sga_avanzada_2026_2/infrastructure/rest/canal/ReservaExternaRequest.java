@@ -2,7 +2,6 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.OcupanteRequest;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.TitularReservaRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -36,7 +35,7 @@ public record ReservaExternaRequest(
 
         @NotNull(message = "es obligatorio")
         @Valid
-        TitularReservaRequest titular,
+        TitularExternoRequest titular,
 
         @NotEmpty(message = "debe tener al menos un ocupante")
         List<@Valid @NotNull(message = "no puede ser nulo") OcupanteRequest> ocupantes) {

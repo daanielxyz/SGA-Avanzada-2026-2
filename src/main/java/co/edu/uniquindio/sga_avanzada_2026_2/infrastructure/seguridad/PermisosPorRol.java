@@ -25,8 +25,12 @@ final class PermisosPorRol {
         permisos
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 
-                // Sin sesión: entrar y lo que muestra el portal (CU-02 · CU-07 · CU-08 · CU-50)
-                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                // Sin sesión: entrar (personal con contraseña, huésped con PIN) y lo que muestra el portal (CU-02 ·
+                // CU-07 · CU-08 · CU-50 · DEC-68)
+                .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/huesped/pin",
+                        "/api/auth/huesped/login", "/api/auth/huesped/cambio-correo").permitAll()
+                // El cambio de correo no pide sesión: lo autoriza el PIN que llega al teléfono y al correo (DEC-69)
+                .requestMatchers(HttpMethod.PUT, "/api/auth/huesped/cambio-correo").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
                         "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}").permitAll()
 
@@ -34,7 +38,14 @@ final class PermisosPorRol {
                 //  (CAN-03 · DEC-47 · DEC-66); hasta entonces queda abierto.
                 .requestMatchers(HttpMethod.POST, "/api/canales/{id}/reservas").permitAll()
 
-                // Venta y recepción (CU-09 a CU-29). TODO(B3b): el huésped, solo sobre lo suyo (USU-04)
+                // El huésped: su cuenta y sus reservas; que cada reserva sea suya lo revisa el controlador (USU-04)
+                .requestMatchers("/api/mi-cuenta", "/api/mis-reservas").hasRole(HUESPED)
+                .requestMatchers(HttpMethod.GET, "/api/reservas/{codigo}", "/api/reservas/{codigo}/folio")
+                .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
+                .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/cancelar")
+                .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
+
+                // Venta y recepción (CU-09 a CU-29)
                 .requestMatchers(HttpMethod.POST, "/api/cotizaciones")
                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/corregir-registro").hasRole(ADMINISTRADOR)

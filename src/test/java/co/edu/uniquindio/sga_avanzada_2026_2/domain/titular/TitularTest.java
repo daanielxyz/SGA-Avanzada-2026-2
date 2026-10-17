@@ -59,4 +59,33 @@ class TitularTest {
         assertThrows(ReglaDominioException.class, () -> titular.actualizarDatos("Ana", null, null));
         assertEquals("3001234567", titular.telefono());
     }
+
+    @Test
+    @Tag("DEC-69")
+    void unaReservaNuevaSoloCompletaElContactoQueFalta() {
+        Titular conTodo = new Titular(ID, ALO, "Ana", CC, CORREO, "3001234567");
+        Titular sinCorreo = new Titular(ID, ALO, "Ana", CC, null, "3001234567");
+
+        conTodo.completarContacto(new Correo("otra@correo.co"), "3119999999");
+        sinCorreo.completarContacto(CORREO, "3119999999");
+
+        assertEquals(CORREO, conTodo.correo());
+        assertEquals("3001234567", conTodo.telefono());
+        assertEquals(CORREO, sinCorreo.correo());
+        assertEquals("3001234567", sinCorreo.telefono());
+        Titular sinTelefono = new Titular(ID, ALO, "Ana", CC, CORREO, null);
+        assertThrows(ReglaDominioException.class, () -> sinTelefono.completarContacto(null, "123"));
+    }
+
+    @Test
+    @Tag("DEC-69")
+    void cambiarCorreoConservaElTelefonoYExigeElCorreoNuevo() {
+        Titular titular = new Titular(ID, ALO, "Ana", CC, CORREO, "3001234567");
+
+        titular.cambiarCorreo(new Correo("ana.nueva@correo.co"));
+
+        assertEquals(new Correo("ana.nueva@correo.co"), titular.correo());
+        assertEquals("3001234567", titular.telefono());
+        assertThrows(ReglaDominioException.class, () -> titular.cambiarCorreo(null));
+    }
 }

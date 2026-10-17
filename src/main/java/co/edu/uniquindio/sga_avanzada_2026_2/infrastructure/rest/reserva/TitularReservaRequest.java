@@ -7,8 +7,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * El titular en el cuerpo de una reserva: nombre, documento y al menos un contacto, que exige el dominio (DEC-49).
- * Si ya existe con ese documento se reutiliza y se actualiza (DEC-58).
+ * El titular en el cuerpo de una reserva del portal o de recepción: nombre, documento, correo y teléfono, todos
+ * obligatorios porque con el correo el titular tiene cuenta y con el teléfono la recupera (DEC-68). Si ya existe con
+ * ese documento se reutiliza y solo se completa el contacto que le falte (DEC-58 · DEC-69).
  */
 public record TitularReservaRequest(
         @NotBlank(message = "es obligatorio")
@@ -23,10 +24,12 @@ public record TitularReservaRequest(
         @Size(max = 30, message = "admite máximo 30 caracteres")
         String numeroDocumento,
 
+        @NotBlank(message = "es obligatorio")
         @Email(message = "no tiene formato de correo")
         @Size(max = 150, message = "admite máximo 150 caracteres")
         String correo,
 
+        @NotBlank(message = "es obligatorio")
         @Size(max = 30, message = "admite máximo 30 caracteres")
         String telefono) {
 

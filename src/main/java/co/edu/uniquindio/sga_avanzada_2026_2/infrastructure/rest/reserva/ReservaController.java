@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShow;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegada;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,7 @@ import java.net.URI;
 @RequestMapping("/api/reservas")
 public class ReservaController {
 
+    private final UsuarioActual usuario;
     private final CrearReserva crearReserva;
     private final ConsultarReserva consultarReserva;
     private final ModificarReserva modificarReserva;
@@ -36,10 +38,11 @@ public class ReservaController {
     private final CancelarReserva cancelarReserva;
     private final DeclararNoShow declararNoShow;
 
-    public ReservaController(CrearReserva crearReserva, ConsultarReserva consultarReserva,
+    public ReservaController(UsuarioActual usuario, CrearReserva crearReserva, ConsultarReserva consultarReserva,
                              ModificarReserva modificarReserva, IndicarHoraLlegada indicarHoraLlegada,
                              ConfirmarReserva confirmarReserva, CancelarReserva cancelarReserva,
                              DeclararNoShow declararNoShow) {
+        this.usuario = usuario;
         this.crearReserva = crearReserva;
         this.consultarReserva = consultarReserva;
         this.modificarReserva = modificarReserva;
@@ -56,9 +59,12 @@ public class ReservaController {
                 .body(ReservaResponse.de(creada));
     }
 
+    /** El huésped solo ve las suyas (USU-04). */
     @GetMapping("/{codigo}")
     public ReservaResponse consultar(@PathVariable String codigo) {
-        return ReservaResponse.de(consultarReserva.ejecutar(codigo));
+        ReservaResult reserva = consultarReserva.ejecutar(codigo);
+        usuario.exigirAccesoA(reserva.titularId());
+        return ReservaResponse.de(reserva);
     }
 
     @PutMapping("/{codigo}/modificar")
@@ -78,8 +84,10 @@ public class ReservaController {
         return ReservaResponse.de(confirmarReserva.ejecutar(codigo));
     }
 
+    /** El huésped solo cancela las suyas (USU-04 · CU-14). */
     @PutMapping("/{codigo}/cancelar")
     public CancelacionResponse cancelar(@PathVariable String codigo) {
+        usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
         return CancelacionResponse.de(cancelarReserva.ejecutar(codigo));
     }
 

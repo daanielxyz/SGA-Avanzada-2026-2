@@ -1,6 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -18,4 +20,6 @@ interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String> {
     Optional<ReservaJpa> findByCanalIdAndIdExterno(String canalId, String idExterno);
 
     List<ReservaJpa> findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva estado, LocalDateTime limite);
+
+    Page<ReservaJpa> findByTitularIdOrderByCreadaEnDescCodigoDesc(String titularId, Pageable pagina);
 }

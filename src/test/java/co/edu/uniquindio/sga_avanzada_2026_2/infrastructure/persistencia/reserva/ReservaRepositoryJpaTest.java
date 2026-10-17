@@ -22,6 +22,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Salida;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.SalidaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.LineaCotizacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TemporadaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
@@ -235,6 +236,27 @@ class ReservaRepositoryJpaTest {
         assertEquals(List.of(new ReservaId("RES-2026-80001")),
                 repositorio.buscarPendientesCreadasAntesDe(LocalDate.of(2026, 10, 1).atTime(10, 0)).stream()
                         .map(Reserva::codigo).toList());
+    }
+
+    @Test
+    @Tag("USU-04")
+    @Tag("DEC-18")
+    void deberiaListarLasReservasDelTitularDeLaMasRecienteALaMasAntigua() {
+        for (int i = 1; i <= 12; i++) {
+            repositorio.guardar(reservaCreadaEn("RES-2026-8%04d".formatted(i), CREADA.plusHours(i)));
+        }
+        entityManager.flush();
+        entityManager.clear();
+
+        Pagina<Reserva> primera = repositorio.listarPorTitular(new TitularId("TIT-1"), 0);
+        Pagina<Reserva> segunda = repositorio.listarPorTitular(new TitularId("TIT-1"), 1);
+
+        assertEquals(12, primera.totalElementos());
+        assertEquals(10, primera.contenido().size());
+        assertEquals(new ReservaId("RES-2026-80012"), primera.contenido().getFirst().codigo());
+        assertEquals(List.of(new ReservaId("RES-2026-80002"), new ReservaId("RES-2026-80001")),
+                segunda.contenido().stream().map(Reserva::codigo).toList());
+        assertTrue(repositorio.listarPorTitular(new TitularId("TIT-2"), 0).contenido().isEmpty());
     }
 
     private static Reserva reservaCreadaEn(String codigo, LocalDateTime creadaEn) {

@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirCargo;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirPagoCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ import java.util.Optional;
 public class FolioController {
 
     private final UsuarioActual usuario;
+    private final ConsultarReserva consultarReserva;
     private final ConsultarFolio consultarFolio;
     private final RegistrarPago registrarPago;
     private final RegistrarDevolucion registrarDevolucion;
@@ -41,11 +43,13 @@ public class FolioController {
     private final CargarServicioAdicional cargarServicio;
     private final CerrarFolio cerrarFolio;
 
-    public FolioController(UsuarioActual usuario, ConsultarFolio consultarFolio, RegistrarPago registrarPago,
+    public FolioController(UsuarioActual usuario, ConsultarReserva consultarReserva, ConsultarFolio consultarFolio,
+                           RegistrarPago registrarPago,
                            RegistrarDevolucion registrarDevolucion, RevertirPago revertirPago,
                            RevertirCargo revertirCargo, CargarServicioAdicional cargarServicio,
                            CerrarFolio cerrarFolio) {
         this.usuario = usuario;
+        this.consultarReserva = consultarReserva;
         this.consultarFolio = consultarFolio;
         this.registrarPago = registrarPago;
         this.registrarDevolucion = registrarDevolucion;
@@ -55,8 +59,10 @@ public class FolioController {
         this.cerrarFolio = cerrarFolio;
     }
 
+    /** El huésped solo ve el folio de sus reservas (USU-04). */
     @GetMapping
     public FolioResponse consultar(@PathVariable String codigo) {
+        usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
         return FolioResponse.de(consultarFolio.ejecutar(codigo));
     }
 

@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.GeneradorCodigos;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.Notificador;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.SerieCodigo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
@@ -24,6 +25,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
@@ -218,6 +220,35 @@ public final class RepositoriosEnMemoria {
                     .sorted(Comparator.comparing(Reserva::creadaEn))
                     .toList();
         }
+
+        @Override
+        public Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina) {
+            List<Reserva> todas = guardadas.values().stream()
+                    .filter(r -> r.titularId().equals(titularId))
+                    .sorted(Comparator.comparing(Reserva::creadaEn).reversed())
+                    .toList();
+            return new Pagina<>(todas.stream().skip((long) numeroPagina * Pagina.TAMANO).limit(Pagina.TAMANO).toList(),
+                    numeroPagina, Pagina.TAMANO, todas.size());
+        }
+    }
+
+    /** Los correos y SMS que se habrían enviado, en orden. */
+    public static final class Notificaciones implements Notificador {
+
+        public record Enviado(String canal, String destino, String asunto, String cuerpo) {
+        }
+
+        public final List<Enviado> enviados = new ArrayList<>();
+
+        @Override
+        public void enviarCorreo(String destino, String asunto, String cuerpo) {
+            enviados.add(new Enviado("CORREO", destino, asunto, cuerpo));
+        }
+
+        @Override
+        public void enviarSms(String telefono, String texto) {
+            enviados.add(new Enviado("SMS", telefono, null, texto));
+        }
     }
 
     public static final class Folios implements FolioRepository {
@@ -254,6 +285,13 @@ public final class RepositoriosEnMemoria {
             return guardados.values().stream()
                     .filter(t -> t.alojamientoId().equals(alojamientoId) && t.documento().equals(documento))
                     .findFirst();
+        }
+
+        @Override
+        public List<Titular> buscarPorCorreo(AlojamientoId alojamientoId, Correo correo) {
+            return guardados.values().stream()
+                    .filter(t -> t.alojamientoId().equals(alojamientoId) && correo.equals(t.correo()))
+                    .toList();
         }
     }
 

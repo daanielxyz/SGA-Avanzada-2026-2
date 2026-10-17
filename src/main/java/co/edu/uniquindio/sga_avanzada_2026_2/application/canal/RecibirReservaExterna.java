@@ -3,8 +3,10 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.GeneradorCodigos;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.SerieCodigo;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.AvisosReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CargadorReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.TitularParaReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
@@ -68,6 +70,7 @@ public class RecibirReservaExterna {
     private final TarificacionDomainService tarificacion;
     private final SincronizacionCanalDomainService sincronizacion;
     private final GeneradorCodigos codigos;
+    private final AvisosReserva avisos;
     private final Clock reloj;
 
     public RecibirReservaExterna(CargadorReserva cargador, CanalRepository canales, ReservaRepository reservas,
@@ -76,7 +79,7 @@ public class RecibirReservaExterna {
                                  EventoCanalRepository eventos, DisponibilidadDomainService disponibilidad,
                                  TarificacionDomainService tarificacion,
                                  SincronizacionCanalDomainService sincronizacion, GeneradorCodigos codigos,
-                                 Clock reloj) {
+                                 AvisosReserva avisos, Clock reloj) {
         this.cargador = cargador;
         this.canales = canales;
         this.reservas = reservas;
@@ -90,6 +93,7 @@ public class RecibirReservaExterna {
         this.tarificacion = tarificacion;
         this.sincronizacion = sincronizacion;
         this.codigos = codigos;
+        this.avisos = avisos;
         this.reloj = reloj;
     }
 
@@ -119,7 +123,8 @@ public class RecibirReservaExterna {
         LocalDateTime ahora = LocalDateTime.now(reloj);
         Estancia estancia = new Estancia(comando.entrada(), comando.salida());
         List<Ocupante> ocupantes = OcupanteCommand.aDominio(comando.ocupantes());
-        Titular titular = cargador.titularPara(canal.alojamientoId(), comando.titular());
+        TitularParaReserva paraReserva = cargador.titularPara(canal.alojamientoId(), comando.titular());
+        Titular titular = paraReserva.titular();
         Disponibilidad disponible = disponibilidad.verificarDisponibilidad(apartamento, estancia, ocupantes.size(),
                 reservas.buscarActivasPorApartamento(apartamento.codigo()), parametros);
 
@@ -139,6 +144,7 @@ public class RecibirReservaExterna {
             reservas.guardar(reserva);
             folios.guardar(Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
                     reserva.valorTotal(), ahora.toLocalDate()));
+            avisos.avisarCreacion(reserva, paraReserva, cargador.alojamientoDe(apartamento).nombre());
         });
         integracion.conflictoRegistrado().ifPresent(conflictos::guardar);
         eventos.registrar(new EventoCanal(new EventoCanalId(codigos.siguiente(SerieCodigo.EVENTO)), canal.id(),

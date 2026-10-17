@@ -102,18 +102,26 @@ public class CargadorReserva {
     }
 
     /**
-     * El titular con ese documento en el alojamiento, con sus datos actualizados a lo que llegó; o uno nuevo si es
-     * la primera vez (TIT-05 · DEC-58). No se guarda aquí: lo guarda el caso de uso junto con la reserva.
+     * El titular con ese documento en el alojamiento, al que solo se le completa el contacto que le falte; o uno nuevo
+     * si es la primera vez (TIT-05 · DEC-58 · DEC-69). Cuenta además si con esta reserva estrena cuenta (ahora tiene
+     * correo y antes no) y si llegó un correo distinto al de su cuenta. No se guarda aquí: lo guarda el caso de uso
+     * junto con la reserva.
      */
-    public Titular titularPara(AlojamientoId alojamientoId, TitularCommand datos) {
+    public TitularParaReserva titularPara(AlojamientoId alojamientoId, TitularCommand datos) {
         Documento documento = new Documento(TipoDocumento.valueOf(datos.tipoDocumento()), datos.numeroDocumento());
         Correo correo = Optional.ofNullable(datos.correo()).filter(c -> !c.isBlank()).map(Correo::new).orElse(null);
         return titulares.buscarPorDocumento(alojamientoId, documento)
                 .map(existente -> {
-                    existente.actualizarDatos(datos.nombre(), correo, datos.telefono());
-                    return existente;
+                    boolean teniaCuenta = existente.correo() != null;
+                    existente.completarContacto(correo, datos.telefono());
+                    boolean correoDistinto = teniaCuenta && correo != null && !correo.equals(existente.correo());
+                    return new TitularParaReserva(existente, !teniaCuenta && existente.correo() != null,
+                            correoDistinto);
                 })
-                .orElseGet(() -> new Titular(new TitularId(codigos.siguiente(SerieCodigo.TITULAR)), alojamientoId,
-                        datos.nombre(), documento, correo, datos.telefono()));
+                .orElseGet(() -> {
+                    Titular nuevo = new Titular(new TitularId(codigos.siguiente(SerieCodigo.TITULAR)), alojamientoId,
+                            datos.nombre(), documento, correo, datos.telefono());
+                    return new TitularParaReserva(nuevo, correo != null, false);
+                });
     }
 }

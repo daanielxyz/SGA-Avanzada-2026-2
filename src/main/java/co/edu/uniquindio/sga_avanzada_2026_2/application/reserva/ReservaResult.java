@@ -11,11 +11,13 @@ import java.util.Optional;
 
 /**
  * Salida de los casos de uso de Reserva (DEC-31): estado, estancia, grupo, valor y política congelados (CU-49).
+ *
+ * @param avisoCuenta solo al crear: avisa que el titular ya tiene una cuenta con otro correo (DEC-69); si no, nulo
  */
 public record ReservaResult(String codigo, String apartamento, String titularId, LocalDate entrada,
                            LocalDate salida, String estado, String canalOrigen, List<OcupanteResult> ocupantes,
                            LocalTime horaEstimadaLlegada, CotizacionResult valor, String politicaId,
-                           LocalDateTime creadaEn) {
+                           LocalDateTime creadaEn, String avisoCuenta) {
 
     public record OcupanteResult(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                  String numeroDocumento, String nacionalidad) {
@@ -39,6 +41,12 @@ public record ReservaResult(String codigo, String apartamento, String titularId,
                 reserva.horaEstimadaLlegada(),
                 CotizacionResult.de(reserva.desglose(), reserva.valorTotal().monto()),
                 reserva.politicaVersionId().valor(),
-                reserva.creadaEn());
+                reserva.creadaEn(),
+                null);
+    }
+
+    public ReservaResult conAvisoCuenta(String aviso) {
+        return new ReservaResult(codigo, apartamento, titularId, entrada, salida, estado, canalOrigen, ocupantes,
+                horaEstimadaLlegada, valor, politicaId, creadaEn, aviso);
     }
 }

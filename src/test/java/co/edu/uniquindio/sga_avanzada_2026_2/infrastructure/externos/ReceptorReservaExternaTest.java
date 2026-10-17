@@ -49,7 +49,7 @@ class ReceptorReservaExternaTest {
                         escenario.folios, escenario.titulares, escenario.tarifas, escenario.politicas,
                         escenario.conflictos, escenario.eventos, new DisponibilidadDomainService(),
                         new TarificacionDomainService(), new SincronizacionCanalDomainService(), escenario.codigos,
-                        AL_CREAR),
+                        escenario.avisos, AL_CREAR),
                 new RegistrarEventoCanal(escenario.eventos, escenario.canales, escenario.codigos, AL_CREAR));
     }
 

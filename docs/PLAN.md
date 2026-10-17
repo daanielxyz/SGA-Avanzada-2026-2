@@ -152,27 +152,34 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
-- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en tres incrementos, un commit cada uno (DEC-68):
+- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en cuatro incrementos, un commit cada uno (DEC-68 · DEC-69):
   - [x] **B3a · Acceso y permisos** (DEC-67): Spring Security con su soporte JWT; `Usuario` y `Rol` con la tabla `usuario` (V11, `seq_usuario`); `POST /api/auth/login`; primer administrador al arrancar desde variables de entorno; `PermisosPorRol` con la tabla de permisos de todos los endpoints; 401 `NO_AUTENTICADO` y 403 `SIN_PERMISO`; `UsuarioActual` entrega el usuario del token; AUTC-01 y EOPE-04 dentro del endpoint. 25 pruebas (CU-02, USU-01/02/05, ROL-02/04, CORR-01, AUTC-01, EOPE-04, BLO-04, REG-06, NOV-05, SAL-02, RN-17, CAN-03, DEC-22/61/66/67).
     - DTO de B3a: ningún Request ni Response existente cambió de forma.
 
       | Endpoint | Request | Response |
       |---|---|---|
       | `POST /api/auth/login` (público) | `IniciarSesionRequest` (correo, contraseña) | `SesionResponse` (token, tipo, vencimiento, usuario, nombre, rol) |
-  - [ ] **B3b · Cuenta del titular y reserva desde el portal** (DEC-68): el titular es la cuenta, una por titular, creada o reutilizada en toda reserva con correo (portal, DIRECTO y externos); correo y teléfono obligatorios para el titular (cambia DEC-49); inicio de sesión del huésped con correo + documento y PIN al correo (15 min, un solo uso, 5 intentos) y tabla de PIN; token con el id del titular y rol `HUESPED`; los dos correos de cada reserva tras un puerto con implementación local; cambio de correo con PIN enviado por SMS (puerto con implementación local) y al correo actual; el huésped ve, paga y cancela solo lo suyo (USU-04 · ROL-04); reserva pública desde el portal con la hora de llegada y pasarela de pago simulada tras un puerto: pagar el anticipo lo registra en el folio y confirma, y la reserva sin pagar vence a los 30 min (parámetro nuevo del alojamiento). Se retira CU-01 y el rol HUESPED sale de la tabla `usuario`.
-    - Endpoints y DTO previstos para B3b (nombres por confirmar al empezar):
+  - [x] **B3b · Cuenta del titular y acceso del huésped** (DEC-69): una reserva solo completa el contacto que le falta al titular (cambia DEC-58) y avisa si llegó otro correo; correo y teléfono obligatorios para el portal y recepción, opcionales para los canales externos; los dos correos de cada reserva (`AvisosReserva`) por el puerto `Notificador` con su implementación local; inicio de sesión del huésped con correo, documento y PIN (tabla `codigo_acceso`, V12); cambio de correo con PIN por SMS y al correo actual, sin sesión; el huésped ve sus reservas, su folio y su cuenta y cancela solo lo suyo. 19 pruebas (DEC-18/68/69, USU-04/08, ROL-04, TIT-05).
+    - DTO de B3b: `ReservaResponse` suma `avisoCuenta`; el contrato del canal usa `TitularExternoRequest` en lugar de `TitularReservaRequest`, que ahora exige correo y teléfono.
 
       | Endpoint | Request | Response |
       |---|---|---|
-      | `POST /api/portal/reservas` (público) | `ReservaPortalRequest` (apartamento, fechas, titular con correo y teléfono, ocupantes, hora de llegada) | `ReservaPortalResponse` (código, PENDIENTE, total, anticipo, vencimiento a los 30 min, datos para pagar) |
-      | Confirmación de la pasarela (simulada; la real en B4) | `PagoEnLineaRequest` | `ReservaResponse` (CONFIRMADA) |
-      | `POST /api/auth/huesped/pin` (público) | `SolicitarPinRequest` (correo, documento) | — (misma respuesta exista o no la cuenta) |
-      | `POST /api/auth/huesped/login` (público) | `IniciarSesionHuespedRequest` (correo, PIN) | `SesionResponse` |
-      | `GET /api/mis-reservas?pagina=` · `GET /api/reservas/{codigo}`, su folio y `PUT …/cancelar` (solo las propias) | — | `Pagina<ReservaResponse>` · `ReservaResponse` · `FolioResponse` · `CancelacionResponse` |
-      | `GET /api/mi-cuenta` · `PUT /api/mi-cuenta` (teléfono; nombre y documento solo si no está validado) | `ActualizarCuentaRequest` | `CuentaResponse` |
-      | `POST /api/mi-cuenta/correo` (PIN por SMS y al correo actual) · `PUT /api/mi-cuenta/correo` (confirma) | `CambiarCorreoRequest` (nuevo correo) · `ConfirmarCambioCorreoRequest` (PIN) | — · `CuentaResponse` |
-  - [ ] **B3c · Personal interno**: gestión de usuarios internos por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), perfil y cambio de contraseña (CU-03 · CU-04; USU-02 sigue aplicando al personal), recuperación de contraseña por correo con código de un solo uso de 15 min (CU-05 · USU-06 · USU-08), cierre de sesión y revocación del token (CU-48), y `GET /api/reservas` con filtros para recepción (CU-25).
-    - Endpoints y DTO previstos para B3c (hoja «APIs»):
+      | `POST /api/auth/huesped/pin` (público) | `SolicitarPinRequest` (correo, número de documento) | `MensajeResponse` (202, igual exista o no la cuenta) |
+      | `POST /api/auth/huesped/login` (público) | `IniciarSesionHuespedRequest` (correo, número de documento, PIN) | `SesionResponse` |
+      | `POST /api/auth/huesped/cambio-correo` · `PUT /api/auth/huesped/cambio-correo` (públicos) | `SolicitarCambioCorreoRequest` (documento, correo nuevo) · `ConfirmarCambioCorreoRequest` (documento, PIN) | `MensajeResponse` |
+      | `GET /api/mi-cuenta` · `PUT /api/mi-cuenta` (huésped) | `ActualizarCuentaRequest` (nombre, teléfono) | `CuentaResponse` |
+      | `GET /api/mis-reservas?pagina=` (huésped) | — | `Pagina<ReservaResponse>` |
+      | `GET /api/reservas/{codigo}`, su folio y `PUT …/cancelar` (el huésped, solo las propias) | — | sin cambios |
+  - [ ] **B3c · Reserva desde el portal y pago en línea** (DEC-68 · DEC-69): reserva pública desde el portal con la hora de llegada; pasarela de pago simulada tras un puerto (la real en B4); pagar lo registra en el folio con el medio `PAGO_EN_LINEA` y confirma; parámetros nuevos del alojamiento: cuánto se paga en línea (ANTICIPO o TOTAL) y el plazo para pagar (30 min); la reserva del portal sin pagar vence en ese plazo; y el planificador que vence las reservas (`BuscarReservasVencidas` + `VencerReserva`, DEC-57), que se adelanta de B4 porque sin él nada vence.
+    - Endpoints y DTO previstos para B3c (nombres por confirmar al empezar):
+
+      | Endpoint | Request | Response |
+      |---|---|---|
+      | `POST /api/portal/reservas` (público) | `ReservaPortalRequest` (apartamento, fechas, titular con correo y teléfono, ocupantes, hora de llegada) | `ReservaPortalResponse` (código, PENDIENTE, total, monto a pagar, vencimiento, datos para pagar, aviso de la cuenta) |
+      | Pago en la pasarela simulada | `PagoEnLineaRequest` | `ReservaResponse` (CONFIRMADA) |
+      | `PUT /api/alojamiento/parametros` (suma los dos parámetros nuevos) | `ParametrosRequest` | `AlojamientoResponse` |
+  - [ ] **B3d · Personal interno**: gestión de usuarios internos por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), perfil y cambio de contraseña (CU-03 · CU-04; USU-02 sigue aplicando al personal), recuperación de contraseña por correo con código de un solo uso de 15 min (CU-05 · USU-06 · USU-08), cierre de sesión y revocación del token (CU-48), y `GET /api/reservas` con filtros para recepción (CU-25).
+    - Endpoints y DTO previstos para B3d (hoja «APIs»):
 
       | Endpoint | Request | Response |
       |---|---|---|
@@ -181,7 +188,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
       | `POST /api/auth/logout` | — | — |
       | `POST /api/usuarios` · `GET /api/usuarios?pagina=` · `PUT /api/usuarios/{id}` · `PUT /api/usuarios/{id}/eliminar` (administrador) | `CrearUsuarioRequest` (con rol interno) · `ModificarUsuarioRequest` | `UsuarioResponse` · `Pagina<UsuarioResponse>` |
       | `GET /api/reservas?pagina=` (filtros: fechas, estado, apartamento, canal, titular) | — | `Pagina<ReservaResponse>` |
-- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante) y planificador que llama `BuscarReservasVencidas` y luego `VencerReserva` por cada código (DEC-57). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa. Además, las versiones reales de los puertos de B3b: pasarela de pago, envío de correo y SMS (DEC-68).
+- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante). El planificador de vencimientos se adelantó a B3c (DEC-69). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa. Además, las versiones reales de los puertos de B3b y B3c: envío de correo y SMS (`Notificador`) y pasarela de pago (DEC-68 · DEC-69).
 - [ ] **B5 · TRA** (CU-VA-01 · DEC-68), de último porque es lo más complejo y un adicional del producto: nombres y apellidos separados en titular y ocupantes; ciudad de residencia, ciudad de procedencia y motivo del viaje de cada ocupante, que recepción toma en la llegada; recepción valida la identidad del titular (tipo de documento, nombres y apellidos) y el titular queda **validado** para las próximas estadías, con esos datos editables solo por recepción o administración; envío del reporte tras un puerto, sin bloquear la llegada, y **nunca de un titular sin validar** (se advierte que primero hay que validarlo).
 
 ## Pendientes por definir (no tienen incremento todavía)

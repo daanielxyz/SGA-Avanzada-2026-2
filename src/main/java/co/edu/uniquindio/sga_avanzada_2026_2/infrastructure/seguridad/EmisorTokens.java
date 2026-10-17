@@ -12,7 +12,8 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * Emite el token JWT de un usuario (CU-02): firmado con HS256, con su id como sujeto y su rol (DEC-67).
+ * Emite el token JWT de quien inicia sesión (CU-02): firmado con HS256, con su id como sujeto y su rol (DEC-67). El
+ * del personal interno lleva el id de su usuario; el del huésped, el de su titular (DEC-68).
  */
 @Component
 public class EmisorTokens {
@@ -31,17 +32,21 @@ public class EmisorTokens {
     }
 
     public SesionIniciada emitir(Usuario usuario) {
+        return emitir(usuario.id(), usuario.nombre(), usuario.rol());
+    }
+
+    public SesionIniciada emitir(String id, String nombre, Rol rol) {
         Instant ahora = reloj.instant();
         Instant expiraEn = ahora.plus(vigencia);
         JwtClaimsSet datos = JwtClaimsSet.builder()
-                .subject(usuario.id())
-                .claim(ROL, usuario.rol().name())
+                .subject(id)
+                .claim(ROL, rol.name())
                 .issuedAt(ahora)
                 .expiresAt(expiraEn)
                 .build();
         String token = codificador
                 .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), datos))
                 .getTokenValue();
-        return new SesionIniciada(token, expiraEn, usuario.id(), usuario.nombre(), usuario.rol());
+        return new SesionIniciada(token, expiraEn, id, nombre, rol);
     }
 }
