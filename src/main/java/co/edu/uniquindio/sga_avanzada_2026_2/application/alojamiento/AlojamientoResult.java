@@ -19,7 +19,8 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                                    long tiempoPreparacionHoras, long plazoConfirmacionHoras,
                                    LocalTime horaLimiteNoShow, int anticipoPct, int minimoMediosPago,
                                    int minimoServiciosAdicionales, int minimoTemporadas, int minimoTramosCancelacion,
-                                   int minimoCapacidadesDistintas) {
+                                   int minimoCapacidadesDistintas, String pagoEnLinea,
+                                   long plazoPagoEnLineaMinutos) {
     }
 
     public record ServicioResult(String id, String nombre, boolean generaCargo, BigDecimal valor, boolean activo) {
@@ -39,7 +40,8 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                 new ParametrosResult(p.umbralEdadFacturable(), p.horaEntrada(), p.horaSalida(),
                         p.tiempoPreparacion().toHours(), p.plazoConfirmacion().toHours(), p.horaLimiteNoShow(),
                         p.anticipo().valor(), p.minimoMediosPago(), p.minimoServiciosAdicionales(),
-                        p.minimoTemporadas(), p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas()),
+                        p.minimoTemporadas(), p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas(),
+                        p.pagoEnLinea().name(), p.plazoPagoEnLinea().toMinutes()),
                 alojamiento.serviciosAdicionales().stream()
                         .map(s -> new ServicioResult(s.id().valor(), s.nombre(), s.generaCargo(), s.valor().monto(),
                                 s.activo()))

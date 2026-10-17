@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.Enmascarar;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.Notificador;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import org.springframework.stereotype.Component;
@@ -58,6 +59,21 @@ public class AvisosReserva {
                 .orElse(null);
     }
 
+    /**
+     * DEC-69 — el pago en línea quedó registrado y la reserva confirmada. Sin correo, el titular no recibe nada.
+     */
+    public void avisarPagoEnLinea(Reserva reserva, Titular titular, Dinero monto, String alojamiento) {
+        Optional.ofNullable(titular.correo()).map(Correo::valor).ifPresent(destino ->
+                notificador.enviarCorreo(destino, "Pago recibido: tu reserva " + reserva.codigo().valor()
+                                + " quedó confirmada",
+                        "Recibimos tu pago en línea de $" + pesos(monto) + " y tu reserva quedó confirmada.\n\n"
+                                + detalle(reserva, titular, alojamiento)));
+    }
+
+    private static String pesos(Dinero dinero) {
+        return String.format(COLOMBIA, "%,d", dinero.monto().longValue());
+    }
+
     private static String detalle(Reserva reserva, Titular titular, String alojamiento) {
         return "Hola " + titular.nombre() + ":\n\n"
                 + "Recibimos tu reserva en " + alojamiento + ".\n\n"
@@ -66,7 +82,7 @@ public class AvisosReserva {
                 + "Entrada: " + reserva.estancia().entrada() + "\n"
                 + "Salida: " + reserva.estancia().salida() + "\n"
                 + "Personas: " + reserva.ocupantes().size() + "\n"
-                + "Valor total: $" + String.format(COLOMBIA, "%,d", reserva.valorTotal().monto().longValue()) + "\n"
+                + "Valor total: $" + pesos(reserva.valorTotal()) + "\n"
                 + "Estado: " + reserva.estado() + "\n";
     }
 

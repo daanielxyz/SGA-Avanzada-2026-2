@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
@@ -104,7 +105,7 @@ class ActivadorApartamentoServiceTest {
     private static ParametrosAlojamiento parametros(int minimoCapacidadesDistintas) {
         return new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0), Duration.ofHours(3),
                 Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), 2, 1, MINIMO_FICHA, 2,
-                minimoCapacidadesDistintas);
+                minimoCapacidadesDistintas, ModoPagoEnLinea.ANTICIPO, Duration.ofMinutes(30));
     }
 
     @Test

@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicional;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicionalId;
@@ -57,7 +58,8 @@ public final class AlojamientoDePrueba {
         alojamientos.guardar(new Alojamiento(ALO, "Puerta al Sol", "Frente al mar", "Santa Marta", "Calle 1 # 2-3",
                 new Ubicacion(11.24, -74.21), null,
                 new ParametrosAlojamiento(12, LocalTime.of(15, 0), LocalTime.of(11, 0), Duration.ofHours(3),
-                        Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), 2, 1, 2, 2, 2),
+                        Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30), 2, 1, 2, 2, 2,
+                        ModoPagoEnLinea.ANTICIPO, Duration.ofMinutes(30)),
                 List.of(new ServicioAdicional(new ServicioAdicionalId(DESAYUNO), "Desayuno", true,
                         Dinero.de(25_000), true)),
                 List.of(new MedioPago("EFECTIVO"), new MedioPago("TARJETA"))));

@@ -24,7 +24,8 @@ public record SgaPropiedades(Alojamiento alojamiento, Parametros parametros, Pol
     public record Parametros(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                              int tiempoPreparacionHoras, int plazoConfirmacionHoras, LocalTime horaLimiteNoShow,
                              int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
-                             int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas) {
+                             int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
+                             String pagoEnLinea, int plazoPagoEnLineaMinutos) {
     }
 
     public record Politica(List<Tramo> tramos, Penalizacion noShow) {

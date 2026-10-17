@@ -223,10 +223,10 @@ public class Reserva {
 
     /**
      * Cancela automáticamente una reserva PENDIENTE que superó el plazo de confirmación contado desde su creación
-     * (RN-21 · RES-17 · RES-21). Lo invoca el caso de uso {@code VencerReservasPendientes}.
+     * (RN-21 · RES-17 · RES-21). Lo invoca el caso de uso {@code VencerReserva}.
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
-     * @param plazo {@code ParametrosAlojamiento.plazoConfirmacion}
+     * @param plazo {@code ParametrosAlojamiento.plazoParaConfirmar} según su canal (DEC-69)
      * @throws ReglaDominioException si no está PENDIENTE o todavía no supera el plazo
      */
     public void expirar(LocalDateTime ahora, Duration plazo) {
@@ -235,11 +235,26 @@ public class Reserva {
         if (estado != EstadoReserva.PENDIENTE) {
             throw new ReglaDominioException("Solo vence una reserva PENDIENTE; está " + estado);
         }
-        if (!ahora.isAfter(creadaEn.plus(plazo))) {
+        if (!vencio(ahora, plazo)) {
             throw new ReglaDominioException("La reserva " + codigo.valor()
                     + " no ha superado el plazo de confirmación");
         }
         estado = EstadoReserva.CANCELADA;
+    }
+
+    /**
+     * Si es una reserva PENDIENTE que ya superó su plazo para confirmarse (RN-21), aunque todavía nadie la haya
+     * vencido.
+     */
+    public boolean vencio(LocalDateTime ahora, Duration plazo) {
+        return estado == EstadoReserva.PENDIENTE && ahora.isAfter(creadaEn.plus(plazo));
+    }
+
+    /**
+     * Hasta cuándo puede confirmarse, p. ej. para pagarla en línea (DEC-69).
+     */
+    public LocalDateTime venceEn(Duration plazo) {
+        return creadaEn.plus(plazo);
     }
 
     /**

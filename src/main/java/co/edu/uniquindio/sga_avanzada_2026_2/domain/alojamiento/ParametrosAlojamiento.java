@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 
@@ -18,6 +19,8 @@ import java.time.LocalTime;
  *                                   apartamentos (TEM-04 · DEC-28)
  * @param minimoTramosCancelacion    tramos que debe tener cada versión de la política de cancelación; mínimo de la
  *                                   Ficha del curso, configurable (POL-01 · DEC-41)
+ * @param pagoEnLinea                cuánto se paga al reservar desde el portal (DEC-69)
+ * @param plazoPagoEnLinea           lo que tiene una reserva del portal para pagarse; si no, vence (DEC-69)
  * @param minimoCapacidadesDistintas capacidades distintas que deben tener los apartamentos activos; mínimo de la
  *                                   Ficha del curso, configurable (CAP-05 · DEC-51)
  */
@@ -25,7 +28,8 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
                                     Duration tiempoPreparacion, Duration plazoConfirmacion,
                                     LocalTime horaLimiteNoShow, Porcentaje anticipo, int minimoMediosPago,
                                     int minimoServiciosAdicionales, int minimoTemporadas,
-                                    int minimoTramosCancelacion, int minimoCapacidadesDistintas) {
+                                    int minimoTramosCancelacion, int minimoCapacidadesDistintas,
+                                    ModoPagoEnLinea pagoEnLinea, Duration plazoPagoEnLinea) {
 
     // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04 · POL-01 · CAP-05
     public ParametrosAlojamiento {
@@ -52,5 +56,24 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         if (minimoTramosCancelacion < 1) {
             throw new ReglaDominioException("La política de cancelación necesita al menos un tramo");
         }
+        if (pagoEnLinea == null) {
+            throw new ReglaDominioException("Falta cuánto se paga en línea: el anticipo o el total");
+        }
+        if (plazoPagoEnLinea == null || plazoPagoEnLinea.isNegative() || plazoPagoEnLinea.isZero()) {
+            throw new ReglaDominioException("El plazo para pagar en línea debe ser mayor que cero");
+        }
+    }
+
+    /**
+     * El plazo para confirmar una reserva PENDIENTE antes de que venza (RN-21): la del portal se paga en línea
+     * y tiene el plazo del pago; las demás, el de confirmación (DEC-69).
+     */
+    public Duration plazoParaConfirmar(CanalOrigen canal) {
+        return canal == CanalOrigen.PORTAL ? plazoPagoEnLinea : plazoConfirmacion;
+    }
+
+    /** El más corto de los dos plazos: antes de él no vence ninguna reserva. */
+    public Duration plazoMasCorto() {
+        return plazoPagoEnLinea.compareTo(plazoConfirmacion) < 0 ? plazoPagoEnLinea : plazoConfirmacion;
     }
 }

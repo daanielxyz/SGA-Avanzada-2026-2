@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.NoShowDomainService
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SalidaOperativaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SincronizacionCanalDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PagoEnLineaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,6 +61,11 @@ public class ServiciosDominioConfig {
     @Bean
     public NoShowDomainService noShowDomainService() {
         return new NoShowDomainService();
+    }
+
+    @Bean
+    public PagoEnLineaDomainService pagoEnLineaDomainService() {
+        return new PagoEnLineaDomainService();
     }
 
     @Bean

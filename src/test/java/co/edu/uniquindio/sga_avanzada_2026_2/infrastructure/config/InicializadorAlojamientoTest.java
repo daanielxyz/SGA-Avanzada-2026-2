@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -16,6 +17,7 @@ import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Set;
 
@@ -59,7 +61,9 @@ class InicializadorAlojamientoTest {
         assertEquals("Puerta al Sol", alojamiento.nombre());
         assertEquals(LocalTime.of(15, 0), alojamiento.parametros().horaEntrada());
         assertEquals(2, alojamiento.parametros().minimoCapacidadesDistintas());
-        assertEquals(Set.of(new MedioPago("EFECTIVO"), new MedioPago("TRANSFERENCIA")),
+        assertEquals(ModoPagoEnLinea.ANTICIPO, alojamiento.parametros().pagoEnLinea());
+        assertEquals(Duration.ofMinutes(30), alojamiento.parametros().plazoPagoEnLinea());
+        assertEquals(Set.of(new MedioPago("EFECTIVO"), new MedioPago("TRANSFERENCIA"), new MedioPago("PAGO_EN_LINEA")),
                 Set.copyOf(alojamiento.mediosPago())); // conjunto sin orden (DEC-27)
         assertEquals(1, politica.version());
         assertEquals(new Porcentaje(0), politica.penalizacionPara(48).porcentaje());

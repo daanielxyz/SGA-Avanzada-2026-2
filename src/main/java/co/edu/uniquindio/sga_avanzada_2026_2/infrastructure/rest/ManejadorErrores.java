@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.PagoRechazadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoDuplicadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -21,8 +22,8 @@ import java.util.List;
 
 /**
  * Traduce las excepciones a respuestas HTTP uniformes (DEC-33): formato → 400, credenciales → 401, rol → 403, no
- * encontrado → 404, duplicado, regla de negocio o choque de concurrencia → 409. Ningún controlador captura
- * excepciones por su cuenta. El 401 y el 403 de una petición que no llega al controlador los responde
+ * encontrado → 404, duplicado, regla de negocio, pago rechazado o choque de concurrencia → 409. Ningún controlador
+ * captura excepciones por su cuenta. El 401 y el 403 de una petición que no llega al controlador los responde
  * {@code RespuestasDeSeguridad} (DEC-67).
  */
 @RestControllerAdvice
@@ -85,6 +86,12 @@ public class ManejadorErrores {
     @ExceptionHandler(RecursoDuplicadoException.class)
     ResponseEntity<ErrorResponse> duplicado(RecursoDuplicadoException e) {
         return responder(HttpStatus.CONFLICT, "DUPLICADO", e.getMessage(), List.of());
+    }
+
+    /** La pasarela no aprobó el cobro: no se registró nada y se puede intentar de nuevo (DEC-69). */
+    @ExceptionHandler(PagoRechazadoException.class)
+    ResponseEntity<ErrorResponse> pagoRechazado(PagoRechazadoException e) {
+        return responder(HttpStatus.CONFLICT, "PAGO_RECHAZADO", e.getMessage(), List.of());
     }
 
     @ExceptionHandler(ReglaDominioException.class)

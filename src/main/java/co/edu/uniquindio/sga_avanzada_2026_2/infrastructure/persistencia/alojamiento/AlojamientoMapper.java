@@ -35,7 +35,9 @@ final class AlojamientoMapper {
                 jpa.getMinimoServiciosAdicionales(),
                 jpa.getMinimoTemporadas(),
                 jpa.getMinimoTramosCancelacion(),
-                jpa.getMinimoCapacidadesDistintas());
+                jpa.getMinimoCapacidadesDistintas(),
+                jpa.getPagoEnLinea(),
+                Duration.ofMinutes(jpa.getPlazoPagoEnLineaMin()));
         return new Alojamiento(
                 new AlojamientoId(jpa.getId()),
                 jpa.getNombre(),
@@ -77,6 +79,8 @@ final class AlojamientoMapper {
         jpa.setMinimoTemporadas(p.minimoTemporadas());
         jpa.setMinimoTramosCancelacion(p.minimoTramosCancelacion());
         jpa.setMinimoCapacidadesDistintas(p.minimoCapacidadesDistintas());
+        jpa.setPagoEnLinea(p.pagoEnLinea());
+        jpa.setPlazoPagoEnLineaMin((int) p.plazoPagoEnLinea().toMinutes());
         jpa.getServiciosAdicionales().clear();
         alojamiento.serviciosAdicionales().forEach(s -> jpa.getServiciosAdicionales().add(new ServicioAdicionalJpa(
                 s.id().valor(), s.nombre(), s.generaCargo(), s.valor().monto(), s.activo())));

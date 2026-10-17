@@ -1,9 +1,12 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -53,6 +56,11 @@ public class AlojamientoJpa {
     private int minimoTemporadas;
     private int minimoTramosCancelacion;
     private int minimoCapacidadesDistintas;
+
+    @Enumerated(EnumType.STRING)
+    private ModoPagoEnLinea pagoEnLinea;
+
+    private int plazoPagoEnLineaMin;
 
     @Version
     private Long version;

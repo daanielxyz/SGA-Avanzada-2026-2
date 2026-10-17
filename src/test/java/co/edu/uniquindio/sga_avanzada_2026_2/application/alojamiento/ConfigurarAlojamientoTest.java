@@ -42,7 +42,7 @@ class ConfigurarAlojamientoTest {
     @Tag("ALO-03")
     void deberiaReemplazarLosParametros() {
         ParametrosCommand nuevos = new ParametrosCommand(10, LocalTime.of(14, 0), LocalTime.of(12, 0), 2, 48,
-                LocalTime.of(21, 0), 0, 2, 1, 2, 2, 1);
+                LocalTime.of(21, 0), 0, 2, 1, 2, 2, 1, "TOTAL", 45);
 
         AlojamientoResult resultado = new CambiarParametrosAlojamiento(alojamientos)
                 .ejecutar(new CambiarParametrosAlojamientoCommand("ALO-1", nuevos));
@@ -56,7 +56,7 @@ class ConfigurarAlojamientoTest {
     @Tag("ALO-06")
     void noDeberiaAceptarMinimosQueElCatalogoNoCumple() {
         ParametrosCommand tresMedios = new ParametrosCommand(12, LocalTime.of(15, 0), LocalTime.of(11, 0), 3, 24,
-                LocalTime.of(22, 0), 30, 3, 1, 2, 2, 2);
+                LocalTime.of(22, 0), 30, 3, 1, 2, 2, 2, "ANTICIPO", 30);
 
         assertThrows(ReglaDominioException.class, () -> new CambiarParametrosAlojamiento(alojamientos)
                 .ejecutar(new CambiarParametrosAlojamientoCommand("ALO-1", tresMedios)));

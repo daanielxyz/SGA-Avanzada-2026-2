@@ -45,7 +45,8 @@ public class CancelacionDomainService {
      * {@code Reserva.expirar}) y anula su alojamiento en el folio sin penalidad: lo pagado queda a favor para la
      * devolución (DEC-57).
      *
-     * @param parametros plazo de confirmación del alojamiento
+     * @param parametros plazos del alojamiento: el del pago en línea para el portal y el de confirmación para los
+     *                   demás
      * @param ahora      fecha y hora actuales en Colombia, inyectadas
      * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), la reserva no está PENDIENTE o todavía
      *                               no supera el plazo
@@ -53,7 +54,7 @@ public class CancelacionDomainService {
     public void procesarVencimiento(Reserva reserva, Folio folio, ParametrosAlojamiento parametros,
                                     LocalDateTime ahora) {
         validarFolio(reserva, folio);
-        reserva.expirar(ahora, parametros.plazoConfirmacion());
+        reserva.expirar(ahora, parametros.plazoParaConfirmar(reserva.canalOrigen()));
         folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "vencimiento", ahora.toLocalDate());
     }
 

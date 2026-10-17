@@ -40,7 +40,7 @@ class InicializarAlojamientoTest {
 
     static ParametrosCommand parametros() {
         return new ParametrosCommand(12, LocalTime.of(15, 0), LocalTime.of(11, 0), 3, 24, LocalTime.of(22, 0), 30,
-                2, 1, 2, 2, 2);
+                2, 1, 2, 2, 2, "ANTICIPO", 30);
     }
 
     private static InicializarAlojamientoCommand comando(String nombre, List<String> medios) {

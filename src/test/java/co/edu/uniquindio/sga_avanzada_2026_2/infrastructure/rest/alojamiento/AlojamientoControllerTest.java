@@ -44,7 +44,9 @@ class AlojamientoControllerTest {
               "minimoServiciosAdicionales": 1,
               "minimoTemporadas": 2,
               "minimoTramosCancelacion": 2,
-              "minimoCapacidadesDistintas": 1
+              "minimoCapacidadesDistintas": 1,
+              "pagoEnLinea": "TOTAL",
+              "plazoPagoEnLineaMinutos": 45
             }
             """;
 

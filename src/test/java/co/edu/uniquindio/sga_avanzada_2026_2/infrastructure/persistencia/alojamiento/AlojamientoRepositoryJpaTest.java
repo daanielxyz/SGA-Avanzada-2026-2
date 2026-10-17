@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojam
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicional;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicionalId;
@@ -35,7 +36,7 @@ class AlojamientoRepositoryJpaTest {
     private static final AlojamientoId ID = new AlojamientoId("ALO-1");
     private static final ParametrosAlojamiento PARAMETROS = new ParametrosAlojamiento(12, LocalTime.of(15, 0),
             LocalTime.of(11, 0), Duration.ofHours(3), Duration.ofHours(24), LocalTime.of(22, 0), new Porcentaje(30),
-            2, 1, 2, 2, 3);
+            2, 1, 2, 2, 3, ModoPagoEnLinea.TOTAL, Duration.ofMinutes(45));
 
     @Autowired
     private AlojamientoRepositoryJpa repositorio;

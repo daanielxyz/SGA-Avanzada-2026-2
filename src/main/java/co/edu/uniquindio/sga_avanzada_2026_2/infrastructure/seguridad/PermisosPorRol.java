@@ -31,6 +31,9 @@ final class PermisosPorRol {
                         "/api/auth/huesped/login", "/api/auth/huesped/cambio-correo").permitAll()
                 // El cambio de correo no pide sesión: lo autoriza el PIN que llega al teléfono y al correo (DEC-69)
                 .requestMatchers(HttpMethod.PUT, "/api/auth/huesped/cambio-correo").permitAll()
+                // La reserva del portal y su pago en línea: no hace falta cuenta para reservar (DEC-68 · DEC-69)
+                .requestMatchers(HttpMethod.POST, "/api/portal/reservas", "/api/portal/reservas/{codigo}/pago")
+                .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
                         "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}").permitAll()
 

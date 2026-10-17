@@ -170,14 +170,13 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
       | `GET /api/mi-cuenta` · `PUT /api/mi-cuenta` (huésped) | `ActualizarCuentaRequest` (nombre, teléfono) | `CuentaResponse` |
       | `GET /api/mis-reservas?pagina=` (huésped) | — | `Pagina<ReservaResponse>` |
       | `GET /api/reservas/{codigo}`, su folio y `PUT …/cancelar` (el huésped, solo las propias) | — | sin cambios |
-  - [ ] **B3c · Reserva desde el portal y pago en línea** (DEC-68 · DEC-69): reserva pública desde el portal con la hora de llegada; pasarela de pago simulada tras un puerto (la real en B4); pagar lo registra en el folio con el medio `PAGO_EN_LINEA` y confirma; parámetros nuevos del alojamiento: cuánto se paga en línea (ANTICIPO o TOTAL) y el plazo para pagar (30 min); la reserva del portal sin pagar vence en ese plazo; y el planificador que vence las reservas (`BuscarReservasVencidas` + `VencerReserva`, DEC-57), que se adelanta de B4 porque sin él nada vence.
-    - Endpoints y DTO previstos para B3c (nombres por confirmar al empezar):
+  - [x] **B3c · Reserva desde el portal y pago en línea** (DEC-70): `ReservarDesdePortal` (público, canal PORTAL, hora de llegada obligatoria), `PagarEnLinea` con el puerto `PasarelaPago` y su `PasarelaSimulada`, `PagoEnLineaDomainService` (valida antes de cobrar; registra con el medio `PAGO_EN_LINEA` y confirma), parámetros `pagoEnLinea` (ANTICIPO o TOTAL) y `plazoPagoEnLinea` (30 min) + persistencia V13, vencimiento según el canal (`plazoParaConfirmar`, `Reserva.vencio`) y `PlanificadorVencimientos` cada minuto. 13 pruebas (CU-10, CU-20, RN-09/21, RES-15, MPAG-02, DEC-57/68/69).
+    - DTO de B3c: `ParametrosRequest` y `AlojamientoResponse` suman `pagoEnLinea` y `plazoPagoEnLineaMinutos` (un `PUT /api/alojamiento/parametros` sin ellos ahora es 400).
 
       | Endpoint | Request | Response |
       |---|---|---|
-      | `POST /api/portal/reservas` (público) | `ReservaPortalRequest` (apartamento, fechas, titular con correo y teléfono, ocupantes, hora de llegada) | `ReservaPortalResponse` (código, PENDIENTE, total, monto a pagar, vencimiento, datos para pagar, aviso de la cuenta) |
-      | Pago en la pasarela simulada | `PagoEnLineaRequest` | `ReservaResponse` (CONFIRMADA) |
-      | `PUT /api/alojamiento/parametros` (suma los dos parámetros nuevos) | `ParametrosRequest` | `AlojamientoResponse` |
+      | `POST /api/portal/reservas` (público) | `ReservaPortalRequest` (apartamento, fechas, titular con correo y teléfono, ocupantes, hora de llegada) | `ReservaPortalResponse` (201: la reserva, `montoAPagar`, `pagarAntesDe`) |
+      | `POST /api/portal/reservas/{codigo}/pago` (público) | `PagoEnLineaRequest` (`tokenPago`) | `ReservaResponse` (CONFIRMADA) · 409 `PAGO_RECHAZADO` |
   - [ ] **B3d · Personal interno**: gestión de usuarios internos por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), perfil y cambio de contraseña (CU-03 · CU-04; USU-02 sigue aplicando al personal), recuperación de contraseña por correo con código de un solo uso de 15 min (CU-05 · USU-06 · USU-08), cierre de sesión y revocación del token (CU-48), y `GET /api/reservas` con filtros para recepción (CU-25).
     - Endpoints y DTO previstos para B3d (hoja «APIs»):
 
