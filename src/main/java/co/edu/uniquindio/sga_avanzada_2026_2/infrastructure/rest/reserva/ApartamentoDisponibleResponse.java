@@ -8,7 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisp
  */
 public record ApartamentoDisponibleResponse(String codigo, String nombre, int capacidad, int dormitorios) {
 
-    static ApartamentoDisponibleResponse de(ApartamentoDisponibleResult r) {
+    public static ApartamentoDisponibleResponse de(ApartamentoDisponibleResult r) {
         return new ApartamentoDisponibleResponse(r.codigo(), r.nombre(), r.capacidad(), r.dormitorios());
     }
 }

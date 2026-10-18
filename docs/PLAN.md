@@ -146,7 +146,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | Endpoint | Request | Response |
     |---|---|---|
     | `GET /api/canales` · `POST /api/canales` · `PUT /api/canales/{id}/desactivar` | `RegistrarCanalRequest` | lista de `CanalResponse` · `CanalResponse` |
-    | `POST /api/canales/{id}/reservas` (contrato del canal; hecho sin credencial, que es de B4) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto; un rechazo por otra regla es el 409 `REGLA_NEGOCIO` de siempre, y el adaptador lo anota con `RegistrarEventoCanal`, DEC-62) |
+    | `POST /api/canales-externos/{id}/reservas` (contrato del canal; la ruta y la clave del canal son de B4a, DEC-73) | `ReservaExternaRequest` | `ReservaExternaResponse` (201, o 200 si es duplicado, o 409 con el conflicto; un rechazo por otra regla es el 409 `REGLA_NEGOCIO` de siempre, y el adaptador lo anota con `RegistrarEventoCanal`, DEC-62) |
     | `GET /api/conflictos/pendientes` · `PUT /api/conflictos/{id}/resolver` | `ResolverConflictoRequest` (decisión) | lista de `ConflictoResponse` · `ConflictoResponse` |
     | `GET /api/canales/{id}/eventos?desde&hasta&pagina` (días) | — | `Pagina<EventoCanalResponse>` |
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
@@ -192,7 +192,17 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
       | Endpoint | Request | Response |
       |---|---|---|
       | `GET /api/reservas?desde&hasta&estado&apartamento&canal&titular&pagina` (recepción y administrador) | — (parámetros) | `Pagina<ReservaResponse>` |
-- [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante). El planificador de vencimientos se adelantó a B3c (DEC-69). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa. Además, las versiones reales de los puertos de B3b y B3c: envío de correo y SMS (`Notificador`) y pasarela de pago (DEC-68 · DEC-69).
+- **B4 · Externos** tras puertos con implementación local. Dividido en tres incrementos, un commit cada uno (DEC-73). El planificador de vencimientos se adelantó a B3c (DEC-70).
+  - [x] **B4a · Contrato del canal externo** (DEC-73): clave del canal en `X-Canal-Clave` (`AutenticadorCanal`, CAN-03), rutas en `/api/canales-externos/{canalId}`, `ConsultarDisponibilidadCanal` (CU-13) y `CancelarReservaExterna` (CU-16) con su bitácora, y `ReceptorCanalExterno` (antes `ReceptorReservaExterna`) para las tres operaciones. Sin migración. 6 pruebas (CU-13/16, CAN-03/05, RN-12, BIT-01, DEC-73).
+    - DTO de B4a: ningún Request ni Response nuevo; la disponibilidad devuelve `ApartamentoDisponibleResponse` y la cancelación `CancelacionResponse`.
+
+      | Endpoint | Request | Response |
+      |---|---|---|
+      | `GET /api/canales-externos/{canalId}/disponibilidad?entrada&salida&ocupantes` | — (parámetros) | lista de `ApartamentoDisponibleResponse` |
+      | `POST /api/canales-externos/{canalId}/reservas` | `ReservaExternaRequest` | `ReservaExternaResponse` (201 · 200 · 409) |
+      | `PUT /api/canales-externos/{canalId}/reservas/{idExterno}/cancelar` | — | `CancelacionResponse` |
+  - [ ] **B4b · Servicios reales**: adaptadores de correo, SMS y pasarela de pago tras `Notificador` y `PasarelaPago`, con las implementaciones locales como alternativa (elegir proveedores y tener cuentas); la pasarela real autoriza y captura solo al confirmar (DEC-70); publicar disponibilidad hacia las plataformas (`PUBLICAR_DISPONIBILIDAD`).
+  - [ ] **B4c · IA no bloqueante**: un puerto de IA con implementación local; decidir para qué se usa (p. ej. tarifa sugerida, resumen diario o clasificación de novedades) y con qué proveedor. La operación nunca depende de ella.
 - [ ] **B5 · TRA** (CU-VA-01 · DEC-68), de último porque es lo más complejo y un adicional del producto: nombres y apellidos separados en titular y ocupantes; ciudad de residencia, ciudad de procedencia y motivo del viaje de cada ocupante, que recepción toma en la llegada; recepción valida la identidad del titular (tipo de documento, nombres y apellidos) y el titular queda **validado** para las próximas estadías, con esos datos editables solo por recepción o administración; envío del reporte tras un puerto, sin bloquear la llegada, y **nunca de un titular sin validar** (se advierte que primero hay que validarlo).
 
 ## Pendientes por definir (no tienen incremento todavía)

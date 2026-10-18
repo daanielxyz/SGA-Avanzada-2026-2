@@ -56,11 +56,21 @@ public class Canal {
      * @throws ReglaDominioException si no es externo o está inactivo
      */
     public void exigirReservasExternas() {
-        if (tipo != CanalOrigen.EXTERNO) {
-            throw new ReglaDominioException("El canal " + id.valor() + " no es un canal externo");
-        }
+        exigirExterno();
         if (!activo) {
             throw new ReglaDominioException("El canal " + id.valor() + " está inactivo y no crea reservas nuevas");
+        }
+    }
+
+    /**
+     * Exige que sea un canal EXTERNO, esté o no activo: un canal desactivado ya no vende, pero todavía puede cancelar
+     * las reservas que trajo (CAN-05 · CU-16).
+     *
+     * @throws ReglaDominioException si no es externo
+     */
+    public void exigirExterno() {
+        if (tipo != CanalOrigen.EXTERNO) {
+            throw new ReglaDominioException("El canal " + id.valor() + " no es un canal externo");
         }
     }
 

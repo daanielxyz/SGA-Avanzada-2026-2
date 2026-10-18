@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 public record CancelacionResponse(String codigo, String estado, BigDecimal retenido, BigDecimal saldo,
                                   String situacionSaldo) {
 
-    static CancelacionResponse de(CancelacionResult r) {
+    public static CancelacionResponse de(CancelacionResult r) {
         return new CancelacionResponse(r.codigo(), r.estado(), r.retenido(), r.saldo(), r.situacionSaldo());
     }
 }

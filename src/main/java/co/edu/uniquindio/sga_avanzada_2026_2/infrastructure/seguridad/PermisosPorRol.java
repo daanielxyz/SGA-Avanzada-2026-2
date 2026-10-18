@@ -41,9 +41,9 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
                         "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}").permitAll()
 
-                // TODO(B4): el contrato del canal se autentica con la credencial del canal, no con un usuario
-                //  (CAN-03 · DEC-47 · DEC-66); hasta entonces queda abierto.
-                .requestMatchers(HttpMethod.POST, "/api/canales/{id}/reservas").permitAll()
+                // El contrato del canal no usa usuario: cada mensaje trae la clave del canal, que revisa
+                // AutenticadorCanal (CAN-03 · DEC-73)
+                .requestMatchers("/api/canales-externos/**").permitAll()
 
                 // El huésped: su cuenta y sus reservas; que cada reserva sea suya lo revisa el controlador (USU-04)
                 .requestMatchers("/api/mi-cuenta", "/api/mis-reservas").hasRole(HUESPED)

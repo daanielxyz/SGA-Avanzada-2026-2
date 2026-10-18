@@ -12,7 +12,7 @@ import java.util.UUID;
  * Implementación local de la {@link PasarelaPago} (DEC-69): no cobra nada. Aprueba todo token salvo
  * {@value #TOKEN_RECHAZADO}, que sirve para probar un rechazo.
  */
-// TODO(B4): adaptador de la pasarela real tras este mismo puerto; este queda como alternativa local.
+// TODO(B4b): adaptador de la pasarela real tras este mismo puerto; este queda como alternativa local.
 @Component
 public class PasarelaSimulada implements PasarelaPago {
 

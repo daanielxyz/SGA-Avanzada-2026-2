@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoDupli
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AccesoDenegadoException;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CanalNoAutenticadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CredencialesInvalidasException;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -71,6 +72,12 @@ public class ManejadorErrores {
     @ExceptionHandler(CredencialesInvalidasException.class)
     ResponseEntity<ErrorResponse> credencialesInvalidas(CredencialesInvalidasException e) {
         return responder(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", e.getMessage(), List.of());
+    }
+
+    /** El mensaje de un canal externo sin su clave válida (CAN-03 · DEC-73). */
+    @ExceptionHandler(CanalNoAutenticadoException.class)
+    ResponseEntity<ErrorResponse> canalNoAutenticado(CanalNoAutenticadoException e) {
+        return responder(HttpStatus.UNAUTHORIZED, "CANAL_NO_AUTENTICADO", e.getMessage(), List.of());
     }
 
     @ExceptionHandler(AccesoDenegadoException.class)

@@ -1,6 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExterna;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.IntegracionExternaResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExterna;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaCommand;
@@ -8,17 +10,28 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponibles;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.TitularCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExternaCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanalCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisponibleResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.OperacionCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ResultadoEvento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SincronizacionCanalDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AutenticadorCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CanalNoAutenticadoException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,10 +46,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * El adaptador de entrada de los canales con los casos de uso reales y repositorios en memoria, sobre el APT-101 de
  * {@link EscenarioEstancia}: lo que el caso de uso rechaza también debe quedar en la bitácora.
  */
-class ReceptorReservaExternaTest {
+class ReceptorCanalExternoTest {
+
+    private static final String CLAVE = "clave-booking";
 
     private EscenarioEstancia escenario;
-    private ReceptorReservaExterna receptor;
+    private ReceptorCanalExterno receptor;
     private String canal;
 
     @BeforeEach
@@ -44,13 +59,22 @@ class ReceptorReservaExternaTest {
         escenario = new EscenarioEstancia();
         canal = new RegistrarCanal(escenario.canales, escenario.alojamientos, escenario.codigos)
                 .ejecutar(new RegistrarCanalCommand("ALO-1", "Booking", "EXTERNO", "BOOKING_API_KEY")).id();
-        receptor = new ReceptorReservaExterna(
+        MockEnvironment entorno = new MockEnvironment().withProperty("sga.canales.BOOKING_API_KEY", CLAVE);
+        RegistrarEventoCanal registrarEvento = new RegistrarEventoCanal(escenario.eventos, escenario.canales,
+                escenario.codigos, AL_CREAR);
+        ConsultarDisponibilidadCanal consultar = new ConsultarDisponibilidadCanal(escenario.canales,
+                escenario.eventos, new BuscarDisponibles(escenario.cargador, escenario.apartamentos,
+                escenario.reservas, new DisponibilidadDomainService()), escenario.codigos, AL_CREAR);
+        CancelarReservaExterna cancelar = new CancelarReservaExterna(escenario.canales, escenario.reservas,
+                escenario.eventos, new CancelarReserva(escenario.cargador, escenario.reservas, escenario.folios,
+                escenario.politicas, new CancelacionDomainService(), AL_CREAR), escenario.codigos, AL_CREAR);
+        receptor = new ReceptorCanalExterno(new AutenticadorCanal(escenario.canales, entorno),
                 new RecibirReservaExterna(escenario.cargador, escenario.canales, escenario.reservas,
                         escenario.folios, escenario.titulares, escenario.tarifas, escenario.politicas,
                         escenario.conflictos, escenario.eventos, new DisponibilidadDomainService(),
                         new TarificacionDomainService(), new SincronizacionCanalDomainService(), escenario.codigos,
                         escenario.avisos, AL_CREAR),
-                new RegistrarEventoCanal(escenario.eventos, escenario.canales, escenario.codigos, AL_CREAR));
+                consultar, cancelar, registrarEvento);
     }
 
     private RecibirReservaExternaCommand pedido(String canalId, String idExterno, List<OcupanteCommand> ocupantes) {
@@ -66,7 +90,7 @@ class ReceptorReservaExternaTest {
     @Test
     @Tag("CU-12")
     void unaReservaQueSeIntegraNoSeAnotaDosVeces() {
-        IntegracionExternaResult resultado = receptor.recibir(pedido(canal, "BK-1", conAna()));
+        IntegracionExternaResult resultado = receptor.recibir(CLAVE, pedido(canal, "BK-1", conAna()));
 
         assertEquals("EXITOSO", resultado.resultado());
         assertEquals(List.of(ResultadoEvento.EXITOSO),
@@ -81,7 +105,7 @@ class ReceptorReservaExternaTest {
                 new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null));
 
         ReglaDominioException rechazo = assertThrows(ReglaDominioException.class,
-                () -> receptor.recibir(pedido(canal, "BK-2", sinElTitular)));
+                () -> receptor.recibir(CLAVE, pedido(canal, "BK-2", sinElTitular)));
 
         EventoCanal evento = escenario.eventos.registrados.getFirst();
         assertEquals(1, escenario.eventos.registrados.size());
@@ -98,17 +122,45 @@ class ReceptorReservaExternaTest {
                 ENTRADA, ENTRADA.plusDays(2), new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", null),
                 conAna(), "{}");
 
-        assertThrows(RecursoNoEncontradoException.class, () -> receptor.recibir(aOtroApartamento));
+        assertThrows(RecursoNoEncontradoException.class, () -> receptor.recibir(CLAVE, aOtroApartamento));
 
         assertEquals(ResultadoEvento.RECHAZADO, escenario.eventos.registrados.getFirst().resultado());
     }
 
     @Test
-    @Tag("BIT-06")
-    void siLaBitacoraFallaElCanalRecibeIgualSuRespuesta() {
-        assertThrows(RecursoNoEncontradoException.class,
-                () -> receptor.recibir(pedido("CAN-99", "BK-4", conAna())));
+    @Tag("CAN-03")
+    @Tag("DEC-73")
+    void sinLaClaveDelCanalNoSeIntegraNiSeAnota() {
+        assertThrows(CanalNoAutenticadoException.class,
+                () -> receptor.recibir("otra", pedido(canal, "BK-4", conAna())));
+        assertThrows(CanalNoAutenticadoException.class,
+                () -> receptor.recibir(null, pedido(canal, "BK-4", conAna())));
+        assertThrows(CanalNoAutenticadoException.class,
+                () -> receptor.recibir(CLAVE, pedido("CAN-99", "BK-4", conAna())));
 
         assertTrue(escenario.eventos.registrados.isEmpty());
+        assertTrue(escenario.reservas.guardadas.isEmpty());
+    }
+
+    @Test
+    @Tag("CU-13")
+    @Tag("CU-16")
+    @Tag("BIT-01")
+    void consultarYCancelarQuedanEnLaBitacora() {
+        IntegracionExternaResult creada = receptor.recibir(CLAVE, pedido(canal, "BK-5", conAna()));
+
+        assertEquals(List.of("APT-101"), receptor.consultarDisponibilidad(CLAVE,
+                new ConsultarDisponibilidadCanalCommand(canal, ENTRADA.plusDays(5), ENTRADA.plusDays(6), 2, "{}"))
+                .stream().map(ApartamentoDisponibleResult::codigo).toList());
+        assertEquals("CANCELADA", receptor.cancelar(CLAVE, new CancelarReservaExternaCommand(canal, "BK-5", "{}"))
+                .estado());
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> receptor.cancelar(CLAVE, new CancelarReservaExternaCommand(canal, "BK-NO", "{}")));
+
+        assertEquals(EstadoReserva.CANCELADA, escenario.cargador.reserva(creada.codigoReserva()).estado());
+        assertEquals(List.of(OperacionCanal.CREAR_RESERVA, OperacionCanal.CONSULTAR_DISPONIBILIDAD,
+                        OperacionCanal.CANCELAR_RESERVA, OperacionCanal.CANCELAR_RESERVA),
+                escenario.eventos.registrados.stream().map(EventoCanal::operacion).toList());
+        assertEquals(ResultadoEvento.RECHAZADO, escenario.eventos.registrados.getLast().resultado());
     }
 }

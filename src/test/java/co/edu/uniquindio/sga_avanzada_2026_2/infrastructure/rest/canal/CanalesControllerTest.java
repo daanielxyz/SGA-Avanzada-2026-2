@@ -1,10 +1,13 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AutenticadorCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.time.LocalDate;
 
@@ -27,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CanalesControllerTest extends PruebaRestDeReservas {
 
     private static final LocalDate ENTRADA = HOY.plusDays(10);
+    private static final String CLAVE_BOOKING = "clave-de-prueba-booking";
 
     private String canalExterno() throws Exception {
         String respuesta = enviar(post("/api/canales"),
@@ -55,7 +59,12 @@ class CanalesControllerTest extends PruebaRestDeReservas {
     }
 
     private static String reservasDe(String canal) {
-        return "/api/canales/" + canal + "/reservas";
+        return "/api/canales-externos/" + canal + "/reservas";
+    }
+
+    /** El mensaje de un canal externo, con la clave de Booking de las pruebas (DEC-73). */
+    private static MockHttpServletRequestBuilder conClave(MockHttpServletRequestBuilder peticion) {
+        return peticion.header(AutenticadorCanal.ENCABEZADO, CLAVE_BOOKING);
     }
 
     @Test
@@ -100,7 +109,7 @@ class CanalesControllerTest extends PruebaRestDeReservas {
     void elCanalCreaUnaReservaYAlRepetirlaRecibeLaMisma() throws Exception {
         String canal = canalExterno();
 
-        String creada = enviar(post(reservasDe(canal)), pedido("BK-1", 0, 2))
+        String creada = enviar(conClave(post(reservasDe(canal))), pedido("BK-1", 0, 2))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/reservas/RES-")))
                 .andExpect(jsonPath("$.resultado").value("EXITOSO"))
@@ -108,7 +117,7 @@ class CanalesControllerTest extends PruebaRestDeReservas {
                 .andReturn().getResponse().getContentAsString();
         String codigo = JsonPath.read(creada, "$.codigoReserva");
 
-        enviar(post(reservasDe(canal)), pedido("BK-1", 0, 2))
+        enviar(conClave(post(reservasDe(canal))), pedido("BK-1", 0, 2))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultado").value("DUPLICADO"))
                 .andExpect(jsonPath("$.codigoReserva").value(codigo));
@@ -125,7 +134,7 @@ class CanalesControllerTest extends PruebaRestDeReservas {
         String canal = canalExterno();
         reservaPendiente(ENTRADA); // ocupa el APT-101 dos noches
 
-        String choque = enviar(post(reservasDe(canal)), pedido("BK-2", 1, 4))
+        String choque = enviar(conClave(post(reservasDe(canal))), pedido("BK-2", 1, 4))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.resultado").value("CONFLICTO"))
                 .andExpect(jsonPath("$.codigoReserva").value(nullValue()))
@@ -162,18 +171,18 @@ class CanalesControllerTest extends PruebaRestDeReservas {
         String sinElTitular = pedido("BK-3", 0, 2).replace("\"tipoDocumento\": \"CC\",\n", "\n")
                 .replace("\"numeroDocumento\": \"2077\"}\n", "\"nacionalidad\": \"Colombiana\"}\n");
 
-        enviar(post(reservasDe(canal)), sinElTitular)
+        enviar(conClave(post(reservasDe(canal))), sinElTitular)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
-        enviar(post(reservasDe(canal)), "{\"apartamento\": \"APT-101\", \"ocupantes\": []}")
+        enviar(conClave(post(reservasDe(canal))), "{\"apartamento\": \"APT-101\", \"ocupantes\": []}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("idExterno: es obligatorio")))
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular: es obligatorio")));
-        enviar(post(reservasDe("CAN-99999")), pedido("BK-3", 0, 2))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
+        enviar(conClave(post(reservasDe("CAN-99999"))), pedido("BK-3", 0, 2))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("CANAL_NO_AUTENTICADO"));
         mvc.perform(put("/api/canales/" + canal + "/desactivar")).andExpect(status().isOk());
-        enviar(post(reservasDe(canal)), pedido("BK-3", 0, 2))
+        enviar(conClave(post(reservasDe(canal))), pedido("BK-3", 0, 2))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
     }
@@ -183,8 +192,8 @@ class CanalesControllerTest extends PruebaRestDeReservas {
     @Tag("BIT-03")
     void laBitacoraDelCanalSeConsultaPorDiasYPorPaginas() throws Exception {
         String canal = canalExterno();
-        enviar(post(reservasDe(canal)), pedido("BK-1", 0, 2)).andExpect(status().isCreated());
-        enviar(post(reservasDe(canal)), pedido("BK-1", 0, 2)).andExpect(status().isOk());
+        enviar(conClave(post(reservasDe(canal))), pedido("BK-1", 0, 2)).andExpect(status().isCreated());
+        enviar(conClave(post(reservasDe(canal))), pedido("BK-1", 0, 2)).andExpect(status().isOk());
         String eventos = "/api/canales/" + canal + "/eventos";
 
         mvc.perform(get(eventos).param("desde", HOY.toString()).param("hasta", HOY.toString()))
@@ -202,5 +211,76 @@ class CanalesControllerTest extends PruebaRestDeReservas {
         mvc.perform(get("/api/canales/CAN-99999/eventos").param("desde", HOY.toString())
                         .param("hasta", HOY.toString()))
                 .andExpect(status().isNotFound());
+    }
+
+    private ResultActions disponibilidad(String canal, String clave, int ocupantes) throws Exception {
+        return mvc.perform(get("/api/canales-externos/" + canal + "/disponibilidad")
+                .header(AutenticadorCanal.ENCABEZADO, clave).param("entrada", ENTRADA.toString())
+                .param("salida", ENTRADA.plusDays(2).toString()).param("ocupantes", String.valueOf(ocupantes)));
+    }
+
+    @Test
+    @Tag("CU-13")
+    @Tag("CAN-03")
+    @Tag("DEC-73")
+    void elCanalConsultaLaDisponibilidadConSuClave() throws Exception {
+        String canal = canalExterno();
+
+        disponibilidad(canal, CLAVE_BOOKING, 2)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")));
+        reservaPendiente(ENTRADA);
+        disponibilidad(canal, CLAVE_BOOKING, 2).andExpect(jsonPath("$[*].codigo").value(containsInAnyOrder("APT-102")));
+        disponibilidad(canal, CLAVE_BOOKING, 0)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("ocupantes: debe ser al menos 1")));
+        disponibilidad(canal, "otra-clave", 2)
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("CANAL_NO_AUTENTICADO"));
+        mvc.perform(get("/api/canales/" + canal + "/eventos").param("desde", HOY.toString())
+                        .param("hasta", HOY.toString()))
+                .andExpect(jsonPath("$.contenido[*].operacion").value(hasItem("CONSULTAR_DISPONIBILIDAD")));
+        mvc.perform(put("/api/canales/" + canal + "/desactivar")).andExpect(status().isOk());
+        disponibilidad(canal, CLAVE_BOOKING, 2).andExpect(status().isConflict());
+    }
+
+    @Test
+    @Tag("CU-16")
+    @Tag("RN-12")
+    @Tag("CAN-05")
+    void elCanalCancelaLaReservaQueTrajoAunqueEsteDesactivado() throws Exception {
+        String canal = canalExterno();
+        enviar(conClave(post(reservasDe(canal))), pedido("BK-1", 0, 2)).andExpect(status().isCreated());
+        mvc.perform(put("/api/canales/" + canal + "/desactivar")).andExpect(status().isOk());
+        String cancelar = reservasDe(canal) + "/BK-1/cancelar";
+
+        mvc.perform(put(cancelar)).andExpect(status().isUnauthorized());
+        mvc.perform(conClave(put(cancelar)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CANCELADA"));
+        mvc.perform(conClave(put(cancelar)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        mvc.perform(conClave(put(reservasDe(canal) + "/BK-NO/cancelar")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
+    }
+
+    @Test
+    @Tag("CAN-03")
+    @Tag("DEC-73")
+    void sinLaClaveOConUnaErradaElCanalNoEntra() throws Exception {
+        String canal = canalExterno();
+
+        enviar(post(reservasDe(canal)), pedido("BK-9", 0, 2))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.mensaje")
+                        .value("El canal no se pudo autenticar: falta la clave del canal o no es válida"));
+        enviar(post(reservasDe(canal)).header(AutenticadorCanal.ENCABEZADO, "clave-de-prueba-bookinG"),
+                pedido("BK-9", 0, 2))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/canales/" + canal + "/eventos").param("desde", HOY.toString())
+                        .param("hasta", HOY.toString()))
+                .andExpect(jsonPath("$.contenido").isEmpty());
     }
 }

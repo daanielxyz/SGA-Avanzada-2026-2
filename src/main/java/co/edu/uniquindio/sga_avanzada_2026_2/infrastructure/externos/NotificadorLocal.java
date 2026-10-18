@@ -14,7 +14,7 @@ import java.util.List;
  * últimos en memoria, para desarrollar y probar sin servidor de correo ni de SMS. Como el PIN queda en el log, no
  * sirve para producción.
  */
-// TODO(B4): adaptadores reales de correo y SMS tras este mismo puerto; este queda como alternativa local.
+// TODO(B4b): adaptadores reales de correo y SMS tras este mismo puerto; este queda como alternativa local.
 @Component
 public class NotificadorLocal implements Notificador {
 

@@ -56,12 +56,16 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
 
     @Test
     @Tag("CAN-03")
-    @Tag("DEC-66")
-    void elContratoDelCanalNoPideUsuario() throws Exception {
-        mvc.perform(post("/api/canales/CAN-99999/reservas").with(sinSesion())
+    @Tag("DEC-73")
+    void elContratoDelCanalPideLaClaveDelCanalYNoUnUsuario() throws Exception {
+        mvc.perform(post("/api/canales-externos/CAN-99999/reservas").with(sinSesion())
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/canales-externos/CAN-99999/disponibilidad").with(sinSesion())
+                        .param("entrada", HOY.plusDays(5).toString()).param("salida", HOY.plusDays(6).toString())
+                        .param("ocupantes", "2"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("CANAL_NO_AUTENTICADO"));
     }
 
     @Test
