@@ -6,10 +6,16 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserv
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShow;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservas;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,9 +23,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.time.LocalDate;
 
 /**
  * Endpoints del ciclo de la reserva antes de la llegada: crear, consultar, modificar, confirmar, cancelar y no-show.
@@ -37,11 +45,12 @@ public class ReservaController {
     private final ConfirmarReserva confirmarReserva;
     private final CancelarReserva cancelarReserva;
     private final DeclararNoShow declararNoShow;
+    private final ListarReservas listarReservas;
 
     public ReservaController(UsuarioActual usuario, CrearReserva crearReserva, ConsultarReserva consultarReserva,
                              ModificarReserva modificarReserva, IndicarHoraLlegada indicarHoraLlegada,
                              ConfirmarReserva confirmarReserva, CancelarReserva cancelarReserva,
-                             DeclararNoShow declararNoShow) {
+                             DeclararNoShow declararNoShow, ListarReservas listarReservas) {
         this.usuario = usuario;
         this.crearReserva = crearReserva;
         this.consultarReserva = consultarReserva;
@@ -50,6 +59,7 @@ public class ReservaController {
         this.confirmarReserva = confirmarReserva;
         this.cancelarReserva = cancelarReserva;
         this.declararNoShow = declararNoShow;
+        this.listarReservas = listarReservas;
     }
 
     @PostMapping
@@ -60,6 +70,24 @@ public class ReservaController {
     }
 
     /** El huésped solo ve las suyas (USU-04). */
+    /** Solo recepción y administración; el huésped ve las suyas en {@code /api/mis-reservas} (DEC-72). */
+    @GetMapping
+    public PaginaResponse<ReservaResponse> listar(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false)
+            @Pattern(regexp = "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW",
+                    message = "debe ser PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA o NO_SHOW")
+            String estado,
+            @RequestParam(required = false) String apartamento,
+            @RequestParam(required = false)
+            @Pattern(regexp = "PORTAL|DIRECTO|EXTERNO", message = "debe ser PORTAL, DIRECTO o EXTERNO") String canal,
+            @RequestParam(required = false) String titular,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(listarReservas.ejecutar(new ListarReservasCommand(desde, hasta, estado, apartamento,
+                canal, titular, pagina)), ReservaResponse::de);
+    }
+
     @GetMapping("/{codigo}")
     public ReservaResponse consultar(@PathVariable String codigo) {
         ReservaResult reserva = consultarReserva.ejecutar(codigo);

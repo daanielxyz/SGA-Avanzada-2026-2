@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -13,7 +14,7 @@ import java.util.Optional;
 /**
  * Spring Data sobre la tabla {@code reserva}. Solo lo usa {@link ReservaRepositoryJpa}.
  */
-interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String> {
+interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String>, JpaSpecificationExecutor<ReservaJpa> {
 
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
 

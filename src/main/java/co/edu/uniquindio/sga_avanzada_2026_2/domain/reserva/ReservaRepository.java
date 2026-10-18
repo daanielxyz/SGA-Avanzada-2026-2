@@ -40,4 +40,12 @@ public interface ReservaRepository {
      * @param numeroPagina empieza en 0
      */
     Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina);
+
+    /**
+     * Las reservas que cumplen todos los filtros, de la que entra primero a la que entra después, de 10 en 10
+     * (CU-25 · DEC-18 · DEC-72).
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Reserva> buscar(FiltroReservas filtro, int numeroPagina);
 }

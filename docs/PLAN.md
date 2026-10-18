@@ -152,7 +152,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
-- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en cinco incrementos, un commit cada uno (DEC-68 · DEC-69 · DEC-71):
+- [x] **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en cinco incrementos, un commit cada uno (DEC-68 · DEC-69 · DEC-71):
   - [x] **B3a · Acceso y permisos** (DEC-67): Spring Security con su soporte JWT; `Usuario` y `Rol` con la tabla `usuario` (V11, `seq_usuario`); `POST /api/auth/login`; primer administrador al arrancar desde variables de entorno; `PermisosPorRol` con la tabla de permisos de todos los endpoints; 401 `NO_AUTENTICADO` y 403 `SIN_PERMISO`; `UsuarioActual` entrega el usuario del token; AUTC-01 y EOPE-04 dentro del endpoint. 25 pruebas (CU-02, USU-01/02/05, ROL-02/04, CORR-01, AUTC-01, EOPE-04, BLO-04, REG-06, NOV-05, SAL-02, RN-17, CAN-03, DEC-22/61/66/67).
     - DTO de B3a: ningún Request ni Response existente cambió de forma.
 
@@ -186,8 +186,8 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
       | `GET`/`PUT /api/usuarios/perfil` · `PUT /api/usuarios/perfil/contrasena` (personal) | `DatosPersonalesRequest` · `CambiarContrasenaRequest` (actual, nueva) | `UsuarioResponse` · `MensajeResponse` |
       | `POST /api/auth/activar` · `POST /api/auth/restablecer-contrasena` · `POST /api/auth/recuperar-contrasena` (públicos) | `FijarContrasenaRequest` (correo, código, contraseña) · `RecuperarContrasenaRequest` (correo) | `MensajeResponse` (la recuperación, 202 igual exista o no el correo) |
       | `POST /api/auth/logout` (con sesión, también el huésped) | — | `MensajeResponse` |
-  - [ ] **B3e · Listado de reservas para recepción** (CU-25): `GET /api/reservas?pagina=` con filtros (fechas, estado, apartamento, canal, titular), de 10 en 10.
-    - Endpoint y DTO previstos para B3e:
+  - [x] **B3e · Listado de reservas para recepción** (DEC-72): `ListarReservas` y `GET /api/reservas` con filtros opcionales (fechas que se cruzan con la estancia, estado, apartamento, canal, titular), de 10 en 10 por fecha de entrada; `FiltroReservas` (VO) y `ReservaRepository.buscar` con `Specification`. Sin migración. 6 pruebas (CU-25, EST-03, ROL-04, USU-04, DEC-18/72). Con esto termina B3.
+    - DTO de B3e: ningún Request ni Response cambió; el listado devuelve `ReservaResponse`.
 
       | Endpoint | Request | Response |
       |---|---|---|

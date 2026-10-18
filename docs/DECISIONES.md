@@ -177,6 +177,10 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - **Cortes de sesión** (`ValidadorSesion`, en cada petición con token): el token lleva un `jti`, y el del personal, la versión de sus sesiones. Un token deja de valer si su `jti` se cerró (`POST /api/auth/logout`, tabla `token_revocado`), si su usuario fue eliminado, si su rol ya no es el del token o si la versión cambió. La versión sube al cambiar o restablecer la contraseña. Responde 401 `NO_AUTENTICADO`. Cuesta una o dos consultas a la base por petición. Se usa una versión y no la hora del cambio porque el token guarda su hora en segundos y dos sesiones del mismo segundo no se distinguirían.
   - **Cerrar sesión** vale también para el huésped. Los tokens cerrados se olvidan cuando vencen.
   - **Rol HUESPED en la tabla `usuario`**: su `CHECK` de V11 no tiene nombre y no se puede quitar igual en PostgreSQL y en H2; la regla queda en `Usuario`, que no acepta ese rol.
+- **DEC-72 · Listado de reservas para recepción (B3e):**
+  - `GET /api/reservas` (recepción y administrador; el huésped usa `/api/mis-reservas`, DEC-69) con filtros opcionales `desde`, `hasta`, `estado`, `apartamento`, `canal` (de origen) y `titular` (su id), que se combinan, y `pagina`. Ordena de la que entra primero a la que entra después, de 10 en 10 (DEC-18).
+  - **Fechas**: entra toda reserva cuya estancia [entrada, salida) se cruce con [desde, hasta), la misma regla de solapamiento de las estancias (EST-03). Con solo `desde`, las que salen después de esa fecha; con solo `hasta`, las que entran antes. Un rango vacío o al revés es 409 `REGLA_NEGOCIO` (`FiltroReservas`, como `Estancia`); un estado, canal o fecha mal escritos, 400.
+  - **Persistencia**: el puerto `ReservaRepository.buscar(FiltroReservas, pagina)` se implementa con `Specification` de Spring Data: cada filtro presente agrega su condición. No se usó una consulta con `:param is null` porque PostgreSQL no siempre deduce el tipo de un parámetro nulo.
 
 ## Persistencia
 - **DEC-11 · JPA + Hibernate, PostgreSQL principal, H2 solo para pruebas.** Cambio por archivos de propiedades, sin clases extra:

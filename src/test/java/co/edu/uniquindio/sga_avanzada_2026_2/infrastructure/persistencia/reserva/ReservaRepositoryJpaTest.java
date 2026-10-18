@@ -12,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
@@ -257,6 +258,28 @@ class ReservaRepositoryJpaTest {
         assertEquals(List.of(new ReservaId("RES-2026-80002"), new ReservaId("RES-2026-80001")),
                 segunda.contenido().stream().map(Reserva::codigo).toList());
         assertTrue(repositorio.listarPorTitular(new TitularId("TIT-2"), 0).contenido().isEmpty());
+    }
+
+    @Test
+    @Tag("CU-25")
+    @Tag("DEC-72")
+    void deberiaBuscarConFiltrosYOrdenarPorEntrada() {
+        repositorio.guardar(pendiente("RES-2026-70001", 20, 22));
+        repositorio.guardar(pendiente("RES-2026-70002", 10, 12));
+        repositorio.guardar(externa("RES-2026-70003", "BK-70"));
+        sincronizar();
+
+        assertEquals(List.of("RES-2026-70002", "RES-2026-70001", "RES-2026-70003"),
+                codigos(new FiltroReservas(null, null, null, null, null, null)));
+        assertEquals(List.of("RES-2026-70003"),
+                codigos(new FiltroReservas(null, null, null, null, CanalOrigen.EXTERNO, null)));
+        assertEquals(List.of("RES-2026-70002"), codigos(new FiltroReservas(LocalDate.of(2026, 12, 11),
+                LocalDate.of(2026, 12, 20), EstadoReserva.PENDIENTE, APT, null, new TitularId("TIT-1"))));
+        assertTrue(codigos(new FiltroReservas(null, null, EstadoReserva.CANCELADA, null, null, null)).isEmpty());
+    }
+
+    private List<String> codigos(FiltroReservas filtro) {
+        return repositorio.buscar(filtro, 0).contenido().stream().map(r -> r.codigo().valor()).toList();
     }
 
     private static Reserva reservaCreadaEn(String codigo, LocalDateTime creadaEn) {

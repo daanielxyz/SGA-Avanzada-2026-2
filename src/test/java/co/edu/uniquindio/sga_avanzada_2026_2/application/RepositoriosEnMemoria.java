@@ -38,6 +38,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
@@ -230,6 +231,11 @@ public final class RepositoriosEnMemoria {
                     .toList();
             return new Pagina<>(todas.stream().skip((long) numeroPagina * Pagina.TAMANO).limit(Pagina.TAMANO).toList(),
                     numeroPagina, Pagina.TAMANO, todas.size());
+        }
+
+        @Override
+        public Pagina<Reserva> buscar(FiltroReservas filtro, int numeroPagina) {
+            throw new UnsupportedOperationException("se prueba con JPA");
         }
     }
 

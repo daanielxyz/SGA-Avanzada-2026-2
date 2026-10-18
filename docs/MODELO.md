@@ -39,6 +39,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 - **E Registro** (check-in): id · fechaHora real · autor: UsuarioId · anulado · motivoCorreccion? (solo en una corrección). Un solo registro vigente; uno equivocado se anula y se reemplaza por una corrección, no se borra ni revierte el estado (DEC-45).
 - **E Salida** (check-out): id · fechaHora real (no anterior al registro) · autor: UsuarioId.
 - **VO Estancia**(entrada, salida > entrada) `noches(): Noche[]` · `cantidadNoches()` · `seSolapaCon(otra)`
+- **VO FiltroReservas**(desde?, hasta?, estado?, apartamento?, canal?, titular?) — el listado de recepción; las fechas filtran las estancias que se cruzan con [desde, hasta) (DEC-72).
 - **VO Noche**(fecha) — unidad de venta; Bloqueo y Temporada comparan por `Noche`.
 - **EN EstadoReserva**: PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA, NO_SHOW. `puedePasarA(e)` · `retieneDisponibilidad()`
 - **EN CanalOrigen**: PORTAL, DIRECTO, EXTERNO

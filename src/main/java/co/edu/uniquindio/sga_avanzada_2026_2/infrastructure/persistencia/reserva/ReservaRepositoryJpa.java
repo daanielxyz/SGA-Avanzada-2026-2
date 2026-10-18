@@ -4,12 +4,15 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,5 +86,30 @@ public class ReservaRepositoryJpa implements ReservaRepository {
                 PageRequest.of(numeroPagina, Pagina.TAMANO));
         return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
                 Pagina.TAMANO, pagina.getTotalElements());
+    }
+
+    /** Cada filtro presente agrega su condición; los ausentes no restringen nada (DEC-72). */
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Reserva> buscar(FiltroReservas filtro, int numeroPagina) {
+        Specification<ReservaJpa> condiciones = Specification.allOf(
+                igual("estado", filtro.estado()),
+                igual("apartamentoCodigo", Optional.ofNullable(filtro.apartamento()).map(ApartamentoId::valor)
+                        .orElse(null)),
+                igual("canalOrigen", filtro.canal()),
+                igual("titularId", Optional.ofNullable(filtro.titular()).map(TitularId::valor).orElse(null)),
+                // EST-03: la estancia [entrada, salida) se cruza con [desde, hasta)
+                (fila, consulta, cb) -> filtro.hasta() == null ? null
+                        : cb.lessThan(fila.get("entrada"), filtro.hasta()),
+                (fila, consulta, cb) -> filtro.desde() == null ? null
+                        : cb.greaterThan(fila.get("salida"), filtro.desde()));
+        Page<ReservaJpa> pagina = filas.findAll(condiciones, PageRequest.of(numeroPagina, Pagina.TAMANO,
+                Sort.by("entrada", "codigo")));
+        return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
+                Pagina.TAMANO, pagina.getTotalElements());
+    }
+
+    private static Specification<ReservaJpa> igual(String campo, Object valor) {
+        return (fila, consulta, cb) -> valor == null ? null : cb.equal(fila.get(campo), valor);
     }
 }
