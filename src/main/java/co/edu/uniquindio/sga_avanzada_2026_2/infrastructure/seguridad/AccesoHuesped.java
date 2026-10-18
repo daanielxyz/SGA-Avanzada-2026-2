@@ -17,7 +17,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -45,7 +44,6 @@ public class AccesoHuesped {
     private final Notificador notificador;
     private final Clock reloj;
     private final AlojamientoId alojamientoId;
-    private final SecureRandom azar = new SecureRandom();
 
     public AccesoHuesped(TitularRepository titulares, CodigoAccesoRepository codigos,
                          CambiarCorreoTitular cambiarCorreo, EmisorTokens emisor, PasswordEncoder cifrador,
@@ -152,7 +150,7 @@ public class AccesoHuesped {
             LOG.warn("Se pidieron demasiados PIN de {} para {}: no se envía otro", proposito, titularId);
             return Optional.empty();
         }
-        String pin = "%06d".formatted(azar.nextInt(1_000_000));
+        String pin = CodigoDeUnSoloUso.nuevoPin();
         codigos.save(CodigoAcceso.emitir(titularId, proposito, cifrador.encode(pin), nuevoCorreo, ahora,
                 ahora.plus(VIGENCIA)));
         return Optional.of(pin);

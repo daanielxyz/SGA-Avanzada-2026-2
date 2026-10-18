@@ -1,6 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Tag;
@@ -8,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
+
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,5 +86,27 @@ class UsuarioRepositoryTest {
         assertFalse(PoliticaContrasena.laCumple("abcdefg1"));
         assertFalse(PoliticaContrasena.laCumple("Abcdefgh"));
         assertFalse(PoliticaContrasena.laCumple(null));
+    }
+
+    @Test
+    @Tag("ROL-03")
+    @Tag("DEC-71")
+    void elPersonalNaceSinContrasenaYConRolInterno() {
+        Usuario.DatosPersonales datos = new Usuario.DatosPersonales("Rita", "300 555 1234", TipoDocumento.CC, "4321",
+                LocalDate.of(1992, 4, 10));
+        Usuario rita = Usuario.crearInterno(new UsuarioId("USR-903"), "ALO-1", new Correo("rita@puertaalsol.co"),
+                Rol.RECEPCIONISTA, datos);
+
+        assertFalse(rita.puedeIniciarSesion());
+        assertFalse(rita.aceptaSesion("RECEPCIONISTA", 0L));
+        rita.fijarContrasena(RESUMEN);
+        assertTrue(rita.aceptaSesion("RECEPCIONISTA", 1L));
+        assertFalse(rita.aceptaSesion("RECEPCIONISTA", 0L));
+        assertFalse(rita.aceptaSesion("ADMINISTRADOR", 1L));
+        assertThrows(ReglaDominioException.class, () -> rita.cambiarRol(Rol.HUESPED));
+        assertThrows(ReglaDominioException.class, () -> Usuario.crearInterno(new UsuarioId("USR-904"), "ALO-1",
+                new Correo("eva@correo.co"), Rol.HUESPED, datos));
+        rita.eliminar();
+        assertFalse(rita.aceptaSesion("RECEPCIONISTA", 1L));
     }
 }

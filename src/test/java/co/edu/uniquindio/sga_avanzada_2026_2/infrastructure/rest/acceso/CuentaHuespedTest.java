@@ -296,4 +296,15 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular.correo: es obligatorio")))
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular.telefono: es obligatorio")));
     }
+
+    @Test
+    @Tag("CU-48")
+    void elHuespedTambienCierraSuSesion() throws Exception {
+        reservaPendiente(HOY.plusDays(5));
+        String token = entrarComoHuesped(ANA, "1094");
+
+        cliente.perform(con(token, post("/api/auth/logout"))).andExpect(status().isOk());
+
+        cliente.perform(con(token, get("/api/mis-reservas"))).andExpect(status().isUnauthorized());
+    }
 }

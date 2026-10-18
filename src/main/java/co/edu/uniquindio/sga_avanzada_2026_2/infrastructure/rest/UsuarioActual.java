@@ -4,6 +4,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AccesoDene
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Rol;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 /**
@@ -41,6 +43,11 @@ public class UsuarioActual {
         if (!tieneRol(Rol.ADMINISTRADOR)) {
             throw new AccesoDenegadoException("Solo el administrador puede " + accion);
         }
+    }
+
+    /** El token de la petición, p. ej. para cerrar esa sesión (CU-48). */
+    public Jwt token() {
+        return ((JwtAuthenticationToken) sesion()).getToken();
     }
 
     private static boolean tieneRol(Rol rol) {

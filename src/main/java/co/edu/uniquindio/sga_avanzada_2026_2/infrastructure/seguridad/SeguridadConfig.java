@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -93,15 +94,18 @@ public class SeguridadConfig {
         return new NimbusJwtEncoder(new ImmutableSecret<>(claveDeFirma));
     }
 
-    /** Valida firma y vencimiento, este con el reloj del sistema (EST-06). */
+    /**
+     * Valida firma y vencimiento, este con el reloj del sistema (EST-06), y que la sesión siga abierta
+     * ({@link ValidadorSesion}, DEC-71).
+     */
     @Bean
-    public JwtDecoder decodificadorDeTokens(SecretKey claveDeFirma, Clock reloj) {
+    public JwtDecoder decodificadorDeTokens(SecretKey claveDeFirma, Clock reloj, ValidadorSesion sesiones) {
         NimbusJwtDecoder decodificador = NimbusJwtDecoder.withSecretKey(claveDeFirma)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
         JwtTimestampValidator vigencia = new JwtTimestampValidator();
         vigencia.setClock(reloj);
-        decodificador.setJwtValidator(vigencia);
+        decodificador.setJwtValidator(new DelegatingOAuth2TokenValidator<>(vigencia, sesiones));
         return decodificador;
     }
 

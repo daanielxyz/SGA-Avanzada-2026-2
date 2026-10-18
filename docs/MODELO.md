@@ -16,9 +16,11 @@ PoliticaCancelacion (una por versión) ─ TramoCancelacion, Porcentaje         
 Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPago(catálogo)
 Canal  ·  ConflictoCanal  ·  EventoCanal(bitácora, solo escritura)  ·  Novedad                →Id: canal, apartamento
 Transversales: Dinero, Noche, Documento, Correo, ids tipados.   Calculados (no se guardan): Disponibilidad, Cotizacion.
-Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada, rol, eliminado),
+Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada o nula hasta
+  activarse, rol interno, teléfono, documento, fecha de nacimiento, eliminado, versión de sesiones; DEC-71),
   Rol(HUESPED, RECEPCIONISTA, ADMINISTRADOR, PERSONAL_SERVICIO). Tabla usuario (V11), solo personal interno; permisos en
   PermisosPorRol (DEC-67). La cuenta del huésped es su Titular (con correo); sus PIN en codigo_acceso (V12, DEC-69).
+  Códigos del personal en codigo_usuario y sesiones cerradas en token_revocado (V14, DEC-71).
 ```
 
 ## 2. Clases

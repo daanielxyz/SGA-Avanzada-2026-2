@@ -152,7 +152,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
     | `POST /api/titulares` (409 `DUPLICADO` si el documento ya existe) · `GET /api/titulares/{id}` · `PUT /api/titulares/{id}` | `TitularRequest` · `ActualizarTitularRequest` | `TitularResponse` |
     | `POST /api/apartamentos/{codigo}/novedades` · `PUT /api/novedades/{id}/avanzar` | `RegistrarNovedadRequest` | `NovedadResponse` |
     | `GET /api/apartamentos/{codigo}/novedades?pagina=` | — | `Pagina<NovedadResponse>` |
-- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en cuatro incrementos, un commit cada uno (DEC-68 · DEC-69):
+- **B3 · Seguridad JWT** (`Usuario`, `Rol`). Dividido en cinco incrementos, un commit cada uno (DEC-68 · DEC-69 · DEC-71):
   - [x] **B3a · Acceso y permisos** (DEC-67): Spring Security con su soporte JWT; `Usuario` y `Rol` con la tabla `usuario` (V11, `seq_usuario`); `POST /api/auth/login`; primer administrador al arrancar desde variables de entorno; `PermisosPorRol` con la tabla de permisos de todos los endpoints; 401 `NO_AUTENTICADO` y 403 `SIN_PERMISO`; `UsuarioActual` entrega el usuario del token; AUTC-01 y EOPE-04 dentro del endpoint. 25 pruebas (CU-02, USU-01/02/05, ROL-02/04, CORR-01, AUTC-01, EOPE-04, BLO-04, REG-06, NOV-05, SAL-02, RN-17, CAN-03, DEC-22/61/66/67).
     - DTO de B3a: ningún Request ni Response existente cambió de forma.
 
@@ -177,16 +177,21 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar c
       |---|---|---|
       | `POST /api/portal/reservas` (público) | `ReservaPortalRequest` (apartamento, fechas, titular con correo y teléfono, ocupantes, hora de llegada) | `ReservaPortalResponse` (201: la reserva, `montoAPagar`, `pagarAntesDe`) |
       | `POST /api/portal/reservas/{codigo}/pago` (público) | `PagoEnLineaRequest` (`tokenPago`) | `ReservaResponse` (CONFIRMADA) · 409 `PAGO_RECHAZADO` |
-  - [ ] **B3d · Personal interno**: gestión de usuarios internos por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), perfil y cambio de contraseña (CU-03 · CU-04; USU-02 sigue aplicando al personal), recuperación de contraseña por correo con código de un solo uso de 15 min (CU-05 · USU-06 · USU-08), cierre de sesión y revocación del token (CU-48), y `GET /api/reservas` con filtros para recepción (CU-25).
-    - Endpoints y DTO previstos para B3d (hoja «APIs»):
+  - [x] **B3d · Personal interno** (DEC-71): gestión de usuarios por el administrador (CU-06 · USU-03 · USU-05 · ROL-03), alta sin contraseña con código de activación de 24 h, perfil y cambio de contraseña (CU-03 · CU-04 · USU-02), recuperación con código de 15 min (CU-05 · USU-06 · USU-08), cierre de sesión (CU-48) y cortes de sesión al eliminar, cambiar el rol o la contraseña (`ValidadorSesion`); el último administrador no se puede quitar. Persistencia V14 (`codigo_usuario`, `token_revocado`, versión de sesiones). 9 pruebas (CU-03/04/05/06/48, USU-01/02/03/05/06/08, ROL-03, DEC-71).
+    - DTO de B3d: ningún Request ni Response existente cambió de forma.
 
       | Endpoint | Request | Response |
       |---|---|---|
-      | `PUT /api/usuarios/perfil` · `PUT /api/usuarios/perfil/contrasena` | `ActualizarPerfilRequest` (sin correo, USU-01) · `CambiarContrasenaRequest` (actual, nueva) | `UsuarioResponse` · — |
-      | `POST /api/auth/recuperar-contrasena` · `POST /api/auth/restablecer-contrasena` (públicos) | `RecuperarContrasenaRequest` (correo) · `RestablecerContrasenaRequest` (correo, código, nueva) | — (misma respuesta exista o no el correo) |
-      | `POST /api/auth/logout` | — | — |
-      | `POST /api/usuarios` · `GET /api/usuarios?pagina=` · `PUT /api/usuarios/{id}` · `PUT /api/usuarios/{id}/eliminar` (administrador) | `CrearUsuarioRequest` (con rol interno) · `ModificarUsuarioRequest` | `UsuarioResponse` · `Pagina<UsuarioResponse>` |
-      | `GET /api/reservas?pagina=` (filtros: fechas, estado, apartamento, canal, titular) | — | `Pagina<ReservaResponse>` |
+      | `POST /api/usuarios` · `GET /api/usuarios?pagina=` · `PUT /api/usuarios/{id}` · `PUT /api/usuarios/{id}/eliminar` (administrador) | `CrearUsuarioRequest` (datos de USU-01 y rol interno, sin contraseña) · `ModificarUsuarioRequest` (datos y rol) | `UsuarioResponse` · `Pagina<UsuarioResponse>` |
+      | `GET`/`PUT /api/usuarios/perfil` · `PUT /api/usuarios/perfil/contrasena` (personal) | `DatosPersonalesRequest` · `CambiarContrasenaRequest` (actual, nueva) | `UsuarioResponse` · `MensajeResponse` |
+      | `POST /api/auth/activar` · `POST /api/auth/restablecer-contrasena` · `POST /api/auth/recuperar-contrasena` (públicos) | `FijarContrasenaRequest` (correo, código, contraseña) · `RecuperarContrasenaRequest` (correo) | `MensajeResponse` (la recuperación, 202 igual exista o no el correo) |
+      | `POST /api/auth/logout` (con sesión, también el huésped) | — | `MensajeResponse` |
+  - [ ] **B3e · Listado de reservas para recepción** (CU-25): `GET /api/reservas?pagina=` con filtros (fechas, estado, apartamento, canal, titular), de 10 en 10.
+    - Endpoint y DTO previstos para B3e:
+
+      | Endpoint | Request | Response |
+      |---|---|---|
+      | `GET /api/reservas?desde&hasta&estado&apartamento&canal&titular&pagina` (recepción y administrador) | — (parámetros) | `Pagina<ReservaResponse>` |
 - [ ] **B4 · Externos** tras puertos con implementación local (canales, IA no bloqueante). El planificador de vencimientos se adelantó a B3c (DEC-69). El adaptador de entrada del canal ya existe (`ReceptorReservaExterna`, DEC-66): llama a `RecibirReservaExterna` y anota el RECHAZADO o el ERROR con `RegistrarEventoCanal`. A B4 le falta que autentique el mensaje con la credencial del canal (CAN-03 · DEC-47, `TODO(B4)`), las demás operaciones del contrato (consultar y publicar disponibilidad, cancelar) y la implementación local alternativa. Además, las versiones reales de los puertos de B3b y B3c: envío de correo y SMS (`Notificador`) y pasarela de pago (DEC-68 · DEC-69).
 - [ ] **B5 · TRA** (CU-VA-01 · DEC-68), de último porque es lo más complejo y un adicional del producto: nombres y apellidos separados en titular y ocupantes; ciudad de residencia, ciudad de procedencia y motivo del viaje de cada ocupante, que recepción toma en la llegada; recepción valida la identidad del titular (tipo de documento, nombres y apellidos) y el titular queda **validado** para las próximas estadías, con esos datos editables solo por recepción o administración; envío del reporte tras un puerto, sin bloquear la llegada, y **nunca de un titular sin validar** (se advierte que primero hay que validarlo).
 
