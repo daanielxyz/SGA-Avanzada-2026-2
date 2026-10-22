@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * Entrada de {@link CerrarFolio}.
+ * Entrada de {@link CerrarFolioUseCase}.
  *
  * @param autor              usuario que cierra; es el usuario autenticado (DEC-61 · DEC-67)
  * @param motivoAutorizacion solo para cerrar con saldo distinto de cero (RN-17); vacío si el saldo está en cero

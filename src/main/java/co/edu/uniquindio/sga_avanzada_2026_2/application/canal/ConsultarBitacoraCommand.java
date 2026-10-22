@@ -3,7 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.canal;
 import java.time.LocalDate;
 
 /**
- * Entrada de {@link ConsultarBitacora} (CU-45).
+ * Entrada de {@link ConsultarBitacoraUseCase} (CU-45).
  *
  * @param desde        primer día, incluido
  * @param hasta        último día, incluido

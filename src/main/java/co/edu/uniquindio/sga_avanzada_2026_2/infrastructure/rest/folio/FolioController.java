@@ -1,15 +1,15 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.folio;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicional;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolio;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicionalUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.ConsultarFolio;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarDevolucion;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPago;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirCargo;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.ConsultarFolioUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarDevolucionUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirCargoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RevertirPagoCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -34,20 +34,20 @@ import java.util.Optional;
 public class FolioController {
 
     private final UsuarioActual usuario;
-    private final ConsultarReserva consultarReserva;
-    private final ConsultarFolio consultarFolio;
-    private final RegistrarPago registrarPago;
-    private final RegistrarDevolucion registrarDevolucion;
-    private final RevertirPago revertirPago;
-    private final RevertirCargo revertirCargo;
-    private final CargarServicioAdicional cargarServicio;
-    private final CerrarFolio cerrarFolio;
+    private final ConsultarReservaUseCase consultarReserva;
+    private final ConsultarFolioUseCase consultarFolio;
+    private final RegistrarPagoUseCase registrarPago;
+    private final RegistrarDevolucionUseCase registrarDevolucion;
+    private final RevertirPagoUseCase revertirPago;
+    private final RevertirCargoUseCase revertirCargo;
+    private final CargarServicioAdicionalUseCase cargarServicio;
+    private final CerrarFolioUseCase cerrarFolio;
 
-    public FolioController(UsuarioActual usuario, ConsultarReserva consultarReserva, ConsultarFolio consultarFolio,
-                           RegistrarPago registrarPago,
-                           RegistrarDevolucion registrarDevolucion, RevertirPago revertirPago,
-                           RevertirCargo revertirCargo, CargarServicioAdicional cargarServicio,
-                           CerrarFolio cerrarFolio) {
+    public FolioController(UsuarioActual usuario, ConsultarReservaUseCase consultarReserva,
+                           ConsultarFolioUseCase consultarFolio, RegistrarPagoUseCase registrarPago,
+                           RegistrarDevolucionUseCase registrarDevolucion, RevertirPagoUseCase revertirPago,
+                           RevertirCargoUseCase revertirCargo, CargarServicioAdicionalUseCase cargarServicio,
+                           CerrarFolioUseCase cerrarFolio) {
         this.usuario = usuario;
         this.consultarReserva = consultarReserva;
         this.consultarFolio = consultarFolio;

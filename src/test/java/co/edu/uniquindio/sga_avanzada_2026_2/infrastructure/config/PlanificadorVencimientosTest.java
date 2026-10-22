@@ -1,8 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarReservasVencidas;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.VencerReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarReservasVencidasUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.VencerReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
 import org.junit.jupiter.api.Tag;
@@ -19,8 +19,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PlanificadorVencimientosTest {
 
     private static PlanificadorVencimientos planificador(EscenarioEstancia escenario, Clock reloj) {
-        return new PlanificadorVencimientos(new BuscarReservasVencidas(escenario.cargador, escenario.reservas, reloj),
-                new VencerReserva(escenario.cargador, escenario.reservas, escenario.folios,
+        return new PlanificadorVencimientos(new BuscarReservasVencidasUseCase(escenario.cargador, escenario.reservas,
+                reloj),
+                new VencerReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios,
                         new CancelacionDomainService(), reloj),
                 "ALO-1");
     }

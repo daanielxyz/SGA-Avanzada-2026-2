@@ -1,8 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.portal;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.PagarEnLinea;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.PagarEnLineaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaPortalResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservarDesdePortal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservarDesdePortalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.ReservaResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +22,10 @@ import java.net.URI;
 @RequestMapping("/api/portal/reservas")
 public class PortalController {
 
-    private final ReservarDesdePortal reservarDesdePortal;
-    private final PagarEnLinea pagarEnLinea;
+    private final ReservarDesdePortalUseCase reservarDesdePortal;
+    private final PagarEnLineaUseCase pagarEnLinea;
 
-    public PortalController(ReservarDesdePortal reservarDesdePortal, PagarEnLinea pagarEnLinea) {
+    public PortalController(ReservarDesdePortalUseCase reservarDesdePortal, PagarEnLineaUseCase pagarEnLinea) {
         this.reservarDesdePortal = reservarDesdePortal;
         this.pagarEnLinea = pagarEnLinea;
     }

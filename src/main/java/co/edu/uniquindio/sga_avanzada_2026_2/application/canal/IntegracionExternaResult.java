@@ -7,7 +7,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.IntegracionExterna;
 import java.util.Optional;
 
 /**
- * Salida de {@link RecibirReservaExterna} (DEC-31), la respuesta para el canal.
+ * Salida de {@link RecibirReservaExternaUseCase} (DEC-31), la respuesta para el canal.
  *
  * @param resultado     EXITOSO (reserva nueva), DUPLICADO (ya se había recibido, RN-19) o CONFLICTO (RN-18)
  * @param codigoReserva la reserva nueva o la que ya existía; vacío en un conflicto

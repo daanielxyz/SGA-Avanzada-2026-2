@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.canal;
 
 /**
- * Entrada de {@link RegistrarEventoCanal} (BIT-01).
+ * Entrada de {@link RegistrarEventoCanalUseCase} (BIT-01).
  *
  * @param operacion nombre de {@code OperacionCanal}
  * @param sentido   ENTRANTE o SALIENTE

@@ -8,8 +8,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Salida de {@link CotizarEstancia}: el desglose noche por noche y el total (COT-02). También es el valor congelado
- * de una reserva.
+ * Salida de {@link CotizarEstanciaUseCase}: el desglose noche por noche y el total (COT-02). También es el valor
+ * congelado de una reserva.
  */
 public record CotizacionResult(List<NocheResult> desglose, BigDecimal total) {
 

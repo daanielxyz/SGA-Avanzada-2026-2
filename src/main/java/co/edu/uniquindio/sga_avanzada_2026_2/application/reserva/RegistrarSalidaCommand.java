@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * Entrada de {@link RegistrarSalida}.
+ * Entrada de {@link RegistrarSalidaUseCase}.
  *
  * @param autor              usuario que registra la salida (SAL-05) y, si hay motivo, quien autoriza; es el usuario
  *                           autenticado (DEC-61 · DEC-67)

@@ -18,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class GestionarTitularesTest {
 
     private RepositoriosEnMemoria.Titulares titulares;
-    private RegistrarTitular registrar;
+    private RegistrarTitularUseCase registrar;
 
     @BeforeEach
     void preparar() {
         titulares = new RepositoriosEnMemoria.Titulares();
         RepositoriosEnMemoria.Alojamientos alojamientos = new RepositoriosEnMemoria.Alojamientos();
         alojamientos.guardar(RepositoriosEnMemoria.puertaAlSol("ALO-1"));
-        registrar = new RegistrarTitular(titulares, alojamientos, new RepositoriosEnMemoria.Codigos());
+        registrar = new RegistrarTitularUseCase(titulares, alojamientos, new RepositoriosEnMemoria.Codigos());
     }
 
     private static RegistrarTitularCommand ana(String correo, String telefono) {
@@ -42,7 +42,7 @@ class GestionarTitularesTest {
         assertEquals("1094", titular.numeroDocumento());
         assertEquals("ana@correo.co", titular.correo());
         assertNull(titular.telefono());
-        assertEquals(titular, new ConsultarTitular(titulares).ejecutar("TIT-1"));
+        assertEquals(titular, new ConsultarTitularUseCase(titulares).ejecutar("TIT-1"));
     }
 
     @Test
@@ -68,7 +68,7 @@ class GestionarTitularesTest {
     @Tag("DEC-49")
     void deberiaActualizarNombreYContactoSinCambiarElDocumento() {
         registrar.ejecutar(ana("ana@correo.co", null));
-        ActualizarTitular actualizar = new ActualizarTitular(titulares);
+        ActualizarTitularUseCase actualizar = new ActualizarTitularUseCase(titulares);
 
         TitularResult titular = actualizar.ejecutar(
                 new ActualizarTitularCommand("TIT-1", "Ana María Ríos", null, "+57 300 123 4567"));
@@ -81,6 +81,7 @@ class GestionarTitularesTest {
                 () -> actualizar.ejecutar(new ActualizarTitularCommand("TIT-1", "Ana", null, null)));
         assertThrows(RecursoNoEncontradoException.class,
                 () -> actualizar.ejecutar(new ActualizarTitularCommand("TIT-9", "Ana", "ana@correo.co", null)));
-        assertThrows(RecursoNoEncontradoException.class, () -> new ConsultarTitular(titulares).ejecutar("TIT-9"));
+        assertThrows(RecursoNoEncontradoException.class,
+                () -> new ConsultarTitularUseCase(titulares).ejecutar("TIT-9"));
     }
 }

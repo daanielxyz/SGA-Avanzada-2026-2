@@ -1,17 +1,17 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExterna;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExternaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.IntegracionExternaResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExterna;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponibles;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.TitularCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExternaCommand;
@@ -57,19 +57,21 @@ class ReceptorCanalExternoTest {
     @BeforeEach
     void preparar() {
         escenario = new EscenarioEstancia();
-        canal = new RegistrarCanal(escenario.canales, escenario.alojamientos, escenario.codigos)
+        canal = new RegistrarCanalUseCase(escenario.canales, escenario.alojamientos, escenario.codigos)
                 .ejecutar(new RegistrarCanalCommand("ALO-1", "Booking", "EXTERNO", "BOOKING_API_KEY")).id();
         MockEnvironment entorno = new MockEnvironment().withProperty("sga.canales.BOOKING_API_KEY", CLAVE);
-        RegistrarEventoCanal registrarEvento = new RegistrarEventoCanal(escenario.eventos, escenario.canales,
+        RegistrarEventoCanalUseCase registrarEvento = new RegistrarEventoCanalUseCase(escenario.eventos,
+                escenario.canales,
                 escenario.codigos, AL_CREAR);
-        ConsultarDisponibilidadCanal consultar = new ConsultarDisponibilidadCanal(escenario.canales,
-                escenario.eventos, new BuscarDisponibles(escenario.cargador, escenario.apartamentos,
+        ConsultarDisponibilidadCanalUseCase consultar = new ConsultarDisponibilidadCanalUseCase(escenario.canales,
+                escenario.eventos, new BuscarDisponiblesUseCase(escenario.cargador, escenario.apartamentos,
                 escenario.reservas, new DisponibilidadDomainService()), escenario.codigos, AL_CREAR);
-        CancelarReservaExterna cancelar = new CancelarReservaExterna(escenario.canales, escenario.reservas,
-                escenario.eventos, new CancelarReserva(escenario.cargador, escenario.reservas, escenario.folios,
+        CancelarReservaExternaUseCase cancelar = new CancelarReservaExternaUseCase(escenario.canales,
+                escenario.reservas,
+                escenario.eventos, new CancelarReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios,
                 escenario.politicas, new CancelacionDomainService(), AL_CREAR), escenario.codigos, AL_CREAR);
         receptor = new ReceptorCanalExterno(new AutenticadorCanal(escenario.canales, entorno),
-                new RecibirReservaExterna(escenario.cargador, escenario.canales, escenario.reservas,
+                new RecibirReservaExternaUseCase(escenario.cargador, escenario.canales, escenario.reservas,
                         escenario.folios, escenario.titulares, escenario.tarifas, escenario.politicas,
                         escenario.conflictos, escenario.eventos, new DisponibilidadDomainService(),
                         new TarificacionDomainService(), new SincronizacionCanalDomainService(), escenario.codigos,

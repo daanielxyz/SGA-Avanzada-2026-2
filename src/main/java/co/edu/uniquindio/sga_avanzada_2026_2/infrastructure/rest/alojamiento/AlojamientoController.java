@@ -1,14 +1,14 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.alojamiento;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicional;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarParametrosAlojamiento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarUbicacionAlojamiento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarValorServicio;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ConsultarAlojamiento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DesactivarServicio;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarParametrosAlojamientoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarUbicacionAlojamientoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarValorServicioUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ConsultarAlojamientoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DesactivarServicioUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DesactivarServicioCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DeshabilitarMedioPago;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.HabilitarMedioPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DeshabilitarMedioPagoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.HabilitarMedioPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.MedioPagoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
@@ -31,21 +31,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AlojamientoController {
 
     private final AlojamientoActual alojamiento;
-    private final ConsultarAlojamiento consultarAlojamiento;
-    private final CambiarParametrosAlojamiento cambiarParametros;
-    private final CambiarUbicacionAlojamiento cambiarUbicacion;
-    private final HabilitarMedioPago habilitarMedioPago;
-    private final DeshabilitarMedioPago deshabilitarMedioPago;
-    private final AgregarServicioAdicional agregarServicio;
-    private final CambiarValorServicio cambiarValorServicio;
-    private final DesactivarServicio desactivarServicio;
+    private final ConsultarAlojamientoUseCase consultarAlojamiento;
+    private final CambiarParametrosAlojamientoUseCase cambiarParametros;
+    private final CambiarUbicacionAlojamientoUseCase cambiarUbicacion;
+    private final HabilitarMedioPagoUseCase habilitarMedioPago;
+    private final DeshabilitarMedioPagoUseCase deshabilitarMedioPago;
+    private final AgregarServicioAdicionalUseCase agregarServicio;
+    private final CambiarValorServicioUseCase cambiarValorServicio;
+    private final DesactivarServicioUseCase desactivarServicio;
 
-    public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamiento consultarAlojamiento,
-                                 CambiarParametrosAlojamiento cambiarParametros,
-                                 CambiarUbicacionAlojamiento cambiarUbicacion,
-                                 HabilitarMedioPago habilitarMedioPago, DeshabilitarMedioPago deshabilitarMedioPago,
-                                 AgregarServicioAdicional agregarServicio, CambiarValorServicio cambiarValorServicio,
-                                 DesactivarServicio desactivarServicio) {
+    public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamientoUseCase consultarAlojamiento,
+                                 CambiarParametrosAlojamientoUseCase cambiarParametros,
+                                 CambiarUbicacionAlojamientoUseCase cambiarUbicacion,
+                                 HabilitarMedioPagoUseCase habilitarMedioPago,
+                                 DeshabilitarMedioPagoUseCase deshabilitarMedioPago,
+                                 AgregarServicioAdicionalUseCase agregarServicio,
+                                 CambiarValorServicioUseCase cambiarValorServicio,
+                                 DesactivarServicioUseCase desactivarServicio) {
         this.alojamiento = alojamiento;
         this.consultarAlojamiento = consultarAlojamiento;
         this.cambiarParametros = cambiarParametros;

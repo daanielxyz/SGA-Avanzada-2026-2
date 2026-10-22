@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Entrada de {@link InicializarAlojamiento}: los valores iniciales del despliegue, que salen de {@code sga.*}
+ * Entrada de {@link InicializarAlojamientoUseCase}: los valores iniciales del despliegue, que salen de {@code sga.*}
  * (DEC-25). Después el administrador los edita desde la aplicación.
  */
 public record InicializarAlojamientoCommand(String id, String nombre, String descripcion, String ciudad,

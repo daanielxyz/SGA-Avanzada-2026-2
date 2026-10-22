@@ -1,14 +1,14 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShow;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegada;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservas;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShowUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
@@ -38,19 +38,20 @@ import java.time.LocalDate;
 public class ReservaController {
 
     private final UsuarioActual usuario;
-    private final CrearReserva crearReserva;
-    private final ConsultarReserva consultarReserva;
-    private final ModificarReserva modificarReserva;
-    private final IndicarHoraLlegada indicarHoraLlegada;
-    private final ConfirmarReserva confirmarReserva;
-    private final CancelarReserva cancelarReserva;
-    private final DeclararNoShow declararNoShow;
-    private final ListarReservas listarReservas;
+    private final CrearReservaUseCase crearReserva;
+    private final ConsultarReservaUseCase consultarReserva;
+    private final ModificarReservaUseCase modificarReserva;
+    private final IndicarHoraLlegadaUseCase indicarHoraLlegada;
+    private final ConfirmarReservaUseCase confirmarReserva;
+    private final CancelarReservaUseCase cancelarReserva;
+    private final DeclararNoShowUseCase declararNoShow;
+    private final ListarReservasUseCase listarReservas;
 
-    public ReservaController(UsuarioActual usuario, CrearReserva crearReserva, ConsultarReserva consultarReserva,
-                             ModificarReserva modificarReserva, IndicarHoraLlegada indicarHoraLlegada,
-                             ConfirmarReserva confirmarReserva, CancelarReserva cancelarReserva,
-                             DeclararNoShow declararNoShow, ListarReservas listarReservas) {
+    public ReservaController(UsuarioActual usuario, CrearReservaUseCase crearReserva,
+                             ConsultarReservaUseCase consultarReserva, ModificarReservaUseCase modificarReserva,
+                             IndicarHoraLlegadaUseCase indicarHoraLlegada, ConfirmarReservaUseCase confirmarReserva,
+                             CancelarReservaUseCase cancelarReserva, DeclararNoShowUseCase declararNoShow,
+                             ListarReservasUseCase listarReservas) {
         this.usuario = usuario;
         this.crearReserva = crearReserva;
         this.consultarReserva = consultarReserva;

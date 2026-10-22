@@ -31,7 +31,7 @@ class ConfigurarAlojamientoTest {
 
     @Test
     void deberiaConsultarElAlojamientoYRechazarUnoInexistente() {
-        ConsultarAlojamiento consultar = new ConsultarAlojamiento(alojamientos);
+        ConsultarAlojamientoUseCase consultar = new ConsultarAlojamientoUseCase(alojamientos);
 
         assertEquals("Puerta al Sol", consultar.ejecutar("ALO-1").nombre());
         assertEquals(30, consultar.ejecutar("ALO-1").parametros().anticipoPct());
@@ -44,7 +44,7 @@ class ConfigurarAlojamientoTest {
         ParametrosCommand nuevos = new ParametrosCommand(10, LocalTime.of(14, 0), LocalTime.of(12, 0), 2, 48,
                 LocalTime.of(21, 0), 0, 2, 1, 2, 2, 1, "TOTAL", 45);
 
-        AlojamientoResult resultado = new CambiarParametrosAlojamiento(alojamientos)
+        AlojamientoResult resultado = new CambiarParametrosAlojamientoUseCase(alojamientos)
                 .ejecutar(new CambiarParametrosAlojamientoCommand("ALO-1", nuevos));
 
         assertEquals(10, resultado.parametros().umbralEdadFacturable());
@@ -58,14 +58,14 @@ class ConfigurarAlojamientoTest {
         ParametrosCommand tresMedios = new ParametrosCommand(12, LocalTime.of(15, 0), LocalTime.of(11, 0), 3, 24,
                 LocalTime.of(22, 0), 30, 3, 1, 2, 2, 2, "ANTICIPO", 30);
 
-        assertThrows(ReglaDominioException.class, () -> new CambiarParametrosAlojamiento(alojamientos)
+        assertThrows(ReglaDominioException.class, () -> new CambiarParametrosAlojamientoUseCase(alojamientos)
                 .ejecutar(new CambiarParametrosAlojamientoCommand("ALO-1", tresMedios)));
     }
 
     @Test
     @Tag("UBI-03")
     void deberiaReemplazarLaUbicacion() {
-        AlojamientoResult resultado = new CambiarUbicacionAlojamiento(alojamientos)
+        AlojamientoResult resultado = new CambiarUbicacionAlojamientoUseCase(alojamientos)
                 .ejecutar(new CambiarUbicacionAlojamientoCommand("ALO-1", 4.53, -75.67));
 
         assertEquals(4.53, resultado.latitud());
@@ -75,8 +75,8 @@ class ConfigurarAlojamientoTest {
     @Test
     @Tag("MPAG-06")
     void deberiaHabilitarYDeshabilitarMediosDePago() {
-        new HabilitarMedioPago(alojamientos).ejecutar(new MedioPagoCommand("ALO-1", "nequi"));
-        AlojamientoResult resultado = new DeshabilitarMedioPago(alojamientos)
+        new HabilitarMedioPagoUseCase(alojamientos).ejecutar(new MedioPagoCommand("ALO-1", "nequi"));
+        AlojamientoResult resultado = new DeshabilitarMedioPagoUseCase(alojamientos)
                 .ejecutar(new MedioPagoCommand("ALO-1", "TARJETA"));
 
         assertEquals(List.of("EFECTIVO", "NEQUI"), resultado.mediosPago());
@@ -85,7 +85,7 @@ class ConfigurarAlojamientoTest {
     @Test
     @Tag("MPAG-01")
     void noDeberiaDejarElCatalogoPorDebajoDelMinimo() {
-        assertThrows(ReglaDominioException.class, () -> new DeshabilitarMedioPago(alojamientos)
+        assertThrows(ReglaDominioException.class, () -> new DeshabilitarMedioPagoUseCase(alojamientos)
                 .ejecutar(new MedioPagoCommand("ALO-1", "EFECTIVO")));
     }
 
@@ -96,13 +96,13 @@ class ConfigurarAlojamientoTest {
     void deberiaAgregarCambiarYDesactivarServicios() {
         RepositoriosEnMemoria.Codigos codigos = new RepositoriosEnMemoria.Codigos();
         codigos.siguiente(SerieCodigo.SERVICIO); // SRV-1 ya lo usa el alojamiento de prueba
-        AlojamientoResult conSpa = new AgregarServicioAdicional(alojamientos, codigos)
+        AlojamientoResult conSpa = new AgregarServicioAdicionalUseCase(alojamientos, codigos)
                 .ejecutar(new AgregarServicioAdicionalCommand("ALO-1", "Spa", true, BigDecimal.valueOf(80_000)));
         String spa = conSpa.serviciosAdicionales().getLast().id();
 
-        new CambiarValorServicio(alojamientos)
+        new CambiarValorServicioUseCase(alojamientos)
                 .ejecutar(new CambiarValorServicioCommand("ALO-1", spa, BigDecimal.valueOf(90_000)));
-        AlojamientoResult resultado = new DesactivarServicio(alojamientos)
+        AlojamientoResult resultado = new DesactivarServicioUseCase(alojamientos)
                 .ejecutar(new DesactivarServicioCommand("ALO-1", "SRV-1"));
 
         AlojamientoResult.ServicioResult cambiado = resultado.serviciosAdicionales().getLast();
@@ -114,7 +114,7 @@ class ConfigurarAlojamientoTest {
     @Test
     @Tag("SERV-05")
     void noDeberiaDesactivarElUnicoServicioActivo() {
-        assertThrows(ReglaDominioException.class, () -> new DesactivarServicio(alojamientos)
+        assertThrows(ReglaDominioException.class, () -> new DesactivarServicioUseCase(alojamientos)
                 .ejecutar(new DesactivarServicioCommand("ALO-1", "SRV-1")));
     }
 }

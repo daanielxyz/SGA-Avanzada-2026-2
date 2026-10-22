@@ -1,6 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.InicializarAlojamiento;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.InicializarAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.InicializarAlojamientoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.InicializarAlojamientoCommand.ServicioCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ParametrosCommand;
@@ -21,10 +21,10 @@ import org.springframework.stereotype.Component;
 @EnableConfigurationProperties(SgaPropiedades.class)
 public class InicializadorAlojamiento implements ApplicationRunner {
 
-    private final InicializarAlojamiento inicializarAlojamiento;
+    private final InicializarAlojamientoUseCase inicializarAlojamiento;
     private final SgaPropiedades propiedades;
 
-    public InicializadorAlojamiento(InicializarAlojamiento inicializarAlojamiento, SgaPropiedades propiedades) {
+    public InicializadorAlojamiento(InicializarAlojamientoUseCase inicializarAlojamiento, SgaPropiedades propiedades) {
         this.inicializarAlojamiento = inicializarAlojamiento;
         this.propiedades = propiedades;
     }

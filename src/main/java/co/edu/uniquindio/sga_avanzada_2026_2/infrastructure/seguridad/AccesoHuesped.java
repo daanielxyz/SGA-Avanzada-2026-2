@@ -2,7 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.Enmascarar;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.Notificador;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.CambiarCorreoTitular;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.CambiarCorreoTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.CambiarCorreoTitularCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
@@ -38,7 +38,7 @@ public class AccesoHuesped {
 
     private final TitularRepository titulares;
     private final CodigoAccesoRepository codigos;
-    private final CambiarCorreoTitular cambiarCorreo;
+    private final CambiarCorreoTitularUseCase cambiarCorreo;
     private final EmisorTokens emisor;
     private final PasswordEncoder cifrador;
     private final Notificador notificador;
@@ -46,7 +46,7 @@ public class AccesoHuesped {
     private final AlojamientoId alojamientoId;
 
     public AccesoHuesped(TitularRepository titulares, CodigoAccesoRepository codigos,
-                         CambiarCorreoTitular cambiarCorreo, EmisorTokens emisor, PasswordEncoder cifrador,
+                         CambiarCorreoTitularUseCase cambiarCorreo, EmisorTokens emisor, PasswordEncoder cifrador,
                          Notificador notificador, Clock reloj,
                          @Value("${sga.alojamiento.id:ALO-1}") String alojamientoId) {
         this.titulares = titulares;

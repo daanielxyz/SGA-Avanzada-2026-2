@@ -1,16 +1,16 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.AvisosReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CargadorReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.TitularCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
@@ -104,7 +104,7 @@ public final class EscenarioEstancia {
     /** Crea la reserva PENDIENTE con su folio y devuelve su código. */
     public String reservaPendiente() {
         TitularCommand ana = new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", "300 123 4567");
-        return new CrearReserva(cargador, reservas, folios, titulares, tarifas, politicas,
+        return new CrearReservaUseCase(cargador, reservas, folios, titulares, tarifas, politicas,
                 new DisponibilidadDomainService(), new TarificacionDomainService(), codigos, avisos, AL_CREAR)
                 .ejecutar(new CrearReservaCommand("APT-101", ENTRADA, ENTRADA.plusDays(3), "DIRECTO", ana,
                         List.of(new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana"),
@@ -116,10 +116,10 @@ public final class EscenarioEstancia {
     /** Reserva CONFIRMADA: indicó su hora de llegada y pagó el anticipo de 180.000 en efectivo. */
     public String reservaConfirmada() {
         String codigo = reservaPendiente();
-        new IndicarHoraLlegada(cargador, reservas)
+        new IndicarHoraLlegadaUseCase(cargador, reservas)
                 .ejecutar(new IndicarHoraLlegadaCommand(codigo, LocalTime.of(16, 0)));
         pagar(codigo, 180_000, AL_CREAR);
-        new ConfirmarReserva(cargador, reservas).ejecutar(codigo);
+        new ConfirmarReservaUseCase(cargador, reservas).ejecutar(codigo);
         return codigo;
     }
 
@@ -130,13 +130,13 @@ public final class EscenarioEstancia {
         return codigo;
     }
 
-    public RegistrarLlegada registrarLlegada(Clock reloj) {
-        return new RegistrarLlegada(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(), reloj);
+    public RegistrarLlegadaUseCase registrarLlegada(Clock reloj) {
+        return new RegistrarLlegadaUseCase(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(), reloj);
     }
 
     /** Abona en efectivo con la fecha del reloj. */
     public void pagar(String codigo, long monto, Clock reloj) {
-        new RegistrarPago(cargador, folios, reloj).ejecutar(new RegistrarPagoCommand(codigo, "EFECTIVO",
+        new RegistrarPagoUseCase(cargador, folios, reloj).ejecutar(new RegistrarPagoCommand(codigo, "EFECTIVO",
                 BigDecimal.valueOf(monto), LocalDate.now(reloj)));
     }
 

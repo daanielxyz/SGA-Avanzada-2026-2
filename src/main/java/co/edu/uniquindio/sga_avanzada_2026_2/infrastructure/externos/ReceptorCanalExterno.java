@@ -1,13 +1,13 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExterna;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExternaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.CancelarReservaExternaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarDisponibilidadCanalCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.IntegracionExternaResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExterna;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanalCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisponibleResult;
@@ -34,14 +34,15 @@ public class ReceptorCanalExterno {
     private static final int MAXIMO_DETALLE = 500;
 
     private final AutenticadorCanal autenticador;
-    private final RecibirReservaExterna recibirReservaExterna;
-    private final ConsultarDisponibilidadCanal consultarDisponibilidad;
-    private final CancelarReservaExterna cancelarReservaExterna;
-    private final RegistrarEventoCanal registrarEvento;
+    private final RecibirReservaExternaUseCase recibirReservaExterna;
+    private final ConsultarDisponibilidadCanalUseCase consultarDisponibilidad;
+    private final CancelarReservaExternaUseCase cancelarReservaExterna;
+    private final RegistrarEventoCanalUseCase registrarEvento;
 
-    public ReceptorCanalExterno(AutenticadorCanal autenticador, RecibirReservaExterna recibirReservaExterna,
-                                ConsultarDisponibilidadCanal consultarDisponibilidad,
-                                CancelarReservaExterna cancelarReservaExterna, RegistrarEventoCanal registrarEvento) {
+    public ReceptorCanalExterno(AutenticadorCanal autenticador, RecibirReservaExternaUseCase recibirReservaExterna,
+                                ConsultarDisponibilidadCanalUseCase consultarDisponibilidad,
+                                CancelarReservaExternaUseCase cancelarReservaExterna,
+                                RegistrarEventoCanalUseCase registrarEvento) {
         this.autenticador = autenticador;
         this.recibirReservaExterna = recibirReservaExterna;
         this.consultarDisponibilidad = consultarDisponibilidad;

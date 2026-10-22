@@ -1,10 +1,10 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacora;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.DesactivarCanal;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ListarCanales;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.DesactivarCanalUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ListarCanalesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import jakarta.validation.Valid;
@@ -34,13 +34,14 @@ import java.util.List;
 public class CanalController {
 
     private final AlojamientoActual alojamiento;
-    private final ListarCanales listarCanales;
-    private final RegistrarCanal registrarCanal;
-    private final DesactivarCanal desactivarCanal;
-    private final ConsultarBitacora consultarBitacora;
+    private final ListarCanalesUseCase listarCanales;
+    private final RegistrarCanalUseCase registrarCanal;
+    private final DesactivarCanalUseCase desactivarCanal;
+    private final ConsultarBitacoraUseCase consultarBitacora;
 
-    public CanalController(AlojamientoActual alojamiento, ListarCanales listarCanales, RegistrarCanal registrarCanal,
-                           DesactivarCanal desactivarCanal, ConsultarBitacora consultarBitacora) {
+    public CanalController(AlojamientoActual alojamiento, ListarCanalesUseCase listarCanales,
+                           RegistrarCanalUseCase registrarCanal, DesactivarCanalUseCase desactivarCanal,
+                           ConsultarBitacoraUseCase consultarBitacora) {
         this.alojamiento = alojamiento;
         this.listarCanales = listarCanales;
         this.registrarCanal = registrarCanal;

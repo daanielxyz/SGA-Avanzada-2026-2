@@ -1,56 +1,56 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicional;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AlojamientoResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ActivarApartamento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativo;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ActivarApartamentoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativoCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ConsultarApartamento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ConsultarApartamentoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamentoCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacora;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarConflictosPendientes;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarConflictosPendientesUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.EventoCanalResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.IntegracionExternaResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExterna;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RecibirReservaExternaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarCanalCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.RegistrarEventoCanalCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicional;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicionalCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.ConsultarFolio;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.ConsultarFolioUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.FolioResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedad;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.ConsultarNovedades;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.RegistrarNovedad;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.ConsultarNovedadesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.RegistrarNovedadUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.RegistrarNovedadCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserva;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistro;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.EstanciaResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalida;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.TitularCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporadaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.CalendarioResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarCalendario;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifa;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarCalendarioUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import org.junit.jupiter.api.BeforeAll;
@@ -96,82 +96,82 @@ class EstanciaCompletaTest {
     private Clock reloj;
 
     @Autowired
-    private CrearApartamento crearApartamento;
+    private CrearApartamentoUseCase crearApartamento;
 
     @Autowired
-    private ActivarApartamento activarApartamento;
+    private ActivarApartamentoUseCase activarApartamento;
 
     @Autowired
-    private CambiarEstadoOperativo cambiarEstadoOperativo;
+    private CambiarEstadoOperativoUseCase cambiarEstadoOperativo;
 
     @Autowired
-    private ConsultarApartamento consultarApartamento;
+    private ConsultarApartamentoUseCase consultarApartamento;
 
     @Autowired
-    private ConsultarCalendario consultarCalendario;
+    private ConsultarCalendarioUseCase consultarCalendario;
 
     @Autowired
-    private AgregarTemporada agregarTemporada;
+    private AgregarTemporadaUseCase agregarTemporada;
 
     @Autowired
-    private DefinirTarifa definirTarifa;
+    private DefinirTarifaUseCase definirTarifa;
 
     @Autowired
-    private AgregarServicioAdicional agregarServicio;
+    private AgregarServicioAdicionalUseCase agregarServicio;
 
     @Autowired
-    private CrearReserva crearReserva;
+    private CrearReservaUseCase crearReserva;
 
     @Autowired
-    private IndicarHoraLlegada indicarHoraLlegada;
+    private IndicarHoraLlegadaUseCase indicarHoraLlegada;
 
     @Autowired
-    private ConfirmarReserva confirmarReserva;
+    private ConfirmarReservaUseCase confirmarReserva;
 
     @Autowired
-    private ConsultarReserva consultarReserva;
+    private ConsultarReservaUseCase consultarReserva;
 
     @Autowired
-    private RegistrarLlegada registrarLlegada;
+    private RegistrarLlegadaUseCase registrarLlegada;
 
     @Autowired
-    private CorregirRegistro corregirRegistro;
+    private CorregirRegistroUseCase corregirRegistro;
 
     @Autowired
-    private RegistrarSalida registrarSalida;
+    private RegistrarSalidaUseCase registrarSalida;
 
     @Autowired
-    private ConsultarFolio consultarFolio;
+    private ConsultarFolioUseCase consultarFolio;
 
     @Autowired
-    private RegistrarPago registrarPago;
+    private RegistrarPagoUseCase registrarPago;
 
     @Autowired
-    private CargarServicioAdicional cargarServicio;
+    private CargarServicioAdicionalUseCase cargarServicio;
 
     @Autowired
-    private RegistrarCanal registrarCanal;
+    private RegistrarCanalUseCase registrarCanal;
 
     @Autowired
-    private RecibirReservaExterna recibirReservaExterna;
+    private RecibirReservaExternaUseCase recibirReservaExterna;
 
     @Autowired
-    private ConsultarConflictosPendientes consultarConflictos;
+    private ConsultarConflictosPendientesUseCase consultarConflictos;
 
     @Autowired
-    private RegistrarEventoCanal registrarEventoCanal;
+    private RegistrarEventoCanalUseCase registrarEventoCanal;
 
     @Autowired
-    private ConsultarBitacora consultarBitacora;
+    private ConsultarBitacoraUseCase consultarBitacora;
 
     @Autowired
-    private RegistrarNovedad registrarNovedad;
+    private RegistrarNovedadUseCase registrarNovedad;
 
     @Autowired
-    private AvanzarNovedad avanzarNovedad;
+    private AvanzarNovedadUseCase avanzarNovedad;
 
     @Autowired
-    private ConsultarNovedades consultarNovedades;
+    private ConsultarNovedadesUseCase consultarNovedades;
 
     private LocalDate hoy;
     private String desayuno;

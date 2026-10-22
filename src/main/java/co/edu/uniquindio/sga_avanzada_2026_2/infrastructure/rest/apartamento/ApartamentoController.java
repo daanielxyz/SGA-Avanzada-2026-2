@@ -1,16 +1,16 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.apartamento;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ActivarApartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ActivarApartamentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ApartamentoResult;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarCapacidad;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativo;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ConsultarApartamento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamento;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.LevantarBloqueo;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarCapacidadUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ConsultarApartamentoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamentoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.LevantarBloqueoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.LevantarBloqueoCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ListarApartamentos;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RegistrarBloqueo;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RetirarApartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ListarApartamentosUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RegistrarBloqueoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.RetirarApartamentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
@@ -45,22 +45,25 @@ public class ApartamentoController {
 
     private final AlojamientoActual alojamiento;
     private final UsuarioActual usuario;
-    private final CrearApartamento crearApartamento;
-    private final ConsultarApartamento consultarApartamento;
-    private final ListarApartamentos listarApartamentos;
-    private final ActivarApartamento activarApartamento;
-    private final RetirarApartamento retirarApartamento;
-    private final CambiarCapacidad cambiarCapacidad;
-    private final CambiarEstadoOperativo cambiarEstadoOperativo;
-    private final RegistrarBloqueo registrarBloqueo;
-    private final LevantarBloqueo levantarBloqueo;
+    private final CrearApartamentoUseCase crearApartamento;
+    private final ConsultarApartamentoUseCase consultarApartamento;
+    private final ListarApartamentosUseCase listarApartamentos;
+    private final ActivarApartamentoUseCase activarApartamento;
+    private final RetirarApartamentoUseCase retirarApartamento;
+    private final CambiarCapacidadUseCase cambiarCapacidad;
+    private final CambiarEstadoOperativoUseCase cambiarEstadoOperativo;
+    private final RegistrarBloqueoUseCase registrarBloqueo;
+    private final LevantarBloqueoUseCase levantarBloqueo;
 
     public ApartamentoController(AlojamientoActual alojamiento, UsuarioActual usuario,
-                                 CrearApartamento crearApartamento, ConsultarApartamento consultarApartamento,
-                                 ListarApartamentos listarApartamentos,
-                                 ActivarApartamento activarApartamento, RetirarApartamento retirarApartamento,
-                                 CambiarCapacidad cambiarCapacidad, CambiarEstadoOperativo cambiarEstadoOperativo,
-                                 RegistrarBloqueo registrarBloqueo, LevantarBloqueo levantarBloqueo) {
+                                 CrearApartamentoUseCase crearApartamento,
+                                 ConsultarApartamentoUseCase consultarApartamento,
+                                 ListarApartamentosUseCase listarApartamentos,
+                                 ActivarApartamentoUseCase activarApartamento,
+                                 RetirarApartamentoUseCase retirarApartamento,
+                                 CambiarCapacidadUseCase cambiarCapacidad,
+                                 CambiarEstadoOperativoUseCase cambiarEstadoOperativo,
+                                 RegistrarBloqueoUseCase registrarBloqueo, LevantarBloqueoUseCase levantarBloqueo) {
         this.alojamiento = alojamiento;
         this.usuario = usuario;
         this.crearApartamento = crearApartamento;

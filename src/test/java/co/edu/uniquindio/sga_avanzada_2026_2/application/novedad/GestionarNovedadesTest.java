@@ -36,8 +36,8 @@ class GestionarNovedadesTest {
         escenario = new EscenarioEstancia();
     }
 
-    private RegistrarNovedad registrar(Clock reloj) {
-        return new RegistrarNovedad(escenario.novedades, escenario.apartamentos, escenario.codigos, reloj);
+    private RegistrarNovedadUseCase registrar(Clock reloj) {
+        return new RegistrarNovedadUseCase(escenario.novedades, escenario.apartamentos, escenario.codigos, reloj);
     }
 
     private static RegistrarNovedadCommand grifo() {
@@ -75,7 +75,7 @@ class GestionarNovedadesTest {
     @Tag("NOV-06")
     void deberiaAvanzarLaNovedadHastaCerrarlaDejandoAutorYFechaDeCadaPaso() {
         registrar(AL_CREAR).ejecutar(grifo());
-        AvanzarNovedad avanzar = new AvanzarNovedad(escenario.novedades, relojEn(AHORA.plusHours(2)));
+        AvanzarNovedadUseCase avanzar = new AvanzarNovedadUseCase(escenario.novedades, relojEn(AHORA.plusHours(2)));
 
         NovedadResult enRevision = avanzar.ejecutar(new AvanzarNovedadCommand("NOV-1", ADMIN));
         NovedadResult cerrada = avanzar.ejecutar(new AvanzarNovedadCommand("NOV-1", ADMIN));
@@ -96,7 +96,8 @@ class GestionarNovedadesTest {
     @Tag("DEC-18")
     void elHistorialDelApartamentoVaDeLaMasRecienteALaMasAntiguaDeDiezEnDiez() {
         IntStream.rangeClosed(1, 12).forEach(i -> registrar(relojEn(AHORA.plusHours(i))).ejecutar(grifo()));
-        ConsultarNovedades consultar = new ConsultarNovedades(escenario.novedades, escenario.apartamentos);
+        ConsultarNovedadesUseCase consultar = new ConsultarNovedadesUseCase(escenario.novedades,
+                escenario.apartamentos);
 
         Pagina<NovedadResult> primera = consultar.ejecutar("APT-101", 0);
         Pagina<NovedadResult> segunda = consultar.ejecutar("APT-101", 1);

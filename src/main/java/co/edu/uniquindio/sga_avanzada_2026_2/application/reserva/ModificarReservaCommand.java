@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Entrada de {@link ModificarReserva} (CU-17): los datos completos como quedan, no solo lo que cambia (DEC-38).
+ * Entrada de {@link ModificarReservaUseCase} (CU-17): los datos completos como quedan, no solo lo que cambia (DEC-38).
  *
  * @param apartamento el mismo u otro apartamento destino
  * @param ocupantes   el grupo completo; el titular sigue siendo el mismo (TIT-01)

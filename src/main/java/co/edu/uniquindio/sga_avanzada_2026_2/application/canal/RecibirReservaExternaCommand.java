@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Entrada de {@link RecibirReservaExterna} (CU-12): lo que pidió el canal, ya autenticado y traducido por su
+ * Entrada de {@link RecibirReservaExternaUseCase} (CU-12): lo que pidió el canal, ya autenticado y traducido por su
  * adaptador (B4).
  *
  * @param idExterno identificador de la reserva en el canal; con el canal da la idempotencia (RN-19)

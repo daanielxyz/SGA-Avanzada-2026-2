@@ -134,8 +134,8 @@ class CicloReservaTest {
                 null);
     }
 
-    private CrearReserva crearReserva() {
-        return new CrearReserva(cargador, reservas, folios, titulares, tarifas, politicas,
+    private CrearReservaUseCase crearReserva() {
+        return new CrearReservaUseCase(cargador, reservas, folios, titulares, tarifas, politicas,
                 new DisponibilidadDomainService(), new TarificacionDomainService(), codigos,
                 new AvisosReserva(notificaciones), RepositoriosEnMemoria.RELOJ);
     }
@@ -263,7 +263,7 @@ class CicloReservaTest {
     @Tag("RN-06")
     @Tag("COT-02")
     void laCotizacionSoloCobraLosOcupantesFacturables() {
-        CotizarEstancia cotizar = new CotizarEstancia(cargador, tarifas, new TarificacionDomainService(),
+        CotizarEstanciaUseCase cotizar = new CotizarEstanciaUseCase(cargador, tarifas, new TarificacionDomainService(),
                 RepositoriosEnMemoria.RELOJ);
 
         CotizacionResult cotizacion = cotizar.ejecutar(new CotizarEstanciaCommand("APT-101", ENTRADA,
@@ -279,7 +279,7 @@ class CicloReservaTest {
     @Tag("RN-01")
     void laBusquedaSoloOfreceApartamentosLibresDondeElGrupoCabe() {
         reservaDeDosAdultosPorTresNoches();
-        BuscarDisponibles buscar = new BuscarDisponibles(cargador, apartamentos, reservas,
+        BuscarDisponiblesUseCase buscar = new BuscarDisponiblesUseCase(cargador, apartamentos, reservas,
                 new DisponibilidadDomainService());
 
         List<ApartamentoDisponibleResult> paraDos = buscar.ejecutar(
@@ -291,8 +291,8 @@ class CicloReservaTest {
         assertTrue(paraTres.isEmpty());
     }
 
-    private ModificarReserva modificarReserva() {
-        return new ModificarReserva(cargador, reservas, folios, tarifas, new DisponibilidadDomainService(),
+    private ModificarReservaUseCase modificarReserva() {
+        return new ModificarReservaUseCase(cargador, reservas, folios, tarifas, new DisponibilidadDomainService(),
                 new TarificacionDomainService(), RepositoriosEnMemoria.RELOJ);
     }
 
@@ -329,10 +329,11 @@ class CicloReservaTest {
     @Tag("RES-15")
     void confirmarExigeHoraDeLlegadaYElAnticipoPagado() {
         String codigo = reservaDeDosAdultosPorTresNoches().codigo();
-        ConfirmarReserva confirmar = new ConfirmarReserva(cargador, reservas);
+        ConfirmarReservaUseCase confirmar = new ConfirmarReservaUseCase(cargador, reservas);
 
         assertThrows(ReglaDominioException.class, () -> confirmar.ejecutar(codigo));
-        new IndicarHoraLlegada(cargador, reservas).ejecutar(new IndicarHoraLlegadaCommand(codigo, LocalTime.of(16, 0)));
+        new IndicarHoraLlegadaUseCase(cargador, reservas).ejecutar(new IndicarHoraLlegadaCommand(codigo,
+                LocalTime.of(16, 0)));
         assertThrows(ReglaDominioException.class, () -> confirmar.ejecutar(codigo));
 
         folio(codigo).registrarPago(new MedioPago("EFECTIVO"), Dinero.de(180_000), HOY, HOY,
@@ -341,8 +342,8 @@ class CicloReservaTest {
         assertEquals("CONFIRMADA", confirmar.ejecutar(codigo).estado());
     }
 
-    private CancelarReserva cancelarEn(LocalDateTime momento) {
-        return new CancelarReserva(cargador, reservas, folios, politicas, new CancelacionDomainService(),
+    private CancelarReservaUseCase cancelarEn(LocalDateTime momento) {
+        return new CancelarReservaUseCase(cargador, reservas, folios, politicas, new CancelacionDomainService(),
                 relojEn(momento));
     }
 
@@ -375,10 +376,11 @@ class CicloReservaTest {
     @Tag("POL-06")
     void elNoShowSeDeclaraDesdeLaHoraLimiteYRetieneSegunLaPolitica() {
         String codigo = reservaDeDosAdultosPorTresNoches().codigo();
-        new IndicarHoraLlegada(cargador, reservas).ejecutar(new IndicarHoraLlegadaCommand(codigo, LocalTime.of(16, 0)));
+        new IndicarHoraLlegadaUseCase(cargador, reservas).ejecutar(new IndicarHoraLlegadaCommand(codigo,
+                LocalTime.of(16, 0)));
         folio(codigo).registrarPago(new MedioPago("EFECTIVO"), Dinero.de(180_000), HOY, HOY,
                 List.of(new MedioPago("EFECTIVO")));
-        new ConfirmarReserva(cargador, reservas).ejecutar(codigo);
+        new ConfirmarReservaUseCase(cargador, reservas).ejecutar(codigo);
 
         assertThrows(ReglaDominioException.class, () -> noShowEn(ENTRADA.atTime(21, 0)).ejecutar(codigo));
         CancelacionResult resultado = noShowEn(ENTRADA.atTime(22, 30)).ejecutar(codigo);
@@ -388,8 +390,8 @@ class CicloReservaTest {
         assertEquals(0, BigDecimal.valueOf(420_000).compareTo(resultado.saldo()));
     }
 
-    private DeclararNoShow noShowEn(LocalDateTime momento) {
-        return new DeclararNoShow(cargador, reservas, folios, politicas, new NoShowDomainService(),
+    private DeclararNoShowUseCase noShowEn(LocalDateTime momento) {
+        return new DeclararNoShowUseCase(cargador, reservas, folios, politicas, new NoShowDomainService(),
                 relojEn(momento));
     }
 
@@ -399,11 +401,13 @@ class CicloReservaTest {
         String codigo = reservaDeDosAdultosPorTresNoches().codigo();
         LocalDateTime plazoCumplido = HOY.atTime(10, 0).plusHours(24);
 
-        assertTrue(new BuscarReservasVencidas(cargador, reservas, relojEn(plazoCumplido)).ejecutar("ALO-1")
+        assertTrue(new BuscarReservasVencidasUseCase(cargador, reservas, relojEn(plazoCumplido)).ejecutar("ALO-1")
                 .isEmpty());
-        List<String> vencidas = new BuscarReservasVencidas(cargador, reservas, relojEn(plazoCumplido.plusMinutes(1)))
+        List<String> vencidas = new BuscarReservasVencidasUseCase(cargador, reservas,
+                relojEn(plazoCumplido.plusMinutes(1)))
                 .ejecutar("ALO-1");
-        CancelacionResult resultado = new VencerReserva(cargador, reservas, folios, new CancelacionDomainService(),
+        CancelacionResult resultado = new VencerReservaUseCase(cargador, reservas, folios,
+                new CancelacionDomainService(),
                 relojEn(plazoCumplido.plusMinutes(1))).ejecutar(codigo);
 
         assertEquals(List.of(codigo), vencidas);
@@ -414,7 +418,7 @@ class CicloReservaTest {
     @Test
     void consultarDevuelveLaReservaYRechazaUnaInexistente() {
         String codigo = reservaDeDosAdultosPorTresNoches().codigo();
-        ConsultarReserva consultar = new ConsultarReserva(cargador);
+        ConsultarReservaUseCase consultar = new ConsultarReservaUseCase(cargador);
 
         assertEquals(codigo, consultar.ejecutar(codigo).codigo());
         assertThrows(RecursoNoEncontradoException.class, () -> consultar.ejecutar("RES-2026-09999"));

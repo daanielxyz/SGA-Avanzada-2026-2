@@ -1,9 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistro;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalida;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
@@ -24,12 +24,12 @@ import java.util.Optional;
 public class EstanciaController {
 
     private final UsuarioActual usuario;
-    private final RegistrarLlegada registrarLlegada;
-    private final CorregirRegistro corregirRegistro;
-    private final RegistrarSalida registrarSalida;
+    private final RegistrarLlegadaUseCase registrarLlegada;
+    private final CorregirRegistroUseCase corregirRegistro;
+    private final RegistrarSalidaUseCase registrarSalida;
 
-    public EstanciaController(UsuarioActual usuario, RegistrarLlegada registrarLlegada,
-                              CorregirRegistro corregirRegistro, RegistrarSalida registrarSalida) {
+    public EstanciaController(UsuarioActual usuario, RegistrarLlegadaUseCase registrarLlegada,
+                              CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida) {
         this.usuario = usuario;
         this.registrarLlegada = registrarLlegada;
         this.corregirRegistro = corregirRegistro;

@@ -51,12 +51,13 @@ class CanalesExternosTest {
                 .id();
     }
 
-    private RegistrarCanal registrarCanal() {
-        return new RegistrarCanal(escenario.canales, escenario.alojamientos, escenario.codigos);
+    private RegistrarCanalUseCase registrarCanal() {
+        return new RegistrarCanalUseCase(escenario.canales, escenario.alojamientos, escenario.codigos);
     }
 
-    private RecibirReservaExterna recibir() {
-        return new RecibirReservaExterna(escenario.cargador, escenario.canales, escenario.reservas, escenario.folios,
+    private RecibirReservaExternaUseCase recibir() {
+        return new RecibirReservaExternaUseCase(escenario.cargador, escenario.canales, escenario.reservas,
+                escenario.folios,
                 escenario.titulares, escenario.tarifas, escenario.politicas, escenario.conflictos, escenario.eventos,
                 new DisponibilidadDomainService(), new TarificacionDomainService(),
                 new SincronizacionCanalDomainService(), escenario.codigos, escenario.avisos, AL_CREAR);
@@ -88,7 +89,8 @@ class CanalesExternosTest {
         assertTrue(portal.activo());
         assertNull(portal.referenciaCredencial());
         assertEquals(List.of("Booking", "Portal web"),
-                new ListarCanales(escenario.canales).ejecutar("ALO-1").stream().map(CanalResult::nombre).toList());
+                new ListarCanalesUseCase(escenario.canales).ejecutar("ALO-1").stream().map(CanalResult::nombre)
+                        .toList());
         assertThrows(ReglaDominioException.class, () -> registrarCanal()
                 .ejecutar(new RegistrarCanalCommand("ALO-1", "Expedia", "EXTERNO", null)));
         assertThrows(RecursoNoEncontradoException.class, () -> registrarCanal()
@@ -148,7 +150,8 @@ class CanalesExternosTest {
         assertNull(resultado.codigoReserva());
         assertEquals(1, escenario.reservas.guardadas.size());
         assertEquals(EstadoReserva.CONFIRMADA, escenario.reserva(vigente).estado());
-        ConflictoResult conflicto = new ConsultarConflictosPendientes(escenario.conflictos).ejecutar().getFirst();
+        ConflictoResult conflicto =
+                new ConsultarConflictosPendientesUseCase(escenario.conflictos).ejecutar().getFirst();
         assertEquals(resultado.conflictoId(), conflicto.id());
         assertEquals("BK-2", conflicto.idExterno());
         assertEquals("APT-101", conflicto.apartamento());
@@ -197,7 +200,7 @@ class CanalesExternosTest {
         RecibirReservaExternaCommand porElPortal = new RecibirReservaExternaCommand(portal, "X-1", "APT-101",
                 ENTRADA, ENTRADA.plusDays(2), new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", null),
                 pedido("X-1", 0, 2).ocupantes(), "{}");
-        DesactivarCanal desactivar = new DesactivarCanal(escenario.canales);
+        DesactivarCanalUseCase desactivar = new DesactivarCanalUseCase(escenario.canales);
 
         assertThrows(ReglaDominioException.class, () -> recibir().ejecutar(porElPortal));
         assertFalse(desactivar.ejecutar(canal).activo());
@@ -222,7 +225,7 @@ class CanalesExternosTest {
     void elAdministradorResuelveUnConflictoDejandoSuDecision() {
         escenario.reservaConfirmada();
         String conflictoId = recibir().ejecutar(pedido("BK-2", 2, 5)).conflictoId();
-        ResolverConflicto resolver = new ResolverConflicto(escenario.conflictos, AL_CREAR);
+        ResolverConflictoUseCase resolver = new ResolverConflictoUseCase(escenario.conflictos, AL_CREAR);
 
         assertThrows(ReglaDominioException.class,
                 () -> resolver.ejecutar(new ResolverConflictoCommand(conflictoId, " ", ADMIN)));
@@ -232,7 +235,7 @@ class CanalesExternosTest {
         assertEquals("RESUELTO", resuelto.estado());
         assertEquals(ADMIN, resuelto.resueltoPor());
         assertEquals("Se reubicó en el APT-102", resuelto.decision());
-        assertTrue(new ConsultarConflictosPendientes(escenario.conflictos).ejecutar().isEmpty());
+        assertTrue(new ConsultarConflictosPendientesUseCase(escenario.conflictos).ejecutar().isEmpty());
         assertThrows(ReglaDominioException.class,
                 () -> resolver.ejecutar(new ResolverConflictoCommand(conflictoId, "Otra", ADMIN)));
         assertThrows(RecursoNoEncontradoException.class,
@@ -244,13 +247,13 @@ class CanalesExternosTest {
     @Tag("BIT-03")
     void laBitacoraGuardaTambienLosRechazosYSeConsultaPorDias() {
         recibir().ejecutar(pedido("BK-1", 0, 3));
-        RegistrarEventoCanal registrar = new RegistrarEventoCanal(escenario.eventos, escenario.canales,
+        RegistrarEventoCanalUseCase registrar = new RegistrarEventoCanalUseCase(escenario.eventos, escenario.canales,
                 escenario.codigos, AL_CREAR);
 
         EventoCanalResult rechazo = registrar.ejecutar(new RegistrarEventoCanalCommand(canal, "CREAR_RESERVA",
                 "ENTRANTE", "{\"id\":\"BK-4\"}", "RECHAZADO", "El titular debe ser uno de los ocupantes"));
 
-        ConsultarBitacora consultar = new ConsultarBitacora(escenario.eventos, escenario.canales);
+        ConsultarBitacoraUseCase consultar = new ConsultarBitacoraUseCase(escenario.eventos, escenario.canales);
         Pagina<EventoCanalResult> deHoy = consultar.ejecutar(new ConsultarBitacoraCommand(canal, HOY, HOY, 0));
         assertEquals("RECHAZADO", rechazo.resultado());
         assertEquals(2, deHoy.totalElementos());

@@ -1,9 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.tarifa;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporada;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.CambiarFechasTemporada;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarCalendario;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DesactivarTemporada;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporadaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.CambiarFechasTemporadaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarCalendarioUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DesactivarTemporadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DesactivarTemporadaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
@@ -25,14 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class TemporadaController {
 
     private final AlojamientoActual alojamiento;
-    private final ConsultarCalendario consultarCalendario;
-    private final AgregarTemporada agregarTemporada;
-    private final CambiarFechasTemporada cambiarFechas;
-    private final DesactivarTemporada desactivarTemporada;
+    private final ConsultarCalendarioUseCase consultarCalendario;
+    private final AgregarTemporadaUseCase agregarTemporada;
+    private final CambiarFechasTemporadaUseCase cambiarFechas;
+    private final DesactivarTemporadaUseCase desactivarTemporada;
 
-    public TemporadaController(AlojamientoActual alojamiento, ConsultarCalendario consultarCalendario,
-                               AgregarTemporada agregarTemporada, CambiarFechasTemporada cambiarFechas,
-                               DesactivarTemporada desactivarTemporada) {
+    public TemporadaController(AlojamientoActual alojamiento, ConsultarCalendarioUseCase consultarCalendario,
+                               AgregarTemporadaUseCase agregarTemporada, CambiarFechasTemporadaUseCase cambiarFechas,
+                               DesactivarTemporadaUseCase desactivarTemporada) {
         this.alojamiento = alojamiento;
         this.consultarCalendario = consultarCalendario;
         this.agregarTemporada = agregarTemporada;

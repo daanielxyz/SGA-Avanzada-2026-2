@@ -1,8 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponibles;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -24,11 +24,11 @@ import java.util.List;
 public class DisponibilidadController {
 
     private final AlojamientoActual alojamiento;
-    private final BuscarDisponibles buscarDisponibles;
-    private final CotizarEstancia cotizarEstancia;
+    private final BuscarDisponiblesUseCase buscarDisponibles;
+    private final CotizarEstanciaUseCase cotizarEstancia;
 
-    public DisponibilidadController(AlojamientoActual alojamiento, BuscarDisponibles buscarDisponibles,
-                                    CotizarEstancia cotizarEstancia) {
+    public DisponibilidadController(AlojamientoActual alojamiento, BuscarDisponiblesUseCase buscarDisponibles,
+                                    CotizarEstanciaUseCase cotizarEstancia) {
         this.alojamiento = alojamiento;
         this.buscarDisponibles = buscarDisponibles;
         this.cotizarEstancia = cotizarEstancia;

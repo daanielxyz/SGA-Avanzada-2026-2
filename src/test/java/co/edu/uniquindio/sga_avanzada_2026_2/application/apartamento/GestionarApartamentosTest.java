@@ -104,13 +104,13 @@ class GestionarApartamentosTest {
                 Dinero.de(200_000L * personas), desglose, new PoliticaId("POL-1"), HOY.atStartOfDay());
     }
 
-    private ActivarApartamento activar() {
-        return new ActivarApartamento(apartamentos, alojamientos, calendarios, tarifas,
+    private ActivarApartamentoUseCase activar() {
+        return new ActivarApartamentoUseCase(apartamentos, alojamientos, calendarios, tarifas,
                 new ActivadorApartamentoService(), RepositoriosEnMemoria.RELOJ);
     }
 
-    private CambiarCapacidad cambiarCapacidad() {
-        return new CambiarCapacidad(apartamentos, alojamientos, reservas, new CambioCapacidadDomainService());
+    private CambiarCapacidadUseCase cambiarCapacidad() {
+        return new CambiarCapacidadUseCase(apartamentos, alojamientos, reservas, new CambioCapacidadDomainService());
     }
 
     @Test
@@ -188,7 +188,7 @@ class GestionarApartamentosTest {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         apartamentos.guardar(apartamento(APT_102, 2, true));
         reservas.guardar(reserva("RES-2026-00001", APT_102, LocalDate.of(2026, 11, 1), 2));
-        RetirarApartamento retirar = new RetirarApartamento(apartamentos, reservas,
+        RetirarApartamentoUseCase retirar = new RetirarApartamentoUseCase(apartamentos, reservas,
                 new BajaApartamentoDomainService());
 
         assertFalse(retirar.ejecutar("APT-101").activo());
@@ -200,7 +200,7 @@ class GestionarApartamentosTest {
     void deberiaAvanzarLaPreparacionYRechazarUnaTransicionInvalida() {
         apartamentos.guardar(Apartamento.crear(APT_101, ALO, "Apto 101", null, new Capacidad(4), new Dormitorio(2),
                 List.of(), List.of(new Caracteristica("Balcón"))));
-        CambiarEstadoOperativo cambiar = new CambiarEstadoOperativo(apartamentos);
+        CambiarEstadoOperativoUseCase cambiar = new CambiarEstadoOperativoUseCase(apartamentos);
 
         assertEquals("EN_PREPARACION",
                 cambiar.ejecutar(new CambiarEstadoOperativoCommand("APT-101", "EN_PREPARACION")).estadoOperativo());
@@ -213,12 +213,12 @@ class GestionarApartamentosTest {
     @Tag("BLO-06")
     void deberiaBloquearFechasLibresYLevantarElBloqueo() {
         apartamentos.guardar(apartamento(APT_101, 4, true));
-        RegistrarBloqueo registrar = new RegistrarBloqueo(apartamentos, reservas,
+        RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
                 new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
 
         ApartamentoResult bloqueado = registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
                 LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 12), "Pintura"));
-        ApartamentoResult levantado = new LevantarBloqueo(apartamentos)
+        ApartamentoResult levantado = new LevantarBloqueoUseCase(apartamentos)
                 .ejecutar(new LevantarBloqueoCommand("APT-101", "BLO-1"));
 
         assertEquals("BLO-1", bloqueado.bloqueos().getFirst().id());
@@ -230,7 +230,7 @@ class GestionarApartamentosTest {
     void noDeberiaBloquearNochesDeUnaReservaActiva() {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         reservas.guardar(reserva("RES-2026-00001", APT_101, LocalDate.of(2026, 11, 1), 2));
-        RegistrarBloqueo registrar = new RegistrarBloqueo(apartamentos, reservas,
+        RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
                 new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
 
         assertThrows(ReglaDominioException.class, () -> registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
@@ -243,7 +243,7 @@ class GestionarApartamentosTest {
         IntStream.rangeClosed(1, 12)
                 .forEach(i -> apartamentos.guardar(apartamento(new ApartamentoId("APT-" + (100 + i)), 2, false)));
 
-        Pagina<ApartamentoResult> segunda = new ListarApartamentos(apartamentos).ejecutar("ALO-1", 1);
+        Pagina<ApartamentoResult> segunda = new ListarApartamentosUseCase(apartamentos).ejecutar("ALO-1", 1);
 
         assertEquals(12, segunda.totalElementos());
         assertEquals(2, segunda.totalPaginas());

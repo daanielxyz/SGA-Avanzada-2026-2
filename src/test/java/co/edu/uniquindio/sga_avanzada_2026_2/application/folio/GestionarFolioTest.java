@@ -2,7 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CargoServicioDomainService;
@@ -43,21 +43,22 @@ class GestionarFolioTest {
         assertEquals(0, BigDecimal.valueOf(esperado).compareTo(real), "esperado " + esperado + " y fue " + real);
     }
 
-    private RegistrarPago registrarPago() {
-        return new RegistrarPago(escenario.cargador, escenario.folios, AL_CREAR);
+    private RegistrarPagoUseCase registrarPago() {
+        return new RegistrarPagoUseCase(escenario.cargador, escenario.folios, AL_CREAR);
     }
 
     private static RegistrarPagoCommand pago(String codigo, String medio, long monto) {
         return new RegistrarPagoCommand(codigo, medio, BigDecimal.valueOf(monto), HOY);
     }
 
-    private CargarServicioAdicional cargarServicio(Clock reloj) {
-        return new CargarServicioAdicional(escenario.cargador, escenario.folios, new CargoServicioDomainService(),
+    private CargarServicioAdicionalUseCase cargarServicio(Clock reloj) {
+        return new CargarServicioAdicionalUseCase(escenario.cargador, escenario.folios,
+                new CargoServicioDomainService(),
                 reloj);
     }
 
-    private CerrarFolio cerrarFolio() {
-        return new CerrarFolio(escenario.cargador, escenario.folios, AL_CREAR);
+    private CerrarFolioUseCase cerrarFolio() {
+        return new CerrarFolioUseCase(escenario.cargador, escenario.folios, AL_CREAR);
     }
 
     @Test
@@ -66,7 +67,7 @@ class GestionarFolioTest {
     void deberiaConsultarElFolioDeLaReservaConSuSaldoCalculado() {
         String codigo = escenario.reservaPendiente();
 
-        FolioResult folio = new ConsultarFolio(escenario.cargador).ejecutar(codigo);
+        FolioResult folio = new ConsultarFolioUseCase(escenario.cargador).ejecutar(codigo);
 
         assertEquals("FOL-1", folio.id());
         assertEquals(codigo, folio.reserva());
@@ -80,7 +81,7 @@ class GestionarFolioTest {
     @Test
     void deberiaRechazarElFolioDeUnaReservaInexistente() {
         assertThrows(RecursoNoEncontradoException.class,
-                () -> new ConsultarFolio(escenario.cargador).ejecutar("RES-2026-09999"));
+                () -> new ConsultarFolioUseCase(escenario.cargador).ejecutar("RES-2026-09999"));
     }
 
     @Test
@@ -125,7 +126,7 @@ class GestionarFolioTest {
     void deberiaRevertirUnPagoMalRegistradoSinBorrarlo() {
         String codigo = escenario.reservaPendiente();
         registrarPago().ejecutar(pago(codigo, "EFECTIVO", 200_000));
-        RevertirPago revertir = new RevertirPago(escenario.cargador, escenario.folios, AL_CREAR);
+        RevertirPagoUseCase revertir = new RevertirPagoUseCase(escenario.cargador, escenario.folios, AL_CREAR);
 
         FolioResult folio = revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-1"));
 
@@ -142,9 +143,10 @@ class GestionarFolioTest {
     @Tag("TPAG-02")
     void deberiaRegistrarLaDevolucionDelSaldoAFavorTrasCancelar() {
         String codigo = escenario.reservaConfirmada(); // pagó 180.000 y cancela gratis, con más de 48 h
-        new CancelarReserva(escenario.cargador, escenario.reservas, escenario.folios, escenario.politicas,
+        new CancelarReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios, escenario.politicas,
                 new CancelacionDomainService(), AL_CREAR).ejecutar(codigo);
-        RegistrarDevolucion devolver = new RegistrarDevolucion(escenario.cargador, escenario.folios, AL_CREAR);
+        RegistrarDevolucionUseCase devolver = new RegistrarDevolucionUseCase(escenario.cargador, escenario.folios,
+                AL_CREAR);
 
         assertThrows(ReglaDominioException.class, () -> devolver.ejecutar(pago(codigo, "EFECTIVO", 200_000)));
         FolioResult folio = devolver.ejecutar(pago(codigo, "EFECTIVO", 180_000));
@@ -185,7 +187,7 @@ class GestionarFolioTest {
     void deberiaRevertirUnCargoMalRegistradoConUnAjusteContrario() {
         String codigo = escenario.reservaEnCurso();
         cargarServicio(ALOJADO).ejecutar(new CargarServicioAdicionalCommand(codigo, "SRV-1"));
-        RevertirCargo revertir = new RevertirCargo(escenario.cargador, escenario.folios, ALOJADO);
+        RevertirCargoUseCase revertir = new RevertirCargoUseCase(escenario.cargador, escenario.folios, ALOJADO);
 
         FolioResult folio = revertir.ejecutar(new RevertirCargoCommand(codigo, "CAR-2", "Se cobró a otro apartamento"));
 

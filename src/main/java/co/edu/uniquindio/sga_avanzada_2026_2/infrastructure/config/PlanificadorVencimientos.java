@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarReservasVencidas;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.VencerReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarReservasVencidasUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.VencerReservaUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,11 +22,11 @@ public class PlanificadorVencimientos {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlanificadorVencimientos.class);
 
-    private final BuscarReservasVencidas buscarVencidas;
-    private final VencerReserva vencerReserva;
+    private final BuscarReservasVencidasUseCase buscarVencidas;
+    private final VencerReservaUseCase vencerReserva;
     private final String alojamientoId;
 
-    public PlanificadorVencimientos(BuscarReservasVencidas buscarVencidas, VencerReserva vencerReserva,
+    public PlanificadorVencimientos(BuscarReservasVencidasUseCase buscarVencidas, VencerReservaUseCase vencerReserva,
                                     @Value("${sga.alojamiento.id:ALO-1}") String alojamientoId) {
         this.buscarVencidas = buscarVencidas;
         this.vencerReserva = vencerReserva;

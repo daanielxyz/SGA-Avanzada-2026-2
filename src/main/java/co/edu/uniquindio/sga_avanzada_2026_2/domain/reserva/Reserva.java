@@ -223,7 +223,7 @@ public class Reserva {
 
     /**
      * Cancela automáticamente una reserva PENDIENTE que superó el plazo de confirmación contado desde su creación
-     * (RN-21 · RES-17 · RES-21). Lo invoca el caso de uso {@code VencerReserva}.
+     * (RN-21 · RES-17 · RES-21). Lo invoca el caso de uso {@code VencerReservaUseCase}.
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
      * @param plazo {@code ParametrosAlojamiento.plazoParaConfirmar} según su canal (DEC-69)

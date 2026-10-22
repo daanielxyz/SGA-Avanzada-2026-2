@@ -1,9 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.novedad;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedad;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadCommand;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.ConsultarNovedades;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.RegistrarNovedad;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.ConsultarNovedadesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.RegistrarNovedadUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
@@ -26,12 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class NovedadController {
 
     private final UsuarioActual usuario;
-    private final RegistrarNovedad registrarNovedad;
-    private final AvanzarNovedad avanzarNovedad;
-    private final ConsultarNovedades consultarNovedades;
+    private final RegistrarNovedadUseCase registrarNovedad;
+    private final AvanzarNovedadUseCase avanzarNovedad;
+    private final ConsultarNovedadesUseCase consultarNovedades;
 
-    public NovedadController(UsuarioActual usuario, RegistrarNovedad registrarNovedad,
-                             AvanzarNovedad avanzarNovedad, ConsultarNovedades consultarNovedades) {
+    public NovedadController(UsuarioActual usuario, RegistrarNovedadUseCase registrarNovedad,
+                             AvanzarNovedadUseCase avanzarNovedad, ConsultarNovedadesUseCase consultarNovedades) {
         this.usuario = usuario;
         this.registrarNovedad = registrarNovedad;
         this.avanzarNovedad = avanzarNovedad;

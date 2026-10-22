@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.politica;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.politica.ConsultarPoliticaVigente;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.politica.PublicarPolitica;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.politica.ConsultarPoliticaVigenteUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.politica.PublicarPoliticaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +22,11 @@ import java.net.URI;
 public class PoliticaController {
 
     private final AlojamientoActual alojamiento;
-    private final PublicarPolitica publicarPolitica;
-    private final ConsultarPoliticaVigente consultarVigente;
+    private final PublicarPoliticaUseCase publicarPolitica;
+    private final ConsultarPoliticaVigenteUseCase consultarVigente;
 
-    public PoliticaController(AlojamientoActual alojamiento, PublicarPolitica publicarPolitica,
-                              ConsultarPoliticaVigente consultarVigente) {
+    public PoliticaController(AlojamientoActual alojamiento, PublicarPoliticaUseCase publicarPolitica,
+                              ConsultarPoliticaVigenteUseCase consultarVigente) {
         this.alojamiento = alojamiento;
         this.publicarPolitica = publicarPolitica;
         this.consultarVigente = consultarVigente;

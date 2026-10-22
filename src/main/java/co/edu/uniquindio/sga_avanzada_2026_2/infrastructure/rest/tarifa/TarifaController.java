@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.tarifa;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarTarifas;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifa;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarTarifasUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifaUseCase;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,10 +19,10 @@ import java.util.List;
 @RequestMapping("/api/apartamentos/{codigo}/tarifas")
 public class TarifaController {
 
-    private final ConsultarTarifas consultarTarifas;
-    private final DefinirTarifa definirTarifa;
+    private final ConsultarTarifasUseCase consultarTarifas;
+    private final DefinirTarifaUseCase definirTarifa;
 
-    public TarifaController(ConsultarTarifas consultarTarifas, DefinirTarifa definirTarifa) {
+    public TarifaController(ConsultarTarifasUseCase consultarTarifas, DefinirTarifaUseCase definirTarifa) {
         this.consultarTarifas = consultarTarifas;
         this.definirTarifa = definirTarifa;
     }

@@ -14,7 +14,7 @@ import java.util.List;
  * últimos en memoria, para desarrollar y probar sin servidor de correo ni de SMS. Como el PIN queda en el log, no
  * sirve para producción.
  */
-// TODO(B4b): adaptadores reales de correo y SMS tras este mismo puerto; este queda como alternativa local.
+// Es el que se usa salvo con sga.correo.modo=smtp, que activa NotificadorSmtp (DEC-76).
 @Component
 public class NotificadorLocal implements Notificador {
 

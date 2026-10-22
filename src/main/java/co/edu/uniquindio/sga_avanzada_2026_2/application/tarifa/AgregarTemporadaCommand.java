@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Entrada de {@link AgregarTemporada} (CU-33): la temporada con la tarifa de cada apartamento activo (TAR-03).
+ * Entrada de {@link AgregarTemporadaUseCase} (CU-33): la temporada con la tarifa de cada apartamento activo (TAR-03).
  *
  * @param fechaFin             inclusiva (TEM-01)
  * @param estanciaMinimaNoches 0 si no exige mínimo (TEM-07)

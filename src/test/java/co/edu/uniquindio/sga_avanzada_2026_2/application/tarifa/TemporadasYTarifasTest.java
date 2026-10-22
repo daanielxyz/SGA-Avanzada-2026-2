@@ -61,13 +61,14 @@ class TemporadasYTarifasTest {
                 List.of(new Caracteristica("Balcón")), List.of(), activo);
     }
 
-    private AgregarTemporada agregarTemporada() {
-        return new AgregarTemporada(calendarios, tarifas, apartamentos, new ActivadorApartamentoService(), codigos,
+    private AgregarTemporadaUseCase agregarTemporada() {
+        return new AgregarTemporadaUseCase(calendarios, tarifas, apartamentos, new ActivadorApartamentoService(),
+                codigos,
                 RepositoriosEnMemoria.RELOJ);
     }
 
-    private DefinirTarifa definirTarifa() {
-        return new DefinirTarifa(tarifas, apartamentos, calendarios, codigos, RepositoriosEnMemoria.RELOJ);
+    private DefinirTarifaUseCase definirTarifa() {
+        return new DefinirTarifaUseCase(tarifas, apartamentos, calendarios, codigos, RepositoriosEnMemoria.RELOJ);
     }
 
     private static AgregarTemporadaCommand alta(List<TarifaCommand> tarifas) {
@@ -124,21 +125,21 @@ class TemporadasYTarifasTest {
     void deberiaCambiarLasFechasYDesactivarUnaTemporada() {
         agregarTemporada().ejecutar(alta(List.of(tarifa("APT-101", 150_000))));
 
-        CalendarioResult cambiado = new CambiarFechasTemporada(calendarios).ejecutar(
+        CalendarioResult cambiado = new CambiarFechasTemporadaUseCase(calendarios).ejecutar(
                 new CambiarFechasTemporadaCommand("ALO-1", "TEM-2", LocalDate.of(2026, 12, 20),
                         LocalDate.of(2027, 1, 10)));
-        CalendarioResult desactivado = new DesactivarTemporada(calendarios)
+        CalendarioResult desactivado = new DesactivarTemporadaUseCase(calendarios)
                 .ejecutar(new DesactivarTemporadaCommand("ALO-1", "TEM-2"));
 
         assertEquals(LocalDate.of(2026, 12, 20), cambiado.temporadas().getLast().fechaInicio());
         assertFalse(desactivado.temporadas().getLast().activa());
-        assertNull(new ConsultarCalendario(calendarios).ejecutar("ALO-1").temporadas().getFirst().fechaInicio());
+        assertNull(new ConsultarCalendarioUseCase(calendarios).ejecutar("ALO-1").temporadas().getFirst().fechaInicio());
     }
 
     @Test
     @Tag("TEM-10")
     void laBaseNoSePuedeDesactivar() {
-        assertThrows(ReglaDominioException.class, () -> new DesactivarTemporada(calendarios)
+        assertThrows(ReglaDominioException.class, () -> new DesactivarTemporadaUseCase(calendarios)
                 .ejecutar(new DesactivarTemporadaCommand("ALO-1", "TEM-1")));
     }
 
@@ -154,14 +155,14 @@ class TemporadasYTarifasTest {
         assertEquals(2, segunda.version());
         assertEquals(2, tarifas.guardadas.size());
         assertEquals(List.of(segunda),
-                new ConsultarTarifas(tarifas, RepositoriosEnMemoria.RELOJ).ejecutar("APT-102"));
+                new ConsultarTarifasUseCase(tarifas, RepositoriosEnMemoria.RELOJ).ejecutar("APT-102"));
     }
 
     @Test
     @Tag("TAR-01")
     void noDeberiaDefinirTarifaEnUnaTemporadaInexistenteOInactiva() {
         agregarTemporada().ejecutar(alta(List.of(tarifa("APT-101", 150_000))));
-        new DesactivarTemporada(calendarios).ejecutar(new DesactivarTemporadaCommand("ALO-1", "TEM-2"));
+        new DesactivarTemporadaUseCase(calendarios).ejecutar(new DesactivarTemporadaCommand("ALO-1", "TEM-2"));
 
         assertThrows(ReglaDominioException.class, () -> definirTarifa()
                 .ejecutar(new DefinirTarifaCommand("APT-102", "TEM-2", BigDecimal.valueOf(100_000))));

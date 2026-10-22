@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarConflictosPendientes;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ResolverConflicto;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarConflictosPendientesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ResolverConflictoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +22,11 @@ import java.util.List;
 public class ConflictoController {
 
     private final UsuarioActual usuario;
-    private final ConsultarConflictosPendientes consultarPendientes;
-    private final ResolverConflicto resolverConflicto;
+    private final ConsultarConflictosPendientesUseCase consultarPendientes;
+    private final ResolverConflictoUseCase resolverConflicto;
 
-    public ConflictoController(UsuarioActual usuario, ConsultarConflictosPendientes consultarPendientes,
-                               ResolverConflicto resolverConflicto) {
+    public ConflictoController(UsuarioActual usuario, ConsultarConflictosPendientesUseCase consultarPendientes,
+                               ResolverConflictoUseCase resolverConflicto) {
         this.usuario = usuario;
         this.consultarPendientes = consultarPendientes;
         this.resolverConflicto = resolverConflicto;

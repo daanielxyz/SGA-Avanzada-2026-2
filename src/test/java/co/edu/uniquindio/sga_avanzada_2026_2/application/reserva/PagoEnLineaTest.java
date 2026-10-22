@@ -62,14 +62,15 @@ class PagoEnLineaTest {
         escenario.alojamientos.guardar(alojamiento);
     }
 
-    private CrearReserva crearReserva(Clock reloj) {
-        return new CrearReserva(escenario.cargador, escenario.reservas, escenario.folios, escenario.titulares,
+    private CrearReservaUseCase crearReserva(Clock reloj) {
+        return new CrearReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios, escenario.titulares,
                 escenario.tarifas, escenario.politicas, new DisponibilidadDomainService(),
                 new TarificacionDomainService(), escenario.codigos, escenario.avisos, reloj);
     }
 
     private ReservaPortalResult reservarDesdePortal() {
-        return new ReservarDesdePortal(crearReserva(AL_CREAR), escenario.cargador, new PagoEnLineaDomainService(),
+        return new ReservarDesdePortalUseCase(crearReserva(AL_CREAR), escenario.cargador,
+                new PagoEnLineaDomainService(),
                 AL_CREAR).ejecutar(new ReservarDesdePortalCommand("APT-101", ENTRADA, ENTRADA.plusDays(3),
                 new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", "300 123 4567"),
                 List.of(new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana"),
@@ -77,8 +78,8 @@ class PagoEnLineaTest {
                 LocalTime.of(16, 0)));
     }
 
-    private PagarEnLinea pagarEnLinea(Clock reloj) {
-        return new PagarEnLinea(escenario.cargador, escenario.reservas, escenario.folios,
+    private PagarEnLineaUseCase pagarEnLinea(Clock reloj) {
+        return new PagarEnLineaUseCase(escenario.cargador, escenario.reservas, escenario.folios,
                 new PagoEnLineaDomainService(), pasarela, escenario.avisos, reloj);
     }
 
@@ -171,10 +172,11 @@ class PagoEnLineaTest {
                 () -> pagarEnLinea(media).ejecutar(new PagarEnLineaCommand(delPortal, "tok")));
         assertTrue(cobrados.isEmpty());
 
-        List<String> vencidas = new BuscarReservasVencidas(escenario.cargador, escenario.reservas, media)
+        List<String> vencidas = new BuscarReservasVencidasUseCase(escenario.cargador, escenario.reservas, media)
                 .ejecutar("ALO-1");
         assertEquals(List.of(delPortal), vencidas);
-        new VencerReserva(escenario.cargador, escenario.reservas, escenario.folios, new CancelacionDomainService(),
+        new VencerReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios,
+                new CancelacionDomainService(),
                 media).ejecutar(delPortal);
         assertEquals(EstadoReserva.CANCELADA, escenario.cargador.reserva(delPortal).estado());
         assertEquals(EstadoReserva.PENDIENTE, escenario.cargador.reserva(deRecepcion).estado());

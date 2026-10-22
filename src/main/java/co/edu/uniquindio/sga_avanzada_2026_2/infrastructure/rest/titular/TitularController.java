@@ -1,8 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.titular;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarTitular;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitular;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.RegistrarTitular;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.RegistrarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.TitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
@@ -26,12 +26,12 @@ import java.net.URI;
 public class TitularController {
 
     private final AlojamientoActual alojamiento;
-    private final RegistrarTitular registrarTitular;
-    private final ConsultarTitular consultarTitular;
-    private final ActualizarTitular actualizarTitular;
+    private final RegistrarTitularUseCase registrarTitular;
+    private final ConsultarTitularUseCase consultarTitular;
+    private final ActualizarTitularUseCase actualizarTitular;
 
-    public TitularController(AlojamientoActual alojamiento, RegistrarTitular registrarTitular,
-                             ConsultarTitular consultarTitular, ActualizarTitular actualizarTitular) {
+    public TitularController(AlojamientoActual alojamiento, RegistrarTitularUseCase registrarTitular,
+                             ConsultarTitularUseCase consultarTitular, ActualizarTitularUseCase actualizarTitular) {
         this.alojamiento = alojamiento;
         this.registrarTitular = registrarTitular;
         this.consultarTitular = consultarTitular;

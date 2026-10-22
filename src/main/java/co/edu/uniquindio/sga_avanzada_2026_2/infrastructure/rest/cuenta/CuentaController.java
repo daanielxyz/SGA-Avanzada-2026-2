@@ -1,8 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.cuenta;
 
-import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasDeTitular;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarCuentaTitular;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitular;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasDeTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarCuentaTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.ReservaResponse;
@@ -21,12 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class CuentaController {
 
     private final UsuarioActual usuario;
-    private final ConsultarTitular consultarTitular;
-    private final ActualizarCuentaTitular actualizarCuenta;
-    private final ListarReservasDeTitular listarReservas;
+    private final ConsultarTitularUseCase consultarTitular;
+    private final ActualizarCuentaTitularUseCase actualizarCuenta;
+    private final ListarReservasDeTitularUseCase listarReservas;
 
-    public CuentaController(UsuarioActual usuario, ConsultarTitular consultarTitular,
-                            ActualizarCuentaTitular actualizarCuenta, ListarReservasDeTitular listarReservas) {
+    public CuentaController(UsuarioActual usuario, ConsultarTitularUseCase consultarTitular,
+                            ActualizarCuentaTitularUseCase actualizarCuenta,
+                            ListarReservasDeTitularUseCase listarReservas) {
         this.usuario = usuario;
         this.consultarTitular = consultarTitular;
         this.actualizarCuenta = actualizarCuenta;

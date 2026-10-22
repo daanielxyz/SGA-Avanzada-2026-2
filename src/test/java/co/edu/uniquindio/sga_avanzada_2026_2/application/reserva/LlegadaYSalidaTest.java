@@ -42,13 +42,14 @@ class LlegadaYSalidaTest {
         escenario = new EscenarioEstancia();
     }
 
-    private RegistrarSalida registrarSalida(Clock reloj) {
-        return new RegistrarSalida(escenario.cargador, escenario.reservas, escenario.apartamentos, escenario.folios,
+    private RegistrarSalidaUseCase registrarSalida(Clock reloj) {
+        return new RegistrarSalidaUseCase(escenario.cargador, escenario.reservas, escenario.apartamentos,
+                escenario.folios,
                 new SalidaOperativaDomainService(), reloj);
     }
 
-    private CorregirRegistro corregirRegistro() {
-        return new CorregirRegistro(escenario.cargador, escenario.reservas, ALOJADO);
+    private CorregirRegistroUseCase corregirRegistro() {
+        return new CorregirRegistroUseCase(escenario.cargador, escenario.reservas, ALOJADO);
     }
 
     private void ponerApartamentoEn(EstadoOperativo estado) {
@@ -187,7 +188,7 @@ class LlegadaYSalidaTest {
 
         registrarSalida(ALOJADO).ejecutar(new RegistrarSalidaCommand(codigo, RECEPCION, ""));
 
-        BuscarDisponibles buscar = new BuscarDisponibles(escenario.cargador, escenario.apartamentos,
+        BuscarDisponiblesUseCase buscar = new BuscarDisponiblesUseCase(escenario.cargador, escenario.apartamentos,
                 escenario.reservas, new DisponibilidadDomainService());
         assertEquals(EstadoReserva.FINALIZADA, escenario.reserva(codigo).estado());
         assertEquals(1, buscar.ejecutar(new BuscarDisponiblesCommand("ALO-1", ENTRADA.plusDays(1),

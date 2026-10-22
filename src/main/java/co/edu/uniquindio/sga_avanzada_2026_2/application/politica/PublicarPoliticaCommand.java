@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Entrada de {@link PublicarPolitica} (CU-35): los tramos por horas y la penalización del no-show que define el
+ * Entrada de {@link PublicarPoliticaUseCase} (CU-35): los tramos por horas y la penalización del no-show que define el
  * administrador del alojamiento (DEC-41).
  */
 public record PublicarPoliticaCommand(String alojamientoId, List<TramoCommand> tramos,

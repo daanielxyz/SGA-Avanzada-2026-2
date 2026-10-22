@@ -4,7 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Entrada de {@link CotizarEstancia} (CU-09): para cotizar basta la fecha de nacimiento de cada ocupante (RN-06).
+ * Entrada de {@link CotizarEstanciaUseCase} (CU-09): para cotizar basta la fecha de nacimiento de cada ocupante
+ * (RN-06).
  */
 public record CotizarEstanciaCommand(String apartamento, LocalDate entrada, LocalDate salida,
                                      List<LocalDate> fechasNacimiento) {

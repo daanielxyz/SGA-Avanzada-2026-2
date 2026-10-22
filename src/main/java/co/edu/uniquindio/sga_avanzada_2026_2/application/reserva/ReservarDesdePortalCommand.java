@@ -5,8 +5,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Entrada de {@link ReservarDesdePortal} (CU-10). A diferencia de recepción, la hora de llegada es obligatoria: pagar
- * confirma la reserva y confirmar la exige (RN-09 · DEC-69).
+ * Entrada de {@link ReservarDesdePortalUseCase} (CU-10). A diferencia de recepción, la hora de llegada es obligatoria:
+ * pagar confirma la reserva y confirmar la exige (RN-09 · DEC-69).
  *
  * @param salida exclusiva: esa noche no se ocupa (EST-01)
  */

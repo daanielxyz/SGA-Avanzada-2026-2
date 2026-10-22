@@ -3,7 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa;
 import java.time.LocalDate;
 
 /**
- * Entrada de {@link CambiarFechasTemporada} (CU-33).
+ * Entrada de {@link CambiarFechasTemporadaUseCase} (CU-33).
  *
  * @param fechaFin inclusiva (TEM-01)
  */
