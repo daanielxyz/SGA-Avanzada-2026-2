@@ -2,7 +2,14 @@
 
 Proyecto de Programación Avanzada (Universidad del Quindío). Backend de un único alojamiento ("Puerta al Sol", 10 apartamentos) aunque en este caso solo se usara un alojamiento la idea es generar un producto comerciable a diferentes alojamientos por medio de SaaS que gestiona apartamentos, tarifas por temporada, disponibilidad, reservas, check-in/out, folio y 3 canales de venta (PORTAL, DIRECTO, EXTERNO). **Riesgo central: vender dos veces la misma noche.**
 Modelo completo (clases, agregados, servicios, reglas): `docs/MODELO.md` — léelo solo cuando necesites atributos/firmas/reglas. Fuente de las reglas detalladas: `docs/Entidad__Objeto_de_valor_corregido.xlsx` (buscar por ID: `RES-01`, `FOL-03`, `RN-17`).
-**Al iniciar trabajo nuevo, leer `docs/PLAN.md`** (plan incremental y en qué incremento vamos) y `docs/DECISIONES.md` (decisiones acordadas `DEC-nn`: estructura, persistencia, Javadoc). Actualizar `PLAN.md` al cerrar cada incremento.
+**Al iniciar trabajo nuevo, leer `docs/SPRINTS.md`** (en qué sprint vamos y qué le toca al equipo), `docs/PLAN.md` (historia del backend por incrementos) y `docs/DECISIONES.md` (decisiones acordadas `DEC-nn`: estructura, persistencia, Javadoc). Desde el sprint 1, el avance se anota en `SPRINTS.md`.
+
+## Trabajo en equipo (DEC-77) — leer antes de editar
+Dos equipos en paralelo, cada uno con su cuenta de GitHub y de Claude: **web** (web de reservas en `web/` y canales de venta) y **pms** (gestión del hotel en `pms/`), sobre este mismo backend. `docs/EQUIPOS.md` dice qué archivos son de cada equipo, cuáles son del núcleo compartido y cómo se nombran las ramas; `docs/SPRINTS.md` tiene el plan por semanas y `docs/BACKLOG.md` lo pendiente con el cliente.
+- Al empezar, leer `CLAUDE.local.md` (local, no va a git) para saber qué equipo es este clon; si no existe, preguntar y no editar nada.
+- Editar solo archivos del propio equipo. Lo del otro equipo no se toca: se explica qué cambio hace falta. El núcleo solo se cambia en una rama `feature/nucleo/…`.
+- Nunca trabajar directo en `main` ni en `develop`: ramas `feature/<equipo>/<tema>`. Commits, PR y merges los hace la persona.
+- Al terminar una tarea, marcarla solo en la sección del equipo en `docs/SPRINTS.md`. Números de migración y de `DEC-nn`: el siguiente libre al integrar.
 
 ## Stack
 Java 25 · Spring Boot 4.1.x · **Gradle Groovy** (`build.gradle`, nunca `.kts`) · JPA/Hibernate · Spring Security con JWT (resource server, DEC-67) · PostgreSQL (principal) + Flyway · H2 en memoria solo para pruebas (DEC-11) · JUnit 5 · Lombok (solo fuera de `domain`).
@@ -30,6 +37,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - Comentar la regla que implementa cada método (`// RN-02 · CAP-02`); pruebas con `@Tag("RN-02")`, caso feliz **y** violación.
 - API por acciones de negocio: `PUT /api/reservas/{codigo}/cancelar`. Prohibido `PATCH /estado` y `DELETE` físico.
 - Commits pequeños, en español, descriptivos; nunca «cambios»/«avance».
+- Frontends (`web/`, `pms/`): React + Vite + TypeScript; solo hablan con la API, nunca con la base.
 
 ## Reglas transversales
 - **Estancia** = `[entrada, salida)`: la noche de salida no se ocupa ni se cobra. Solapan si `entradaA < salidaB && entradaB < salidaA`.

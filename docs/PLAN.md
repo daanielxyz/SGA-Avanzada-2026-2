@@ -1,6 +1,8 @@
 # Plan incremental del SGA
 
-Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Actualizar al cerrar cada incremento. Decisiones en `docs/DECISIONES.md`.
+Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Decisiones en `docs/DECISIONES.md`.
+
+> **Desde el 26 de octubre de 2026 se trabaja por sprints y por equipos (DEC-77).** Este plan queda como la historia del backend hasta B4b. Lo pendiente (B4c Channex, B4d IA, B5 TRA y los frontends `web/` y `pms/`) está repartido en `docs/SPRINTS.md`, y lo que es de cada equipo en `docs/EQUIPOS.md`.
 
 ## Definición de terminado (cada incremento)
 1. Un incremento = un agregado o pieza transversal = un commit (lo hace el usuario).
