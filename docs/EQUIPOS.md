@@ -12,12 +12,12 @@ Un solo backend (este repositorio, `src/`) y dos frontends en React, cada uno en
 | **Backend (API)** | `src/` | Ambos frontends y los canales externos | PostgreSQL, correo, Channex |
 
 ## Equipos
-| Equipo | Producto | Integrantes | Prefijo de rama |
-|---|---|---|---|
-| **web** | Web de reservas + canales de venta (portal y Channex) | `TODO(equipo)` | `feature/web/…` |
-| **pms** | PMS: operación y configuración del hotel, TRA | `TODO(equipo)` | `feature/pms/…` |
+| Equipo | Producto | Prefijo de rama |
+|---|---|---|
+| **web** | Web de reservas + canales de venta (portal y Channex) | `feature/web/…` |
+| **pms** | PMS: operación y configuración del hotel, TRA | `feature/pms/…` |
 
-Cada equipo trabaja con su propia cuenta de GitHub y de Claude. Cada clon dice a Claude qué equipo es en un archivo **local, que no va a git**: `CLAUDE.local.md` en la raíz, con una sola línea:
+Las ramas y los equipos se nombran por el trabajo, no por las personas. Cada equipo trabaja con su propia cuenta de GitHub y de Claude. Cada clon dice a Claude qué equipo es en un archivo **local, que no va a git**: `CLAUDE.local.md` en la raíz, con una sola línea:
 
 ```markdown
 Soy el equipo **pms**. Solo edito lo que docs/EQUIPOS.md asigna a pms; lo del núcleo, solo en una rama feature/nucleo/….

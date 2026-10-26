@@ -9,6 +9,7 @@ Dos equipos en paralelo, cada uno con su cuenta de GitHub y de Claude: **web** (
 - Al empezar, leer `CLAUDE.local.md` (local, no va a git) para saber qué equipo es este clon; si no existe, preguntar y no editar nada.
 - Editar solo archivos del propio equipo. Lo del otro equipo no se toca: se explica qué cambio hace falta. El núcleo solo se cambia en una rama `feature/nucleo/…`.
 - Nunca trabajar directo en `main` ni en `develop`: ramas `feature/<equipo>/<tema>`. Commits, PR y merges los hace la persona.
+- Cada tarea es un corte vertical: la pantalla del frontend del equipo más lo que falte del backend, con sus pruebas (ver «Terminado» en `docs/SPRINTS.md`).
 - Al terminar una tarea, marcarla solo en la sección del equipo en `docs/SPRINTS.md`. Números de migración y de `DEC-nn`: el siguiente libre al integrar.
 
 ## Stack
