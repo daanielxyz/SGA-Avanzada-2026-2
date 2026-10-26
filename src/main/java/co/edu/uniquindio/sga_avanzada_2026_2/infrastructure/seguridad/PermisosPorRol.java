@@ -25,6 +25,10 @@ final class PermisosPorRol {
         permisos
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 
+                // Documentación de la API (DEC-79): solo existe con SGA_DOCUMENTACION_API=true; si no, responde 404
+                .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
+                        "/swagger-ui/**").permitAll()
+
                 // Sin sesión: entrar (personal con contraseña, huésped con PIN) y lo que muestra el portal (CU-02 ·
                 // CU-07 · CU-08 · CU-50 · DEC-68)
                 .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/huesped/pin",
