@@ -38,3 +38,6 @@ out/
 
 ### Claude: cada clon dice aquí qué equipo es (docs/EQUIPOS.md) ###
 CLAUDE.local.md
+
+### Variables de entorno ###
+.env
