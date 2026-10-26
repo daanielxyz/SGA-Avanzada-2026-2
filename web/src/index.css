@@ -1,0 +1,34 @@
+/* Estilos base. Los colores y la tipografía definitivos se acuerdan con el cliente (cierre 1). */
+:root {
+  --texto: #1f2328;
+  --texto-suave: #59636e;
+  --fondo: #ffffff;
+  --borde: #d1d9e0;
+  --acento: #b45309;
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fondo);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+a {
+  color: var(--acento);
+}
