@@ -85,7 +85,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
                 + "DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1",
         "spring.datasource.username=sa",
         "spring.datasource.password=",
-        "spring.flyway.locations=classpath:db/migration"})
+        "spring.flyway.locations=classpath:db/migration",
+        // Lo que el .env de cada quien pueda traer no cambia la prueba
+        "sga.seguridad.jwt.secreto=secreto-solo-para-las-pruebas-del-sga-0123456789",
+        "sga.seguridad.administrador.correo=", "sga.seguridad.administrador.clave=", "sga.correo.modo=local"})
 class EstanciaCompletaTest {
 
     private static final String ALO = "ALO-1";
