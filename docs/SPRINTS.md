@@ -24,7 +24,7 @@ El cliente solo puede probar lo que ve en una pantalla, así que cada tarea del 
 ## Sprint 1 · 26 – 30 oct · «Ver y encontrar»
 Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepción encuentra cualquier reserva rápido.
 - **web**
-  - [ ] Crear `web/` (React + Vite + TypeScript), cliente de la API y despliegue local.
+  - [~] Crear `web/` (React + Vite + TypeScript), cliente de la API y despliegue local.
   - [ ] Búsqueda de disponibilidad por fechas y ocupantes, y cotización con el desglose por noche.
   - [ ] Definir con el cliente qué datos del apartamento ve el público (pendiente de DEC-67) y ajustar la respuesta pública.
   - [ ] Núcleo: `feature/nucleo/contrato-api`, la documentación OpenAPI de la API para que ambos frontends la consulten.
