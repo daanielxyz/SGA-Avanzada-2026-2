@@ -32,3 +32,141 @@ main {
 a {
   color: var(--acento);
 }
+
+/* Textos de apoyo y avisos de error */
+.suave {
+  color: var(--texto-suave);
+}
+
+.aviso {
+  color: #b42318;
+  font-weight: 500;
+}
+
+/* Campos y botones. Letra de 16px para que el celular no acerque la página al tocar un campo. */
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+input,
+button {
+  font: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+input {
+  border: 1px solid var(--borde);
+}
+
+button {
+  border: none;
+  background: var(--acento);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Búsqueda: en el celular un campo debajo del otro; en pantallas anchas, en una fila */
+.busqueda {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+@media (min-width: 640px) {
+  .busqueda {
+    grid-template-columns: 1fr 1fr 120px auto;
+    align-items: end;
+  }
+
+  .busqueda .aviso {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Tarjeta de cada apartamento libre */
+.tarjeta {
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.tarjeta img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--borde);
+}
+
+.tarjeta-cuerpo {
+  padding: 16px;
+}
+
+.tarjeta h3 {
+  margin: 0;
+}
+
+.dotacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.dotacion li {
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.85rem;
+}
+
+/* Precio: fechas de nacimiento y desglose por noche */
+.cotizador form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cotizador table {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.cotizador caption {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.cotizador th,
+.cotizador td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--borde);
+  text-align: right;
+}
+
+.cotizador th:first-child,
+.cotizador td:first-child {
+  text-align: left;
+}
+
+.cotizador tfoot {
+  font-weight: 700;
+}
