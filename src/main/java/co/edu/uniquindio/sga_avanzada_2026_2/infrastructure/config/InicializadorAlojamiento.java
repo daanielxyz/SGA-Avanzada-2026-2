@@ -10,6 +10,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
  * DEC-53). Se apaga con {@code sga.inicializar=false} (las pruebas lo apagan para no escribir en la BD compartida).
  */
 @Component
+@Order(1) // antes de CargadorDatosDemo, que necesita el alojamiento
 @ConditionalOnProperty(name = "sga.inicializar", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties(SgaPropiedades.class)
 public class InicializadorAlojamiento implements ApplicationRunner {
