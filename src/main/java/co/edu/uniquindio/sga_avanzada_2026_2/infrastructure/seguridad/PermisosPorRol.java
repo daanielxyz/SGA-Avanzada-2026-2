@@ -44,6 +44,11 @@ final class PermisosPorRol {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
                         "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}").permitAll()
+                // Buscar y cotizar en el portal, sin cuenta: solo datos públicos y un cálculo que no guarda nada
+                // (CU-07 · CU-08 · CU-09 · equipo web)
+                .requestMatchers(HttpMethod.GET, "/api/portal/apartamentos/disponibles",
+                        "/api/portal/apartamentos/{codigo}").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/cotizaciones").permitAll()
 
                 // El contrato del canal no usa usuario: cada mensaje trae la clave del canal, que revisa
                 // AutenticadorCanal (CAN-03 · DEC-73)
@@ -56,9 +61,7 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/cancelar")
                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
 
-                // Venta y recepción (CU-09 a CU-29)
-                .requestMatchers(HttpMethod.POST, "/api/cotizaciones")
-                .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
+                // Venta y recepción (CU-10 a CU-29)
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/corregir-registro").hasRole(ADMINISTRADOR)
                 .requestMatchers("/api/reservas/**", "/api/titulares/**").hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
 
