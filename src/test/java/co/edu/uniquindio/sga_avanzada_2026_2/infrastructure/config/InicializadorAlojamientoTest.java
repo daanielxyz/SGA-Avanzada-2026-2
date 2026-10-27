@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         "spring.flyway.locations=classpath:db/migration",
         // Lo que el .env de cada quien pueda traer no cambia la prueba
         "sga.seguridad.jwt.secreto=secreto-solo-para-las-pruebas-del-sga-0123456789",
-        "sga.seguridad.administrador.correo=", "sga.seguridad.administrador.clave=", "sga.correo.modo=local"})
+        "sga.seguridad.administrador.correo=", "sga.seguridad.administrador.clave=", "sga.correo.modo=local", "sga.datos-demo=false"})
 class InicializadorAlojamientoTest {
 
     private static final AlojamientoId ALO = new AlojamientoId("ALO-1");
