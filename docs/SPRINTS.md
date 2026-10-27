@@ -28,6 +28,7 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
   - [~] Búsqueda de disponibilidad por fechas y ocupantes, y cotización con el desglose por noche (`feature/web/busqueda-disponibilidad`, DEC-80).
   - [~] Definir con el cliente qué datos del apartamento ve el público (pendiente de DEC-67) y ajustar la respuesta pública: supuesto en DEC-80, se valida en el cierre 1.
   - [x] Núcleo: `feature/nucleo/contrato-api`, la documentación OpenAPI de la API para que ambos frontends la consulten.
+  - [~] Núcleo: `feature/nucleo/datos-demo`, apartamentos, temporadas y tarifas de ejemplo con `SGA_DATOS_DEMO=true` para probar a mano y para la demo (DEC-81).
 - **pms**
   - [ ] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol.
   - [ ] Listado de reservas con filtros y detalle de una reserva.
