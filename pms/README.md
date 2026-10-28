@@ -10,7 +10,7 @@ La gestión del alojamiento para recepción, el personal de servicio y la admini
 La web de reservas usa el puerto 5173, así que los dos frontends pueden correr a la vez.
 
 ## Variables
-Las mismas que `web/`, con el mismo significado (DEC-81):
+Las mismas que `web/`, con el mismo significado (DEC-82):
 - `SGA_API_URL`: la lee Vite para el proxy. Vite reenvía las rutas `/api` al backend, así que no hace falta CORS en desarrollo. Solo se define si el backend corre en otra dirección (por ejemplo `SGA_API_URL=http://localhost:9090`).
 - `VITE_API_URL`: la lee el navegador para llamar directo a la API. En desarrollo va vacía, para pasar por el proxy; solo se define al construir el PMS para publicarlo en otra dirección que la API, y entonces el backend necesita ese origen en `SGA_CORS_ORIGENES`.
 

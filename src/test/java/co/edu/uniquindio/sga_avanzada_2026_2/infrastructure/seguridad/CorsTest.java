@@ -17,12 +17,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Con {@code SGA_CORS_ORIGENES} los frontends publicados aparte llaman a la API desde su origen; cualquier otro, no
- * (DEC-81).
+ * (DEC-82).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "sga.cors.origenes= https://reservas.ejemplo.com , https://pms.ejemplo.com")
-@Tag("DEC-81")
+@Tag("DEC-82")
 class CorsTest {
 
     private static final String WEB = "https://reservas.ejemplo.com";

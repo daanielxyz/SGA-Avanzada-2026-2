@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.List;
 
 /**
- * Propiedades {@code sga.cors.*} (DEC-81): orígenes de los frontends ({@code web/}, {@code pms/}) publicados en una
+ * Propiedades {@code sga.cors.*} (DEC-82): orígenes de los frontends ({@code web/}, {@code pms/}) publicados en una
  * dirección distinta a la de la API. Llegan por {@code SGA_CORS_ORIGENES}, separados por comas; en local no hacen
  * falta, porque el proxy de Vite reenvía {@code /api} al backend.
  *
