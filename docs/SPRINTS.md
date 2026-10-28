@@ -30,7 +30,7 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
   - [x] Núcleo: `feature/nucleo/contrato-api`, la documentación OpenAPI de la API para que ambos frontends la consulten.
   - [~] Núcleo: `feature/nucleo/datos-demo`, apartamentos, temporadas y tarifas de ejemplo con `SGA_DATOS_DEMO=true` para probar a mano y para la demo (DEC-81).
 - **pms**
-  - [ ] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol.
+  - [~] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol (`feature/pms/estructura-pms`).
   - [ ] Listado de reservas con filtros y detalle de una reserva.
   - [~] Núcleo: `feature/nucleo/cors-frontends`, CORS para los orígenes de `web/` y `pms/` por variable de entorno (DEC-81).
   - [ ] Núcleo: `feature/nucleo/estructura-carpetas` en el cierre 1, con las ramas de los dos equipos ya integradas: el backend pasa a `backend/` (DEC-82).
