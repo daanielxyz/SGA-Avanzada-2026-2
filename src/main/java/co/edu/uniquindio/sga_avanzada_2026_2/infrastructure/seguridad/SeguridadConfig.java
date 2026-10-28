@@ -66,7 +66,7 @@ public class SeguridadConfig {
     }
 
     /**
-     * CORS de {@code /api/**} para los orígenes configurados (DEC-81). El token va en {@code Authorization}, sin
+     * CORS de {@code /api/**} para los orígenes configurados (DEC-82). El token va en {@code Authorization}, sin
      * cookies, así que no se permiten credenciales; solo los métodos que usa la API (sin {@code PATCH} ni
      * {@code DELETE}) y se expone {@code Location} para los 201. Sin orígenes no se registra nada y la API responde
      * como antes, también a las peticiones que reenvía el proxy de Vite con su {@code Origin}.

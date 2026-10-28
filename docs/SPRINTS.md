@@ -19,7 +19,7 @@ El cliente solo puede probar lo que ve en una pantalla, así que cada tarea del 
 - **Lunes, contrato primero**: si la tarea necesita un endpoint nuevo o un cambio, se acuerdan la ruta, el Request y el Response antes de programar. La pantalla puede avanzar contra datos simulados mientras el backend se termina.
 - **Si toca el núcleo** (dominio, migraciones, seguridad común): ese cambio va primero, en su propia rama `feature/nucleo/…` y en un PR pequeño, a más tardar el miércoles, para que el otro equipo alcance a revisarlo. La tarea del equipo se apoya en él después.
 - **Terminado** quiere decir: `./gradlew build` verde con pruebas del caso feliz y de la violación de cada regla nueva; `npm run build` y `npm test` verdes en el frontend tocado; los mensajes de error del backend (400/401/403/404/409) se muestran entendibles en la pantalla; integrado en `develop` y probado allí con el otro frontend también corriendo.
-- **Probar en local**: el backend corre con PostgreSQL y las variables de entorno de cada quien; cada frontend corre con `npm run dev` y su proxy de Vite reenvía `/api` al backend (`SGA_API_URL` si no está en `http://localhost:8080`), así que no hace falta CORS; `VITE_API_URL` va vacía y solo se usa, junto con `SGA_CORS_ORIGENES`, cuando un frontend se publica en otra dirección que la API (DEC-81).
+- **Probar en local**: el backend corre con PostgreSQL y las variables de entorno de cada quien; cada frontend corre con `npm run dev` y su proxy de Vite reenvía `/api` al backend (`SGA_API_URL` si no está en `http://localhost:8080`), así que no hace falta CORS; `VITE_API_URL` va vacía y solo se usa, junto con `SGA_CORS_ORIGENES`, cuando un frontend se publica en otra dirección que la API (DEC-82).
 
 ## Sprint 1 · 26 – 30 oct · «Ver y encontrar»
 Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepción encuentra cualquier reserva rápido.
@@ -32,8 +32,8 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
 - **pms**
   - [~] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol (`feature/pms/estructura-pms`).
   - [ ] Listado de reservas con filtros y detalle de una reserva.
-  - [~] Núcleo: `feature/nucleo/cors-frontends`, CORS para los orígenes de `web/` y `pms/` por variable de entorno (DEC-81).
-  - [ ] Núcleo: `feature/nucleo/estructura-carpetas` en el cierre 1, con las ramas de los dos equipos ya integradas: el backend pasa a `backend/` (DEC-82).
+  - [~] Núcleo: `feature/nucleo/cors-frontends`, CORS para los orígenes de `web/` y `pms/` por variable de entorno (DEC-82).
+  - [ ] Núcleo: `feature/nucleo/estructura-carpetas` en el cierre 1, con las ramas de los dos equipos ya integradas: el backend pasa a `backend/` (DEC-83).
 - **Cierre 1 (vie 30 oct)**: demo de las dos pantallas; priorizar con el cliente el backlog de la entrevista.
 
 ## Sprint 2 · 3 – 6 nov (lunes festivo) · «Reservar»

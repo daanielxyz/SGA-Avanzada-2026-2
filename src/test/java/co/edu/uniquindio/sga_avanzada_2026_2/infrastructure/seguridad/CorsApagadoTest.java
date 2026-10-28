@@ -14,12 +14,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Sin {@code SGA_CORS_ORIGENES} la API responde como antes de DEC-81: no autoriza a ningún origen, pero tampoco
+ * Sin {@code SGA_CORS_ORIGENES} la API responde como antes de DEC-82: no autoriza a ningún origen, pero tampoco
  * rechaza lo que llega con {@code Origin} a través del proxy de Vite.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Tag("DEC-81")
+@Tag("DEC-82")
 class CorsApagadoTest {
 
     @Autowired
