@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -21,19 +22,24 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
+import java.util.List;
 
 /**
  * Seguridad de la API (DEC-67): sin sesión de servidor, cada petición trae su token JWT y Spring Security lo valida
  * y arma el rol; los permisos están en {@link PermisosPorRol}.
  */
 @Configuration
-@EnableConfigurationProperties(SeguridadPropiedades.class)
+@EnableConfigurationProperties({SeguridadPropiedades.class, CorsPropiedades.class})
 public class SeguridadConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(SeguridadConfig.class);
@@ -41,10 +47,12 @@ public class SeguridadConfig {
     private static final int MINIMO_SECRETO = 32;
 
     @Bean
-    public SecurityFilterChain filtros(HttpSecurity http, RespuestasDeSeguridad respuestas) throws Exception {
+    public SecurityFilterChain filtros(HttpSecurity http, RespuestasDeSeguridad respuestas, CorsPropiedades cors)
+            throws Exception {
         return http
                 // Sin cookies ni sesión no hay nada que un sitio ajeno pueda aprovechar: CSRF no aplica
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(origenes -> origenes.configurationSource(origenesDeLosFrontends(cors)))
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(PermisosPorRol::configurar)
                 .oauth2ResourceServer(tokens -> tokens
@@ -55,6 +63,28 @@ public class SeguridadConfig {
                         .authenticationEntryPoint(respuestas)
                         .accessDeniedHandler(respuestas))
                 .build();
+    }
+
+    /**
+     * CORS de {@code /api/**} para los orígenes configurados (DEC-81). El token va en {@code Authorization}, sin
+     * cookies, así que no se permiten credenciales; solo los métodos que usa la API (sin {@code PATCH} ni
+     * {@code DELETE}) y se expone {@code Location} para los 201. Sin orígenes no se registra nada y la API responde
+     * como antes, también a las peticiones que reenvía el proxy de Vite con su {@code Origin}.
+     */
+    private static CorsConfigurationSource origenesDeLosFrontends(CorsPropiedades cors) {
+        UrlBasedCorsConfigurationSource fuente = new UrlBasedCorsConfigurationSource();
+        if (cors.origenes().isEmpty()) {
+            return fuente;
+        }
+        CorsConfiguration configuracion = new CorsConfiguration();
+        configuracion.setAllowedOrigins(cors.origenes());
+        configuracion.setAllowedMethods(List.of("GET", "POST", "PUT"));
+        configuracion.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        configuracion.setExposedHeaders(List.of(HttpHeaders.LOCATION));
+        configuracion.setAllowCredentials(false);
+        configuracion.setMaxAge(Duration.ofHours(1));
+        fuente.registerCorsConfiguration("/api/**", configuracion);
+        return fuente;
     }
 
     /** El dato {@code rol} del token pasa a ser el rol de Spring Security. */
