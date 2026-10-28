@@ -1,0 +1,195 @@
+/* Estilos base del PMS. Los colores y la tipografía definitivos se acuerdan con el cliente (cierre 1). */
+:root {
+  --texto: #1f2328;
+  --texto-suave: #59636e;
+  --fondo: #ffffff;
+  --fondo-menu: #f6f8fa;
+  --borde: #d1d9e0;
+  --acento: #1d4ed8;
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fondo);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: var(--acento);
+}
+
+/* Textos de apoyo, avisos de error y notas */
+.suave {
+  color: var(--texto-suave);
+}
+
+.aviso {
+  color: #b42318;
+  font-weight: 500;
+}
+
+.aviso p,
+.aviso ul {
+  margin: 0;
+}
+
+.nota {
+  border-left: 4px solid var(--acento);
+  background: var(--fondo-menu);
+  padding: 8px 12px;
+}
+
+/* Campos y botones. Letra de 16px para que el celular no acerque la página al tocar un campo. */
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+input,
+button {
+  font: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+input {
+  border: 1px solid var(--borde);
+}
+
+button {
+  border: none;
+  background: var(--acento);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secundario {
+  background: transparent;
+  color: var(--acento);
+  border: 1px solid var(--borde);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Entrada: un formulario angosto en el centro */
+.entrada {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 48px 16px;
+}
+
+.formulario {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Panel: cabecera arriba; el menú arriba del contenido en el celular y a la izquierda en pantallas anchas */
+.panel {
+  display: grid;
+  grid-template-areas: 'cabecera' 'menu' 'contenido';
+  min-height: 100vh;
+}
+
+.cabecera {
+  grid-area: cabecera;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.quien {
+  margin: 0 0 0 auto;
+}
+
+.menu {
+  grid-area: menu;
+  background: var(--fondo-menu);
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.menu h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+  margin: 12px 0 4px;
+}
+
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu a {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.menu a.active {
+  background: var(--fondo);
+  font-weight: 600;
+}
+
+.contenido {
+  grid-area: contenido;
+  padding: 24px 16px;
+  max-width: 1100px;
+}
+
+@media (min-width: 800px) {
+  .panel {
+    grid-template-areas: 'cabecera cabecera' 'menu contenido';
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .menu {
+    border-bottom: none;
+    border-right: 1px solid var(--borde);
+  }
+}
+
+/* Accesos de la pantalla de inicio */
+.accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.acceso {
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  font-weight: 600;
+}
