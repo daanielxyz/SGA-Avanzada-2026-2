@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Ejecutable de la skill impeccable (19 MB): no va a git y no se ejecuta (pms/DISENO.md, «Skills»)
+.claude/skills/impeccable/scripts/bin/

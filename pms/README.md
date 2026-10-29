@@ -1,6 +1,6 @@
 # PMS (equipo pms)
 
-La gestión del alojamiento para recepción, el personal de servicio y la administración. React + Vite + TypeScript; solo habla con la API del backend (DEC-77).
+La gestión del alojamiento para recepción, el personal de servicio y la administración. React + Vite + TypeScript; solo habla con la API del backend (DEC-77). El diseño visual (flujo, pantallas por diseñar y auditoría) está en [`DISENO.md`](DISENO.md) (DEC-84).
 
 ## Correrlo en local
 1. Arrancar el backend (en la raíz del repositorio) en `http://localhost:8080`.
