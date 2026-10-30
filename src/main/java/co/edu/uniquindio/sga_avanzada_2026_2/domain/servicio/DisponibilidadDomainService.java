@@ -7,8 +7,10 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Servicio de dominio sin estado: decide si un apartamento está disponible para una estancia. Cruza Apartamento y
@@ -46,6 +48,24 @@ public class DisponibilidadDomainService {
                                                  ParametrosAlojamiento parametros) {
         List<Reserva> otras = reservas.stream().filter(r -> !r.equals(reserva)).toList();
         return verificarDisponibilidad(apartamento, estancia, ocupantes, otras, parametros);
+    }
+
+    /**
+     * La primera noche, desde {@code desde}, en que el apartamento se puede reservar para una persona, con las mismas
+     * reglas de {@link #verificarDisponibilidad} (RN-01 · RN-07 · RN-20 · DISP-02). Sirve para mostrar un precio sin
+     * que el visitante haya elegido fechas.
+     *
+     * @param dias cuántas noches mirar hacia adelante, contando {@code desde}
+     * @return vacío si no hay ninguna noche libre en ese plazo
+     */
+    public Optional<Noche> proximaNocheLibre(Apartamento apartamento, LocalDate desde, int dias,
+                                             List<Reserva> reservas, ParametrosAlojamiento parametros) {
+        return Stream.iterate(desde, dia -> dia.plusDays(1))
+                .limit(Math.max(dias, 0))
+                .filter(dia -> verificarDisponibilidad(apartamento, new Estancia(dia, dia.plusDays(1)), 1, reservas,
+                        parametros).disponible())
+                .findFirst()
+                .map(Noche::new);
     }
 
     private static Optional<String> motivo(Apartamento apartamento, Estancia estancia, int ocupantes,

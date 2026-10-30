@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Bloqueo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.BloqueoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.APT;
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.apartamento;
@@ -117,6 +119,39 @@ class DisponibilidadDomainServiceTest {
         assertFalse(trasUnaSalida.disponible());
         assertFalse(antesDeUnaEntrada.disponible());
         assertTrue(verificar(List.of(confirmada("RES-2026-00003", 7, 9)), 5).disponible());
+    }
+
+    @Test
+    @Tag("RN-01")
+    void laProximaNocheLibreSaltaLasReservadasYLasBloqueadas() {
+        Bloqueo bloqueo = new Bloqueo(new BloqueoId("BLO-1"), dia(12), dia(14), "Pintura", true);
+        List<Reserva> reservas = List.of(confirmada("RES-2026-00001", 10, 12));
+
+        assertEquals(Optional.of(new Noche(dia(14))), servicio.proximaNocheLibre(apartamento(true, List.of(bloqueo)),
+                dia(10), 30, reservas, parametros(3)));
+        assertEquals(Optional.of(new Noche(dia(5))), servicio.proximaNocheLibre(apartamentoActivo(), dia(5), 30,
+                reservas, parametros(3)));
+    }
+
+    @Test
+    @Tag("RN-20")
+    void laProximaNocheLibreRespetaElTiempoDePreparacion() {
+        List<Reserva> reservas = List.of(confirmada("RES-2026-00001", 10, 12));
+
+        // 5 h no caben entre la salida (11:00) y la entrada (15:00): el 12 no sirve, el 13 sí
+        assertEquals(Optional.of(new Noche(dia(13))), servicio.proximaNocheLibre(apartamentoActivo(), dia(10), 30,
+                reservas, parametros(5)));
+    }
+
+    @Test
+    @Tag("DISP-02")
+    void sinNochesLibresEnElPlazoNoDevuelveNinguna() {
+        List<Reserva> reservas = List.of(confirmada("RES-2026-00001", 10, 20));
+
+        assertEquals(Optional.empty(), servicio.proximaNocheLibre(apartamentoActivo(), dia(10), 10, reservas,
+                parametros(3)));
+        assertEquals(Optional.empty(), servicio.proximaNocheLibre(apartamento(false, List.of()), dia(10), 30,
+                List.of(), parametros(3)));
     }
 
     @Test
