@@ -275,6 +275,21 @@ class CicloReservaTest {
     }
 
     @Test
+    @Tag("RN-06")
+    @Tag("COT-02")
+    void cotizarSabiendoSoloCuantosPaganDaLoMismoQueConLasFechas() {
+        CotizarEstanciaUseCase cotizar = new CotizarEstanciaUseCase(cargador, tarifas, new TarificacionDomainService(),
+                RepositoriosEnMemoria.RELOJ);
+
+        CotizacionResult porCantidad = cotizar.ejecutar(new CotizarPorCantidadCommand("APT-101", ENTRADA,
+                ENTRADA.plusDays(3), 1));
+
+        assertEquals(cotizar.ejecutar(new CotizarEstanciaCommand("APT-101", ENTRADA, ENTRADA.plusDays(3),
+                List.of(LocalDate.of(1990, 1, 1), LocalDate.of(2021, 1, 1)))), porCantidad);
+        assertTrue(reservas.guardadas.isEmpty());
+    }
+
+    @Test
     @Tag("DISP-02")
     @Tag("RN-01")
     void laBusquedaSoloOfreceApartamentosLibresDondeElGrupoCabe() {
