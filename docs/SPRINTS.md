@@ -25,10 +25,13 @@ El cliente solo puede probar lo que ve en una pantalla, así que cada tarea del 
 Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepción encuentra cualquier reserva rápido.
 - **web**
   - [x] Crear `web/` (React + Vite + TypeScript), cliente de la API y despliegue local.
-  - [~] Búsqueda de disponibilidad por fechas y ocupantes, y cotización con el desglose por noche (`feature/web/busqueda-disponibilidad`, DEC-80).
+  - [x] Búsqueda de disponibilidad por fechas y ocupantes, y cotización con el desglose por noche (`feature/web/busqueda-disponibilidad`, DEC-80). Ajustada tras medirla (1:19, la meta era 1 minuto): se cotiza con adultos y niños, sin fechas de nacimiento (`feature/web/pulir-busqueda`, DEC-85).
+  - [x] Catálogo del portal: el inicio muestra todos los apartamentos con lo que paga un adulto su próxima noche libre, la búsqueda por fechas queda como filtro y cada apartamento tiene su página con fechas y personas que recalculan el precio; de 10 en 10, probado con datos extremos y ajustado al celular (`feature/web/catalogo-apartamentos`, `feature/web/movil`, DEC-85).
+  - [x] Revisar que `web/` cumpla DEC-83: el nombre del hotel y la edad desde la que se paga salen de la API; nada de Puerta al Sol en el código.
   - [~] Definir con el cliente qué datos del apartamento ve el público (pendiente de DEC-67) y ajustar la respuesta pública: supuesto en DEC-80, se valida en el cierre 1.
   - [x] Núcleo: `feature/nucleo/contrato-api`, la documentación OpenAPI de la API para que ambos frontends la consulten.
-  - [~] Núcleo: `feature/nucleo/datos-demo`, apartamentos, temporadas y tarifas de ejemplo con `SGA_DATOS_DEMO=true` para probar a mano y para la demo (DEC-81).
+  - [x] Núcleo: `feature/nucleo/cotizar-por-cantidad` y `feature/nucleo/proxima-noche-libre`: cotizar sabiendo cuántos pagan y la próxima noche libre de cada apartamento (DEC-85).
+  - [x] Núcleo: `feature/nucleo/datos-demo`, apartamentos, temporadas y tarifas de ejemplo con `SGA_DATOS_DEMO=true` para probar a mano y para la demo (DEC-81).
 - **pms**
   - [x] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol (`feature/pms/estructura-pms`).
   - [~] Diseño base del PMS: layouts a mano, mockups en Claude Design de las pantallas del sprint 1 y su base visual (variables de CSS y componentes comunes) aplicada a las pantallas existentes (`feature/pms/diseno-base`, DEC-84; flujo y pantallas en `pms/DISENO.md`).
