@@ -40,6 +40,15 @@ export interface EstanciaPortal {
   proximaNocheLibre: string | null
 }
 
+/** `PaginaResponse`: una página de un listado, de 10 en 10 (DEC-18); `numero` empieza en 0. */
+export interface Pagina<T> {
+  contenido: T[]
+  numero: number
+  tamano: number
+  totalElementos: number
+  totalPaginas: number
+}
+
 /** Fechas en formato `AAAA-MM-DD`; la salida es el día en que se va: esa noche no se cobra. */
 export interface Estadia {
   entrada: string
@@ -57,12 +66,13 @@ function consulta({ entrada, salida }: Estadia, { adultos, ninos }: Grupo) {
   return new URLSearchParams({ entrada, salida, ocupantes: String(adultos + ninos), ninos: String(ninos) })
 }
 
-export function listarApartamentos() {
-  return pedir<ApartamentoPublico[]>('/api/portal/apartamentos')
+export function listarApartamentos(pagina = 0) {
+  return pedir<Pagina<ApartamentoPublico>>(`/api/portal/apartamentos?pagina=${pagina}`)
 }
 
-export function buscarDisponibles(estadia: Estadia, grupo: Grupo) {
-  return pedir<ApartamentoPublico[]>(`/api/portal/apartamentos/disponibles?${consulta(estadia, grupo)}`)
+export function buscarDisponibles(estadia: Estadia, grupo: Grupo, pagina = 0) {
+  return pedir<Pagina<ApartamentoPublico>>(
+    `/api/portal/apartamentos/disponibles?${consulta(estadia, grupo)}&pagina=${pagina}`)
 }
 
 export function consultarApartamento(codigo: string) {

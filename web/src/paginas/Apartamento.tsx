@@ -12,6 +12,7 @@ import { ErrorApi } from '../api/cliente'
 import CamposEstancia from '../busqueda/CamposEstancia'
 import { problemaDeEstadia } from '../busqueda/estadia'
 import DesglosePrecio from '../busqueda/DesglosePrecio'
+import Foto from '../busqueda/Foto'
 import { enPesos, fechaCorta, fechaDesdeHoy, masDias, noches } from '../formato'
 
 type Carga =
@@ -89,12 +90,12 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
       {fotos.length > 0 && (
         <div className="galeria">
           {fotos.map((f, i) => (
-            <img key={f.url} src={f.url} alt={`Foto ${i + 1} de ${apartamento.nombre}`}
-              loading={i === 0 ? 'eager' : 'lazy'} />
+            <Foto key={f.url} url={f.url} alt={`Foto ${i + 1} de ${apartamento.nombre}`}
+              carga={i === 0 ? 'eager' : 'lazy'} />
           ))}
         </div>
       )}
-      {apartamento.descripcion && <p>{apartamento.descripcion}</p>}
+      {apartamento.descripcion && <p className="descripcion-completa">{apartamento.descripcion}</p>}
       {apartamento.caracteristicas.length > 0 && (
         <ul className="dotacion" aria-label="Dotación">
           {apartamento.caracteristicas.map((c) => (
@@ -105,7 +106,8 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
 
       <h2>Tus fechas</h2>
       <div className="busqueda">
-        <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} alCambiar={cambiar} />
+        <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} capacidad={apartamento.capacidad}
+          alCambiar={cambiar} />
       </div>
       <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar} />
     </main>
@@ -160,18 +162,18 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
 
   const { disponible, precio, proximaNocheLibre } = calculo.estancia
   if (!disponible) {
+    // Sin ninguna noche libre en el año, no es culpa de las fechas elegidas: no se dice que esas no sirven
+    if (proximaNocheLibre === null) {
+      return <p className="aviso" aria-live="polite">Este apartamento no tiene fechas libres en el próximo año.</p>
+    }
     const n = noches(estadia.entrada, estadia.salida)
     return (
       <div className="precio" aria-live="polite">
         <p className="aviso">No está libre en esas fechas.</p>
-        {proximaNocheLibre ? (
-          <button type="button" className="secundario"
-            onClick={() => alCambiar({ entrada: proximaNocheLibre, salida: masDias(proximaNocheLibre, n) }, grupo)}>
-            Ver desde el {fechaCorta(proximaNocheLibre)}
-          </button>
-        ) : (
-          <p className="suave">No tiene noches libres en el próximo año.</p>
-        )}
+        <button type="button" className="secundario"
+          onClick={() => alCambiar({ entrada: proximaNocheLibre, salida: masDias(proximaNocheLibre, n) }, grupo)}>
+          Ver desde el {fechaCorta(proximaNocheLibre)}
+        </button>
       </div>
     )
   }

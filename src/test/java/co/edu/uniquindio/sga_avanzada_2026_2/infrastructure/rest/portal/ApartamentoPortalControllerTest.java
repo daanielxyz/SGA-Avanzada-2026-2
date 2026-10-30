@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.portal;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TarifaRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -35,11 +38,40 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
     @Autowired
     private WebApplicationContext contexto;
 
+    @Autowired
+    private ApartamentoRepository apartamentos;
+
+    @Autowired
+    private TarifaRepository tarifas;
+
     private MockMvc visitante;
 
     @BeforeEach
     void prepararVisitante() {
         visitante = MockMvcBuilders.webAppContextSetup(contexto).apply(springSecurity()).build();
+    }
+
+    @Test
+    @Tag("DEC-18")
+    void elListadoYLaBusquedaVanDeDiezEnDiez() throws Exception {
+        for (int i = 3; i <= 12; i++) { // con el APT-101 y el APT-102, doce a la venta
+            AlojamientoDePrueba.guardarApartamento(apartamentos, tarifas, "APT-%d".formatted(100 + i), 2);
+        }
+
+        visitante.perform(get("/api/portal/apartamentos"))
+                .andExpect(jsonPath("$.contenido.length()").value(10))
+                .andExpect(jsonPath("$.numero").value(0))
+                .andExpect(jsonPath("$.totalElementos").value(12))
+                .andExpect(jsonPath("$.totalPaginas").value(2));
+        visitante.perform(get("/api/portal/apartamentos").param("pagina", "1"))
+                .andExpect(jsonPath("$.contenido.length()").value(2))
+                .andExpect(jsonPath("$.contenido[0].precio.total").value(100000));
+        visitante.perform(get("/api/portal/apartamentos").param("pagina", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido").isEmpty());
+        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$.contenido.length()").value(10))
+                .andExpect(jsonPath("$.totalElementos").value(12));
+        visitante.perform(get("/api/portal/apartamentos").param("pagina", "-1")).andExpect(status().isBadRequest());
     }
 
     private ResultActions buscar(LocalDate entrada, LocalDate salida, String ocupantes) throws Exception {
@@ -53,24 +85,24 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
     void elVisitanteVeLosLibresSoloConLosDatosPublicos() throws Exception {
         buscar(ENTRADA, SALIDA, "2")
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")))
-                .andExpect(jsonPath("$[0].nombre").exists())
-                .andExpect(jsonPath("$[0].capacidad").exists())
-                .andExpect(jsonPath("$[0].dormitorios").value(2))
-                .andExpect(jsonPath("$[0].imagenes[0].url").value("https://cdn.sga.co/apt.jpg"))
-                .andExpect(jsonPath("$[0].imagenes[0].principal").value(true))
-                .andExpect(jsonPath("$[0].caracteristicas").value(contains("Balcón")))
-                .andExpect(jsonPath("$[0].estadoOperativo").doesNotExist())
-                .andExpect(jsonPath("$[0].bloqueos").doesNotExist())
-                .andExpect(jsonPath("$[0].activo").doesNotExist())
-                .andExpect(jsonPath("$[0].alojamientoId").doesNotExist());
+                .andExpect(jsonPath("$.contenido[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")))
+                .andExpect(jsonPath("$.contenido[0].nombre").exists())
+                .andExpect(jsonPath("$.contenido[0].capacidad").exists())
+                .andExpect(jsonPath("$.contenido[0].dormitorios").value(2))
+                .andExpect(jsonPath("$.contenido[0].imagenes[0].url").value("https://cdn.sga.co/apt.jpg"))
+                .andExpect(jsonPath("$.contenido[0].imagenes[0].principal").value(true))
+                .andExpect(jsonPath("$.contenido[0].caracteristicas").value(contains("Balcón")))
+                .andExpect(jsonPath("$.contenido[0].estadoOperativo").doesNotExist())
+                .andExpect(jsonPath("$.contenido[0].bloqueos").doesNotExist())
+                .andExpect(jsonPath("$.contenido[0].activo").doesNotExist())
+                .andExpect(jsonPath("$.contenido[0].alojamientoId").doesNotExist());
     }
 
     @Test
     @Tag("RN-02")
     void unGrupoQueNoCabeNoVeElApartamento() throws Exception {
-        buscar(ENTRADA, SALIDA, "3").andExpect(jsonPath("$[*].codigo").value(contains("APT-101")));
-        buscar(ENTRADA, SALIDA, "5").andExpect(jsonPath("$").isEmpty());
+        buscar(ENTRADA, SALIDA, "3").andExpect(jsonPath("$.contenido[*].codigo").value(contains("APT-101")));
+        buscar(ENTRADA, SALIDA, "5").andExpect(jsonPath("$.contenido").isEmpty());
     }
 
     @Test
@@ -78,9 +110,9 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
     void unApartamentoYaReservadoEsasNochesNoAparece() throws Exception {
         reservaPendiente(ENTRADA);
 
-        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$[*].codigo").value(contains("APT-102")));
+        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$.contenido[*].codigo").value(contains("APT-102")));
         buscar(SALIDA, SALIDA.plusDays(1), "2")
-                .andExpect(jsonPath("$[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")));
+                .andExpect(jsonPath("$.contenido[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")));
     }
 
     @Test
@@ -88,7 +120,7 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
     void unApartamentoRetiradoNoExisteParaElPublico() throws Exception {
         mvc.perform(put("/api/apartamentos/APT-102/retirar")).andExpect(status().isOk());
 
-        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$[*].codigo").value(contains("APT-101")));
+        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$.contenido[*].codigo").value(contains("APT-101")));
         visitante.perform(get("/api/portal/apartamentos/APT-102"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
@@ -124,21 +156,21 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
         visitante.perform(get("/api/portal/apartamentos/disponibles").param("entrada", ENTRADA.toString())
                         .param("salida", SALIDA.toString()).param("ocupantes", "3").param("ninos", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].codigo").value("APT-101"))
-                .andExpect(jsonPath("$[0].precio.desglose.length()").value(2))
-                .andExpect(jsonPath("$[0].precio.desglose[0].noche").value(ENTRADA.toString()))
-                .andExpect(jsonPath("$[0].precio.desglose[0].tarifa").value(100000))
-                .andExpect(jsonPath("$[0].precio.desglose[0].ocupantesFacturables").value(2))
-                .andExpect(jsonPath("$[0].precio.desglose[0].temporada").doesNotExist())
-                .andExpect(jsonPath("$[0].precio.total").value(400000));
+                .andExpect(jsonPath("$.contenido[0].codigo").value("APT-101"))
+                .andExpect(jsonPath("$.contenido[0].precio.desglose.length()").value(2))
+                .andExpect(jsonPath("$.contenido[0].precio.desglose[0].noche").value(ENTRADA.toString()))
+                .andExpect(jsonPath("$.contenido[0].precio.desglose[0].tarifa").value(100000))
+                .andExpect(jsonPath("$.contenido[0].precio.desglose[0].ocupantesFacturables").value(2))
+                .andExpect(jsonPath("$.contenido[0].precio.desglose[0].temporada").doesNotExist())
+                .andExpect(jsonPath("$.contenido[0].precio.total").value(400000));
     }
 
     @Test
     @Tag("RN-06")
     void sinDecirCuantosSonNinosTodosPagan() throws Exception {
         buscar(ENTRADA, SALIDA, "2")
-                .andExpect(jsonPath("$[0].precio.total").value(400000))
-                .andExpect(jsonPath("$[0].proximaNocheLibre").isEmpty());
+                .andExpect(jsonPath("$.contenido[0].precio.total").value(400000))
+                .andExpect(jsonPath("$.contenido[0].proximaNocheLibre").isEmpty());
     }
 
     @Test
@@ -148,14 +180,14 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
 
         visitante.perform(get("/api/portal/apartamentos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")))
-                .andExpect(jsonPath("$[?(@.codigo == 'APT-101')].proximaNocheLibre")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(containsInAnyOrder("APT-101", "APT-102")))
+                .andExpect(jsonPath("$.contenido[?(@.codigo == 'APT-101')].proximaNocheLibre")
                         .value(contains(HOY.plusDays(2).toString())))
-                .andExpect(jsonPath("$[?(@.codigo == 'APT-102')].proximaNocheLibre").value(contains(HOY.toString())))
-                .andExpect(jsonPath("$[?(@.codigo == 'APT-102')].precio.desglose[0].noche")
+                .andExpect(jsonPath("$.contenido[?(@.codigo == 'APT-102')].proximaNocheLibre").value(contains(HOY.toString())))
+                .andExpect(jsonPath("$.contenido[?(@.codigo == 'APT-102')].precio.desglose[0].noche")
                         .value(contains(HOY.toString())))
-                .andExpect(jsonPath("$[?(@.codigo == 'APT-102')].precio.total").value(contains(100000)))
-                .andExpect(jsonPath("$[0].bloqueos").doesNotExist());
+                .andExpect(jsonPath("$.contenido[?(@.codigo == 'APT-102')].precio.total").value(contains(100000)))
+                .andExpect(jsonPath("$.contenido[0].bloqueos").doesNotExist());
     }
 
     @Test
