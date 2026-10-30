@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { consultarAlojamiento, type Alojamiento } from './api/alojamiento'
 import Encabezado from './Encabezado'
+import Apartamento from './paginas/Apartamento'
 import Inicio from './paginas/Inicio'
 import NoEncontrada from './paginas/NoEncontrada'
 
@@ -27,11 +28,14 @@ export default function App() {
     }
   }, [])
 
+  const umbral = alojamiento?.parametros.umbralEdadFacturable ?? null
+
   return (
     <>
       <Encabezado nombre={alojamiento?.nombre ?? null} />
       <Routes>
-        <Route path="/" element={<Inicio umbral={alojamiento?.parametros.umbralEdadFacturable ?? null} />} />
+        <Route path="/" element={<Inicio umbral={umbral} />} />
+        <Route path="/apartamentos/:codigo" element={<Apartamento umbral={umbral} />} />
         <Route path="*" element={<NoEncontrada />} />
       </Routes>
     </>
