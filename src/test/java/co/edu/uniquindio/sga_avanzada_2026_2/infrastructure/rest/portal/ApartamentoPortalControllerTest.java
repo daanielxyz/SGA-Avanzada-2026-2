@@ -120,6 +120,40 @@ class ApartamentoPortalControllerTest extends PruebaRestDeReservas {
     @Test
     @Tag("CU-09")
     @Tag("RN-06")
+    void cadaLibreTraeSuPrecioYLosNinosNoPagan() throws Exception {
+        visitante.perform(get("/api/portal/apartamentos/disponibles").param("entrada", ENTRADA.toString())
+                        .param("salida", SALIDA.toString()).param("ocupantes", "3").param("ninos", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].codigo").value("APT-101"))
+                .andExpect(jsonPath("$[0].precio.desglose.length()").value(2))
+                .andExpect(jsonPath("$[0].precio.desglose[0].noche").value(ENTRADA.toString()))
+                .andExpect(jsonPath("$[0].precio.desglose[0].tarifa").value(100000))
+                .andExpect(jsonPath("$[0].precio.desglose[0].ocupantesFacturables").value(2))
+                .andExpect(jsonPath("$[0].precio.desglose[0].temporada").doesNotExist())
+                .andExpect(jsonPath("$[0].precio.total").value(400000));
+    }
+
+    @Test
+    @Tag("RN-06")
+    void sinDecirCuantosSonNinosTodosPaganYLaFichaNoTraePrecio() throws Exception {
+        buscar(ENTRADA, SALIDA, "2").andExpect(jsonPath("$[0].precio.total").value(400000));
+        visitante.perform(get("/api/portal/apartamentos/APT-101")).andExpect(jsonPath("$.precio").isEmpty());
+    }
+
+    @Test
+    void masNinosQueElGrupoOUnNumeroNegativoSeRechazan() throws Exception {
+        visitante.perform(get("/api/portal/apartamentos/disponibles").param("entrada", ENTRADA.toString())
+                        .param("salida", SALIDA.toString()).param("ocupantes", "2").param("ninos", "-1"))
+                .andExpect(status().isBadRequest());
+        visitante.perform(get("/api/portal/apartamentos/disponibles").param("entrada", ENTRADA.toString())
+                        .param("salida", SALIDA.toString()).param("ocupantes", "2").param("ninos", "3"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("CU-09")
+    @Tag("RN-06")
     void elVisitanteCotizaSinCuentaConElDesglosePorNoche() throws Exception {
         String cotizacion = ("{\"apartamento\": \"APT-101\", \"entrada\": \"%s\", \"salida\": \"%s\","
                 + " \"fechasNacimiento\": [\"1990-05-01\", \"1988-03-02\"]}").formatted(ENTRADA, SALIDA);

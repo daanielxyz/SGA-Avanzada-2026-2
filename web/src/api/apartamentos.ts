@@ -1,6 +1,18 @@
-// Llamadas de la búsqueda y la cotización. Cada interface es el gemelo de un Response del backend: si el Response
-// cambia en Java, se cambia aquí también (el contrato está en /swagger-ui.html).
+// Llamadas de la búsqueda. Cada interface es el gemelo de un Response del backend: si el Response cambia en Java, se
+// cambia aquí también (el contrato está en /swagger-ui.html).
 import { pedir } from './cliente'
+
+/** `PrecioResponse`: lo que cuesta la estancia buscada para el grupo, noche por noche, en pesos sin decimales. */
+export interface Precio {
+  desglose: {
+    noche: string
+    /** Lo que paga cada adulto esa noche, según su temporada. */
+    tarifa: number
+    ocupantesFacturables: number
+    subtotal: number
+  }[]
+  total: number
+}
 
 /** `ApartamentoPublicoResponse`: solo lo que ve el público de un apartamento. */
 export interface ApartamentoPublico {
@@ -11,18 +23,8 @@ export interface ApartamentoPublico {
   dormitorios: number
   imagenes: { url: string; principal: boolean }[]
   caracteristicas: string[]
-}
-
-/** `CotizacionResponse`: el precio noche por noche y el total, en pesos sin decimales. */
-export interface Cotizacion {
-  desglose: {
-    noche: string
-    temporada: string
-    tarifa: number
-    ocupantesFacturables: number
-    subtotal: number
-  }[]
-  total: number
+  /** Viene en la búsqueda; en la ficha, sin fechas, va vacío. */
+  precio: Precio | null
 }
 
 /** Fechas en formato `AAAA-MM-DD`; la salida es el día en que se va: esa noche no se cobra. */
@@ -31,15 +33,14 @@ export interface Estadia {
   salida: string
 }
 
-export function buscarDisponibles({ entrada, salida }: Estadia, ocupantes: number) {
-  const consulta = new URLSearchParams({ entrada, salida, ocupantes: String(ocupantes) })
-  return pedir<ApartamentoPublico[]>(`/api/portal/apartamentos/disponibles?${consulta}`)
+/** Quiénes viajan: los adultos alcanzan la edad desde la que se paga el día de llegada (RN-06); los niños no. */
+export interface Grupo {
+  adultos: number
+  ninos: number
 }
 
-/** La edad de cada ocupante a la fecha de entrada decide si paga (RN-06), por eso se piden las fechas de nacimiento. */
-export function cotizar(apartamento: string, { entrada, salida }: Estadia, fechasNacimiento: string[]) {
-  return pedir<Cotizacion>('/api/cotizaciones', {
-    method: 'POST',
-    cuerpo: { apartamento, entrada, salida, fechasNacimiento },
-  })
+/** Todos cuentan para la capacidad (RN-02); solo los adultos pagan. */
+export function buscarDisponibles({ entrada, salida }: Estadia, { adultos, ninos }: Grupo) {
+  const consulta = new URLSearchParams({ entrada, salida, ocupantes: String(adultos + ninos), ninos: String(ninos) })
+  return pedir<ApartamentoPublico[]>(`/api/portal/apartamentos/disponibles?${consulta}`)
 }

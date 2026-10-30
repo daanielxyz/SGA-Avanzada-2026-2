@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { buscarDisponibles, type ApartamentoPublico, type Estadia } from '../api/apartamentos'
+import { buscarDisponibles, type ApartamentoPublico, type Estadia, type Grupo } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import FormularioBusqueda from '../busqueda/FormularioBusqueda'
 import TarjetaApartamento from '../busqueda/TarjetaApartamento'
@@ -10,17 +10,22 @@ type Busqueda =
   | { estado: 'sin-buscar' }
   | { estado: 'buscando' }
   | { estado: 'error'; mensaje: string }
-  | { estado: 'lista'; estadia: Estadia; ocupantes: number; apartamentos: ApartamentoPublico[] }
+  | { estado: 'lista'; estadia: Estadia; grupo: Grupo; apartamentos: ApartamentoPublico[] }
 
-/** Página de inicio: buscar apartamentos libres por fechas y personas, y ver el precio de cada uno (CU-07 · CU-09). */
-export default function Inicio() {
+/**
+ * Página de inicio: buscar apartamentos libres por fechas y personas, y ver el precio de cada uno sin pedir fechas de
+ * nacimiento (CU-07 · CU-09 · RN-06).
+ *
+ * @param umbral edad desde la que se paga, del alojamiento; vacía mientras llega
+ */
+export default function Inicio({ umbral }: { umbral: number | null }) {
   const [busqueda, setBusqueda] = useState<Busqueda>({ estado: 'sin-buscar' })
 
-  async function buscar(estadia: Estadia, ocupantes: number) {
+  async function buscar(estadia: Estadia, grupo: Grupo) {
     setBusqueda({ estado: 'buscando' })
     try {
-      const apartamentos = await buscarDisponibles(estadia, ocupantes)
-      setBusqueda({ estado: 'lista', estadia, ocupantes, apartamentos })
+      const apartamentos = await buscarDisponibles(estadia, grupo)
+      setBusqueda({ estado: 'lista', estadia, grupo, apartamentos })
     } catch (error) {
       setBusqueda({ estado: 'error', mensaje: error instanceof ErrorApi ? error.message : 'Algo salió mal.' })
     }
@@ -31,7 +36,7 @@ export default function Inicio() {
       <h1>Reserva tu estadía</h1>
       <p className="suave">Busca tus fechas y mira el precio de cada apartamento antes de reservar.</p>
 
-      <FormularioBusqueda buscando={busqueda.estado === 'buscando'} alBuscar={buscar} />
+      <FormularioBusqueda buscando={busqueda.estado === 'buscando'} umbral={umbral} alBuscar={buscar} />
 
       <section aria-live="polite" className="resultados">
         {busqueda.estado === 'error' && (
@@ -45,8 +50,9 @@ export default function Inicio() {
   )
 }
 
-function Resultados({ estadia, ocupantes, apartamentos }: Extract<Busqueda, { estado: 'lista' }>) {
+function Resultados({ estadia, grupo, apartamentos }: Extract<Busqueda, { estado: 'lista' }>) {
   const n = noches(estadia.entrada, estadia.salida)
+  const personas = grupo.adultos + grupo.ninos
   const resumen = `${fechaCorta(estadia.entrada)} a ${fechaCorta(estadia.salida)} · ${n} ${n === 1 ? 'noche' : 'noches'}`
 
   if (apartamentos.length === 0) {
@@ -54,7 +60,7 @@ function Resultados({ estadia, ocupantes, apartamentos }: Extract<Busqueda, { es
       <>
         <h2>No hay apartamentos libres</h2>
         <p>
-          Para {ocupantes} {ocupantes === 1 ? 'persona' : 'personas'}, {resumen}. Prueba con otras fechas o menos
+          Para {personas} {personas === 1 ? 'persona' : 'personas'}, {resumen}. Prueba con otras fechas o menos
           personas.
         </p>
       </>
@@ -66,15 +72,16 @@ function Resultados({ estadia, ocupantes, apartamentos }: Extract<Busqueda, { es
         {apartamentos.length} {apartamentos.length === 1 ? 'apartamento libre' : 'apartamentos libres'}
       </h2>
       <p className="suave">{resumen}</p>
-      {apartamentos.map((a) => (
-        // La clave cambia con cada búsqueda para que el precio calculado de otras fechas no se quede en pantalla
-        <TarjetaApartamento
-          key={`${a.codigo}-${estadia.entrada}-${estadia.salida}-${ocupantes}`}
-          apartamento={a}
-          estadia={estadia}
-          ocupantes={ocupantes}
-        />
-      ))}
+      <div className="rejilla">
+        {apartamentos.map((a) => (
+          // La clave cambia con cada búsqueda para que un detalle abierto de otras fechas no se quede en pantalla
+          <TarjetaApartamento
+            key={`${a.codigo}-${estadia.entrada}-${estadia.salida}-${grupo.adultos}-${grupo.ninos}`}
+            apartamento={a}
+            grupo={grupo}
+          />
+        ))}
+      </div>
     </>
   )
 }

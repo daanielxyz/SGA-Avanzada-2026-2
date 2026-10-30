@@ -15,7 +15,8 @@ function abrir(direccion: string) {
 function laApiDiceQueElHotelEs(nombre: string | null) {
   vi.stubGlobal('fetch', vi.fn(() => nombre === null
     ? Promise.reject(new TypeError('sin red'))
-    : Promise.resolve(new Response(JSON.stringify({ nombre }), { status: 200 }))))
+    : Promise.resolve(new Response(JSON.stringify({ nombre, parametros: { umbralEdadFacturable: 12 } }),
+      { status: 200 }))))
 }
 
 beforeEach(() => {

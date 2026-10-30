@@ -6,6 +6,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEnc
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisponibleResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarPorCantidadCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.constraints.Min;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,30 +32,38 @@ public class ApartamentoPortalController {
     private final AlojamientoActual alojamiento;
     private final BuscarDisponiblesUseCase buscarDisponibles;
     private final ConsultarApartamentoUseCase consultarApartamento;
+    private final CotizarEstanciaUseCase cotizarEstancia;
 
     public ApartamentoPortalController(AlojamientoActual alojamiento, BuscarDisponiblesUseCase buscarDisponibles,
-                                       ConsultarApartamentoUseCase consultarApartamento) {
+                                       ConsultarApartamentoUseCase consultarApartamento,
+                                       CotizarEstanciaUseCase cotizarEstancia) {
         this.alojamiento = alojamiento;
         this.buscarDisponibles = buscarDisponibles;
         this.consultarApartamento = consultarApartamento;
+        this.cotizarEstancia = cotizarEstancia;
     }
 
     /**
-     * El precio de cada uno se pide aparte, con {@code POST /api/cotizaciones}.
+     * Cada libre trae su precio para el grupo, sin pedir fechas de nacimiento: el visitante dice cuántos son niños y
+     * los demás pagan (RN-06). Los datos de cada ocupante se piden al reservar.
      *
      * @param salida    exclusiva: esa noche no se ocupa (EST-01)
      * @param ocupantes tamaño del grupo; todos cuentan para la capacidad (RN-02)
+     * @param ninos     cuántos del grupo no alcanzan el umbral de edad a la entrada; sin él, todos pagan. Si son más
+     *                  que el grupo, el dominio lo rechaza (409)
      */
     @GetMapping("/disponibles")
     public List<ApartamentoPublicoResponse> buscar(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate entrada,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
-            @RequestParam @Min(value = 1, message = "debe ser al menos 1") int ocupantes) {
+            @RequestParam @Min(value = 1, message = "debe ser al menos 1") int ocupantes,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativo") int ninos) {
         return buscarDisponibles.ejecutar(new BuscarDisponiblesCommand(alojamiento.id(), entrada, salida, ocupantes))
                 .stream()
                 .map(ApartamentoDisponibleResult::codigo)
-                .map(consultarApartamento::ejecutar)
-                .map(ApartamentoPublicoResponse::de)
+                .map(codigo -> ApartamentoPublicoResponse.de(consultarApartamento.ejecutar(codigo),
+                        cotizarEstancia.ejecutar(new CotizarPorCantidadCommand(codigo, entrada, salida,
+                                ocupantes - ninos))))
                 .toList();
     }
 
