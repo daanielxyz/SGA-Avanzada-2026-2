@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import type { ApartamentoPublico, Estadia, Grupo } from '../api/apartamentos'
 import { enPesos, fechaCorta, noches } from '../formato'
+import Foto from './Foto'
 
 interface Props {
   apartamento: ApartamentoPublico
@@ -22,10 +23,10 @@ export default function TarjetaApartamento({ apartamento, busqueda }: Props) {
 
   return (
     <article className="tarjeta" aria-labelledby={id}>
-      {foto && <img src={foto.url} alt={`Foto de ${apartamento.nombre}`} loading="lazy" />}
+      <Foto url={foto?.url} alt={`Foto de ${apartamento.nombre}`} />
       <div className="tarjeta-cuerpo">
         <h3 id={id}>
-          <Link to={enlace(apartamento, busqueda)} className="enlace-tarjeta">
+          <Link to={enlace(apartamento, busqueda)} className="enlace-tarjeta" title={apartamento.nombre}>
             {apartamento.nombre}
           </Link>
         </h3>
@@ -39,7 +40,11 @@ export default function TarjetaApartamento({ apartamento, busqueda }: Props) {
             {servicios.slice(0, SERVICIOS_A_LA_VISTA).map((c) => (
               <li key={c}>{c}</li>
             ))}
-            {servicios.length > SERVICIOS_A_LA_VISTA && <li>+{servicios.length - SERVICIOS_A_LA_VISTA}</li>}
+            {servicios.length > SERVICIOS_A_LA_VISTA && (
+              <li title={servicios.slice(SERVICIOS_A_LA_VISTA).join(', ')}>
+                +{servicios.length - SERVICIOS_A_LA_VISTA}
+              </li>
+            )}
           </ul>
         )}
       </div>

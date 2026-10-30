@@ -6,11 +6,13 @@ interface Props {
   grupo: Grupo
   /** Edad desde la que se paga, del alojamiento (RN-06); vacía mientras llega. */
   umbral: number | null
+  /** En la página de un apartamento, su capacidad: tope de cada campo de personas. En la búsqueda no hay tope. */
+  capacidad?: number
   alCambiar: (estadia: Estadia, grupo: Grupo) => void
 }
 
 /** Llegada, salida, adultos y niños: los mismos campos en la búsqueda y en la página de cada apartamento. */
-export default function CamposEstancia({ estadia, grupo, umbral, alCambiar }: Props) {
+export default function CamposEstancia({ estadia, grupo, umbral, capacidad, alCambiar }: Props) {
   const hoy = fechaDesdeHoy()
 
   // Si la llegada alcanza la salida, la salida se corre para conservar al menos una noche
@@ -33,6 +35,7 @@ export default function CamposEstancia({ estadia, grupo, umbral, alCambiar }: Pr
         nombre="Adultos"
         ayuda={umbral === null ? 'Pagan' : `${umbral} años o más`}
         minimo={1}
+        maximo={capacidad}
         valor={grupo.adultos}
         alCambiar={(adultos) => alCambiar(estadia, { ...grupo, adultos })}
       />
@@ -40,6 +43,7 @@ export default function CamposEstancia({ estadia, grupo, umbral, alCambiar }: Pr
         nombre="Niños"
         ayuda={umbral === null ? 'No pagan' : `Menores de ${umbral}, no pagan`}
         minimo={0}
+        maximo={capacidad}
         valor={grupo.ninos}
         alCambiar={(ninos) => alCambiar(estadia, { ...grupo, ninos })}
       />
@@ -52,12 +56,13 @@ interface PropsCampo {
   /** La edad que cuenta, debajo del campo; los lectores de pantalla la leen después del nombre. */
   ayuda: string
   minimo: number
+  maximo?: number
   valor: number
   alCambiar: (valor: number) => void
 }
 
 /** Un número de personas, nunca menor que su mínimo. */
-function CampoPersonas({ nombre, ayuda, minimo, valor, alCambiar }: PropsCampo) {
+function CampoPersonas({ nombre, ayuda, minimo, maximo, valor, alCambiar }: PropsCampo) {
   const id = `personas-${nombre}`
   return (
     <div className="campo">
@@ -67,7 +72,7 @@ function CampoPersonas({ nombre, ayuda, minimo, valor, alCambiar }: PropsCampo) 
         type="number"
         inputMode="numeric"
         min={minimo}
-        max={20}
+        max={maximo}
         value={valor}
         aria-describedby={`${id}-ayuda`}
         onChange={(e) => alCambiar(Math.max(minimo, Number(e.target.value) || minimo))}

@@ -111,6 +111,23 @@ describe('Apartamento', () => {
     expect(urlDeLaLlamada(fetch, 2)).toContain('entrada=2026-12-20&salida=2026-12-22')
   })
 
+  it('sin noches libres en el año no culpa a las fechas elegidas', async () => {
+    const sinNoches: EstanciaPortal = { ...UNA_NOCHE_LIBRE, disponible: false, proximaNocheLibre: null }
+    laApiResponde([200, { ...SUITE, precio: null, proximaNocheLibre: null }], [200, sinNoches])
+    abrir('/apartamentos/APT-101')
+
+    expect(await screen.findByText('Este apartamento no tiene fechas libres en el próximo año.')).toBeInTheDocument()
+    expect(screen.queryByText('No está libre en esas fechas.')).not.toBeInTheDocument()
+  })
+
+  it('los campos de personas llegan hasta la capacidad del apartamento', async () => {
+    laApiResponde([200, SUITE], [200, UNA_NOCHE_LIBRE])
+    abrir('/apartamentos/APT-101')
+
+    expect(await screen.findByLabelText('Adultos')).toHaveAttribute('max', '4')
+    expect(screen.getByLabelText('Niños')).toHaveAttribute('max', '4')
+  })
+
   it('si el grupo no cabe lo dice sin llamar a la API', async () => {
     const fetch = laApiResponde([200, SUITE], [200, UNA_NOCHE_LIBRE])
     abrir('/apartamentos/APT-101')

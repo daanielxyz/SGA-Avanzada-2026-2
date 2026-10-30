@@ -17,7 +17,7 @@ function laApiDiceQueElHotelEs(nombre: string | null) {
     ? Promise.reject(new TypeError('sin red'))
     : Promise.resolve(new Response(JSON.stringify(ruta === '/api/alojamiento'
       ? { nombre, parametros: { umbralEdadFacturable: 12 } }
-      : []), { status: 200 }))))
+      : { contenido: [], numero: 0, tamano: 10, totalElementos: 0, totalPaginas: 0 }), { status: 200 }))))
 }
 
 beforeEach(() => {

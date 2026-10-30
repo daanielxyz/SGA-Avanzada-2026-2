@@ -135,7 +135,7 @@ button:disabled {
 
 .tarjeta {
   display: grid;
-  grid-template-columns: 112px 1fr;
+  grid-template-columns: 112px minmax(0, 1fr);
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--borde);
@@ -149,7 +149,8 @@ button:disabled {
   }
 }
 
-.tarjeta img {
+.tarjeta img,
+.tarjeta .sin-foto {
   width: 112px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
@@ -169,7 +170,12 @@ button:disabled {
   margin: 0;
 }
 
+/* El nombre completo se ve en la página del apartamento; aquí, máximo tres líneas */
 .tarjeta h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   font-size: 1rem;
   overflow-wrap: anywhere;
 }
@@ -214,11 +220,13 @@ button:disabled {
 
 @media (min-width: 640px) {
   .tarjeta {
-    grid-template-columns: 160px 1fr 180px;
+    /* El precio nunca se recorta: la columna crece si el número no cabe */
+    grid-template-columns: 160px minmax(0, 1fr) minmax(180px, auto);
     gap: 16px;
   }
 
-  .tarjeta img {
+  .tarjeta img,
+  .tarjeta .sin-foto {
     width: 160px;
     aspect-ratio: 4 / 3;
   }
@@ -237,6 +245,17 @@ button:disabled {
     border-left: 1px solid var(--borde);
     text-align: right;
   }
+}
+
+/* Sin foto, o la foto no cargó: un recuadro gris del mismo tamaño */
+.sin-foto {
+  border-radius: 8px;
+  background: var(--borde);
+}
+
+/* La descripción en la página del apartamento conserva sus saltos de línea */
+.descripcion-completa {
+  white-space: pre-line;
 }
 
 /* Dotación completa, en la página del apartamento */
@@ -346,7 +365,8 @@ button.secundario {
   margin: 16px 0;
 }
 
-.galeria img {
+.galeria img,
+.galeria .sin-foto {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
@@ -359,4 +379,21 @@ button.secundario {
   .galeria {
     grid-auto-columns: minmax(300px, 45%);
   }
+}
+
+/* Anterior y siguiente bajo los listados de 10 en 10 */
+.paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.paginacion button.secundario {
+  margin-top: 0;
+}
+
+.paginacion button:disabled {
+  visibility: hidden;
 }

@@ -12,7 +12,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizacionResul
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarPorCantidadCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ProximaNocheLibreResult;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.portal.ApartamentoPublicoResponse.PrecioResponse;
 import jakarta.validation.constraints.Min;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -59,12 +61,16 @@ public class ApartamentoPortalController {
     }
 
     /**
-     * Todos los apartamentos a la venta, cada uno con lo que paga un adulto su próxima noche libre desde hoy, para
-     * mostrar precios antes de que el visitante elija fechas.
+     * Los apartamentos a la venta, de 10 en 10 (DEC-18), cada uno con lo que paga un adulto su próxima noche libre
+     * desde hoy, para mostrar precios antes de que el visitante elija fechas. Solo se calcula el precio de los de la
+     * página pedida.
+     *
+     * @param pagina empieza en 0; una que no existe llega vacía
      */
     @GetMapping
-    public List<ApartamentoPublicoResponse> listar() {
-        return proximasNoches(LocalDate.now(reloj)).stream().map(this::conSuProximaNoche).toList();
+    public PaginaResponse<ApartamentoPublicoResponse> listar(
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(pagina(proximasNoches(LocalDate.now(reloj)), pagina), this::conSuProximaNoche);
     }
 
     /**
@@ -75,20 +81,21 @@ public class ApartamentoPortalController {
      * @param ocupantes tamaño del grupo; todos cuentan para la capacidad (RN-02)
      * @param ninos     cuántos del grupo no alcanzan el umbral de edad a la entrada; sin él, todos pagan. Si son más
      *                  que el grupo, el dominio lo rechaza (409)
+     * @param pagina    de 10 en 10 (DEC-18), empieza en 0
      */
     @GetMapping("/disponibles")
-    public List<ApartamentoPublicoResponse> buscar(
+    public PaginaResponse<ApartamentoPublicoResponse> buscar(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate entrada,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
             @RequestParam @Min(value = 1, message = "debe ser al menos 1") int ocupantes,
-            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativo") int ninos) {
-        return libres(entrada, salida, ocupantes).stream()
-                .map(codigo -> ApartamentoPublicoResponse.de(consultarApartamento.ejecutar(codigo),
-                        cotizar(codigo, entrada, salida, ocupantes - ninos), null))
-                .toList();
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativo") int ninos,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(pagina(libres(entrada, salida, ocupantes), pagina),
+                codigo -> ApartamentoPublicoResponse.de(consultarApartamento.ejecutar(codigo),
+                        cotizar(codigo, entrada, salida, ocupantes - ninos), null));
     }
 
-    /** La ficha, con su próxima noche libre como en el listado. APA-16: uno retirado no existe para el público: 404. */
+    /** La ficha, con su próxima noche libre como en el listado. APA-16: uno retirado no existe para el público. */
     @GetMapping("/{codigo}")
     public ApartamentoPublicoResponse consultar(@PathVariable String codigo) {
         aLaVenta(codigo);
@@ -110,6 +117,13 @@ public class ApartamentoPortalController {
         return new EstanciaPortalResponse(libres(entrada, salida, ocupantes).contains(codigo),
                 PrecioResponse.de(cotizar(codigo, entrada, salida, ocupantes - ninos)),
                 proximaNoche(codigo, entrada).noche());
+    }
+
+    // El listado se arma en memoria (los libres, o la próxima noche de cada uno): se corta aquí la página pedida
+    private static <T> Pagina<T> pagina(List<T> todos, int numero) {
+        int desde = (int) Math.min((long) numero * Pagina.TAMANO, todos.size());
+        return new Pagina<>(todos.subList(desde, Math.min(desde + Pagina.TAMANO, todos.size())), numero, Pagina.TAMANO,
+                todos.size());
     }
 
     private void aLaVenta(String codigo) {
