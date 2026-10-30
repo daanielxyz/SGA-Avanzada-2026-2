@@ -306,6 +306,22 @@ class CicloReservaTest {
         assertTrue(paraTres.isEmpty());
     }
 
+    @Test
+    @Tag("CU-07")
+    @Tag("RN-01")
+    void cadaApartamentoActivoTraeSuProximaNocheLibre() {
+        reservaDeDosAdultosPorTresNoches(); // APT-101 del 10 al 13
+        BuscarProximasNochesLibresUseCase buscar = new BuscarProximasNochesLibresUseCase(cargador, apartamentos,
+                reservas, new DisponibilidadDomainService());
+
+        List<ProximaNocheLibreResult> libres = buscar.ejecutar(
+                new BuscarProximasNochesLibresCommand("ALO-1", ENTRADA, 30));
+
+        assertEquals(List.of(new ProximaNocheLibreResult("APT-101", ENTRADA.plusDays(3)),
+                new ProximaNocheLibreResult("APT-102", ENTRADA)), libres);
+        assertEquals(1, reservas.guardadas.size());
+    }
+
     private ModificarReservaUseCase modificarReserva() {
         return new ModificarReservaUseCase(cargador, reservas, folios, tarifas, new DisponibilidadDomainService(),
                 new TarificacionDomainService(), RepositoriosEnMemoria.RELOJ);
