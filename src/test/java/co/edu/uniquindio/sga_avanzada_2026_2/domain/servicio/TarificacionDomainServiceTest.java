@@ -96,6 +96,37 @@ class TarificacionDomainServiceTest {
     }
 
     @Test
+    @Tag("RN-06")
+    void sabiendoSoloCuantosPaganDaLoMismoQueConLosOcupantes() {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 12, 13), LocalDate.of(2026, 12, 16));
+        List<Ocupante> familia = List.of(ocupante("A", 35, estancia.entrada()), ocupante("B", 33, estancia.entrada()),
+                ocupante("N", 8, estancia.entrada()));
+
+        assertEquals(servicio.calcularValorEstancia(APT, estancia, familia, UMBRAL, CALENDARIO, TARIFAS),
+                servicio.calcularValorEstancia(APT, estancia, 2, CALENDARIO, TARIFAS));
+    }
+
+    @Test
+    @Tag("RN-06")
+    void siNadiePagaElTotalEsCeroPeroSeVeLaTarifaDeCadaNoche() {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 2));
+
+        Cotizacion cotizacion = servicio.calcularValorEstancia(APT, estancia, 0, CALENDARIO, TARIFAS);
+
+        assertEquals(Dinero.CERO, cotizacion.total());
+        assertEquals(Dinero.de(100_000), cotizacion.desglose().getFirst().tarifa());
+    }
+
+    @Test
+    @Tag("RN-06")
+    void deberiaRechazarUnNumeroNegativoDeQuienesPagan() {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 2));
+
+        assertThrows(ReglaDominioException.class,
+                () -> servicio.calcularValorEstancia(APT, estancia, -1, CALENDARIO, TARIFAS));
+    }
+
+    @Test
     @Tag("TAR-06")
     void deberiaUsarLaVersionMasRecienteDeLaTarifa() {
         Estancia estancia = new Estancia(LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 2));
