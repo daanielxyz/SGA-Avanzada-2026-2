@@ -19,6 +19,13 @@
   box-sizing: border-box;
 }
 
+/* En el celular: sin el destello del navegador al tocar (cada control tiene su propio :active) y sin que iOS agrande
+   el texto al girar el teléfono */
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
 }
@@ -86,6 +93,20 @@ button {
   color: #ffffff;
   font-weight: 600;
   cursor: pointer;
+  transition: transform 120ms ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Sin la espera del doble toque (zoom): el toque cuenta de inmediato */
+button,
+a {
+  touch-action: manipulation;
+}
+
+/* Responde al apoyar el dedo, no al soltarlo */
+button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 button:disabled {
@@ -140,13 +161,17 @@ button:disabled {
   padding: 12px;
   border: 1px solid var(--borde);
   border-radius: 12px;
-  transition: border-color 150ms ease-out;
+  transition: border-color 150ms ease-out, background-color 120ms ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .tarjeta:hover {
     border-color: var(--texto-suave);
   }
+}
+
+.tarjeta:active {
+  background-color: #f6f8fa;
 }
 
 .tarjeta img,
@@ -361,6 +386,7 @@ button.secundario {
   grid-auto-columns: minmax(260px, 80%);
   gap: 8px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   margin: 16px 0;
 }

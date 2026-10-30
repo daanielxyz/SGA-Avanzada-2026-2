@@ -8,11 +8,13 @@ interface Props {
   umbral: number | null
   /** En la página de un apartamento, su capacidad: tope de cada campo de personas. En la búsqueda no hay tope. */
   capacidad?: number
+  /** La tecla Enter del teclado del celular: «buscar» en el filtro, «listo» en la página del apartamento. */
+  teclaEnter?: 'search' | 'done'
   alCambiar: (estadia: Estadia, grupo: Grupo) => void
 }
 
 /** Llegada, salida, adultos y niños: los mismos campos en la búsqueda y en la página de cada apartamento. */
-export default function CamposEstancia({ estadia, grupo, umbral, capacidad, alCambiar }: Props) {
+export default function CamposEstancia({ estadia, grupo, umbral, capacidad, teclaEnter = 'done', alCambiar }: Props) {
   const hoy = fechaDesdeHoy()
 
   // Si la llegada alcanza la salida, la salida se corre para conservar al menos una noche
@@ -36,6 +38,7 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, alCa
         ayuda={umbral === null ? 'Pagan' : `${umbral} años o más`}
         minimo={1}
         maximo={capacidad}
+        teclaEnter={teclaEnter}
         valor={grupo.adultos}
         alCambiar={(adultos) => alCambiar(estadia, { ...grupo, adultos })}
       />
@@ -44,6 +47,7 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, alCa
         ayuda={umbral === null ? 'No pagan' : `Menores de ${umbral}, no pagan`}
         minimo={0}
         maximo={capacidad}
+        teclaEnter={teclaEnter}
         valor={grupo.ninos}
         alCambiar={(ninos) => alCambiar(estadia, { ...grupo, ninos })}
       />
@@ -57,12 +61,13 @@ interface PropsCampo {
   ayuda: string
   minimo: number
   maximo?: number
+  teclaEnter: 'search' | 'done'
   valor: number
   alCambiar: (valor: number) => void
 }
 
 /** Un número de personas, nunca menor que su mínimo. */
-function CampoPersonas({ nombre, ayuda, minimo, maximo, valor, alCambiar }: PropsCampo) {
+function CampoPersonas({ nombre, ayuda, minimo, maximo, teclaEnter, valor, alCambiar }: PropsCampo) {
   const id = `personas-${nombre}`
   return (
     <div className="campo">
@@ -71,6 +76,7 @@ function CampoPersonas({ nombre, ayuda, minimo, maximo, valor, alCambiar }: Prop
         id={id}
         type="number"
         inputMode="numeric"
+        enterKeyHint={teclaEnter}
         min={minimo}
         max={maximo}
         value={valor}

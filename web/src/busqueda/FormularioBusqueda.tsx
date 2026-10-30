@@ -28,7 +28,7 @@ export default function FormularioBusqueda({ buscando, umbral, alBuscar }: Props
 
   return (
     <form className="busqueda" onSubmit={enviar} noValidate>
-      <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} alCambiar={(e, g) => {
+      <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} teclaEnter="search" alCambiar={(e, g) => {
         setEstadia(e)
         setGrupo(g)
       }} />
