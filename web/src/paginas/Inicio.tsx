@@ -87,7 +87,7 @@ function Todos({ apartamentos }: { apartamentos: ApartamentoPublico[] }) {
   return (
     <>
       <h2>Nuestros apartamentos</h2>
-      <div className="rejilla">
+      <div className="filas">
         {apartamentos.map((a) => (
           <TarjetaApartamento key={a.codigo} apartamento={a} />
         ))}
@@ -127,7 +127,7 @@ function Filtrados({ estadia, grupo, apartamentos, alVerTodos }: PropsFiltrados)
       </h2>
       <p className="suave">{resumen}</p>
       {verTodos}
-      <div className="rejilla">
+      <div className="filas">
         {apartamentos.map((a) => (
           <TarjetaApartamento key={a.codigo} apartamento={a} busqueda={{ estadia, grupo }} />
         ))}

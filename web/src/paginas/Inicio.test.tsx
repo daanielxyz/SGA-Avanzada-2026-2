@@ -71,8 +71,10 @@ describe('Inicio', () => {
     expect(urlDeLaLlamada(fetch, 0)).toBe('/api/portal/apartamentos')
     expect(within(tarjeta).getByRole('img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
     expect(within(tarjeta).getByText('Hasta 4 personas · 2 dormitorios')).toBeInTheDocument()
-    expect(within(tarjeta).getByRole('list', { name: 'Dotación' })).toHaveTextContent('BalcónCocinaWifi+2 más')
-    expect(within(tarjeta).getByText(/por adulto, noche del/)).toHaveTextContent(/\$\s*100\.000 por adulto/)
+    expect(within(tarjeta).getByRole('list', { name: 'Dotación' })).toHaveTextContent('BalcónCocinaWifiJacuzzi+1')
+    expect(within(tarjeta).getByText(/\$\s*100\.000/)).toBeInTheDocument()
+    expect(within(tarjeta).getByText('por adulto y noche')).toBeInTheDocument()
+    expect(within(tarjeta).getByText(/noche del/)).toBeInTheDocument()
     expect(within(tarjeta).queryByText(/Total/)).not.toBeInTheDocument()
   })
 
@@ -111,8 +113,9 @@ describe('Inicio', () => {
     expect(screen.getByRole('heading', { name: '1 apartamento libre' })).toBeInTheDocument()
     expect(urlDeLaLlamada(fetch, 1)).toBe(`/api/portal/apartamentos/disponibles?entrada=${fechaDesdeHoy(1)}`
       + `&salida=${fechaDesdeHoy(3)}&ocupantes=3&ninos=1`)
-    expect(within(tarjeta).getByText(/Total 2 noches/)).toHaveTextContent(
-      /Total 2 noches, 2 adultos y 1 niño:\s*\$\s*460\.000/)
+    expect(within(tarjeta).getByText(/\$\s*460\.000/)).toBeInTheDocument()
+    expect(within(tarjeta).getByText('Total 2 noches, 2 adultos y 1 niño')).toBeInTheDocument()
+    expect(within(tarjeta).getByText(/por adulto y noche/)).toHaveTextContent(/\$\s*100\.000 por adulto y noche/)
     expect(within(tarjeta).getByRole('link', { name: 'Suite Jardín' })).toHaveAttribute('href',
       `/apartamentos/APT-101?entrada=${fechaDesdeHoy(1)}&salida=${fechaDesdeHoy(3)}&adultos=2&ninos=1`)
 
