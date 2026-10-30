@@ -1,18 +1,21 @@
 import { useState, type FormEvent } from 'react'
-import type { Estadia } from '../api/apartamentos'
+import type { Estadia, Grupo } from '../api/apartamentos'
 import { fechaDesdeHoy } from '../formato'
 
 interface Props {
   buscando: boolean
-  alBuscar: (estadia: Estadia, ocupantes: number) => void
+  /** Edad desde la que se paga, del alojamiento (RN-06); vacía mientras llega. */
+  umbral: number | null
+  alBuscar: (estadia: Estadia, grupo: Grupo) => void
 }
 
-/** Fechas y tamaño del grupo. Revisa lo obvio antes de llamar a la API; las reglas de verdad las revisa el backend. */
-export default function FormularioBusqueda({ buscando, alBuscar }: Props) {
+/** Fechas y quiénes viajan. Revisa lo obvio antes de llamar a la API; las reglas de verdad las revisa el backend. */
+export default function FormularioBusqueda({ buscando, umbral, alBuscar }: Props) {
   const hoy = fechaDesdeHoy()
   const [entrada, setEntrada] = useState(fechaDesdeHoy(1))
   const [salida, setSalida] = useState(fechaDesdeHoy(3))
-  const [ocupantes, setOcupantes] = useState(2)
+  const [adultos, setAdultos] = useState(2)
+  const [ninos, setNinos] = useState(0)
   const [problema, setProblema] = useState<string | null>(null)
 
   function enviar(evento: FormEvent) {
@@ -24,7 +27,7 @@ export default function FormularioBusqueda({ buscando, alBuscar }: Props) {
       setProblema('La salida debe ser al menos un día después de la llegada.')
     } else {
       setProblema(null)
-      alBuscar({ entrada, salida }, ocupantes)
+      alBuscar({ entrada, salida }, { adultos, ninos })
     }
   }
 
@@ -38,17 +41,20 @@ export default function FormularioBusqueda({ buscando, alBuscar }: Props) {
         Salida
         <input type="date" value={salida} min={entrada} required onChange={(e) => setSalida(e.target.value)} />
       </label>
-      <label>
-        Personas
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={20}
-          value={ocupantes}
-          onChange={(e) => setOcupantes(Math.max(1, Number(e.target.value) || 1))}
-        />
-      </label>
+      <CampoPersonas
+        nombre="Adultos"
+        ayuda={umbral === null ? 'Pagan' : `${umbral} años o más`}
+        minimo={1}
+        valor={adultos}
+        alCambiar={setAdultos}
+      />
+      <CampoPersonas
+        nombre="Niños"
+        ayuda={umbral === null ? 'No pagan' : `Menores de ${umbral}, no pagan`}
+        minimo={0}
+        valor={ninos}
+        alCambiar={setNinos}
+      />
       <button type="submit" disabled={buscando}>
         {buscando ? 'Buscando…' : 'Buscar'}
       </button>
@@ -58,5 +64,37 @@ export default function FormularioBusqueda({ buscando, alBuscar }: Props) {
         </p>
       )}
     </form>
+  )
+}
+
+interface PropsCampo {
+  nombre: string
+  /** La edad que cuenta, debajo del campo; los lectores de pantalla la leen después del nombre. */
+  ayuda: string
+  minimo: number
+  valor: number
+  alCambiar: (valor: number) => void
+}
+
+/** Un número de personas, nunca menor que su mínimo. */
+function CampoPersonas({ nombre, ayuda, minimo, valor, alCambiar }: PropsCampo) {
+  const id = `personas-${nombre}`
+  return (
+    <div className="campo">
+      <label htmlFor={id}>{nombre}</label>
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={minimo}
+        max={20}
+        value={valor}
+        aria-describedby={`${id}-ayuda`}
+        onChange={(e) => alCambiar(Math.max(minimo, Number(e.target.value) || minimo))}
+      />
+      <span id={`${id}-ayuda`} className="ayuda">
+        {ayuda}
+      </span>
+    </div>
   )
 }
