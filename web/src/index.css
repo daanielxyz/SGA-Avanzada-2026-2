@@ -33,6 +33,21 @@ a {
   color: var(--acento);
 }
 
+/* Cabecera con el nombre del alojamiento; con su logo cuando la API lo traiga (BL-05) */
+.encabezado {
+  max-width: 960px;
+  min-height: 56px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+}
+
+.marca {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--texto);
+  text-decoration: none;
+}
+
 /* Textos de apoyo y avisos de error */
 .suave {
   color: var(--texto-suave);

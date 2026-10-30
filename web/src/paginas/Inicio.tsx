@@ -28,7 +28,7 @@ export default function Inicio() {
 
   return (
     <main>
-      <h1>Puerta al Sol</h1>
+      <h1>Reserva tu estadía</h1>
       <p className="suave">Busca tus fechas y mira el precio de cada apartamento antes de reservar.</p>
 
       <FormularioBusqueda buscando={busqueda.estado === 'buscando'} alBuscar={buscar} />
