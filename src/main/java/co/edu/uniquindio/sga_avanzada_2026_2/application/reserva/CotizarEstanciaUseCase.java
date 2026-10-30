@@ -53,6 +53,26 @@ public class CotizarEstanciaUseCase {
                 tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))));
     }
 
+    /**
+     * Lo mismo sabiendo solo cuántos pagan, sin fechas de nacimiento (RN-06): el portal muestra el precio antes de
+     * pedir los datos de cada ocupante, que llegan al reservar.
+     *
+     * @throws co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException si no
+     *         existe el apartamento, su alojamiento o el calendario
+     * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la estancia es
+     *         inválida (RN-03), los que pagan son menos de cero o falta la tarifa de alguna noche (RN-05 · TAR-03)
+     */
+    @Transactional(readOnly = true)
+    public CotizacionResult ejecutar(CotizarPorCantidadCommand comando) {
+        Apartamento apartamento = cargador.apartamento(comando.apartamento());
+        Alojamiento alojamiento = cargador.alojamientoDe(apartamento);
+        Estancia estancia = new Estancia(comando.entrada(), comando.salida());
+
+        return CotizacionResult.de(tarificacion.calcularValorEstancia(apartamento.codigo(), estancia,
+                comando.facturables(), cargador.calendario(alojamiento.id()),
+                tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))));
+    }
+
     // Para cotizar solo cuenta la edad a la fecha de entrada (RN-06); el nombre es de relleno
     private static List<Ocupante> ocupantes(List<LocalDate> fechasNacimiento) {
         return IntStream.range(0, fechasNacimiento.size())

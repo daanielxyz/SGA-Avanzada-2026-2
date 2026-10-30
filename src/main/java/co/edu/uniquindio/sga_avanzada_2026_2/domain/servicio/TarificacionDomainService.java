@@ -39,6 +39,24 @@ public class TarificacionDomainService {
         int facturables = (int) ocupantes.stream()
                 .filter(o -> o.esFacturableA(estancia.entrada(), umbral))
                 .count();
+        return calcularValorEstancia(apartamentoId, estancia, facturables, calendario, tarifas);
+    }
+
+    /**
+     * El mismo cálculo cuando todavía no se conoce a los ocupantes, solo cuántos pagan: en el portal el visitante dice
+     * cuántos alcanzan el umbral de edad a la fecha de entrada (RN-06) y sus datos se piden al reservar (RN-05 ·
+     * TAR-04 · NOC-04 · COT-01 · COT-03).
+     *
+     * @param facturables ocupantes que pagan; cero es válido (todos son menores del umbral)
+     * @return desglose noche por noche y total (COT-02)
+     * @throws ReglaDominioException si {@code facturables} es negativo o a alguna noche le falta tarifa para su
+     *         temporada (RN-05 · TAR-03)
+     */
+    public Cotizacion calcularValorEstancia(ApartamentoId apartamentoId, Estancia estancia, int facturables,
+                                            CalendarioTemporadas calendario, List<Tarifa> tarifas) {
+        if (facturables < 0) {
+            throw new ReglaDominioException("Los ocupantes que pagan no pueden ser menos de cero");
+        }
         List<LineaCotizacion> desglose = estancia.noches().stream()
                 .map(noche -> linea(noche, apartamentoId, facturables, calendario, tarifas))
                 .toList();
