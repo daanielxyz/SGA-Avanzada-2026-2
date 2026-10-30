@@ -11,12 +11,13 @@ function abrir(direccion: string) {
   )
 }
 
-/** `GET /api/alojamiento` simulado: el nombre que la API trae, o que no responde. */
+/** La API simulada: el alojamiento con ese nombre y ningún apartamento, o una API que no responde. */
 function laApiDiceQueElHotelEs(nombre: string | null) {
-  vi.stubGlobal('fetch', vi.fn(() => nombre === null
+  vi.stubGlobal('fetch', vi.fn((ruta: string) => nombre === null
     ? Promise.reject(new TypeError('sin red'))
-    : Promise.resolve(new Response(JSON.stringify({ nombre, parametros: { umbralEdadFacturable: 12 } }),
-      { status: 200 }))))
+    : Promise.resolve(new Response(JSON.stringify(ruta === '/api/alojamiento'
+      ? { nombre, parametros: { umbralEdadFacturable: 12 } }
+      : []), { status: 200 }))))
 }
 
 beforeEach(() => {

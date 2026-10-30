@@ -238,3 +238,59 @@ button.secundario {
 .precio tfoot {
   font-weight: 700;
 }
+
+/* Toda la tarjeta lleva a la página del apartamento: el enlace del nombre la cubre entera */
+.tarjeta {
+  position: relative;
+}
+
+.enlace-tarjeta {
+  color: inherit;
+  text-decoration: none;
+}
+
+.enlace-tarjeta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.tarjeta:hover h3,
+.enlace-tarjeta:focus-visible {
+  text-decoration: underline;
+}
+
+.enlace-tarjeta:focus-visible {
+  outline: none;
+}
+
+.tarjeta:has(.enlace-tarjeta:focus-visible) {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* Página del apartamento: fotos en fila que se desliza en el celular */
+.galeria {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 80%);
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 16px 0;
+}
+
+.galeria img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  scroll-snap-align: start;
+  background: var(--borde);
+}
+
+@media (min-width: 640px) {
+  .galeria {
+    grid-auto-columns: minmax(300px, 45%);
+  }
+}

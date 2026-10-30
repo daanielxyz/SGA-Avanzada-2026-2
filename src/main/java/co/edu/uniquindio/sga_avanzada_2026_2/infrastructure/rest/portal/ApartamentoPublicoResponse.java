@@ -13,11 +13,15 @@ import java.util.List;
  * que solo ve el personal en {@code ApartamentoResponse} (DEC-67). Qué ve el público es un supuesto a validar con el
  * cliente en el cierre 1: agregar campos aquí no rompe a nadie.
  *
- * @param precio en la búsqueda, lo que cuesta la estancia buscada para el grupo; en la ficha, sin fechas, va vacío
+ * @param precio            en la búsqueda por fechas, lo que cuesta esa estancia para el grupo; en el listado y la
+ *                          ficha, lo que paga un adulto su próxima noche libre; vacío si no tiene ninguna
+ * @param proximaNocheLibre en el listado y la ficha, la primera noche que se puede reservar desde hoy; en la búsqueda
+ *                          por fechas va vacía, porque esas fechas ya están libres
  */
 public record ApartamentoPublicoResponse(String codigo, String nombre, String descripcion, int capacidad,
                                          int dormitorios, List<ImagenResponse> imagenes,
-                                         List<String> caracteristicas, PrecioResponse precio) {
+                                         List<String> caracteristicas, PrecioResponse precio,
+                                         LocalDate proximaNocheLibre) {
 
     /**
      * @param principal la foto que se muestra primero
@@ -27,6 +31,12 @@ public record ApartamentoPublicoResponse(String codigo, String nombre, String de
 
     /** El desglose noche por noche y el total (COT-02), sin los ids internos de las temporadas. */
     public record PrecioResponse(List<NocheResponse> desglose, BigDecimal total) {
+
+        static PrecioResponse de(CotizacionResult r) {
+            return r == null ? null : new PrecioResponse(r.desglose().stream()
+                    .map(n -> new NocheResponse(n.noche(), n.tarifa(), n.ocupantesFacturables(), n.subtotal()))
+                    .toList(), r.total());
+        }
     }
 
     /**
@@ -35,15 +45,9 @@ public record ApartamentoPublicoResponse(String codigo, String nombre, String de
     public record NocheResponse(LocalDate noche, BigDecimal tarifa, int ocupantesFacturables, BigDecimal subtotal) {
     }
 
-    static ApartamentoPublicoResponse de(ApartamentoResult r) {
-        return de(r, null);
-    }
-
-    static ApartamentoPublicoResponse de(ApartamentoResult r, CotizacionResult precio) {
+    static ApartamentoPublicoResponse de(ApartamentoResult r, CotizacionResult precio, LocalDate proximaNocheLibre) {
         return new ApartamentoPublicoResponse(r.codigo(), r.nombre(), r.descripcion(), r.capacidad(),
                 r.dormitorios(), r.imagenes().stream().map(i -> new ImagenResponse(i.url(), i.principal())).toList(),
-                r.caracteristicas(), precio == null ? null : new PrecioResponse(precio.desglose().stream()
-                        .map(n -> new NocheResponse(n.noche(), n.tarifa(), n.ocupantesFacturables(), n.subtotal()))
-                        .toList(), precio.total()));
+                r.caracteristicas(), PrecioResponse.de(precio), proximaNocheLibre);
     }
 }

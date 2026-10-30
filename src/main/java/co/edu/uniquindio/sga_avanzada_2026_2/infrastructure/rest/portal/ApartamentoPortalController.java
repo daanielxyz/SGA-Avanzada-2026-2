@@ -6,9 +6,14 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEnc
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisponibleResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarProximasNochesLibresCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarProximasNochesLibresUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizacionResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarPorCantidadCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ProximaNocheLibreResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.portal.ApartamentoPublicoResponse.PrecioResponse;
 import jakarta.validation.constraints.Min;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,30 +22,49 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Lo que el visitante del portal ve de los apartamentos, sin sesión (CU-07 · CU-08): los libres para sus fechas y la
- * ficha de cada uno, solo con los datos públicos ({@link ApartamentoPublicoResponse}). Reusa los casos de uso del
- * personal sin cambiarlos. Solo traduce HTTP ⇄ caso de uso (DEC-33).
+ * Lo que el visitante del portal ve de los apartamentos, sin sesión (CU-07 · CU-08 · CU-09): todos con el precio de
+ * su próxima noche libre, los libres para unas fechas y la ficha de cada uno, solo con los datos públicos
+ * ({@link ApartamentoPublicoResponse}). Reusa los casos de uso del personal sin cambiarlos. Solo traduce HTTP ⇄ caso
+ * de uso (DEC-33).
  */
 @RestController
 @RequestMapping("/api/portal/apartamentos")
 public class ApartamentoPortalController {
 
+    // Hasta dónde mira el portal para encontrar la próxima noche libre: un año
+    private static final int HORIZONTE_DIAS = 365;
+
     private final AlojamientoActual alojamiento;
     private final BuscarDisponiblesUseCase buscarDisponibles;
+    private final BuscarProximasNochesLibresUseCase proximasNoches;
     private final ConsultarApartamentoUseCase consultarApartamento;
     private final CotizarEstanciaUseCase cotizarEstancia;
+    private final Clock reloj;
 
     public ApartamentoPortalController(AlojamientoActual alojamiento, BuscarDisponiblesUseCase buscarDisponibles,
+                                       BuscarProximasNochesLibresUseCase proximasNoches,
                                        ConsultarApartamentoUseCase consultarApartamento,
-                                       CotizarEstanciaUseCase cotizarEstancia) {
+                                       CotizarEstanciaUseCase cotizarEstancia, Clock reloj) {
         this.alojamiento = alojamiento;
         this.buscarDisponibles = buscarDisponibles;
+        this.proximasNoches = proximasNoches;
         this.consultarApartamento = consultarApartamento;
         this.cotizarEstancia = cotizarEstancia;
+        this.reloj = reloj;
+    }
+
+    /**
+     * Todos los apartamentos a la venta, cada uno con lo que paga un adulto su próxima noche libre desde hoy, para
+     * mostrar precios antes de que el visitante elija fechas.
+     */
+    @GetMapping
+    public List<ApartamentoPublicoResponse> listar() {
+        return proximasNoches(LocalDate.now(reloj)).stream().map(this::conSuProximaNoche).toList();
     }
 
     /**
@@ -58,22 +82,65 @@ public class ApartamentoPortalController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
             @RequestParam @Min(value = 1, message = "debe ser al menos 1") int ocupantes,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativo") int ninos) {
-        return buscarDisponibles.ejecutar(new BuscarDisponiblesCommand(alojamiento.id(), entrada, salida, ocupantes))
-                .stream()
-                .map(ApartamentoDisponibleResult::codigo)
+        return libres(entrada, salida, ocupantes).stream()
                 .map(codigo -> ApartamentoPublicoResponse.de(consultarApartamento.ejecutar(codigo),
-                        cotizarEstancia.ejecutar(new CotizarPorCantidadCommand(codigo, entrada, salida,
-                                ocupantes - ninos))))
+                        cotizar(codigo, entrada, salida, ocupantes - ninos), null))
                 .toList();
     }
 
-    /** APA-16: un apartamento retirado no existe para el público, igual que en la búsqueda: 404. */
+    /** La ficha, con su próxima noche libre como en el listado. APA-16: uno retirado no existe para el público: 404. */
     @GetMapping("/{codigo}")
     public ApartamentoPublicoResponse consultar(@PathVariable String codigo) {
+        aLaVenta(codigo);
+        return conSuProximaNoche(proximaNoche(codigo, LocalDate.now(reloj)));
+    }
+
+    /**
+     * Si unas fechas y un grupo caben en este apartamento, cuánto costaría y, si no está libre, desde qué noche lo
+     * está. Los mismos parámetros que {@code /disponibles}.
+     */
+    @GetMapping("/{codigo}/estancia")
+    public EstanciaPortalResponse estancia(
+            @PathVariable String codigo,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate entrada,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
+            @RequestParam @Min(value = 1, message = "debe ser al menos 1") int ocupantes,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativo") int ninos) {
+        aLaVenta(codigo);
+        return new EstanciaPortalResponse(libres(entrada, salida, ocupantes).contains(codigo),
+                PrecioResponse.de(cotizar(codigo, entrada, salida, ocupantes - ninos)),
+                proximaNoche(codigo, entrada).noche());
+    }
+
+    private void aLaVenta(String codigo) {
         ApartamentoResult apartamento = consultarApartamento.ejecutar(codigo);
         if (!apartamento.activo()) {
             throw new RecursoNoEncontradoException("el apartamento", codigo);
         }
-        return ApartamentoPublicoResponse.de(apartamento);
+    }
+
+    private List<String> libres(LocalDate entrada, LocalDate salida, int ocupantes) {
+        return buscarDisponibles.ejecutar(new BuscarDisponiblesCommand(alojamiento.id(), entrada, salida, ocupantes))
+                .stream().map(ApartamentoDisponibleResult::codigo).toList();
+    }
+
+    private List<ProximaNocheLibreResult> proximasNoches(LocalDate desde) {
+        return proximasNoches.ejecutar(new BuscarProximasNochesLibresCommand(alojamiento.id(), desde, HORIZONTE_DIAS));
+    }
+
+    private ProximaNocheLibreResult proximaNoche(String codigo, LocalDate desde) {
+        return proximasNoches(desde).stream().filter(l -> l.codigo().equals(codigo)).findFirst()
+                .orElse(new ProximaNocheLibreResult(codigo, null));
+    }
+
+    // Un adulto, su próxima noche libre; sin noche libre en el año, sin precio
+    private ApartamentoPublicoResponse conSuProximaNoche(ProximaNocheLibreResult libre) {
+        LocalDate noche = libre.noche();
+        return ApartamentoPublicoResponse.de(consultarApartamento.ejecutar(libre.codigo()),
+                noche == null ? null : cotizar(libre.codigo(), noche, noche.plusDays(1), 1), noche);
+    }
+
+    private CotizacionResult cotizar(String codigo, LocalDate entrada, LocalDate salida, int facturables) {
+        return cotizarEstancia.ejecutar(new CotizarPorCantidadCommand(codigo, entrada, salida, facturables));
     }
 }
