@@ -21,6 +21,39 @@ El cliente solo puede probar lo que ve en una pantalla, así que cada tarea del 
 - **Terminado** quiere decir: `./gradlew build` verde con pruebas del caso feliz y de la violación de cada regla nueva; `npm run build` y `npm test` verdes en el frontend tocado; los mensajes de error del backend (400/401/403/404/409) se muestran entendibles en la pantalla; integrado en `develop` y probado allí con el otro frontend también corriendo.
 - **Probar en local**: el backend corre con PostgreSQL y las variables de entorno de cada quien; cada frontend corre con `npm run dev` y su proxy de Vite reenvía `/api` al backend (`SGA_API_URL` si no está en `http://localhost:8080`), así que no hace falta CORS; `VITE_API_URL` va vacía y solo se usa, junto con `SGA_CORS_ORIGENES`, cuando un frontend se publica en otra dirección que la API (DEC-82).
 
+## Lo que cambió en el backend para la Entrega 2 (DEC-86)
+Integrado en `develop` (PR #18). Ninguna pantalla existente se rompe: ningún frontend usaba lo que cambió de forma. El contrato completo está en `docs/api/openapi.yaml`.
+
+**Los dos equipos, en local**
+- Traer `develop` aplica la migración `V15__parqueadero_y_mascotas`. La siguiente migración nueva es la `V16` o la que siga libre al integrar.
+- Los datos de prueba y Swagger ahora están **encendidos por defecto**. Sobre una base vacía quedan 10 apartamentos, un usuario por rol, reservas en todos los estados y por los tres canales, un bloqueo y un apartamento fuera de servicio. Las cuentas y su clave están en `README.md`. `SGA_DATOS_DEMO=false` los apaga.
+- En una base que ya tenía datos, esa carga puede fallar y dejar en el log `Datos de prueba (12.3): no se cargaron`, sin afectar el arranque: por ejemplo, si `APT-101` ya no está en `PENDIENTE_PREPARACION` o sus fechas chocan con una reserva. Para tener el escenario completo, borrar y crear otra vez la base `sga`.
+- Las reservas de prueba ocupan noches: si una búsqueda o una demo no encuentra un apartamento, revisar `GET /api/ocupacion` antes de suponer un error. La `PENDIENTE` de prueba vence sola a las 24 horas.
+
+**Contratos que cambiaron** (ningún frontend los consumía todavía)
+| Endpoint | Cambio |
+|---|---|
+| `PUT /api/apartamentos/{codigo}/estado-operativo` | Ya no existe. Se usa `iniciar-preparacion`, `marcar-preparado`, `marcar-pendiente-preparacion` y `declarar-fuera-de-servicio`, sin cuerpo. `OCUPADO` solo lo pone registrar la llegada |
+| `GET /api/apartamentos/disponibles` | Responde `PaginaResponse`, con imagen principal, valor estimado y ubicación. Filtros opcionales: `fechasNacimiento`, `capacidadMinima`, `precioMinimo`, `precioMaximo`, `caracteristicas`, `servicios` |
+| `GET /api/canales`, `GET /api/conflictos/pendientes`, `GET /api/apartamentos/{codigo}/tarifas` | Responden `PaginaResponse`: los datos vienen en `contenido`, con `?pagina=` |
+| `GET /api/reservas` | Ordena de la más reciente a la más antigua |
+| Todo error | 404 de ruta, 405 y 500 también llegan como `ErrorResponse`, con nuevos códigos `METODO_NO_PERMITIDO` y `ERROR_INTERNO`; un choque de doble venta en PostgreSQL es 409 `CONCURRENCIA` |
+
+**Campos nuevos, compatibles** (agregar campos no rompe a nadie): `vehiculos` y `mascotas` en `POST /api/reservas` y en la respuesta de la reserva; `cupoParqueadero`, `aceptaMascotas`, `limiteMascotas` y `cargoMascota` en los parámetros de `GET /api/alojamiento`.
+
+**PMS**
+- Endpoints nuevos para las pantallas que vienen: `GET /api/ocupacion` (tablero), `GET /api/apartamentos/pendientes-preparacion`, `PUT /api/apartamentos/{codigo}` e imágenes (`POST …/imagenes`, `PUT …/imagenes/quitar`, `PUT …/imagenes/principal`), `PUT /api/alojamiento/datos`, `GET /api/apartamentos/{codigo}/tarifas/historial` y `GET /api/politicas`.
+- `PUT /api/alojamiento/parametros` reemplaza todos los parámetros: **la pantalla debe enviar los cuatro campos de parqueadero y mascotas**. Si faltan, se apagan esas reglas.
+- `POST /api/reservas` acepta `vehiculos` y `mascotas`; cada regla puede responder 409 (RP-02 y RP-03), y cada mascota agrega un cargo al folio.
+
+**Web**
+- El portal (`/api/portal/**`) no cambió de forma, pero ahora lista 10 apartamentos. `APT-110` aparece aunque esté fuera de servicio: el enunciado lo pide así si no tiene bloqueo (sección 3.3).
+- El portal todavía no envía `vehiculos` ni `mascotas`, ni tiene los filtros nuevos: si se quieren, `ReservarDesdePortalCommand` y `/api/portal/apartamentos/disponibles` deben ampliarse, o la pantalla puede usar `GET /api/apartamentos/disponibles`, que es público.
+- `GET /api/apartamentos/{codigo}/calendario?desde&hasta` es público y da las noches libres para el calendario del detalle (CU-08).
+- `GET /api/alojamiento`, que la web consume, sigue siendo público y ahora incluye también los parámetros nuevos: se suma a lo pendiente de `GET /api/portal/alojamiento` (DEC-85).
+
+**Por confirmar con la Ficha** (`TODO(equipo)`): los apartamentos `APT-105` a `APT-110` y los valores iniciales de parqueadero y mascotas son de relleno.
+
 ## Sprint 1 · 26 – 30 oct · «Ver y encontrar»
 Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepción encuentra cualquier reserva rápido.
 - **web**
@@ -47,7 +80,7 @@ Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confi
   - [ ] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación.
   - [ ] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas».
 - **pms**
-  - [ ] Tablero de ocupación por apartamento y fechas (endpoint nuevo si hace falta).
+  - [ ] Tablero de ocupación por apartamento y fechas (el endpoint ya existe: `GET /api/ocupacion`, DEC-86).
   - [ ] Crear reserva directa; confirmar, cancelar y declarar no-show.
 - **Cierre 2 (vie 6 nov)**.
 
