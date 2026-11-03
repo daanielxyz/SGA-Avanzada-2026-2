@@ -158,20 +158,17 @@ class GestionApartamentosControllerTest {
 
     @Test
     void deberiaAvanzarElEstadoOperativoPorSusTransiciones() throws Exception {
-        enviar(put(APT + "/estado-operativo"), "{\"estado\": \"EN_PREPARACION\"}")
+        mvc.perform(put(APT + "/iniciar-preparacion"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoOperativo").value("EN_PREPARACION"));
-        enviar(put(APT + "/estado-operativo"), "{\"estado\": \"PREPARADO\"}")
+        mvc.perform(put(APT + "/marcar-preparado"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoOperativo").value("PREPARADO"));
     }
 
     @Test
-    void unEstadoQueNoExisteEs400YUnaTransicionNoPermitidaEs409() throws Exception {
-        enviar(put(APT + "/estado-operativo"), "{\"estado\": \"LIMPIO\"}")
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
-        enviar(put(APT + "/estado-operativo"), "{\"estado\": \"PREPARADO\"}")
+    void unaTransicionNoPermitidaEs409() throws Exception {
+        mvc.perform(put(APT + "/marcar-preparado"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
     }

@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.titular;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.RegistrarTitularUseCase;
@@ -39,6 +41,7 @@ public class TitularController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<TitularResponse> registrar(@Valid @RequestBody RegistrarTitularRequest solicitud) {
         TitularResult registrado = registrarTitular.ejecutar(solicitud.aCommand(alojamiento.id()));
         return ResponseEntity.created(URI.create("/api/titulares/" + registrado.id()))

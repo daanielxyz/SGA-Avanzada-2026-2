@@ -1,5 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
+import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.validation.constraints.Min;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarConflictosPendientesUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ResolverConflictoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
@@ -33,8 +37,9 @@ public class ConflictoController {
     }
 
     @GetMapping("/pendientes")
-    public List<ConflictoResponse> consultarPendientes() {
-        return consultarPendientes.ejecutar().stream().map(ConflictoResponse::de).toList();
+    public PaginaResponse<ConflictoResponse> consultarPendientes(
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(Pagina.de(consultarPendientes.ejecutar(), pagina), ConflictoResponse::de);
     }
 
     @PutMapping("/{id}/resolver")

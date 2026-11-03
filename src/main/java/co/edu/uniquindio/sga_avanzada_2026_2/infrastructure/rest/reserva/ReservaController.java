@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
@@ -64,6 +66,7 @@ public class ReservaController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ReservaResponse> crear(@Valid @RequestBody CrearReservaRequest solicitud) {
         ReservaResult creada = crearReserva.ejecutar(solicitud.aCommand());
         return ResponseEntity.created(URI.create("/api/reservas/" + creada.codigo()))

@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.alojamiento;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ActualizarDatosAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarUbicacionAlojamientoUseCase;
@@ -32,6 +35,7 @@ public class AlojamientoController {
 
     private final AlojamientoActual alojamiento;
     private final ConsultarAlojamientoUseCase consultarAlojamiento;
+    private final ActualizarDatosAlojamientoUseCase actualizarDatos;
     private final CambiarParametrosAlojamientoUseCase cambiarParametros;
     private final CambiarUbicacionAlojamientoUseCase cambiarUbicacion;
     private final HabilitarMedioPagoUseCase habilitarMedioPago;
@@ -41,6 +45,7 @@ public class AlojamientoController {
     private final DesactivarServicioUseCase desactivarServicio;
 
     public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamientoUseCase consultarAlojamiento,
+                                 ActualizarDatosAlojamientoUseCase actualizarDatos,
                                  CambiarParametrosAlojamientoUseCase cambiarParametros,
                                  CambiarUbicacionAlojamientoUseCase cambiarUbicacion,
                                  HabilitarMedioPagoUseCase habilitarMedioPago,
@@ -50,6 +55,7 @@ public class AlojamientoController {
                                  DesactivarServicioUseCase desactivarServicio) {
         this.alojamiento = alojamiento;
         this.consultarAlojamiento = consultarAlojamiento;
+        this.actualizarDatos = actualizarDatos;
         this.cambiarParametros = cambiarParametros;
         this.cambiarUbicacion = cambiarUbicacion;
         this.habilitarMedioPago = habilitarMedioPago;
@@ -62,6 +68,11 @@ public class AlojamientoController {
     @GetMapping
     public AlojamientoResponse consultar() {
         return AlojamientoResponse.de(consultarAlojamiento.ejecutar(alojamiento.id()));
+    }
+
+    @PutMapping("/datos")
+    public AlojamientoResponse actualizarDatos(@Valid @RequestBody ActualizarDatosAlojamientoRequest solicitud) {
+        return AlojamientoResponse.de(actualizarDatos.ejecutar(solicitud.aCommand(alojamiento.id())));
     }
 
     @PutMapping("/parametros")
@@ -86,8 +97,9 @@ public class AlojamientoController {
 
     @PostMapping("/servicios")
     @ResponseStatus(HttpStatus.CREATED)
-    public AlojamientoResponse agregarServicio(@Valid @RequestBody ServicioAdicionalRequest solicitud) {
-        return AlojamientoResponse.de(agregarServicio.ejecutar(solicitud.aCommand(alojamiento.id())));
+    public ResponseEntity<AlojamientoResponse> agregarServicio(@Valid @RequestBody ServicioAdicionalRequest solicitud) {
+        return ResponseEntity.created(URI.create("/api/alojamiento"))
+                .body(AlojamientoResponse.de(agregarServicio.ejecutar(solicitud.aCommand(alojamiento.id()))));
     }
 
     @PutMapping("/servicios/{id}/valor")

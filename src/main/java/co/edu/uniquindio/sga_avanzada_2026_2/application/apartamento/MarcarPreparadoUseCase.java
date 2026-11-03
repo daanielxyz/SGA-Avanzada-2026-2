@@ -4,35 +4,32 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEnc
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Caso de uso: avanzar la preparación de un apartamento (CU-42) o declararlo fuera de servicio (CU-40). Que solo el
- * administrador declare FUERA_DE_SERVICIO (EOPE-04) lo controla la seguridad (DEC-22 · DEC-67).
+ * Caso de uso: el personal deja un apartamento listo para entregarse (CU-42 · RN-11). Quién puede hacerlo lo controla la seguridad (DEC-22 · DEC-67).
  */
 @Service
-public class CambiarEstadoOperativoUseCase {
+public class MarcarPreparadoUseCase {
 
     private final ApartamentoRepository apartamentos;
 
-    public CambiarEstadoOperativoUseCase(ApartamentoRepository apartamentos) {
+    public MarcarPreparadoUseCase(ApartamentoRepository apartamentos) {
         this.apartamentos = apartamentos;
     }
 
     /**
      * @throws RecursoNoEncontradoException si el apartamento no existe
-     * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la transición no
-     *                                      está permitida (EOPE-02)
+     * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la transición no está permitida (EOPE-02)
      */
     @Transactional
-    public ApartamentoResult ejecutar(CambiarEstadoOperativoCommand comando) {
-        ApartamentoId id = new ApartamentoId(comando.codigo());
+    public ApartamentoResult ejecutar(String codigo) {
+        ApartamentoId id = new ApartamentoId(codigo);
         Apartamento apartamento = apartamentos.buscarPorCodigo(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el apartamento", id.valor()));
 
-        apartamento.cambiarEstadoOperativo(EstadoOperativo.valueOf(comando.estado()));
+        apartamento.marcarPreparado();
 
         apartamentos.guardar(apartamento);
         return ApartamentoResult.de(apartamento);

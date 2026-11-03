@@ -1,5 +1,11 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest;
 
+import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.PagoRechazadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoDuplicadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
@@ -29,6 +35,8 @@ import java.util.List;
  */
 @RestControllerAdvice
 public class ManejadorErrores {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ManejadorErrores.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> validacion(MethodArgumentNotValidException e) {
@@ -112,6 +120,41 @@ public class ManejadorErrores {
         return responder(HttpStatus.CONFLICT, "CONCURRENCIA",
                 "Otro usuario cambió este registro al mismo tiempo; vuelva a consultarlo e intente de nuevo",
                 List.of());
+    }
+
+    /**
+     * La base de datos rechazó el cambio, p. ej. dos reservas simultáneas de la misma noche que pasaron a la vez la
+     * verificación del dominio y chocaron con la restricción de PostgreSQL (RN-01 · DEC-12).
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    ResponseEntity<ErrorResponse> integridad(DataIntegrityViolationException e) {
+        return responder(HttpStatus.CONFLICT, "CONCURRENCIA",
+                "La operación choca con otra que se acaba de guardar; vuelva a consultar e intente de nuevo",
+                List.of());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ResponseEntity<ErrorResponse> rutaInexistente(NoResourceFoundException e) {
+        return responder(HttpStatus.NOT_FOUND, "NO_ENCONTRADO", "La ruta solicitada no existe", List.of());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ResponseEntity<ErrorResponse> metodoNoPermitido(HttpRequestMethodNotSupportedException e) {
+        return responder(HttpStatus.METHOD_NOT_ALLOWED, "METODO_NO_PERMITIDO",
+                "La ruta no admite el método " + e.getMethod(), List.of());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    ResponseEntity<ErrorResponse> formatoNoSoportado(HttpMediaTypeNotSupportedException e) {
+        return responder(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "VALIDACION", "El cuerpo debe enviarse como JSON", List.of());
+    }
+
+    /** Lo inesperado queda en el log, nunca en la respuesta: el cliente no ve trazas técnicas (DEC-33). */
+    @ExceptionHandler(Exception.class)
+    ResponseEntity<ErrorResponse> inesperado(Exception e) {
+        LOG.error("Error inesperado", e);
+        return responder(HttpStatus.INTERNAL_SERVER_ERROR, "ERROR_INTERNO",
+                "Ocurrió un error inesperado; intente de nuevo", List.of());
     }
 
     private static ResponseEntity<ErrorResponse> responder(HttpStatus estado, String codigo, String mensaje,

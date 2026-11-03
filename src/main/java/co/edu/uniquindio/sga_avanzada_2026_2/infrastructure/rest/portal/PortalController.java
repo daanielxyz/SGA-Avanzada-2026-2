@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.portal;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.PagarEnLineaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaPortalResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservarDesdePortalUseCase;
@@ -31,6 +33,7 @@ public class PortalController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ReservaPortalResponse> reservar(@Valid @RequestBody ReservaPortalRequest solicitud) {
         ReservaPortalResult creada = reservarDesdePortal.ejecutar(solicitud.aCommand());
         return ResponseEntity.created(URI.create("/api/reservas/" + creada.reserva().codigo()))

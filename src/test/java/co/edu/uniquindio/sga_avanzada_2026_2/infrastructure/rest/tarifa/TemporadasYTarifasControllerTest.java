@@ -155,8 +155,8 @@ class TemporadasYTarifasControllerTest {
 
         mvc.perform(get(TARIFAS))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].valorPorOcupante").value(120000));
+                .andExpect(jsonPath("$.contenido", hasSize(1)))
+                .andExpect(jsonPath("$.contenido[0].valorPorOcupante").value(120000));
     }
 
     @Test
@@ -177,6 +177,6 @@ class TemporadasYTarifasControllerTest {
                 .andExpect(status().isNotFound());
         mvc.perform(get("/api/apartamentos/APT-999/tarifas"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.contenido").isEmpty());
     }
 }

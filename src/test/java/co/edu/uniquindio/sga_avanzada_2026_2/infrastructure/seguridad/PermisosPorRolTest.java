@@ -149,21 +149,21 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
     @Test
     @Tag("EOPE-04")
     void elPersonalDeServicioSoloMueveLaRutaDePreparacion() throws Exception {
-        String estadoOperativo = "/api/apartamentos/APT-101/estado-operativo";
+        String apartamento = "/api/apartamentos/APT-101";
 
-        como(Rol.PERSONAL_SERVICIO, put(estadoOperativo), estado("FUERA_DE_SERVICIO"))
+        como(Rol.PERSONAL_SERVICIO, put(apartamento + "/declarar-fuera-de-servicio"), "")
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.codigo").value("SIN_PERMISO"));
-        enviar(put(estadoOperativo), estado("FUERA_DE_SERVICIO")).andExpect(status().isOk());
-        como(Rol.PERSONAL_SERVICIO, put(estadoOperativo), estado("PENDIENTE_PREPARACION"))
+        enviar(put(apartamento + "/declarar-fuera-de-servicio"), "").andExpect(status().isOk());
+        como(Rol.PERSONAL_SERVICIO, put(apartamento + "/marcar-pendiente-preparacion"), "")
                 .andExpect(status().isForbidden());
-        enviar(put(estadoOperativo), estado("PENDIENTE_PREPARACION")).andExpect(status().isOk());
+        enviar(put(apartamento + "/marcar-pendiente-preparacion"), "").andExpect(status().isOk());
 
-        como(Rol.PERSONAL_SERVICIO, put(estadoOperativo), estado("EN_PREPARACION")).andExpect(status().isOk());
-        como(Rol.PERSONAL_SERVICIO, put(estadoOperativo), estado("PREPARADO"))
+        como(Rol.PERSONAL_SERVICIO, put(apartamento + "/iniciar-preparacion"), "").andExpect(status().isOk());
+        como(Rol.PERSONAL_SERVICIO, put(apartamento + "/marcar-preparado"), "")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estadoOperativo").value("PREPARADO"));
-        como(Rol.RECEPCIONISTA, put(estadoOperativo), estado("EN_PREPARACION")).andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, put(apartamento + "/iniciar-preparacion"), "").andExpect(status().isForbidden());
     }
 
     @Test

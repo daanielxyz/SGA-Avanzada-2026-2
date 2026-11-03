@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.AvisosReserva;
@@ -105,7 +106,7 @@ public final class EscenarioEstancia {
     public String reservaPendiente() {
         TitularCommand ana = new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", "300 123 4567");
         return new CrearReservaUseCase(cargador, reservas, folios, titulares, tarifas, politicas,
-                new DisponibilidadDomainService(), new TarificacionDomainService(), codigos, avisos, AL_CREAR)
+                new DisponibilidadDomainService(), new TarificacionDomainService(), new CupoParqueaderoDomainService(), codigos, avisos, AL_CREAR)
                 .ejecutar(new CrearReservaCommand("APT-101", ENTRADA, ENTRADA.plusDays(3), "DIRECTO", ana,
                         List.of(new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana"),
                                 new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null)),

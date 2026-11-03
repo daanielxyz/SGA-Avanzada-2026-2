@@ -19,7 +19,8 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                                      LocalTime horaLimiteNoShow, int anticipoPct, int minimoMediosPago,
                                      int minimoServiciosAdicionales, int minimoTemporadas,
                                      int minimoTramosCancelacion, int minimoCapacidadesDistintas,
-                                     String pagoEnLinea, long plazoPagoEnLineaMinutos) {
+                                     String pagoEnLinea, long plazoPagoEnLineaMinutos, int cupoParqueadero,
+                                     boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota) {
     }
 
     public record ServicioResponse(String id, String nombre, boolean generaCargo, BigDecimal valor, boolean activo) {
@@ -33,7 +34,8 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                         p.tiempoPreparacionHoras(), p.plazoConfirmacionHoras(), p.horaLimiteNoShow(),
                         p.anticipoPct(), p.minimoMediosPago(), p.minimoServiciosAdicionales(), p.minimoTemporadas(),
                         p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas(), p.pagoEnLinea(),
-                        p.plazoPagoEnLineaMinutos()),
+                        p.plazoPagoEnLineaMinutos(), p.cupoParqueadero(), p.aceptaMascotas(), p.limiteMascotas(),
+                        p.cargoMascota()),
                 r.serviciosAdicionales().stream()
                         .map(s -> new ServicioResponse(s.id(), s.nombre(), s.generaCargo(), s.valor(), s.activo()))
                         .toList(),

@@ -12,8 +12,17 @@ import java.util.List;
  * @param canalOrigen         PORTAL o DIRECTO
  * @param ocupantes           el grupo completo, incluido el titular con su documento (TIT-01)
  * @param horaEstimadaLlegada opcional al crear; necesaria para confirmar (RN-09)
+ * @param vehiculos           los que ocupan parqueadero (RP-02)
+ * @param mascotas            las que lleva el grupo (RP-03)
  */
 public record CrearReservaCommand(String apartamento, LocalDate entrada, LocalDate salida, String canalOrigen,
                                   TitularCommand titular, List<OcupanteCommand> ocupantes,
-                                  LocalTime horaEstimadaLlegada) {
+                                  LocalTime horaEstimadaLlegada, int vehiculos, int mascotas) {
+
+    /** Sin vehículos ni mascotas, como reserva el portal. */
+    public CrearReservaCommand(String apartamento, LocalDate entrada, LocalDate salida, String canalOrigen,
+                               TitularCommand titular, List<OcupanteCommand> ocupantes,
+                               LocalTime horaEstimadaLlegada) {
+        this(apartamento, entrada, salida, canalOrigen, titular, ocupantes, horaEstimadaLlegada, 0, 0);
+    }
 }

@@ -144,6 +144,14 @@ public final class RepositoriosEnMemoria {
         }
 
         @Override
+        public Pagina<PoliticaCancelacion> listarVersiones(AlojamientoId alojamientoId, int numeroPagina) {
+            return Pagina.de(guardadas.values().stream()
+                    .filter(p -> p.alojamientoId().equals(alojamientoId))
+                    .sorted(Comparator.comparingInt(PoliticaCancelacion::version).reversed())
+                    .toList(), numeroPagina);
+        }
+
+        @Override
         public Optional<PoliticaCancelacion> buscarVigente(AlojamientoId alojamientoId) {
             return guardadas.values().stream()
                     .filter(p -> p.alojamientoId().equals(alojamientoId))
@@ -176,6 +184,12 @@ public final class RepositoriosEnMemoria {
         }
 
         @Override
+        public Pagina<Tarifa> listarHistorial(ApartamentoId apartamentoId, int numeroPagina) {
+            return Pagina.de(guardadas.stream().filter(t -> t.apartamentoId().equals(apartamentoId)).toList(),
+                    numeroPagina);
+        }
+
+        @Override
         public List<Tarifa> buscarVigentesPorApartamento(ApartamentoId apartamentoId, LocalDate fecha) {
             return guardadas.stream()
                     .filter(t -> t.apartamentoId().equals(apartamentoId) && !t.vigenteDesde().isAfter(fecha))
@@ -194,6 +208,11 @@ public final class RepositoriosEnMemoria {
         @Override
         public void guardar(Reserva reserva) {
             guardadas.put(reserva.codigo(), reserva);
+        }
+
+        @Override
+        public List<Reserva> buscarActivasConVehiculos() {
+            return guardadas.values().stream().filter(r -> r.estaActiva() && r.vehiculos() > 0).toList();
         }
 
         @Override

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 
 import java.time.LocalDate;
@@ -19,4 +20,11 @@ public interface TarifaRepository {
      * @param fecha fecha de la operación (hoy), no la de la estancia
      */
     List<Tarifa> buscarVigentesPorApartamento(ApartamentoId apartamentoId, LocalDate fecha);
+
+    /**
+     * Todas las versiones del apartamento, de la más reciente a la más antigua, de 10 en 10 (TAR-05).
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Tarifa> listarHistorial(ApartamentoId apartamentoId, int numeroPagina);
 }

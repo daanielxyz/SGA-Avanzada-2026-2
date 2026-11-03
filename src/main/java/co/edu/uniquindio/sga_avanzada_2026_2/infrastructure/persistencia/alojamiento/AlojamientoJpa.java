@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojamiento;
 
+import java.math.BigDecimal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -61,6 +62,14 @@ public class AlojamientoJpa {
     private ModoPagoEnLinea pagoEnLinea;
 
     private int plazoPagoEnLineaMin;
+
+    private int cupoParqueadero;
+
+    private boolean aceptaMascotas;
+
+    private int limiteMascotas;
+
+    private BigDecimal cargoMascota;
 
     @Version
     private Long version;

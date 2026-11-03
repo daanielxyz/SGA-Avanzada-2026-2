@@ -1,0 +1,4908 @@
+{
+  "info": {
+    "name": "SGA · Entrega 2",
+    "description": "Ejecutar completa, en orden, contra la aplicación recién arrancada sobre una base vacía: los datos de prueba se cargan solos. Cada petición comprueba su código HTTP.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Inicio de sesión, 401 y 403",
+      "item": [
+        {
+          "name": "401: sin token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400: login sin contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin.demo@example.com\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "401: contraseña incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin.demo@example.com\",\n  \"contrasena\": \"Mala12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login administrador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"admin.demo@example.com\",\n  \"contrasena\": \"Demo12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenadmin\", json[\"token\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login recepcionista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"recepcion.demo@example.com\",\n  \"contrasena\": \"Demo12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenrecepcion\", json[\"token\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login personal de servicio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/auth/login",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"servicio.demo@example.com\",\n  \"contrasena\": \"Demo12345\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"tokenservicio\", json[\"token\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403: el personal de servicio no ve reservas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenservicio}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403: recepción no configura temporadas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/temporadas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "temporadas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403: recepción no saca de servicio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-101/declarar-fuera-de-servicio",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-101",
+                "declarar-fuera-de-servicio"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "403: recepción no gestiona usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/usuarios",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 403', () => pm.response.to.have.status(403));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Datos de prueba y consultas",
+      "item": [
+        {
+          "name": "Los 10 apartamentos, de 10 en 10",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Un usuario por rol",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/usuarios",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Alojamiento y parámetros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/alojamiento",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "alojamiento"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Temporadas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/temporadas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "temporadas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"temporadaBase\", json[\"temporadas\"][0][\"id\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Política vigente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/politicas/vigente",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "politicas",
+                "vigente"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Versiones de la política",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/politicas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "politicas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Canales de venta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/canales",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "canales"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tarifas vigentes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-101/tarifas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-101",
+                "tarifas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Histórico de tarifas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-101/tarifas/historial",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-101",
+                "tarifas",
+                "historial"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas, de la más reciente a la más antigua",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas PENDIENTE",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=PENDIENTE",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "PENDIENTE"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cPendiente\", json[\"contenido\"][0][\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas CONFIRMADA del portal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=CONFIRMADA&canal=PORTAL",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "CONFIRMADA"
+                },
+                {
+                  "key": "canal",
+                  "value": "PORTAL"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cConfirmada\", json[\"contenido\"][0][\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas EN_CURSO",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=EN_CURSO",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "EN_CURSO"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas FINALIZADA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=FINALIZADA",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "FINALIZADA"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cFinalizada\", json[\"contenido\"][0][\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas CANCELADA",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=CANCELADA",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "CANCELADA"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas NO_SHOW",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?estado=NO_SHOW",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "NO_SHOW"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reservas por canal EXTERNO",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas?canal=EXTERNO",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": [
+                {
+                  "key": "canal",
+                  "value": "EXTERNO"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Búsqueda por fechas y grupo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/disponibles?entrada={{d60}}&salida={{d62}}&ocupantes=2",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "entrada",
+                  "value": "{{d60}}"
+                },
+                {
+                  "key": "salida",
+                  "value": "{{d62}}"
+                },
+                {
+                  "key": "ocupantes",
+                  "value": "2"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Búsqueda con fechas de nacimiento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/disponibles?entrada={{d60}}&salida={{d62}}&ocupantes=2&fechasNacimiento=1990-01-01&fechasNacimiento=2024-01-01",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "entrada",
+                  "value": "{{d60}}"
+                },
+                {
+                  "key": "salida",
+                  "value": "{{d62}}"
+                },
+                {
+                  "key": "ocupantes",
+                  "value": "2"
+                },
+                {
+                  "key": "fechasNacimiento",
+                  "value": "1990-01-01"
+                },
+                {
+                  "key": "fechasNacimiento",
+                  "value": "2024-01-01"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Búsqueda con filtros",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/disponibles?entrada={{d60}}&salida={{d62}}&ocupantes=2&capacidadMinima=3&precioMaximo=2000000&caracteristicas=Wifi&servicios=Parqueadero",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "entrada",
+                  "value": "{{d60}}"
+                },
+                {
+                  "key": "salida",
+                  "value": "{{d62}}"
+                },
+                {
+                  "key": "ocupantes",
+                  "value": "2"
+                },
+                {
+                  "key": "capacidadMinima",
+                  "value": "3"
+                },
+                {
+                  "key": "precioMaximo",
+                  "value": "2000000"
+                },
+                {
+                  "key": "caracteristicas",
+                  "value": "Wifi"
+                },
+                {
+                  "key": "servicios",
+                  "value": "Parqueadero"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400: búsqueda sin fechas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/disponibles?ocupantes=2",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "disponibles"
+              ],
+              "query": [
+                {
+                  "key": "ocupantes",
+                  "value": "2"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calendario de disponibilidad",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-103/calendario?desde={{d0}}&hasta={{d4}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-103",
+                "calendario"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{d0}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{d4}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Calendario de ocupación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/ocupacion?desde={{d0}}&hasta={{d40}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "ocupacion"
+              ],
+              "query": [
+                {
+                  "key": "desde",
+                  "value": "{{d0}}"
+                },
+                {
+                  "key": "hasta",
+                  "value": "{{d40}}"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apartamentos por preparar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/pendientes-preparacion",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "pendientes-preparacion"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenservicio}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cotizar con desglose por noche",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/cotizaciones",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "cotizaciones"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-102\",\n  \"entrada\": \"{{d60}}\",\n  \"salida\": \"{{d62}}\",\n  \"fechasNacimiento\": [\n    \"1990-01-01\",\n    \"2024-01-01\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404: apartamento inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-999",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-999"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 404', () => pm.response.to.have.status(404));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404: ruta inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/no-existe",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "no-existe"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 404', () => pm.response.to.have.status(404));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "405: método no permitido",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 405', () => pm.response.to.have.status(405));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Gestión del alojamiento y los apartamentos",
+      "item": [
+        {
+          "name": "Editar datos del alojamiento",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/alojamiento/datos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "alojamiento",
+                "datos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Puerta al Sol\",\n  \"descripcion\": \"Apartamentos en el Eje Cafetero\",\n  \"ciudad\": \"Salento\",\n  \"direccion\": \"Calle Real 1\",\n  \"normas\": \"Silencio desde las 22:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400: datos del alojamiento vacíos",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/alojamiento/datos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "alojamiento",
+                "datos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear apartamento (201 con Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"APT-120\",\n  \"nombre\": \"Nuevo\",\n  \"descripcion\": \"Para probar\",\n  \"capacidad\": 2,\n  \"dormitorios\": 1,\n  \"imagenes\": [\n    {\n      \"url\": \"https://picsum.photos/seed/a/800/450\",\n      \"principal\": true\n    }\n  ],\n  \"caracteristicas\": [\n    \"Wifi\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar apartamento",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Nuevo editado\",\n  \"descripcion\": \"Editado\",\n  \"dormitorios\": 1,\n  \"caracteristicas\": [\n    \"Wifi\",\n    \"Balcón\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Agregar imagen (201 con Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/imagenes",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "imagenes"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://picsum.photos/seed/b/800/450\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marcar imagen principal",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/imagenes/principal",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "imagenes",
+                "principal"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://picsum.photos/seed/b/800/450\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quitar imagen",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/imagenes/quitar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "imagenes",
+                "quitar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://picsum.photos/seed/a/800/450\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 IMG-02: imagen repetida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/imagenes",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "imagenes"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://picsum.photos/seed/b/800/450\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 TAR-03: activar sin tarifas completas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/activar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "activar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retirar de la venta: APT-120 no está activo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-120/retirar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-120",
+                "retirar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Definir tarifa (nueva versión)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-101/tarifas/{{temporadaBase}}",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-101",
+                "tarifas",
+                "{{temporadaBase}}"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"valorPorOcupante\": 125000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Flujo completo de una reserva",
+      "item": [
+        {
+          "name": "Crear reserva (nace PENDIENTE, 201 con Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-108\",\n  \"entrada\": \"{{d0}}\",\n  \"salida\": \"{{d2}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 2001\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"2001\",\n    \"correo\": \"t2001@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 2001\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"2001\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cFlujo\", json[\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-09: confirmar sin hora de llegada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/confirmar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Indicar hora de llegada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/hora-llegada",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "hora-llegada"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hora\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409: confirmar sin el anticipo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/confirmar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar folio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/folio",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "folio"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"saldo\", json[\"saldo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-15: medio de pago no habilitado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/folio/pagos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "folio",
+                "pagos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medio\": \"TRUEQUE\",\n  \"monto\": 1000,\n  \"fecha\": \"{{d0}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar pago (201 con Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/folio/pagos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "folio",
+                "pagos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medio\": \"EFECTIVO\",\n  \"monto\": {{saldo}},\n  \"fecha\": \"{{d0}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/confirmar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar llegada (pasa a EN_CURSO)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/registrar-llegada",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "registrar-llegada"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-08: cancelar una reserva EN_CURSO",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/cancelar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "cancelar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"No se puede\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar salida (pasa a FINALIZADA)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFlujo}}/registrar-salida",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFlujo}}",
+                "registrar-salida"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar preparación",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-108/iniciar-preparacion",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-108",
+                "iniciar-preparacion"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenservicio}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marcar preparado",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-108/marcar-preparado",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-108",
+                "marcar-preparado"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenservicio}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 EOPE-02: transición de estado operativo inválida",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-108/iniciar-preparacion",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-108",
+                "iniciar-preparacion"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenservicio}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Un 409 por cada regla",
+      "item": [
+        {
+          "name": "409 RN-01: noches ya reservadas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-102\",\n  \"entrada\": \"{{d11}}\",\n  \"salida\": \"{{d12}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3001\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3001\",\n    \"correo\": \"t3001@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3001\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3001\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-02: más ocupantes que la capacidad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-101\",\n  \"entrada\": \"{{d70}}\",\n  \"salida\": \"{{d71}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3002\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3002\",\n    \"correo\": \"t3002@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3002\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3002\",\n      \"nacionalidad\": \"CO\"\n    },\n    {\n      \"nombre\": \"Acompañante 1\",\n      \"fechaNacimiento\": \"1991-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"30021\",\n      \"nacionalidad\": \"CO\"\n    },\n    {\n      \"nombre\": \"Acompañante 2\",\n      \"fechaNacimiento\": \"1991-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"30022\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-03: salida anterior a la entrada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-101\",\n  \"entrada\": \"{{d71}}\",\n  \"salida\": \"{{d70}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3003\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3003\",\n    \"correo\": \"t3003@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3003\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3003\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-04: entrada anterior a hoy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-101\",\n  \"entrada\": \"{{dm3}}\",\n  \"salida\": \"{{dm1}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3004\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3004\",\n    \"correo\": \"t3004@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3004\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3004\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-07: apartamento bloqueado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-109\",\n  \"entrada\": \"{{d21}}\",\n  \"salida\": \"{{d22}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3005\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3005\",\n    \"correo\": \"t3005@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3005\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3005\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-10: registro antes de la fecha de entrada",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cConfirmada}}/registrar-llegada",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cConfirmada}}",
+                "registrar-llegada"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-08: confirmar una reserva FINALIZADA",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cFinalizada}}/confirmar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cFinalizada}}",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-17: cerrar folio con saldo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cPendiente}}/folio/cerrar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cPendiente}}",
+                "folio",
+                "cerrar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserva de hoy para probar RN-11",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-105\",\n  \"entrada\": \"{{d0}}\",\n  \"salida\": \"{{d1}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3006\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3006\",\n    \"correo\": \"t3006@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3006\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3006\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cHoy\", json[\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar su folio",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cHoy}}/folio",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cHoy}}",
+                "folio"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"saldoHoy\", json[\"saldo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pagarla",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cHoy}}/folio/pagos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cHoy}}",
+                "folio",
+                "pagos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"medio\": \"EFECTIVO\",\n  \"monto\": {{saldoHoy}},\n  \"fecha\": \"{{d0}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmarla",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cHoy}}/confirmar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cHoy}}",
+                "confirmar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sacar el apartamento de servicio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-105/declarar-fuera-de-servicio",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-105",
+                "declarar-fuera-de-servicio"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-11: entregar un apartamento que no está PREPARADO",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cHoy}}/registrar-llegada",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cHoy}}",
+                "registrar-llegada"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Devolverlo a preparación",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-105/marcar-pendiente-preparacion",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-105",
+                "marcar-pendiente-preparacion"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserva para probar RN-12",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-106\",\n  \"entrada\": \"{{d80}}\",\n  \"salida\": \"{{d82}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3007\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3007\",\n    \"correo\": \"t3007@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3007\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3007\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cLibera\", json[\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Otra reserva, para probar RN-14",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-106\",\n  \"entrada\": \"{{d90}}\",\n  \"salida\": \"{{d92}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3008\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3008\",\n    \"correo\": \"t3008@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3008\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3008\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"cMover\", json[\"codigo\"]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-14: modificar hacia noches ocupadas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cMover}}/modificar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cMover}}",
+                "modificar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-106\",\n  \"entrada\": \"{{d80}}\",\n  \"salida\": \"{{d82}}\",\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3008\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3008\",\n      \"nacionalidad\": \"CO\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RN-14: modificar hacia noches libres recalcula",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cMover}}/modificar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cMover}}",
+                "modificar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-106\",\n  \"entrada\": \"{{d95}}\",\n  \"salida\": \"{{d97}}\",\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3008\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3008\",\n      \"nacionalidad\": \"CO\"\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancelar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas/{{cLibera}}/cancelar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas",
+                "{{cLibera}}",
+                "cancelar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"El huésped desiste\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RN-12: la cancelación libera las noches",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-106\",\n  \"entrada\": \"{{d80}}\",\n  \"salida\": \"{{d82}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3009\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3009\",\n    \"correo\": \"t3009@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3009\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3009\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Subir el tiempo de preparación a 6 horas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/alojamiento/parametros",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "alojamiento",
+                "parametros"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"umbralEdadFacturable\": 12,\n  \"horaEntrada\": \"15:00:00\",\n  \"horaSalida\": \"11:00:00\",\n  \"tiempoPreparacionHoras\": 6,\n  \"plazoConfirmacionHoras\": 24,\n  \"horaLimiteNoShow\": \"22:00:00\",\n  \"anticipoPct\": 30,\n  \"minimoMediosPago\": 2,\n  \"minimoServiciosAdicionales\": 1,\n  \"minimoTemporadas\": 2,\n  \"minimoTramosCancelacion\": 2,\n  \"minimoCapacidadesDistintas\": 2,\n  \"pagoEnLinea\": \"ANTICIPO\",\n  \"plazoPagoEnLineaMinutos\": 30,\n  \"cupoParqueadero\": 8,\n  \"aceptaMascotas\": true,\n  \"limiteMascotas\": 2,\n  \"cargoMascota\": 30000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserva previa para probar RN-20",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-107\",\n  \"entrada\": \"{{d100}}\",\n  \"salida\": \"{{d102}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3010\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3010\",\n    \"correo\": \"t3010@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3010\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3010\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RN-20: sin tiempo de preparación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-107\",\n  \"entrada\": \"{{d102}}\",\n  \"salida\": \"{{d103}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3011\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3011\",\n    \"correo\": \"t3011@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3011\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3011\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dejar el tiempo de preparación en 3 horas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/alojamiento/parametros",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "alojamiento",
+                "parametros"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"umbralEdadFacturable\": 12,\n  \"horaEntrada\": \"15:00:00\",\n  \"horaSalida\": \"11:00:00\",\n  \"tiempoPreparacionHoras\": 3,\n  \"plazoConfirmacionHoras\": 24,\n  \"horaLimiteNoShow\": \"22:00:00\",\n  \"anticipoPct\": 30,\n  \"minimoMediosPago\": 2,\n  \"minimoServiciosAdicionales\": 1,\n  \"minimoTemporadas\": 2,\n  \"minimoTramosCancelacion\": 2,\n  \"minimoCapacidadesDistintas\": 2,\n  \"pagoEnLinea\": \"ANTICIPO\",\n  \"plazoPagoEnLineaMinutos\": 30,\n  \"cupoParqueadero\": 8,\n  \"aceptaMascotas\": true,\n  \"limiteMascotas\": 2,\n  \"cargoMascota\": 30000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Temporada con estancia mínima de 3 noches",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/temporadas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "temporadas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Feria\",\n  \"fechaInicio\": \"{{d300}}\",\n  \"fechaFin\": \"{{d310}}\",\n  \"estanciaMinimaNoches\": 3,\n  \"tarifas\": [\n    {\n      \"apartamento\": \"APT-101\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-102\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-103\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-104\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-105\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-106\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-107\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-108\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-109\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-110\",\n      \"valorPorOcupante\": 200000\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RP-01: estancia menor al mínimo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-101\",\n  \"entrada\": \"{{d300}}\",\n  \"salida\": \"{{d301}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3012\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3012\",\n    \"correo\": \"t3012@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3012\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3012\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 TEM-02: temporadas solapadas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/temporadas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "temporadas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Otra feria\",\n  \"fechaInicio\": \"{{d301}}\",\n  \"fechaFin\": \"{{d302}}\",\n  \"tarifas\": [\n    {\n      \"apartamento\": \"APT-101\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-102\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-103\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-104\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-105\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-106\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-107\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-108\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-109\",\n      \"valorPorOcupante\": 200000\n    },\n    {\n      \"apartamento\": \"APT-110\",\n      \"valorPorOcupante\": 200000\n    }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserva que llena el parqueadero",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-104\",\n  \"entrada\": \"{{d40}}\",\n  \"salida\": \"{{d42}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3013\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3013\",\n    \"correo\": \"t3013@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3013\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3013\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 8,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RP-02: el parqueadero no tiene cupo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-108\",\n  \"entrada\": \"{{d41}}\",\n  \"salida\": \"{{d42}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3014\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3014\",\n    \"correo\": \"t3014@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3014\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3014\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 1,\n  \"mascotas\": 0,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 RP-03: más mascotas que el límite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-108\",\n  \"entrada\": \"{{d70}}\",\n  \"salida\": \"{{d71}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3015\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3015\",\n    \"correo\": \"t3015@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3015\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3015\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 3,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RP-03: las mascotas permitidas generan cargo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/reservas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenrecepcion}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apartamento\": \"APT-108\",\n  \"entrada\": \"{{d70}}\",\n  \"salida\": \"{{d71}}\",\n  \"canalOrigen\": \"DIRECTO\",\n  \"titular\": {\n    \"nombre\": \"Prueba 3016\",\n    \"tipoDocumento\": \"CC\",\n    \"numeroDocumento\": \"3016\",\n    \"correo\": \"t3016@example.com\",\n    \"telefono\": \"3001234567\"\n  },\n  \"ocupantes\": [\n    {\n      \"nombre\": \"Prueba 3016\",\n      \"fechaNacimiento\": \"1990-01-01\",\n      \"tipoDocumento\": \"CC\",\n      \"numeroDocumento\": \"3016\",\n      \"nacionalidad\": \"CO\"\n    }\n  ],\n  \"vehiculos\": 0,\n  \"mascotas\": 2,\n  \"horaEstimadaLlegada\": \"16:00:00\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 BLO-01: bloqueo sobre noches reservadas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-102/bloqueos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-102",
+                "bloqueos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inicio\": \"{{d11}}\",\n  \"fin\": \"{{d12}}\",\n  \"motivo\": \"Pintura\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar bloqueo (201 con Location)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-102/bloqueos",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-102",
+                "bloqueos"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inicio\": \"{{d60}}\",\n  \"fin\": \"{{d62}}\",\n  \"motivo\": \"Pintura\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 APA-16: retirar con reservas activas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/apartamentos/APT-102/retirar",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "apartamentos",
+                "APT-102",
+                "retirar"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409 POL-01: política con un solo tramo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/politicas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "politicas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tramos\": [\n    {\n      \"antelacionMinHoras\": 0,\n      \"penalizacion\": {\n        \"base\": \"VALOR_TOTAL\",\n        \"porcentaje\": 50\n      }\n    }\n  ],\n  \"penalizacionNoShow\": {\n    \"base\": \"VALOR_TOTAL\",\n    \"porcentaje\": 100\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('error en formato único', () => { const e = pm.response.json(); pm.expect(e).to.have.property('codigo'); pm.expect(e).to.have.property('mensaje'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publicar política: la anterior se conserva (201)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/api/politicas",
+              "host": [
+                "{{base}}"
+              ],
+              "path": [
+                "api",
+                "politicas"
+              ],
+              "query": []
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenadmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tramos\": [\n    {\n      \"antelacionMinHoras\": 72,\n      \"penalizacion\": {\n        \"base\": \"VALOR_TOTAL\",\n        \"porcentaje\": 0\n      }\n    },\n    {\n      \"antelacionMinHoras\": 0,\n      \"penalizacion\": {\n        \"base\": \"VALOR_TOTAL\",\n        \"porcentaje\": 60\n      }\n    }\n  ],\n  \"penalizacionNoShow\": {\n    \"base\": \"VALOR_TOTAL\",\n    \"porcentaje\": 100\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('trae Location', () => pm.response.to.have.header('Location'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const hoy = new Date();",
+          "const f = n => { const x = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + n);",
+          "  const p = v => String(v).padStart(2, '0'); return x.getFullYear() + '-' + p(x.getMonth() + 1) + '-' + p(x.getDate()); };",
+          "pm.collectionVariables.set('dm30', f(-30));",
+          "pm.collectionVariables.set('dm3', f(-3));",
+          "pm.collectionVariables.set('dm1', f(-1));",
+          "pm.collectionVariables.set('d0', f(0));",
+          "pm.collectionVariables.set('d1', f(1));",
+          "pm.collectionVariables.set('d2', f(2));",
+          "pm.collectionVariables.set('d3', f(3));",
+          "pm.collectionVariables.set('d4', f(4));",
+          "pm.collectionVariables.set('d10', f(10));",
+          "pm.collectionVariables.set('d11', f(11));",
+          "pm.collectionVariables.set('d12', f(12));",
+          "pm.collectionVariables.set('d13', f(13));",
+          "pm.collectionVariables.set('d15', f(15));",
+          "pm.collectionVariables.set('d21', f(21));",
+          "pm.collectionVariables.set('d22', f(22));",
+          "pm.collectionVariables.set('d40', f(40));",
+          "pm.collectionVariables.set('d41', f(41));",
+          "pm.collectionVariables.set('d42', f(42));",
+          "pm.collectionVariables.set('d60', f(60));",
+          "pm.collectionVariables.set('d62', f(62));",
+          "pm.collectionVariables.set('d70', f(70));",
+          "pm.collectionVariables.set('d71', f(71));",
+          "pm.collectionVariables.set('d80', f(80));",
+          "pm.collectionVariables.set('d82', f(82));",
+          "pm.collectionVariables.set('d90', f(90));",
+          "pm.collectionVariables.set('d92', f(92));",
+          "pm.collectionVariables.set('d95', f(95));",
+          "pm.collectionVariables.set('d97', f(97));",
+          "pm.collectionVariables.set('d100', f(100));",
+          "pm.collectionVariables.set('d102', f(102));",
+          "pm.collectionVariables.set('d103', f(103));",
+          "pm.collectionVariables.set('d300', f(300));",
+          "pm.collectionVariables.set('d301', f(301));",
+          "pm.collectionVariables.set('d302', f(302));",
+          "pm.collectionVariables.set('d310', f(310));"
+        ]
+      }
+    }
+  ]
+}

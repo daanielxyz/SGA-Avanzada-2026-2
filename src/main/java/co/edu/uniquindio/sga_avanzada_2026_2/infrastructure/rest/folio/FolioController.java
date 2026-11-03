@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.folio;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioCommand;
@@ -68,36 +70,41 @@ public class FolioController {
 
     @PostMapping("/pagos")
     @ResponseStatus(HttpStatus.CREATED)
-    public FolioResponse registrarPago(@PathVariable String codigo,
+    public ResponseEntity<FolioResponse> registrarPago(@PathVariable String codigo,
                                        @Valid @RequestBody RegistrarPagoRequest solicitud) {
-        return FolioResponse.de(registrarPago.ejecutar(solicitud.aCommand(codigo)));
+        return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
+                .body(FolioResponse.de(registrarPago.ejecutar(solicitud.aCommand(codigo))));
     }
 
     @PostMapping("/devoluciones")
     @ResponseStatus(HttpStatus.CREATED)
-    public FolioResponse registrarDevolucion(@PathVariable String codigo,
+    public ResponseEntity<FolioResponse> registrarDevolucion(@PathVariable String codigo,
                                              @Valid @RequestBody RegistrarPagoRequest solicitud) {
-        return FolioResponse.de(registrarDevolucion.ejecutar(solicitud.aCommand(codigo)));
+        return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
+                .body(FolioResponse.de(registrarDevolucion.ejecutar(solicitud.aCommand(codigo))));
     }
 
     @PostMapping("/pagos/{id}/revertir")
     @ResponseStatus(HttpStatus.CREATED)
-    public FolioResponse revertirPago(@PathVariable String codigo, @PathVariable String id) {
-        return FolioResponse.de(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id)));
+    public ResponseEntity<FolioResponse> revertirPago(@PathVariable String codigo, @PathVariable String id) {
+        return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
+                .body(FolioResponse.de(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id))));
     }
 
     @PostMapping("/cargos/{id}/revertir")
     @ResponseStatus(HttpStatus.CREATED)
-    public FolioResponse revertirCargo(@PathVariable String codigo, @PathVariable String id,
+    public ResponseEntity<FolioResponse> revertirCargo(@PathVariable String codigo, @PathVariable String id,
                                        @Valid @RequestBody RevertirCargoRequest solicitud) {
-        return FolioResponse.de(revertirCargo.ejecutar(solicitud.aCommand(codigo, id)));
+        return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
+                .body(FolioResponse.de(revertirCargo.ejecutar(solicitud.aCommand(codigo, id))));
     }
 
     @PostMapping("/servicios")
     @ResponseStatus(HttpStatus.CREATED)
-    public FolioResponse cargarServicio(@PathVariable String codigo,
+    public ResponseEntity<FolioResponse> cargarServicio(@PathVariable String codigo,
                                         @Valid @RequestBody CargarServicioRequest solicitud) {
-        return FolioResponse.de(cargarServicio.ejecutar(solicitud.aCommand(codigo)));
+        return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
+                .body(FolioResponse.de(cargarServicio.ejecutar(solicitud.aCommand(codigo))));
     }
 
     /**

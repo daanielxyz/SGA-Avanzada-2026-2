@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.RepositoriosEnMemoria;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
@@ -136,7 +137,8 @@ class CicloReservaTest {
 
     private CrearReservaUseCase crearReserva() {
         return new CrearReservaUseCase(cargador, reservas, folios, titulares, tarifas, politicas,
-                new DisponibilidadDomainService(), new TarificacionDomainService(), codigos,
+                new DisponibilidadDomainService(), new TarificacionDomainService(),
+                new CupoParqueaderoDomainService(), codigos,
                 new AvisosReserva(notificaciones), RepositoriosEnMemoria.RELOJ);
     }
 
@@ -324,7 +326,7 @@ class CicloReservaTest {
 
     private ModificarReservaUseCase modificarReserva() {
         return new ModificarReservaUseCase(cargador, reservas, folios, tarifas, new DisponibilidadDomainService(),
-                new TarificacionDomainService(), RepositoriosEnMemoria.RELOJ);
+                new TarificacionDomainService(), new CupoParqueaderoDomainService(), RepositoriosEnMemoria.RELOJ);
     }
 
     @Test

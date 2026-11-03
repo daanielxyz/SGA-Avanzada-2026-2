@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.tarifa;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Tarifa;
@@ -38,9 +41,22 @@ public class TarifaRepositoryJpa implements TarifaRepository {
     @Transactional(readOnly = true)
     public List<Tarifa> buscarVigentesPorApartamento(ApartamentoId apartamentoId, LocalDate fecha) {
         return filas.buscarVigentes(apartamentoId.valor(), fecha).stream()
-                .map(t -> new Tarifa(new TarifaId(t.getId()), new ApartamentoId(t.getApartamentoCodigo()),
-                        new TemporadaId(t.getTemporadaId()), new Dinero(t.getValorPorOcupante()), t.getVersion(),
-                        t.getVigenteDesde()))
+                .map(TarifaRepositoryJpa::aDominio)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Tarifa> listarHistorial(ApartamentoId apartamentoId, int numeroPagina) {
+        Page<TarifaJpa> pagina = filas.findByApartamentoCodigoOrderByVigenteDesdeDescVersionDesc(apartamentoId.valor(),
+                PageRequest.of(numeroPagina, Pagina.TAMANO));
+        return new Pagina<>(pagina.getContent().stream().map(TarifaRepositoryJpa::aDominio).toList(), numeroPagina,
+                Pagina.TAMANO, pagina.getTotalElements());
+    }
+
+    private static Tarifa aDominio(TarifaJpa t) {
+        return new Tarifa(new TarifaId(t.getId()), new ApartamentoId(t.getApartamentoCodigo()),
+                new TemporadaId(t.getTemporadaId()), new Dinero(t.getValorPorOcupante()), t.getVersion(),
+                t.getVigenteDesde());
     }
 }

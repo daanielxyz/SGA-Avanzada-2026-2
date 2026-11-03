@@ -1,0 +1,4807 @@
+openapi: "3.1.0"
+info:
+  title: "SGA · API de Puerta al Sol"
+  description: "Contrato de la API del SGA. Sale de los controladores con springdoc (DEC-79) y se publica aquí; si un endpoint cambia, este archivo se regenera en el mismo commit desde /v3/api-docs. Los errores llegan siempre como ErrorResponse (estado, codigo, mensaje, detalles)."
+  version: MVP1
+servers:
+  - url: "http://localhost:8080"
+    description: Desarrollo local
+security:
+  - token: []
+paths:
+  "/api/usuarios/{id}":
+    put:
+      tags:
+        - usuario-controller
+      operationId: modificar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ModificarUsuarioRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/UsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/usuarios/{id}/eliminar":
+    put:
+      tags:
+        - usuario-controller
+      operationId: eliminar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/UsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/usuarios/perfil:
+    get:
+      tags:
+        - perfil-controller
+      operationId: consultar
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/UsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - perfil-controller
+      operationId: actualizar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/DatosPersonalesRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/UsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/usuarios/perfil/contrasena:
+    put:
+      tags:
+        - perfil-controller
+      operationId: cambiarContrasena
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CambiarContrasenaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/titulares/{id}":
+    get:
+      tags:
+        - titular-controller
+      operationId: consultar_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TitularResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - titular-controller
+      operationId: actualizar_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ActualizarTitularRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TitularResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/temporadas/{id}/fechas":
+    put:
+      tags:
+        - temporada-controller
+      operationId: cambiarFechas
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CambiarFechasTemporadaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CalendarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/temporadas/{id}/desactivar":
+    put:
+      tags:
+        - temporada-controller
+      operationId: desactivar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CalendarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/registrar-salida":
+    put:
+      tags:
+        - estancia-controller
+      operationId: registrarSalida
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarSalidaRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EstanciaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/registrar-llegada":
+    put:
+      tags:
+        - estancia-controller
+      operationId: registrarLlegada
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EstanciaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/no-show":
+    put:
+      tags:
+        - reserva-controller
+      operationId: declararNoShow
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CancelacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/modificar":
+    put:
+      tags:
+        - reserva-controller
+      operationId: modificar_1
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ModificarReservaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/hora-llegada":
+    put:
+      tags:
+        - reserva-controller
+      operationId: indicarHoraLlegada
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/HoraLlegadaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/cerrar":
+    put:
+      tags:
+        - folio-controller
+      operationId: cerrar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CerrarFolioRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/corregir-registro":
+    put:
+      tags:
+        - estancia-controller
+      operationId: corregirRegistro
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CorregirRegistroRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EstanciaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/confirmar":
+    put:
+      tags:
+        - reserva-controller
+      operationId: confirmar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/cancelar":
+    put:
+      tags:
+        - reserva-controller
+      operationId: cancelar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CancelacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/novedades/{id}/avanzar":
+    put:
+      tags:
+        - novedad-controller
+      operationId: avanzar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/NovedadResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/mi-cuenta:
+    get:
+      tags:
+        - cuenta-controller
+      operationId: consultar_2
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CuentaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - cuenta-controller
+      operationId: actualizar_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ActualizarCuentaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CuentaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/conflictos/{id}/resolver":
+    put:
+      tags:
+        - conflicto-controller
+      operationId: resolver
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ResolverConflictoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ConflictoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/canales/{id}/desactivar":
+    put:
+      tags:
+        - canal-controller
+      operationId: desactivar_1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CanalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/canales-externos/{canalId}/reservas/{idExterno}/cancelar":
+    put:
+      tags:
+        - contrato-canal-controller
+      operationId: cancelarReserva
+      parameters:
+        - name: canalId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: idExterno
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-Canal-Clave
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CancelacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/huesped/cambio-correo:
+    put:
+      tags:
+        - acceso-huesped-controller
+      operationId: confirmarCambioCorreo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ConfirmarCambioCorreoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - acceso-huesped-controller
+      operationId: solicitarCambioCorreo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SolicitarCambioCorreoRequest"
+        required: true
+      responses:
+        "202":
+          description: Accepted
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}":
+    get:
+      tags:
+        - apartamento-controller
+      operationId: consultar_3
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - apartamento-controller
+      operationId: actualizar_3
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ActualizarApartamentoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/tarifas/{temporada}":
+    put:
+      tags:
+        - tarifa-controller
+      operationId: definir
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: temporada
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/DefinirTarifaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TarifaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/retirar":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: retirar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/marcar-preparado":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: marcarPreparado
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/marcar-pendiente-preparacion":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: marcarPendientePreparacion
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/iniciar-preparacion":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: iniciarPreparacion
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/imagenes/quitar":
+    put:
+      tags:
+        - imagen-apartamento-controller
+      operationId: quitar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImagenApartamentoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/imagenes/principal":
+    put:
+      tags:
+        - imagen-apartamento-controller
+      operationId: marcarPrincipal
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImagenApartamentoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/declarar-fuera-de-servicio":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: declararFueraDeServicio
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/capacidad":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: cambiarCapacidad
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CambiarCapacidadRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CambioCapacidadResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/bloqueos/{id}/levantar":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: levantarBloqueo
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/activar":
+    put:
+      tags:
+        - apartamento-controller
+      operationId: activar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/ubicacion:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: cambiarUbicacion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UbicacionRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/alojamiento/servicios/{id}/valor":
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: cambiarValorServicio
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ValorServicioRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/alojamiento/servicios/{id}/desactivar":
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: desactivarServicio
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/parametros:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: cambiarParametros
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ParametrosRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/alojamiento/medios-pago/{medio}/habilitar":
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: habilitarMedioPago
+      parameters:
+        - name: medio
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/alojamiento/medios-pago/{medio}/deshabilitar":
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: deshabilitarMedioPago
+      parameters:
+        - name: medio
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/datos:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: actualizarDatos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ActualizarDatosAlojamientoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/usuarios:
+    get:
+      tags:
+        - usuario-controller
+      operationId: listar
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseUsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - usuario-controller
+      operationId: crear
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CrearUsuarioRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/UsuarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/titulares:
+    post:
+      tags:
+        - titular-controller
+      operationId: registrar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarTitularRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TitularResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/temporadas:
+    get:
+      tags:
+        - temporada-controller
+      operationId: consultar_4
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CalendarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - temporada-controller
+      operationId: agregar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AgregarTemporadaRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TemporadaCreadaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas:
+    get:
+      tags:
+        - reserva-controller
+      operationId: listar_1
+      parameters:
+        - name: desde
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW"
+        - name: apartamento
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: canal
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: "PORTAL|DIRECTO|EXTERNO"
+        - name: titular
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - reserva-controller
+      operationId: crear_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CrearReservaRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/servicios":
+    post:
+      tags:
+        - folio-controller
+      operationId: cargarServicio
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CargarServicioRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/pagos":
+    post:
+      tags:
+        - folio-controller
+      operationId: registrarPago
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarPagoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/pagos/{id}/revertir":
+    post:
+      tags:
+        - folio-controller
+      operationId: revertirPago
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/devoluciones":
+    post:
+      tags:
+        - folio-controller
+      operationId: registrarDevolucion
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarPagoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio/cargos/{id}/revertir":
+    post:
+      tags:
+        - folio-controller
+      operationId: revertirCargo
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RevertirCargoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/portal/reservas:
+    post:
+      tags:
+        - portal-controller
+      operationId: reservar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ReservaPortalRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaPortalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/portal/reservas/{codigo}/pago":
+    post:
+      tags:
+        - portal-controller
+      operationId: pagar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PagoEnLineaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/politicas:
+    get:
+      tags:
+        - politica-controller
+      operationId: listarVersiones
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponsePoliticaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - politica-controller
+      operationId: publicar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PublicarPoliticaRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PoliticaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/cotizaciones:
+    post:
+      tags:
+        - disponibilidad-controller
+      operationId: cotizar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CotizarEstanciaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CotizacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/canales:
+    get:
+      tags:
+        - canal-controller
+      operationId: listar_2
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseCanalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - canal-controller
+      operationId: registrar_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarCanalRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/CanalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/canales-externos/{canalId}/reservas":
+    post:
+      tags:
+        - contrato-canal-controller
+      operationId: recibirReserva
+      parameters:
+        - name: canalId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-Canal-Clave
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ReservaExternaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaExternaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/restablecer-contrasena:
+    post:
+      tags:
+        - recuperacion-controller
+      operationId: restablecer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/FijarContrasenaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/recuperar-contrasena:
+    post:
+      tags:
+        - recuperacion-controller
+      operationId: recuperar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RecuperarContrasenaRequest"
+        required: true
+      responses:
+        "202":
+          description: Accepted
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/logout:
+    post:
+      tags:
+        - sesion-controller
+      operationId: cerrarSesion
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/login:
+    post:
+      tags:
+        - sesion-controller
+      operationId: iniciarSesion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/IniciarSesionRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SesionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/huesped/pin:
+    post:
+      tags:
+        - acceso-huesped-controller
+      operationId: solicitarPin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SolicitarPinRequest"
+        required: true
+      responses:
+        "202":
+          description: Accepted
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/huesped/login:
+    post:
+      tags:
+        - acceso-huesped-controller
+      operationId: iniciarSesion_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/IniciarSesionHuespedRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SesionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/auth/activar:
+    post:
+      tags:
+        - recuperacion-controller
+      operationId: activar_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/FijarContrasenaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/MensajeResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/apartamentos:
+    get:
+      tags:
+        - apartamento-controller
+      operationId: listar_3
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - apartamento-controller
+      operationId: crear_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CrearApartamentoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/novedades":
+    get:
+      tags:
+        - novedad-controller
+      operationId: consultar_5
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseNovedadResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - novedad-controller
+      operationId: registrar_2
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarNovedadRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/NovedadResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/imagenes":
+    post:
+      tags:
+        - imagen-apartamento-controller
+      operationId: agregar_1
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImagenApartamentoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/bloqueos":
+    post:
+      tags:
+        - apartamento-controller
+      operationId: registrarBloqueo
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarBloqueoRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/servicios:
+    post:
+      tags:
+        - alojamiento-controller
+      operationId: agregarServicio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ServicioAdicionalRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}":
+    get:
+      tags:
+        - reserva-controller
+      operationId: consultar_6
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/folio":
+    get:
+      tags:
+        - folio-controller
+      operationId: consultar_7
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/FolioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/portal/apartamentos:
+    get:
+      tags:
+        - apartamento-portal-controller
+      operationId: listar_4
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseApartamentoPublicoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/portal/apartamentos/{codigo}":
+    get:
+      tags:
+        - apartamento-portal-controller
+      operationId: consultar_8
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ApartamentoPublicoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/portal/apartamentos/{codigo}/estancia":
+    get:
+      tags:
+        - apartamento-portal-controller
+      operationId: estancia
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: entrada
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: ocupantes
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: ninos
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EstanciaPortalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/portal/apartamentos/disponibles:
+    get:
+      tags:
+        - apartamento-portal-controller
+      operationId: buscar
+      parameters:
+        - name: entrada
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: ocupantes
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: ninos
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseApartamentoPublicoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/politicas/vigente:
+    get:
+      tags:
+        - politica-controller
+      operationId: consultarVigente
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PoliticaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/ocupacion:
+    get:
+      tags:
+        - ocupacion-controller
+      operationId: consultar_9
+      parameters:
+        - name: desde
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: apartamento
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseOcupacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/mis-reservas:
+    get:
+      tags:
+        - cuenta-controller
+      operationId: misReservas
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/conflictos/pendientes:
+    get:
+      tags:
+        - conflicto-controller
+      operationId: consultarPendientes
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseConflictoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/canales/{id}/eventos":
+    get:
+      tags:
+        - canal-controller
+      operationId: consultarBitacora
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseEventoCanalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/canales-externos/{canalId}/disponibilidad":
+    get:
+      tags:
+        - contrato-canal-controller
+      operationId: consultarDisponibilidad
+      parameters:
+        - name: canalId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: X-Canal-Clave
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: entrada
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: ocupantes
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/ApartamentoDisponibleResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/tarifas":
+    get:
+      tags:
+        - tarifa-controller
+      operationId: consultar_10
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseTarifaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/tarifas/historial":
+    get:
+      tags:
+        - tarifa-controller
+      operationId: consultarHistorial
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseTarifaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/apartamentos/{codigo}/calendario":
+    get:
+      tags:
+        - disponibilidad-controller
+      operationId: calendario
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NocheCalendarioResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/apartamentos/pendientes-preparacion:
+    get:
+      tags:
+        - apartamento-controller
+      operationId: listarPendientesPreparacion
+      parameters:
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseApartamentoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/apartamentos/disponibles:
+    get:
+      tags:
+        - disponibilidad-controller
+      operationId: buscar_1
+      parameters:
+        - name: entrada
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: ocupantes
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: fechasNacimiento
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: date
+        - name: capacidadMinima
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: precioMinimo
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0.0
+        - name: precioMaximo
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0.0
+        - name: caracteristicas
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: servicios
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseApartamentoEncontradoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento:
+    get:
+      tags:
+        - alojamiento-controller
+      operationId: consultar_11
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ModificarUsuarioRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        fechaNacimiento:
+          type: string
+          format: date
+        rol:
+          type: string
+          minLength: 1
+          pattern: "RECEPCIONISTA|PERSONAL_SERVICIO|ADMINISTRADOR"
+      required:
+        - fechaNacimiento
+        - nombre
+        - numeroDocumento
+        - rol
+        - telefono
+        - tipoDocumento
+    UsuarioResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        correo:
+          type: string
+        rol:
+          type: string
+        telefono:
+          type: string
+        tipoDocumento:
+          type: string
+        numeroDocumento:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
+        activado:
+          type: boolean
+        eliminado:
+          type: boolean
+    DatosPersonalesRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        fechaNacimiento:
+          type: string
+          format: date
+      required:
+        - fechaNacimiento
+        - nombre
+        - numeroDocumento
+        - telefono
+        - tipoDocumento
+    CambiarContrasenaRequest:
+      type: object
+      properties:
+        actual:
+          type: string
+          minLength: 1
+        nueva:
+          type: string
+          minLength: 1
+          pattern: "^(?=.*\\p{Lu})(?=.*\\d).{8,}$"
+      required:
+        - actual
+        - nueva
+    MensajeResponse:
+      type: object
+      properties:
+        mensaje:
+          type: string
+    ActualizarTitularRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - nombre
+    TitularResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        tipoDocumento:
+          type: string
+        numeroDocumento:
+          type: string
+        correo:
+          type: string
+        telefono:
+          type: string
+    CambiarFechasTemporadaRequest:
+      type: object
+      properties:
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+      required:
+        - fechaFin
+        - fechaInicio
+    CalendarioResponse:
+      type: object
+      properties:
+        temporadas:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TemporadaResponse"
+    TemporadaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        esBase:
+          type: boolean
+        estanciaMinimaNoches:
+          type: integer
+          format: int32
+        activa:
+          type: boolean
+    RegistrarSalidaRequest:
+      type: object
+      properties:
+        motivoAutorizacion:
+          type: string
+          maxLength: 500
+          minLength: 0
+    EstanciaResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        estado:
+          type: string
+        apartamento:
+          type: string
+        estadoOperativo:
+          type: string
+        registros:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RegistroResponse"
+        salida:
+          "$ref": "#/components/schemas/SalidaResponse"
+        folioCerrado:
+          type: boolean
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+    RegistroResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        autor:
+          type: string
+        anulado:
+          type: boolean
+        motivoCorreccion:
+          type: string
+    SalidaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        autor:
+          type: string
+    CancelacionResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        estado:
+          type: string
+        retenido:
+          type: number
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+    ModificarReservaRequest:
+      type: object
+      properties:
+        apartamento:
+          type: string
+          minLength: 1
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        ocupantes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupanteRequest"
+          minItems: 1
+      required:
+        - apartamento
+        - entrada
+        - ocupantes
+        - salida
+    OcupanteRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        fechaNacimiento:
+          type: string
+          format: date
+        tipoDocumento:
+          type: string
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        nacionalidad:
+          type: string
+          maxLength: 60
+          minLength: 0
+      required:
+        - fechaNacimiento
+        - nombre
+    CotizacionResponse:
+      type: object
+      properties:
+        desglose:
+          type: array
+          items:
+            "$ref": "#/components/schemas/NocheResponse"
+        total:
+          type: number
+    NocheResponse:
+      type: object
+      properties:
+        noche:
+          type: string
+          format: date
+        temporada:
+          type: string
+        tarifa:
+          type: number
+        ocupantesFacturables:
+          type: integer
+          format: int32
+        subtotal:
+          type: number
+    OcupanteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        fechaNacimiento:
+          type: string
+          format: date
+        tipoDocumento:
+          type: string
+        numeroDocumento:
+          type: string
+        nacionalidad:
+          type: string
+    ReservaResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        apartamento:
+          type: string
+        titularId:
+          type: string
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        estado:
+          type: string
+        canalOrigen:
+          type: string
+        ocupantes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupanteResponse"
+        horaEstimadaLlegada:
+          type: string
+          format: time-local
+        valor:
+          "$ref": "#/components/schemas/CotizacionResponse"
+        politicaId:
+          type: string
+        creadaEn:
+          type: string
+          format: date-time
+        avisoCuenta:
+          type: string
+        vehiculos:
+          type: integer
+          format: int32
+        mascotas:
+          type: integer
+          format: int32
+    HoraLlegadaRequest:
+      type: object
+      properties:
+        hora:
+          type: string
+          format: time-local
+      required:
+        - hora
+    CerrarFolioRequest:
+      type: object
+      properties:
+        motivoAutorizacion:
+          type: string
+          maxLength: 500
+          minLength: 0
+    AutorizacionResponse:
+      type: object
+      properties:
+        autor:
+          type: string
+        motivo:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+    CargoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        tipo:
+          type: string
+        concepto:
+          type: string
+        valor:
+          type: number
+        sentido:
+          type: string
+        fecha:
+          type: string
+          format: date
+        corrigeA:
+          type: string
+    FolioResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        reserva:
+          type: string
+        cargos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CargoResponse"
+        pagos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PagoResponse"
+        totalPagado:
+          type: number
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+        cerrado:
+          type: boolean
+        autorizacion:
+          "$ref": "#/components/schemas/AutorizacionResponse"
+    PagoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        medio:
+          type: string
+        monto:
+          type: number
+        tipo:
+          type: string
+        fecha:
+          type: string
+          format: date
+        reversaDe:
+          type: string
+    CorregirRegistroRequest:
+      type: object
+      properties:
+        fechaHora:
+          type: string
+          format: date-time
+        motivo:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - fechaHora
+        - motivo
+    CambioResponse:
+      type: object
+      properties:
+        estado:
+          type: string
+        autor:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+    NovedadResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        apartamento:
+          type: string
+        descripcion:
+          type: string
+        gravedad:
+          type: string
+        estado:
+          type: string
+        historial:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CambioResponse"
+    ActualizarCuentaRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - nombre
+        - telefono
+    CuentaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        tipoDocumento:
+          type: string
+        numeroDocumento:
+          type: string
+        correo:
+          type: string
+        telefono:
+          type: string
+    ResolverConflictoRequest:
+      type: object
+      properties:
+        decision:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - decision
+    ConflictoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        canalId:
+          type: string
+        idExterno:
+          type: string
+        apartamento:
+          type: string
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        detectadoEn:
+          type: string
+          format: date-time
+        motivo:
+          type: string
+        estado:
+          type: string
+        resueltoPor:
+          type: string
+        resueltoEn:
+          type: string
+          format: date-time
+        decision:
+          type: string
+    CanalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        tipo:
+          type: string
+        referenciaCredencial:
+          type: string
+        activo:
+          type: boolean
+    ConfirmarCambioCorreoRequest:
+      type: object
+      properties:
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        pin:
+          type: string
+          minLength: 1
+          pattern: "\\d{6}"
+      required:
+        - numeroDocumento
+        - pin
+        - tipoDocumento
+    ActualizarApartamentoRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        descripcion:
+          type: string
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+        caracteristicas:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          minItems: 1
+      required:
+        - caracteristicas
+        - dormitorios
+        - nombre
+    ApartamentoResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        alojamientoId:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        capacidad:
+          type: integer
+          format: int32
+        dormitorios:
+          type: integer
+          format: int32
+        estadoOperativo:
+          type: string
+        activo:
+          type: boolean
+        imagenes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ImagenResponse"
+        caracteristicas:
+          type: array
+          items:
+            type: string
+        bloqueos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BloqueoResponse"
+    BloqueoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        motivo:
+          type: string
+        vigente:
+          type: boolean
+    ImagenResponse:
+      type: object
+      properties:
+        url:
+          type: string
+        principal:
+          type: boolean
+    DefinirTarifaRequest:
+      type: object
+      properties:
+        valorPorOcupante:
+          type: number
+          exclusiveMinimum: 0
+      required:
+        - valorPorOcupante
+    TarifaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        apartamento:
+          type: string
+        temporada:
+          type: string
+        valorPorOcupante:
+          type: number
+        version:
+          type: integer
+          format: int32
+        vigenteDesde:
+          type: string
+          format: date
+    ImagenApartamentoRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          minLength: 1
+      required:
+        - url
+    CambiarCapacidadRequest:
+      type: object
+      properties:
+        capacidad:
+          type: integer
+          format: int32
+          minimum: 1
+      required:
+        - capacidad
+    CambioCapacidadResponse:
+      type: object
+      properties:
+        apartamento:
+          "$ref": "#/components/schemas/ApartamentoResponse"
+        reservasAfectadas:
+          type: array
+          items:
+            type: string
+    UbicacionRequest:
+      type: object
+      properties:
+        latitud:
+          type: number
+          format: double
+        longitud:
+          type: number
+          format: double
+      required:
+        - latitud
+        - longitud
+    AlojamientoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        ciudad:
+          type: string
+        direccion:
+          type: string
+        latitud:
+          type: number
+          format: double
+        longitud:
+          type: number
+          format: double
+        normas:
+          type: string
+        parametros:
+          "$ref": "#/components/schemas/ParametrosResponse"
+        serviciosAdicionales:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ServicioResponse"
+        mediosPago:
+          type: array
+          items:
+            type: string
+    ParametrosResponse:
+      type: object
+      properties:
+        umbralEdadFacturable:
+          type: integer
+          format: int32
+        horaEntrada:
+          type: string
+          format: time-local
+        horaSalida:
+          type: string
+          format: time-local
+        tiempoPreparacionHoras:
+          type: integer
+          format: int64
+        plazoConfirmacionHoras:
+          type: integer
+          format: int64
+        horaLimiteNoShow:
+          type: string
+          format: time-local
+        anticipoPct:
+          type: integer
+          format: int32
+        minimoMediosPago:
+          type: integer
+          format: int32
+        minimoServiciosAdicionales:
+          type: integer
+          format: int32
+        minimoTemporadas:
+          type: integer
+          format: int32
+        minimoTramosCancelacion:
+          type: integer
+          format: int32
+        minimoCapacidadesDistintas:
+          type: integer
+          format: int32
+        pagoEnLinea:
+          type: string
+        plazoPagoEnLineaMinutos:
+          type: integer
+          format: int64
+        cupoParqueadero:
+          type: integer
+          format: int32
+        aceptaMascotas:
+          type: boolean
+        limiteMascotas:
+          type: integer
+          format: int32
+        cargoMascota:
+          type: number
+    ServicioResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        generaCargo:
+          type: boolean
+        valor:
+          type: number
+        activo:
+          type: boolean
+    ValorServicioRequest:
+      type: object
+      properties:
+        valor:
+          type: number
+          minimum: 0
+      required:
+        - valor
+    ParametrosRequest:
+      type: object
+      properties:
+        umbralEdadFacturable:
+          type: integer
+          format: int32
+          minimum: 0
+        horaEntrada:
+          type: string
+          format: time-local
+        horaSalida:
+          type: string
+          format: time-local
+        tiempoPreparacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+        plazoConfirmacionHoras:
+          type: integer
+          format: int32
+          minimum: 0
+        horaLimiteNoShow:
+          type: string
+          format: time-local
+        anticipoPct:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 0
+        minimoMediosPago:
+          type: integer
+          format: int32
+          minimum: 0
+        minimoServiciosAdicionales:
+          type: integer
+          format: int32
+          minimum: 0
+        minimoTemporadas:
+          type: integer
+          format: int32
+          minimum: 0
+        minimoTramosCancelacion:
+          type: integer
+          format: int32
+          minimum: 0
+        minimoCapacidadesDistintas:
+          type: integer
+          format: int32
+          minimum: 0
+        pagoEnLinea:
+          type: string
+          minLength: 1
+          pattern: "ANTICIPO|TOTAL"
+        plazoPagoEnLineaMinutos:
+          type: integer
+          format: int32
+          minimum: 1
+        cupoParqueadero:
+          type: integer
+          format: int32
+          minimum: 0
+        aceptaMascotas:
+          type: boolean
+        limiteMascotas:
+          type: integer
+          format: int32
+          minimum: 0
+        cargoMascota:
+          type: number
+          minimum: 0
+      required:
+        - anticipoPct
+        - horaEntrada
+        - horaLimiteNoShow
+        - horaSalida
+        - minimoCapacidadesDistintas
+        - minimoMediosPago
+        - minimoServiciosAdicionales
+        - minimoTemporadas
+        - minimoTramosCancelacion
+        - pagoEnLinea
+        - plazoConfirmacionHoras
+        - plazoPagoEnLineaMinutos
+        - tiempoPreparacionHoras
+        - umbralEdadFacturable
+    ActualizarDatosAlojamientoRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        descripcion:
+          type: string
+          minLength: 1
+        ciudad:
+          type: string
+          maxLength: 120
+          minLength: 0
+        direccion:
+          type: string
+          maxLength: 200
+          minLength: 0
+        normas:
+          type: string
+      required:
+        - ciudad
+        - descripcion
+        - direccion
+        - nombre
+    CrearUsuarioRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        fechaNacimiento:
+          type: string
+          format: date
+        rol:
+          type: string
+          minLength: 1
+          pattern: "RECEPCIONISTA|PERSONAL_SERVICIO|ADMINISTRADOR"
+      required:
+        - correo
+        - fechaNacimiento
+        - nombre
+        - numeroDocumento
+        - rol
+        - telefono
+        - tipoDocumento
+    RegistrarTitularRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - nombre
+        - numeroDocumento
+        - tipoDocumento
+    AgregarTemporadaRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 80
+          minLength: 0
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        estanciaMinimaNoches:
+          type: integer
+          format: int32
+          minimum: 0
+        tarifas:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TarifaRequest"
+      required:
+        - fechaFin
+        - fechaInicio
+        - nombre
+    TarifaRequest:
+      type: object
+      properties:
+        apartamento:
+          type: string
+          minLength: 1
+        valorPorOcupante:
+          type: number
+          exclusiveMinimum: 0
+      required:
+        - apartamento
+        - valorPorOcupante
+    TemporadaCreadaResponse:
+      type: object
+      properties:
+        temporada:
+          "$ref": "#/components/schemas/TemporadaResponse"
+        tarifas:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TarifaResponse"
+    CrearReservaRequest:
+      type: object
+      properties:
+        apartamento:
+          type: string
+          minLength: 1
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        canalOrigen:
+          type: string
+          minLength: 1
+          pattern: "PORTAL|DIRECTO"
+        titular:
+          "$ref": "#/components/schemas/TitularReservaRequest"
+        ocupantes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupanteRequest"
+          minItems: 1
+        horaEstimadaLlegada:
+          type: string
+          format: time-local
+        vehiculos:
+          type: integer
+          format: int32
+          minimum: 0
+        mascotas:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+        - apartamento
+        - canalOrigen
+        - entrada
+        - ocupantes
+        - salida
+        - titular
+    TitularReservaRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - correo
+        - nombre
+        - numeroDocumento
+        - telefono
+        - tipoDocumento
+    CargarServicioRequest:
+      type: object
+      properties:
+        servicioId:
+          type: string
+          minLength: 1
+      required:
+        - servicioId
+    RegistrarPagoRequest:
+      type: object
+      properties:
+        medio:
+          type: string
+          maxLength: 40
+          minLength: 0
+        monto:
+          type: number
+          exclusiveMinimum: 0
+        fecha:
+          type: string
+          format: date
+      required:
+        - fecha
+        - medio
+        - monto
+    RevertirCargoRequest:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 170
+          minLength: 0
+      required:
+        - motivo
+    ReservaPortalRequest:
+      type: object
+      properties:
+        apartamento:
+          type: string
+          maxLength: 20
+          minLength: 0
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        titular:
+          "$ref": "#/components/schemas/TitularReservaRequest"
+        ocupantes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupanteRequest"
+          minItems: 1
+        horaEstimadaLlegada:
+          type: string
+          format: time-local
+      required:
+        - apartamento
+        - entrada
+        - horaEstimadaLlegada
+        - ocupantes
+        - salida
+        - titular
+    ReservaPortalResponse:
+      type: object
+      properties:
+        reserva:
+          "$ref": "#/components/schemas/ReservaResponse"
+        montoAPagar:
+          type: number
+        pagarAntesDe:
+          type: string
+          format: date-time
+    PagoEnLineaRequest:
+      type: object
+      properties:
+        tokenPago:
+          type: string
+          maxLength: 200
+          minLength: 0
+      required:
+        - tokenPago
+    PenalizacionRequest:
+      type: object
+      properties:
+        base:
+          type: string
+          minLength: 1
+          pattern: "VALOR_TOTAL|PAGADO|ANTICIPO_EXIGIDO"
+        porcentaje:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 0
+        montoFijo:
+          type: number
+          exclusiveMinimum: 0
+      required:
+        - base
+    PublicarPoliticaRequest:
+      type: object
+      properties:
+        tramos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TramoRequest"
+          minItems: 1
+        penalizacionNoShow:
+          "$ref": "#/components/schemas/PenalizacionRequest"
+      required:
+        - penalizacionNoShow
+        - tramos
+    TramoRequest:
+      type: object
+      properties:
+        antelacionMinHoras:
+          type: integer
+          format: int32
+          minimum: 0
+        penalizacion:
+          "$ref": "#/components/schemas/PenalizacionRequest"
+      required:
+        - antelacionMinHoras
+        - penalizacion
+    PenalizacionResponse:
+      type: object
+      properties:
+        base:
+          type: string
+        porcentaje:
+          type: integer
+          format: int32
+        montoFijo:
+          type: number
+    PoliticaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+          format: int32
+        tramos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TramoResponse"
+        penalizacionNoShow:
+          "$ref": "#/components/schemas/PenalizacionResponse"
+    TramoResponse:
+      type: object
+      properties:
+        antelacionMinHoras:
+          type: integer
+          format: int32
+        penalizacion:
+          "$ref": "#/components/schemas/PenalizacionResponse"
+    CotizarEstanciaRequest:
+      type: object
+      properties:
+        apartamento:
+          type: string
+          minLength: 1
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        fechasNacimiento:
+          type: array
+          items:
+            type: string
+            format: date
+          minItems: 1
+      required:
+        - apartamento
+        - entrada
+        - fechasNacimiento
+        - salida
+    RegistrarCanalRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 80
+          minLength: 0
+        tipo:
+          type: string
+          minLength: 1
+          pattern: "PORTAL|DIRECTO|EXTERNO"
+        referenciaCredencial:
+          type: string
+          maxLength: 120
+          minLength: 0
+      required:
+        - nombre
+        - tipo
+    ReservaExternaRequest:
+      type: object
+      properties:
+        idExterno:
+          type: string
+          maxLength: 80
+          minLength: 0
+        apartamento:
+          type: string
+          minLength: 1
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        titular:
+          "$ref": "#/components/schemas/TitularExternoRequest"
+        ocupantes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupanteRequest"
+          minItems: 1
+      required:
+        - apartamento
+        - entrada
+        - idExterno
+        - ocupantes
+        - salida
+        - titular
+    TitularExternoRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+        telefono:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - nombre
+        - numeroDocumento
+        - tipoDocumento
+    ReservaExternaResponse:
+      type: object
+      properties:
+        resultado:
+          type: string
+        codigoReserva:
+          type: string
+        conflictoId:
+          type: string
+        detalle:
+          type: string
+    FijarContrasenaRequest:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          minLength: 1
+        codigo:
+          type: string
+          minLength: 1
+          pattern: "\\d{6}"
+        contrasena:
+          type: string
+          minLength: 1
+          pattern: "^(?=.*\\p{Lu})(?=.*\\d).{8,}$"
+      required:
+        - codigo
+        - contrasena
+        - correo
+    RecuperarContrasenaRequest:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          minLength: 1
+      required:
+        - correo
+    IniciarSesionRequest:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          minLength: 1
+        contrasena:
+          type: string
+          minLength: 1
+      required:
+        - contrasena
+        - correo
+    SesionResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        tipo:
+          type: string
+        expiraEn:
+          type: string
+          format: date-time
+        usuario:
+          type: string
+        nombre:
+          type: string
+        rol:
+          type: string
+    SolicitarPinRequest:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          minLength: 1
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+      required:
+        - correo
+        - numeroDocumento
+    IniciarSesionHuespedRequest:
+      type: object
+      properties:
+        correo:
+          type: string
+          format: email
+          minLength: 1
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        pin:
+          type: string
+          minLength: 1
+          pattern: "\\d{6}"
+      required:
+        - correo
+        - numeroDocumento
+        - pin
+    SolicitarCambioCorreoRequest:
+      type: object
+      properties:
+        tipoDocumento:
+          type: string
+          minLength: 1
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        nuevoCorreo:
+          type: string
+          format: email
+          maxLength: 150
+          minLength: 0
+      required:
+        - nuevoCorreo
+        - numeroDocumento
+        - tipoDocumento
+    CrearApartamentoRequest:
+      type: object
+      properties:
+        codigo:
+          type: string
+          minLength: 1
+          pattern: "APT-\\d+"
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        descripcion:
+          type: string
+          maxLength: 2000
+          minLength: 0
+        capacidad:
+          type: integer
+          format: int32
+          minimum: 1
+        dormitorios:
+          type: integer
+          format: int32
+          minimum: 1
+        imagenes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ImagenRequest"
+          maxItems: 10
+          minItems: 0
+        caracteristicas:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+            minLength: 0
+          minItems: 1
+      required:
+        - capacidad
+        - caracteristicas
+        - codigo
+        - dormitorios
+        - imagenes
+        - nombre
+    ImagenRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          maxLength: 500
+          minLength: 0
+          pattern: "https?://\\S+"
+        principal:
+          type: boolean
+      required:
+        - url
+    RegistrarNovedadRequest:
+      type: object
+      properties:
+        descripcion:
+          type: string
+          maxLength: 2000
+          minLength: 0
+        gravedad:
+          type: string
+          minLength: 1
+          pattern: "BAJA|MEDIA|ALTA"
+      required:
+        - descripcion
+        - gravedad
+    RegistrarBloqueoRequest:
+      type: object
+      properties:
+        inicio:
+          type: string
+          format: date
+        fin:
+          type: string
+          format: date
+        motivo:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - fin
+        - inicio
+        - motivo
+    ServicioAdicionalRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 120
+          minLength: 0
+        generaCargo:
+          type: boolean
+        valor:
+          type: number
+          minimum: 0
+      required:
+        - generaCargo
+        - nombre
+        - valor
+    PaginaResponseUsuarioResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UsuarioResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    PaginaResponseReservaResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReservaResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    ApartamentoPublicoResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        capacidad:
+          type: integer
+          format: int32
+        dormitorios:
+          type: integer
+          format: int32
+        imagenes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ImagenResponse"
+        caracteristicas:
+          type: array
+          items:
+            type: string
+        precio:
+          "$ref": "#/components/schemas/PrecioResponse"
+        proximaNocheLibre:
+          type: string
+          format: date
+    PaginaResponseApartamentoPublicoResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApartamentoPublicoResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    PrecioResponse:
+      type: object
+      properties:
+        desglose:
+          type: array
+          items:
+            "$ref": "#/components/schemas/NocheResponse"
+        total:
+          type: number
+    EstanciaPortalResponse:
+      type: object
+      properties:
+        disponible:
+          type: boolean
+        precio:
+          "$ref": "#/components/schemas/PrecioResponse"
+        proximaNocheLibre:
+          type: string
+          format: date
+    PaginaResponsePoliticaResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PoliticaResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    BloqueoOcupadoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+        motivo:
+          type: string
+    OcupacionResponse:
+      type: object
+      properties:
+        apartamento:
+          type: string
+        nombre:
+          type: string
+        estadoOperativo:
+          type: string
+        reservas:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReservaOcupadaResponse"
+        bloqueos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BloqueoOcupadoResponse"
+    PaginaResponseOcupacionResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OcupacionResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    ReservaOcupadaResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        estado:
+          type: string
+        canalOrigen:
+          type: string
+        titularId:
+          type: string
+    PaginaResponseConflictoResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ConflictoResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    PaginaResponseCanalResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CanalResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    EventoCanalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        operacion:
+          type: string
+        sentido:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        cargaUtil:
+          type: string
+        resultado:
+          type: string
+        detalle:
+          type: string
+    PaginaResponseEventoCanalResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EventoCanalResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    ApartamentoDisponibleResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        capacidad:
+          type: integer
+          format: int32
+        dormitorios:
+          type: integer
+          format: int32
+    PaginaResponseApartamentoResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApartamentoResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    PaginaResponseTarifaResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TarifaResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    PaginaResponseNovedadResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/NovedadResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    NocheCalendarioResponse:
+      type: object
+      properties:
+        fecha:
+          type: string
+          format: date
+        libre:
+          type: boolean
+    ApartamentoEncontradoResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        nombre:
+          type: string
+        capacidad:
+          type: integer
+          format: int32
+        dormitorios:
+          type: integer
+          format: int32
+        imagenPrincipal:
+          type: string
+        caracteristicas:
+          type: array
+          items:
+            type: string
+        valorEstimado:
+          type: number
+        ciudad:
+          type: string
+        latitud:
+          type: number
+          format: double
+        longitud:
+          type: number
+          format: double
+    PaginaResponseApartamentoEncontradoResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ApartamentoEncontradoResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
+    ErrorResponse:
+      properties:
+        estado:
+          type: integer
+          format: int32
+        codigo:
+          type: string
+        mensaje:
+          type: string
+        detalles:
+          type: array
+          items:
+            type: string
+  securitySchemes:
+    token:
+      type: http
+      description: "Token de POST /api/auth/login (personal) o POST /api/auth/huesped/login (huésped)"
+      scheme: bearer
+      bearerFormat: JWT
+    claveCanal:
+      type: apiKey
+      description: "Solo para /api/canales-externos/{canalId} (DEC-73)"
+      name: X-Canal-Clave
+      in: header

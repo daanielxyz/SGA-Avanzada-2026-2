@@ -39,7 +39,8 @@ public class PlanificadorVencimientos {
      *
      * @return cuántas venció
      */
-    @Scheduled(fixedDelayString = "${sga.planificador.intervalo:PT1M}")
+    @Scheduled(fixedDelayString = "${sga.planificador.intervalo:PT1M}",
+            initialDelayString = "${sga.planificador.intervalo:PT1M}")
     public int vencerPendientes() {
         int vencidas = 0;
         for (String codigo : buscarVencidas.ejecutar(alojamientoId)) {

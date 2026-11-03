@@ -42,8 +42,12 @@ final class PermisosPorRol {
                 // La reserva del portal y su pago en línea: no hace falta cuenta para reservar (DEC-68 · DEC-69)
                 .requestMatchers(HttpMethod.POST, "/api/portal/reservas", "/api/portal/reservas/{codigo}/pago")
                 .permitAll()
+                // Lo que falta por preparar es del personal (CU-41); va antes de la regla pública de {codigo}
+                .requestMatchers(HttpMethod.GET, "/api/apartamentos/pendientes-preparacion")
+                .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
                 .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
-                        "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}").permitAll()
+                        "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}",
+                        "/api/apartamentos/{codigo}/calendario").permitAll()
                 // Buscar y cotizar en el portal, sin cuenta: solo datos públicos y un cálculo que no guarda nada
                 // (CU-07 · CU-08 · CU-09 · equipo web)
                 .requestMatchers(HttpMethod.GET, "/api/portal/apartamentos", "/api/portal/apartamentos/disponibles",
@@ -63,14 +67,17 @@ final class PermisosPorRol {
 
                 // Venta y recepción (CU-10 a CU-29)
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/corregir-registro").hasRole(ADMINISTRADOR)
-                .requestMatchers("/api/reservas/**", "/api/titulares/**").hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
+                .requestMatchers("/api/reservas/**", "/api/titulares/**", "/api/ocupacion")
+                .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
 
                 // El personal y su propia cuenta (CU-03 · CU-04); gestionar a los demás es del administrador
                 .requestMatchers("/api/usuarios/perfil", "/api/usuarios/perfil/**")
                 .hasAnyRole(RECEPCIONISTA, PERSONAL_SERVICIO, ADMINISTRADOR)
 
                 // Preparación y novedades (CU-41 a CU-44 · CU-55); EOPE-04 se revisa en el controlador
-                .requestMatchers(HttpMethod.PUT, "/api/apartamentos/{codigo}/estado-operativo",
+                .requestMatchers(HttpMethod.PUT, "/api/apartamentos/{codigo}/iniciar-preparacion",
+                        "/api/apartamentos/{codigo}/marcar-preparado",
+                        "/api/apartamentos/{codigo}/marcar-pendiente-preparacion",
                         "/api/novedades/{id}/avanzar").hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
                 .requestMatchers("/api/apartamentos/{codigo}/novedades")
                 .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)

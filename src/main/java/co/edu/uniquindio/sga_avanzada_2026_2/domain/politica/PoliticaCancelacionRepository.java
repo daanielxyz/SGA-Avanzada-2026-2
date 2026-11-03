@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.politica;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 
 import java.util.Optional;
@@ -17,4 +18,11 @@ public interface PoliticaCancelacionRepository {
 
     /** La versión más alta del alojamiento (POL-01 · DEC-42), la que congela una reserva nueva. */
     Optional<PoliticaCancelacion> buscarVigente(AlojamientoId alojamientoId);
+
+    /**
+     * Todas las versiones del alojamiento, de la más alta a la más baja, de 10 en 10 (POL-04).
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<PoliticaCancelacion> listarVersiones(AlojamientoId alojamientoId, int numeroPagina);
 }

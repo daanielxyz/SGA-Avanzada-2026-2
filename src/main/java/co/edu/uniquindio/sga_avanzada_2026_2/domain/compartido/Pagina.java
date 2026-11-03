@@ -23,6 +23,16 @@ public record Pagina<T>(List<T> contenido, int numero, int tamano, long totalEle
         contenido = List.copyOf(contenido);
     }
 
+    /**
+     * Corta de una lista ya completa la página pedida: para listados que se arman en memoria (DEC-18).
+     *
+     * @param numero empieza en 0; una página que no existe llega vacía
+     */
+    public static <T> Pagina<T> de(List<T> todos, int numero) {
+        int desde = (int) Math.min((long) numero * TAMANO, todos.size());
+        return new Pagina<>(todos.subList(desde, Math.min(desde + TAMANO, todos.size())), numero, TAMANO, todos.size());
+    }
+
     public int totalPaginas() {
         return (int) ((totalElementos + tamano - 1) / tamano);
     }

@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import java.math.BigDecimal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -17,13 +19,27 @@ public record ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada,
                                 int tiempoPreparacionHoras, int plazoConfirmacionHoras, LocalTime horaLimiteNoShow,
                                 int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
                                 int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
-                                String pagoEnLinea, int plazoPagoEnLineaMinutos) {
+                                String pagoEnLinea, int plazoPagoEnLineaMinutos, int cupoParqueadero,
+                                boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota) {
+
+    /** Sin parqueadero ni mascotas (RP-02 · RP-03). */
+    public ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
+                             int tiempoPreparacionHoras, int plazoConfirmacionHoras, LocalTime horaLimiteNoShow,
+                             int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
+                             int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
+                             String pagoEnLinea, int plazoPagoEnLineaMinutos) {
+        this(umbralEdadFacturable, horaEntrada, horaSalida, tiempoPreparacionHoras, plazoConfirmacionHoras,
+                horaLimiteNoShow, anticipoPct, minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
+                minimoTramosCancelacion, minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLineaMinutos, 0, false, 0,
+                BigDecimal.ZERO);
+    }
 
     ParametrosAlojamiento aDominio() {
         return new ParametrosAlojamiento(umbralEdadFacturable, horaEntrada, horaSalida,
                 Duration.ofHours(tiempoPreparacionHoras), Duration.ofHours(plazoConfirmacionHoras), horaLimiteNoShow,
                 new Porcentaje(anticipoPct), minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
                 minimoTramosCancelacion, minimoCapacidadesDistintas, ModoPagoEnLinea.valueOf(pagoEnLinea),
-                Duration.ofMinutes(plazoPagoEnLineaMinutos));
+                Duration.ofMinutes(plazoPagoEnLineaMinutos), cupoParqueadero, aceptaMascotas, limiteMascotas,
+                new Dinero(cargoMascota));
     }
 }

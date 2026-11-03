@@ -16,12 +16,12 @@ import java.util.Objects;
 public class Alojamiento {
 
     private final AlojamientoId id;
-    private final String nombre;
-    private final String descripcion;
-    private final String ciudad;
-    private final String direccion;
+    private String nombre;
+    private String descripcion;
+    private String ciudad;
+    private String direccion;
     private Ubicacion ubicacion;
-    private final String normas; // opcional
+    private String normas; // opcional
     private ParametrosAlojamiento parametros;
     private final List<ServicioAdicional> serviciosAdicionales;
     private final List<MedioPago> mediosPago; // solo los habilitados
@@ -69,6 +69,23 @@ public class Alojamiento {
                                     List<MedioPago> mediosPago) {
         return new Alojamiento(id, nombre, descripcion, ciudad, direccion, ubicacion, normas, parametros,
                 serviciosAdicionales, mediosPago);
+    }
+
+    /**
+     * Corrige los datos del establecimiento y sus normas de convivencia (CU-30 · ALO-02).
+     *
+     * @throws ReglaDominioException si falta el nombre, la descripción, la ciudad o la dirección
+     */
+    public void actualizarDatos(String nuevoNombre, String nuevaDescripcion, String nuevaCiudad, String nuevaDireccion,
+                                String nuevasNormas) {
+        if (vacio(nuevoNombre) || vacio(nuevaDescripcion) || vacio(nuevaCiudad) || vacio(nuevaDireccion)) {
+            throw new ReglaDominioException("Nombre, descripción, ciudad y dirección del alojamiento son obligatorios");
+        }
+        nombre = nuevoNombre.trim();
+        descripcion = nuevaDescripcion.trim();
+        ciudad = nuevaCiudad.trim();
+        direccion = nuevaDireccion.trim();
+        normas = nuevasNormas;
     }
 
     /**

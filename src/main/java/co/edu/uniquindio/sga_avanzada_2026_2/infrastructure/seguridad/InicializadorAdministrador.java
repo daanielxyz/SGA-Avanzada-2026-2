@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad;
 
+import org.springframework.core.annotation.Order;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.GeneradorCodigos;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.SerieCodigo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * todavía no hay ninguno (DEC-67). Los demás usuarios internos los crea él (USU-03).
  */
 @Component
+@Order(1) // antes de los datos de prueba, que traen otro administrador
 public class InicializadorAdministrador implements ApplicationRunner {
 
     private static final Logger LOG = LoggerFactory.getLogger(InicializadorAdministrador.class);

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ActivadorApartamentoService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BajaApartamentoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BloqueoOperativoDomainService;
@@ -41,6 +42,11 @@ public class ServiciosDominioConfig {
     @Bean
     public CambioCapacidadDomainService cambioCapacidadDomainService() {
         return new CambioCapacidadDomainService();
+    }
+
+    @Bean
+    public CupoParqueaderoDomainService cupoParqueaderoDomainService() {
+        return new CupoParqueaderoDomainService();
     }
 
     @Bean

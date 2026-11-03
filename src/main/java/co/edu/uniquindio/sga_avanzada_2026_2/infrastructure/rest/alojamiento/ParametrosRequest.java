@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.alojamiento;
 
+import jakarta.validation.constraints.DecimalMin;
+import java.util.Optional;
+import java.math.BigDecimal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarParametrosAlojamientoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ParametrosCommand;
 import jakarta.validation.constraints.Max;
@@ -67,12 +70,26 @@ public record ParametrosRequest(
 
         @NotNull(message = "es obligatorio")
         @Min(value = 1, message = "debe ser al menos 1")
-        Integer plazoPagoEnLineaMinutos) {
+        Integer plazoPagoEnLineaMinutos,
+
+        // Opcionales (RP-02 · RP-03 · L-16): sin ellos, el alojamiento queda sin parqueadero ni mascotas
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer cupoParqueadero,
+
+        Boolean aceptaMascotas,
+
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer limiteMascotas,
+
+        @DecimalMin(value = "0", message = "no puede ser negativo")
+        BigDecimal cargoMascota) {
 
     CambiarParametrosAlojamientoCommand aCommand(String alojamientoId) {
         return new CambiarParametrosAlojamientoCommand(alojamientoId, new ParametrosCommand(umbralEdadFacturable,
                 horaEntrada, horaSalida, tiempoPreparacionHoras, plazoConfirmacionHoras, horaLimiteNoShow,
                 anticipoPct, minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
-                minimoTramosCancelacion, minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLineaMinutos));
+                minimoTramosCancelacion, minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLineaMinutos,
+                Optional.ofNullable(cupoParqueadero).orElse(0), Boolean.TRUE.equals(aceptaMascotas),
+                Optional.ofNullable(limiteMascotas).orElse(0), Optional.ofNullable(cargoMascota).orElse(BigDecimal.ZERO)));
     }
 }

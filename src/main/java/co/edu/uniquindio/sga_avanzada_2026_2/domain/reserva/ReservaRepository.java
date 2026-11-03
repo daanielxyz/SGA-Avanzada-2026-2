@@ -24,6 +24,9 @@ public interface ReservaRepository {
      */
     List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId);
 
+    /** Reservas PENDIENTE, CONFIRMADA o EN_CURSO que declararon vehículos: ocupan el parqueadero (RP-02). */
+    List<Reserva> buscarActivasConVehiculos();
+
     /** La reserva que un canal externo ya envió con ese identificador, para no duplicarla (RN-19 · CAN-04). */
     Optional<Reserva> buscarPorCanalEIdExterno(CanalId canalId, String idExterno);
 
@@ -42,7 +45,7 @@ public interface ReservaRepository {
     Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina);
 
     /**
-     * Las reservas que cumplen todos los filtros, de la que entra primero a la que entra después, de 10 en 10
+     * Las reservas que cumplen todos los filtros, de la más reciente a la más antigua, de 10 en 10
      * (CU-25 · DEC-18 · DEC-72).
      *
      * @param numeroPagina empieza en 0

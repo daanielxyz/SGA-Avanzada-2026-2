@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.politica;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
@@ -47,5 +50,14 @@ public class PoliticaCancelacionRepositoryJpa implements PoliticaCancelacionRepo
     public Optional<PoliticaCancelacion> buscarVigente(AlojamientoId alojamientoId) {
         return filas.findFirstByAlojamientoIdOrderByVersionDesc(alojamientoId.valor())
                 .map(PoliticaCancelacionMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<PoliticaCancelacion> listarVersiones(AlojamientoId alojamientoId, int numeroPagina) {
+        Page<PoliticaCancelacionJpa> pagina = filas.findByAlojamientoIdOrderByVersionDesc(alojamientoId.valor(),
+                PageRequest.of(numeroPagina, Pagina.TAMANO));
+        return new Pagina<>(pagina.getContent().stream().map(PoliticaCancelacionMapper::aDominio).toList(),
+                numeroPagina, Pagina.TAMANO, pagina.getTotalElements());
     }
 }

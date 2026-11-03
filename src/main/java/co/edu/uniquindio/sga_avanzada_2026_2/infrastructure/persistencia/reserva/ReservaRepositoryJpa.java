@@ -59,6 +59,14 @@ public class ReservaRepositoryJpa implements ReservaRepository {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Reserva> buscarActivasConVehiculos() {
+        return filas.findByEstadoInAndVehiculosGreaterThan(ACTIVOS, 0).stream()
+                .map(ReservaMapper::aDominio)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId) {
         return filas.findByApartamentoCodigoAndEstadoIn(apartamentoId.valor(), ACTIVOS).stream()
                 .map(ReservaMapper::aDominio)
@@ -104,7 +112,7 @@ public class ReservaRepositoryJpa implements ReservaRepository {
                 (fila, consulta, cb) -> filtro.desde() == null ? null
                         : cb.greaterThan(fila.get("salida"), filtro.desde()));
         Page<ReservaJpa> pagina = filas.findAll(condiciones, PageRequest.of(numeroPagina, Pagina.TAMANO,
-                Sort.by("entrada", "codigo")));
+                Sort.by(Sort.Direction.DESC, "creadaEn", "codigo")));
         return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
                 Pagina.TAMANO, pagina.getTotalElements());
     }
