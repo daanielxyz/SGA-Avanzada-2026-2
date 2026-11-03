@@ -5,7 +5,7 @@ La gestión del alojamiento para recepción, el personal de servicio y la admini
 ## Correrlo en local
 1. Arrancar el backend (en la raíz del repositorio) en `http://localhost:8080`.
 2. En esta carpeta: `npm install` (solo la primera vez) y luego `npm run dev`.
-3. Abrir `http://localhost:5174` y entrar con una cuenta del personal (en local, el primer administrador del `.env`: `SGA_ADMIN_CORREO` y `SGA_ADMIN_CLAVE`).
+3. Abrir `http://localhost:5174` y entrar con una cuenta del personal: las de los datos de prueba, en el `README.md` de la raíz, o el primer administrador del `.env` (`SGA_ADMIN_CORREO` y `SGA_ADMIN_CLAVE`), si se definió.
 
 La web de reservas usa el puerto 5173, así que los dos frontends pueden correr a la vez.
 

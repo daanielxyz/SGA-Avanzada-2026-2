@@ -7,7 +7,7 @@ Un solo backend (este repositorio, `src/`) y dos frontends en React, cada uno en
 
 | Producto | Carpeta | Para quién | Habla con |
 |---|---|---|---|
-| **Web de reservas** | `web/` | El huésped: busca, cotiza, reserva, paga y ve su cuenta | `/api/portal/**`, `/api/auth/huesped/**`, `/api/mi-cuenta`, `/api/mis-reservas`, `/api/apartamentos/disponibles`, `/api/cotizaciones` |
+| **Web de reservas** | `web/` | El huésped: busca, cotiza, reserva, paga y ve su cuenta | `/api/portal/**`, `/api/auth/huesped/**`, `/api/mi-cuenta`, `/api/mis-reservas`, `/api/apartamentos/disponibles`, `/api/apartamentos/{codigo}/calendario`, `/api/cotizaciones` |
 | **PMS** | `pms/` | Recepción y administración: toda la gestión del hotel | El resto de `/api/**` (con JWT del personal) |
 | **Backend (API)** | `src/` | Ambos frontends y los canales externos | PostgreSQL, correo, Channex |
 

@@ -39,7 +39,7 @@ Ya en el sprint 4: activar la cuenta y recuperar la contraseña, con la misma pl
 - **Errores**: todos llegan como `ErrorResponse` con `estado`, `codigo` (`VALIDACION`, `NO_AUTENTICADO`, `SIN_PERMISO`, `NO_ENCONTRADO`, `REGLA_NEGOCIO`…), `mensaje` y `detalles` (los errores por campo en un 400).
 - **No existe** hoy: buscar por código en el listado (para eso se abre el detalle directamente), buscar el titular por nombre ni el total de noches (se calcula con `salida − entrada`).
 - Si el mockup del listado muestra el nombre del titular, hace falta agregarlo al Response (un campo nuevo, sin quitar ninguno) o pedirlo aparte: se decide en `feature/pms/listado-reservas`.
-- El contrato completo está en `/swagger-ui.html` con `SGA_DOCUMENTACION_API=true` (DEC-79).
+- El contrato completo está en `docs/api/openapi.yaml` y en `/swagger-ui.html` (DEC-79 · DEC-86).
 
 ## Marca del producto (Meridian)
 El PMS lleva la marca del **producto**, Meridian, «software de gestión hotelera» (brandbook en `pms/diseno/brandbook.png`). No es la marca de un alojamiento, así que sí puede ir en `pms/src`. El nombre y el logo del alojamiento siguen llegando de la API (DEC-83).
