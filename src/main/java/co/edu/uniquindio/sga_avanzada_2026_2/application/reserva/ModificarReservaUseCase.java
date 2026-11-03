@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
@@ -36,17 +37,20 @@ public class ModificarReservaUseCase {
     private final TarifaRepository tarifas;
     private final DisponibilidadDomainService disponibilidad;
     private final TarificacionDomainService tarificacion;
+    private final CupoParqueaderoDomainService cupoParqueadero;
     private final Clock reloj;
 
     public ModificarReservaUseCase(CargadorReserva cargador, ReservaRepository reservas, FolioRepository folios,
                                    TarifaRepository tarifas, DisponibilidadDomainService disponibilidad,
-                                   TarificacionDomainService tarificacion, Clock reloj) {
+                                   TarificacionDomainService tarificacion,
+                                   CupoParqueaderoDomainService cupoParqueadero, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.folios = folios;
         this.tarifas = tarifas;
         this.disponibilidad = disponibilidad;
         this.tarificacion = tarificacion;
+        this.cupoParqueadero = cupoParqueadero;
         this.reloj = reloj;
     }
 
@@ -78,6 +82,9 @@ public class ModificarReservaUseCase {
         reserva.modificar(estancia, ocupantes, destino.codigo(), cotizacion, destino.capacidad(),
                 calendario.estanciaMinimaPara(estancia), cargador.titular(reserva.titularId()),
                 parametros.umbralEdadFacturable(), hoy);
+        // RP-02: las nuevas fechas también deben caber en el parqueadero
+        cupoParqueadero.exigirCupo(estancia, reserva.vehiculos(), reservas.buscarActivasConVehiculos(), reserva,
+                parametros.cupoParqueadero());
         folio.ajustarPorModificacion(valorAnterior, reserva.valorTotal(), hoy);
 
         reservas.guardar(reserva);

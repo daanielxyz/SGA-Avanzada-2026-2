@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.tarifa;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,8 @@ import java.util.List;
  * Spring Data sobre la tabla {@code tarifa}. Solo lo usa {@link TarifaRepositoryJpa}.
  */
 interface TarifaJpaRepository extends JpaRepository<TarifaJpa, String> {
+
+    Page<TarifaJpa> findByApartamentoCodigoOrderByVigenteDesdeDescVersionDesc(String apartamentoCodigo, Pageable pagina);
 
     /**
      * Para cada temporada, la fila con la versión más alta del apartamento cuya vigencia ya empezó en {@code fecha}.

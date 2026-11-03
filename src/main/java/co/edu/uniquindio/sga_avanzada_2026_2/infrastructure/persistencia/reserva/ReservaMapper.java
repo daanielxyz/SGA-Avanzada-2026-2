@@ -53,7 +53,9 @@ final class ReservaMapper {
                                 new Dinero(n.getTarifa()), n.getOcupantesFacturables(), new Dinero(n.getSubtotal())))
                         .toList(),
                 new PoliticaId(jpa.getPoliticaVersionId()),
-                jpa.getCreadaEn());
+                jpa.getCreadaEn(),
+                jpa.getVehiculos(),
+                jpa.getMascotas());
     }
 
     /**
@@ -74,6 +76,8 @@ final class ReservaMapper {
         jpa.setValorTotal(reserva.valorTotal().monto());
         jpa.setPoliticaVersionId(reserva.politicaVersionId().valor());
         jpa.setCreadaEn(reserva.creadaEn());
+        jpa.setVehiculos(reserva.vehiculos());
+        jpa.setMascotas(reserva.mascotas());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
                 r.autor().valor(), r.anulado(), r.motivoCorreccion())));

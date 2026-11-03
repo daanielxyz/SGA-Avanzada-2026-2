@@ -45,7 +45,8 @@ public class InicializadorAlojamiento implements ApplicationRunner {
                         p.tiempoPreparacionHoras(), p.plazoConfirmacionHoras(), p.horaLimiteNoShow(), p.anticipoPct(),
                         p.minimoMediosPago(), p.minimoServiciosAdicionales(), p.minimoTemporadas(),
                         p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas(), p.pagoEnLinea(),
-                        p.plazoPagoEnLineaMinutos()),
+                        p.plazoPagoEnLineaMinutos(), p.cupoParqueadero(), p.aceptaMascotas(), p.limiteMascotas(),
+                        p.cargoMascota()),
                 a.servicios().stream().map(s -> new ServicioCommand(s.nombre(), s.generaCargo(), s.valor())).toList(),
                 a.mediosPago(),
                 sga.politica().tramos().stream()

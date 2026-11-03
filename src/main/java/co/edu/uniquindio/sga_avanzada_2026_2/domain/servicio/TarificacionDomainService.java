@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
+import java.time.LocalDate;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
@@ -20,6 +22,26 @@ import java.util.List;
  * que recibe por parámetro.
  */
 public class TarificacionDomainService {
+
+    /**
+     * Cuántos del grupo pagan (RN-06): sin fechas de nacimiento, todos; con ellas, los que a la fecha de entrada
+     * alcanzan el umbral. Quien las da debe dar una por ocupante.
+     *
+     * @throws ReglaDominioException si hay fechas y no corresponden al tamaño del grupo
+     */
+    public int contarFacturables(int ocupantes, List<LocalDate> fechasNacimiento, LocalDate entrada, int umbral) {
+        if (fechasNacimiento.isEmpty()) {
+            return ocupantes;
+        }
+        if (fechasNacimiento.size() != ocupantes) {
+            throw new ReglaDominioException("Se esperaban " + ocupantes + " fechas de nacimiento y llegaron "
+                    + fechasNacimiento.size());
+        }
+        return (int) fechasNacimiento.stream()
+                .filter(nacimiento -> new Ocupante(new OcupanteId("OCU-1"), "Ocupante", nacimiento, null, null)
+                        .esFacturableA(entrada, umbral))
+                .count();
+    }
 
     /**
      * Valor = Σ por noche (tarifa vigente del apartamento en la temporada de esa noche × ocupantes facturables)

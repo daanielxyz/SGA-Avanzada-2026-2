@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.novedad;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.AvanzarNovedadCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.novedad.ConsultarNovedadesUseCase;
@@ -40,9 +42,10 @@ public class NovedadController {
 
     @PostMapping("/api/apartamentos/{codigo}/novedades")
     @ResponseStatus(HttpStatus.CREATED)
-    public NovedadResponse registrar(@PathVariable String codigo,
+    public ResponseEntity<NovedadResponse> registrar(@PathVariable String codigo,
                                      @Valid @RequestBody RegistrarNovedadRequest solicitud) {
-        return NovedadResponse.de(registrarNovedad.ejecutar(solicitud.aCommand(codigo, usuario.id())));
+        return ResponseEntity.created(URI.create("/api/apartamentos/" + codigo + "/novedades"))
+                .body(NovedadResponse.de(registrarNovedad.ejecutar(solicitud.aCommand(codigo, usuario.id()))));
     }
 
     /** De la más reciente a la más antigua, incluidas las cerradas (NOV-06). */

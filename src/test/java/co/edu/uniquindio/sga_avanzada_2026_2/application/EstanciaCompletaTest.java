@@ -1,11 +1,11 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.MarcarPreparadoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.IniciarPreparacionUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AlojamientoResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ActivarApartamentoUseCase;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativoUseCase;
-import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CambiarEstadoOperativoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.ConsultarApartamentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.CrearApartamentoCommand;
@@ -80,7 +80,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(locations = "file:src/main/resources/application.properties", properties = {
+@TestPropertySource(locations = "file:src/main/resources/application.properties", properties = {"sga.datos-demo=false", 
         "spring.datasource.url=jdbc:h2:mem:estancia;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;"
                 + "DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1",
         "spring.datasource.username=sa",
@@ -105,7 +105,10 @@ class EstanciaCompletaTest {
     private ActivarApartamentoUseCase activarApartamento;
 
     @Autowired
-    private CambiarEstadoOperativoUseCase cambiarEstadoOperativo;
+    private IniciarPreparacionUseCase iniciarPreparacion;
+
+    @Autowired
+    private MarcarPreparadoUseCase marcarPreparado;
 
     @Autowired
     private ConsultarApartamentoUseCase consultarApartamento;
@@ -195,8 +198,8 @@ class EstanciaCompletaTest {
                 .forEach(temporada -> definirTarifa.ejecutar(
                         new DefinirTarifaCommand(APT, temporada, BigDecimal.valueOf(100_000))));
         activarApartamento.ejecutar(APT);
-        cambiarEstadoOperativo.ejecutar(new CambiarEstadoOperativoCommand(APT, "EN_PREPARACION"));
-        cambiarEstadoOperativo.ejecutar(new CambiarEstadoOperativoCommand(APT, "PREPARADO"));
+        iniciarPreparacion.ejecutar(APT);
+        marcarPreparado.ejecutar(APT);
         AlojamientoResult alojamiento = agregarServicio.ejecutar(
                 new AgregarServicioAdicionalCommand(ALO, "Desayuno", true, BigDecimal.valueOf(25_000)));
         desayuno = alojamiento.serviciosAdicionales().getLast().id();

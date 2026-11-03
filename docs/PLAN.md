@@ -41,7 +41,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Decisiones en `docs/DE
     | `ListarApartamentosUseCase` (CU-31) | — (página) | `Pagina<ApartamentoResult>` |
     | `ActivarApartamentoUseCase` / `RetirarApartamentoUseCase` (CU-31) | — (código) | `ApartamentoResult` |
     | `CambiarCapacidadUseCase` (APA-15) | `CambiarCapacidadCommand` | `CambioCapacidadResult` (apartamento + reservas afectadas) |
-    | `CambiarEstadoOperativoUseCase` (CU-40 · CU-42) | `CambiarEstadoOperativoCommand` | `ApartamentoResult` |
+    | `CambiarEstadoOperativoUseCase` (CU-40 · CU-42; reemplazado por un caso de uso por acción, DEC-86) | `CambiarEstadoOperativoCommand` | `ApartamentoResult` |
     | `RegistrarBloqueoUseCase` (CU-32) / `LevantarBloqueoUseCase` (CU-52) | `RegistrarBloqueoCommand` / `LevantarBloqueoCommand` | `ApartamentoResult` |
     | `ConsultarCalendarioUseCase` / `CambiarFechasTemporadaUseCase` / `DesactivarTemporadaUseCase` (CU-33) | `CambiarFechasTemporadaCommand` / `DesactivarTemporadaCommand` | `CalendarioResult` |
     | `AgregarTemporadaUseCase` (CU-33 · TAR-03) | `AgregarTemporadaCommand` (+ tarifa por apartamento) | `TemporadaCreadaResult` |
@@ -107,7 +107,7 @@ Estado: `[x]` hecho · `[ ]` pendiente · `[~]` en curso. Decisiones en `docs/DE
     | `GET /api/apartamentos?pagina=` | — | `Pagina<ApartamentoResponse>` |
     | `PUT /api/apartamentos/{codigo}/activar` · `…/retirar` | — | `ApartamentoResponse` |
     | `PUT /api/apartamentos/{codigo}/capacidad` | `CambiarCapacidadRequest` | `CambioCapacidadResponse` |
-    | `PUT /api/apartamentos/{codigo}/estado-operativo` | `CambiarEstadoOperativoRequest` | `ApartamentoResponse` |
+    | `PUT /api/apartamentos/{codigo}/estado-operativo` (reemplazado por acciones de negocio, DEC-86) | `CambiarEstadoOperativoRequest` | `ApartamentoResponse` |
     | `POST /api/apartamentos/{codigo}/bloqueos` · `PUT …/bloqueos/{id}/levantar` | `RegistrarBloqueoRequest` | `ApartamentoResponse` |
     | `GET /api/temporadas` · `POST /api/temporadas` | `AgregarTemporadaRequest` | `CalendarioResponse` · `TemporadaCreadaResponse` (201) |
     | `PUT /api/temporadas/{id}/fechas` · `PUT /api/temporadas/{id}/desactivar` | `CambiarFechasTemporadaRequest` | `CalendarioResponse` |

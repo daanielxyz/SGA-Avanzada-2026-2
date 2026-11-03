@@ -263,13 +263,13 @@ class ReservaRepositoryJpaTest {
     @Test
     @Tag("CU-25")
     @Tag("DEC-72")
-    void deberiaBuscarConFiltrosYOrdenarPorEntrada() {
+    void deberiaBuscarConFiltrosDeLaMasRecienteALaMasAntigua() {
         repositorio.guardar(pendiente("RES-2026-70001", 20, 22));
         repositorio.guardar(pendiente("RES-2026-70002", 10, 12));
         repositorio.guardar(externa("RES-2026-70003", "BK-70"));
         sincronizar();
 
-        assertEquals(List.of("RES-2026-70002", "RES-2026-70001", "RES-2026-70003"),
+        assertEquals(List.of("RES-2026-70003", "RES-2026-70002", "RES-2026-70001"),
                 codigos(new FiltroReservas(null, null, null, null, null, null)));
         assertEquals(List.of("RES-2026-70003"),
                 codigos(new FiltroReservas(null, null, null, null, CanalOrigen.EXTERNO, null)));

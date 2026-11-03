@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.tarifa;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.AgregarTemporadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.CambiarFechasTemporadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.ConsultarCalendarioUseCase;
@@ -47,8 +49,9 @@ public class TemporadaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TemporadaCreadaResponse agregar(@Valid @RequestBody AgregarTemporadaRequest solicitud) {
-        return TemporadaCreadaResponse.de(agregarTemporada.ejecutar(solicitud.aCommand(alojamiento.id())));
+    public ResponseEntity<TemporadaCreadaResponse> agregar(@Valid @RequestBody AgregarTemporadaRequest solicitud) {
+        return ResponseEntity.created(URI.create("/api/temporadas"))
+                .body(TemporadaCreadaResponse.de(agregarTemporada.ejecutar(solicitud.aCommand(alojamiento.id()))));
     }
 
     @PutMapping("/{id}/fechas")

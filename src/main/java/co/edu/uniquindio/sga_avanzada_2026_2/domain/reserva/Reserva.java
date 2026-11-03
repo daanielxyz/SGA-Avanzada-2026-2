@@ -46,6 +46,8 @@ public class Reserva {
     private List<LineaCotizacion> desglose;  // congelado, por noche
     private final PoliticaId politicaVersionId; // congelada
     private final LocalDateTime creadaEn;       // desde aquí corre el plazo de confirmación (RN-21)
+    private int vehiculos;                      // RP-02
+    private int mascotas;                       // RP-03
 
     // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · REG-06 · SAL-01
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
@@ -53,6 +55,16 @@ public class Reserva {
                    List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
                    LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
                    PoliticaId politicaVersionId, LocalDateTime creadaEn) {
+        this(codigo, apartamentoId, titularId, estancia, estado, canalOrigen, canalId, idExterno, ocupantes, registros,
+                salida, horaEstimadaLlegada, valorTotal, desglose, politicaVersionId, creadaEn, 0, 0);
+    }
+
+    // Reconstrucción con lo que la reserva declaró de vehículos y mascotas (RP-02 · RP-03)
+    public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
+                   EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
+                   List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
+                   LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
+                   PoliticaId politicaVersionId, LocalDateTime creadaEn, int vehiculos, int mascotas) {
         if (codigo == null || apartamentoId == null || titularId == null || estancia == null || estado == null
                 || canalOrigen == null || ocupantes == null || registros == null || valorTotal == null
                 || desglose == null || politicaVersionId == null || creadaEn == null) {
@@ -83,6 +95,35 @@ public class Reserva {
         this.desglose = List.copyOf(desglose);
         this.politicaVersionId = politicaVersionId;
         this.creadaEn = creadaEn;
+        validarDeclarados(vehiculos, mascotas);
+        this.vehiculos = vehiculos;
+        this.mascotas = mascotas;
+    }
+
+    /**
+     * Anota cuántos vehículos y mascotas lleva la reserva. Que quepan en el parqueadero (RP-02) lo verifica antes
+     * {@code CupoParqueaderoDomainService}, y que se acepten (RP-03), {@code ParametrosAlojamiento.exigirMascotas}.
+     *
+     * @throws ReglaDominioException si alguna cantidad es negativa
+     */
+    public void declararVehiculosYMascotas(int nuevosVehiculos, int nuevasMascotas) {
+        validarDeclarados(nuevosVehiculos, nuevasMascotas);
+        vehiculos = nuevosVehiculos;
+        mascotas = nuevasMascotas;
+    }
+
+    private static void validarDeclarados(int vehiculos, int mascotas) {
+        if (vehiculos < 0 || mascotas < 0) {
+            throw new ReglaDominioException("Los vehículos y las mascotas de la reserva no pueden ser negativos");
+        }
+    }
+
+    public int vehiculos() {
+        return vehiculos;
+    }
+
+    public int mascotas() {
+        return mascotas;
     }
 
     /**

@@ -1,7 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
-import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.AutorizacionCierre;
@@ -61,7 +60,7 @@ public class SalidaOperativaDomainService {
     private static void finalizar(Reserva reserva, Apartamento apartamento, SalidaId salidaId, LocalDateTime ahora,
                                   UsuarioId autor) {
         reserva.registrarSalida(salidaId, ahora, autor);
-        apartamento.cambiarEstadoOperativo(EstadoOperativo.PENDIENTE_PREPARACION);
+        apartamento.marcarPendientePreparacion();
     }
 
     // FOL-02 · D-02: los tres agregados deben ser de la misma estancia

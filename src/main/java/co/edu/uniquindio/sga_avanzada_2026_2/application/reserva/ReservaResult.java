@@ -17,7 +17,7 @@ import java.util.Optional;
 public record ReservaResult(String codigo, String apartamento, String titularId, LocalDate entrada,
                            LocalDate salida, String estado, String canalOrigen, List<OcupanteResult> ocupantes,
                            LocalTime horaEstimadaLlegada, CotizacionResult valor, String politicaId,
-                           LocalDateTime creadaEn, String avisoCuenta) {
+                           LocalDateTime creadaEn, String avisoCuenta, int vehiculos, int mascotas) {
 
     public record OcupanteResult(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                  String numeroDocumento, String nacionalidad) {
@@ -42,11 +42,13 @@ public record ReservaResult(String codigo, String apartamento, String titularId,
                 CotizacionResult.de(reserva.desglose(), reserva.valorTotal().monto()),
                 reserva.politicaVersionId().valor(),
                 reserva.creadaEn(),
-                null);
+                null,
+                reserva.vehiculos(),
+                reserva.mascotas());
     }
 
     public ReservaResult conAvisoCuenta(String aviso) {
         return new ReservaResult(codigo, apartamento, titularId, entrada, salida, estado, canalOrigen, ocupantes,
-                horaEstimadaLlegada, valor, politicaId, creadaEn, aviso);
+                horaEstimadaLlegada, valor, politicaId, creadaEn, aviso, vehiculos, mascotas);
     }
 }

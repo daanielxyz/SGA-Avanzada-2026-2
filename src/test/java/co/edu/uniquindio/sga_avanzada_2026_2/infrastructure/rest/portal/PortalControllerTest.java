@@ -122,7 +122,7 @@ class PortalControllerTest extends PruebaRestDeReservas {
 
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", HOY.plusDays(5).toString())
                         .param("salida", HOY.plusDays(7).toString()).param("ocupantes", "2"))
-                .andExpect(jsonPath("$[*].codigo").value(hasItem("APT-101")));
+                .andExpect(jsonPath("$.contenido[*].codigo").value(hasItem("APT-101")));
     }
 
     @Test

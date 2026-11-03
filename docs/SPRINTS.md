@@ -36,6 +36,7 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
   - [x] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol (`feature/pms/estructura-pms`).
   - [~] Diseño base del PMS: layouts a mano, mockups en Claude Design de las pantallas del sprint 1 y su base visual (variables de CSS y componentes comunes) aplicada a las pantallas existentes (`feature/pms/diseno-base`, DEC-84; flujo y pantallas en `pms/DISENO.md`).
   - [ ] Listado de reservas con filtros y detalle de una reserva, ya con el diseño base.
+  - [x] Núcleo: `feature/nucleo/entrega-2`, lo que faltaba del backend para la Entrega 2 (DEC-86).
   - [~] Núcleo: `feature/nucleo/cors-frontends`, CORS para los orígenes de `web/` y `pms/` por variable de entorno (DEC-82).
   - [ ] Núcleo: `feature/nucleo/estructura-carpetas` en el cierre 1, con las ramas de los dos equipos ya integradas: el backend pasa a `backend/` (DEC-83).
 - **Cierre 1 (vie 30 oct)**: demo de las dos pantallas; priorizar con el cliente el backlog de la entrevista.

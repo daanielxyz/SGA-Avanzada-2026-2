@@ -96,7 +96,7 @@ class ApartamentoRepositoryJpaTest {
         apartamento.levantarBloqueo(new BloqueoId("BLO-1"));
         apartamento.registrarBloqueo(new BloqueoId("BLO-2"), LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 5),
                 "Mantenimiento");
-        apartamento.cambiarEstadoOperativo(EstadoOperativo.FUERA_DE_SERVICIO);
+        apartamento.declararFueraDeServicio();
         apartamento.cambiarCapacidad(new Capacidad(3));
         repositorio.guardar(apartamento);
         sincronizar();
@@ -117,7 +117,7 @@ class ApartamentoRepositoryJpaTest {
         sincronizar();
 
         Apartamento apartamento = repositorio.buscarPorCodigo(CODIGO).orElseThrow();
-        apartamento.cambiarEstadoOperativo(EstadoOperativo.OCUPADO);
+        apartamento.ocupar();
         repositorio.guardar(apartamento);
         sincronizar();
 

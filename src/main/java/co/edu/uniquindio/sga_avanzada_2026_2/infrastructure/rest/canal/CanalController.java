@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.canal;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.ConsultarBitacoraCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.canal.DesactivarCanalUseCase;
@@ -50,14 +53,16 @@ public class CanalController {
     }
 
     @GetMapping
-    public List<CanalResponse> listar() {
-        return listarCanales.ejecutar(alojamiento.id()).stream().map(CanalResponse::de).toList();
+    public PaginaResponse<CanalResponse> listar(
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(Pagina.de(listarCanales.ejecutar(alojamiento.id()), pagina), CanalResponse::de);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CanalResponse registrar(@Valid @RequestBody RegistrarCanalRequest solicitud) {
-        return CanalResponse.de(registrarCanal.ejecutar(solicitud.aCommand(alojamiento.id())));
+    public ResponseEntity<CanalResponse> registrar(@Valid @RequestBody RegistrarCanalRequest solicitud) {
+        return ResponseEntity.created(URI.create("/api/canales"))
+                .body(CanalResponse.de(registrarCanal.ejecutar(solicitud.aCommand(alojamiento.id()))));
     }
 
     @PutMapping("/{id}/desactivar")

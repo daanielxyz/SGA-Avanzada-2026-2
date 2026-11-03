@@ -200,12 +200,11 @@ class GestionarApartamentosTest {
     void deberiaAvanzarLaPreparacionYRechazarUnaTransicionInvalida() {
         apartamentos.guardar(Apartamento.crear(APT_101, ALO, "Apto 101", null, new Capacidad(4), new Dormitorio(2),
                 List.of(), List.of(new Caracteristica("Balcón"))));
-        CambiarEstadoOperativoUseCase cambiar = new CambiarEstadoOperativoUseCase(apartamentos);
+        MarcarPreparadoUseCase marcarPreparado = new MarcarPreparadoUseCase(apartamentos);
 
-        assertEquals("EN_PREPARACION",
-                cambiar.ejecutar(new CambiarEstadoOperativoCommand("APT-101", "EN_PREPARACION")).estadoOperativo());
-        assertThrows(ReglaDominioException.class,
-                () -> cambiar.ejecutar(new CambiarEstadoOperativoCommand("APT-101", "OCUPADO")));
+        assertThrows(ReglaDominioException.class, () -> marcarPreparado.ejecutar("APT-101"));
+        assertEquals("EN_PREPARACION", new IniciarPreparacionUseCase(apartamentos).ejecutar("APT-101").estadoOperativo());
+        assertEquals("PREPARADO", marcarPreparado.ejecutar("APT-101").estadoOperativo());
     }
 
     @Test

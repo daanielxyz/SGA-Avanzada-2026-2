@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /**
- * Caso de uso: recepción busca reservas con filtros (CU-25 · DEC-72), de la que entra primero a la que entra después.
+ * Caso de uso: recepción busca reservas con filtros (CU-25 · DEC-72), de la más reciente a la más antigua.
  * El huésped no lo usa: ve las suyas con {@link ListarReservasDeTitularUseCase}.
  */
 @Service

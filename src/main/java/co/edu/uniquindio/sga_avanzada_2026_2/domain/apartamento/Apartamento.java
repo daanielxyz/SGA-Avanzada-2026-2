@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import java.util.stream.IntStream;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -19,13 +21,13 @@ public class Apartamento {
 
     private final ApartamentoId codigo;
     private final AlojamientoId alojamientoId;
-    private final String nombre;
-    private final String descripcion;
+    private String nombre;
+    private String descripcion;
     private Capacidad capacidad;
-    private final Dormitorio dormitorios;
+    private Dormitorio dormitorios;
     private EstadoOperativo estadoOperativo;
-    private final List<Imagen> imagenes;               // 0..10; sin imágenes no se puede activar
-    private final List<Caracteristica> caracteristicas; // ≥1
+    private List<Imagen> imagenes;               // 0..10; sin imágenes no se puede activar
+    private List<Caracteristica> caracteristicas; // ≥1
     private final List<Bloqueo> bloqueos;
     private boolean activo;
 
@@ -122,11 +124,141 @@ public class Apartamento {
     }
 
     /**
-     * Cambia el estado operativo. No crea ni levanta bloqueos (BLO-05).
+     * Corrige los datos descriptivos del apartamento (CU-31 · CARAC-01). La capacidad tiene su propia operación,
+     * porque advierte de las reservas afectadas (APA-15).
      *
-     * @throws ReglaDominioException si la transición no está permitida (EOPE-02)
+     * @throws ReglaDominioException si falta el nombre, los dormitorios o no queda ninguna característica
      */
-    public void cambiarEstadoOperativo(EstadoOperativo destino) {
+    public void actualizarDatos(String nuevoNombre, String nuevaDescripcion, Dormitorio nuevosDormitorios,
+                                List<Caracteristica> nuevasCaracteristicas) {
+        if (nuevoNombre == null || nuevoNombre.isBlank()) {
+            throw new ReglaDominioException("El nombre del apartamento es obligatorio");
+        }
+        if (nuevosDormitorios == null) {
+            throw new ReglaDominioException("Los dormitorios del apartamento son obligatorios");
+        }
+        if (nuevasCaracteristicas == null || nuevasCaracteristicas.isEmpty()) {
+            throw new ReglaDominioException("El apartamento debe declarar al menos una característica");
+        }
+        nombre = nuevoNombre.trim();
+        descripcion = nuevaDescripcion;
+        dormitorios = nuevosDormitorios;
+        caracteristicas = List.copyOf(nuevasCaracteristicas);
+    }
+
+    /**
+     * Agrega una imagen; la primera queda como principal (IMG-01 · IMG-02).
+     *
+     * @throws ReglaDominioException si ya tiene el máximo de imágenes o esa url ya está
+     */
+    public void agregarImagen(String url) {
+        Imagen nueva = new Imagen(url, imagenes.isEmpty());
+        if (imagenes.size() >= MAXIMO_IMAGENES) {
+            throw new ReglaDominioException("Un apartamento admite máximo " + MAXIMO_IMAGENES + " imágenes");
+        }
+        if (imagenes.stream().anyMatch(i -> i.url().equals(nueva.url()))) {
+            throw new ReglaDominioException("El apartamento ya tiene la imagen " + nueva.url());
+        }
+        List<Imagen> todas = new ArrayList<>(imagenes);
+        todas.add(nueva);
+        imagenes = List.copyOf(todas);
+    }
+
+    /**
+     * Quita una imagen; si era la principal, la primera de las que quedan toma su lugar (IMG-02). Un apartamento a la
+     * venta no puede quedarse sin imágenes (IMG-01).
+     *
+     * @throws ReglaDominioException si la imagen no existe o es la última de un apartamento activo
+     */
+    public void quitarImagen(String url) {
+        exigirImagen(url);
+        if (activo && imagenes.size() == 1) {
+            throw new ReglaDominioException("Un apartamento a la venta no puede quedarse sin imágenes");
+        }
+        List<Imagen> restantes = imagenes.stream().filter(i -> !i.url().equals(url.trim())).toList();
+        boolean falta = restantes.stream().noneMatch(Imagen::principal);
+        imagenes = IntStream.range(0, restantes.size())
+                .mapToObj(i -> new Imagen(restantes.get(i).url(), restantes.get(i).principal() || (falta && i == 0)))
+                .toList();
+    }
+
+    /**
+     * Destaca una imagen: exactamente una es la principal (IMG-02).
+     *
+     * @throws ReglaDominioException si la imagen no existe
+     */
+    public void marcarImagenPrincipal(String url) {
+        exigirImagen(url);
+        imagenes = imagenes.stream().map(i -> new Imagen(i.url(), i.url().equals(url.trim()))).toList();
+    }
+
+    private void exigirImagen(String url) {
+        if (url == null || imagenes.stream().noneMatch(i -> i.url().equals(url.trim()))) {
+            throw new ReglaDominioException("El apartamento " + codigo.valor() + " no tiene la imagen " + url);
+        }
+    }
+
+    /** Lo que el personal de servicio tiene por preparar (CU-41). */
+    public boolean pendienteDePreparacion() {
+        return estadoOperativo == EstadoOperativo.PENDIENTE_PREPARACION
+                || estadoOperativo == EstadoOperativo.EN_PREPARACION;
+    }
+
+    /** Los bloqueos vigentes que tocan alguna noche del rango (CU-24 · BLO-03). */
+    public List<Bloqueo> bloqueosVigentesEn(Estancia rango) {
+        return bloqueos.stream()
+                .filter(b -> rango.noches().stream().anyMatch(b::cubre))
+                .toList();
+    }
+
+    /**
+     * El personal empieza a preparar el apartamento (CU-42).
+     *
+     * @throws ReglaDominioException si no estaba PENDIENTE_PREPARACION (EOPE-02)
+     */
+    public void iniciarPreparacion() {
+        transitarA(EstadoOperativo.EN_PREPARACION);
+    }
+
+    /**
+     * El apartamento queda listo para entregarse (CU-42 · RN-11).
+     *
+     * @throws ReglaDominioException si no estaba EN_PREPARACION (EOPE-02)
+     */
+    public void marcarPreparado() {
+        transitarA(EstadoOperativo.PREPARADO);
+    }
+
+    /**
+     * El apartamento entra a la ruta de preparación: tras la salida de un grupo o al volver de estar fuera de
+     * servicio, para que nunca se entregue sin revisar (RN-11 · DEC-21).
+     *
+     * @throws ReglaDominioException si no estaba OCUPADO ni FUERA_DE_SERVICIO (EOPE-02)
+     */
+    public void marcarPendientePreparacion() {
+        transitarA(EstadoOperativo.PENDIENTE_PREPARACION);
+    }
+
+    /**
+     * Un grupo recibe el apartamento (CU-21 · RN-11).
+     *
+     * @throws ReglaDominioException si no estaba PREPARADO (EOPE-02)
+     */
+    public void ocupar() {
+        transitarA(EstadoOperativo.OCUPADO);
+    }
+
+    /**
+     * Saca el apartamento de operación (CU-40). No impide venderlo a futuro: para eso está el bloqueo (sección 3.3).
+     *
+     * @throws ReglaDominioException si está OCUPADO o ya estaba fuera de servicio (EOPE-02)
+     */
+    public void declararFueraDeServicio() {
+        transitarA(EstadoOperativo.FUERA_DE_SERVICIO);
+    }
+
+    // EOPE-02. No crea ni levanta bloqueos (BLO-05)
+    private void transitarA(EstadoOperativo destino) {
         if (!estadoOperativo.puedePasarA(destino)) {
             throw new ReglaDominioException(
                     "Transición de estado operativo no permitida: " + estadoOperativo + " → " + destino);

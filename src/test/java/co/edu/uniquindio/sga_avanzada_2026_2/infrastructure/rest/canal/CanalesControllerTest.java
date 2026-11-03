@@ -79,8 +79,8 @@ class CanalesControllerTest extends PruebaRestDeReservas {
 
         mvc.perform(get("/api/canales"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].nombre").value(containsInAnyOrder("Booking", "Portal web")));
+                .andExpect(jsonPath("$.contenido", hasSize(2)))
+                .andExpect(jsonPath("$.contenido[*].nombre").value(containsInAnyOrder("Booking", "Portal web")));
         mvc.perform(put("/api/canales/" + booking + "/desactivar"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activo").value(false));
@@ -143,11 +143,11 @@ class CanalesControllerTest extends PruebaRestDeReservas {
 
         mvc.perform(get("/api/conflictos/pendientes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(conflicto))
-                .andExpect(jsonPath("$[0].idExterno").value("BK-2"))
-                .andExpect(jsonPath("$[0].apartamento").value("APT-101"))
-                .andExpect(jsonPath("$[0].estado").value("PENDIENTE"));
+                .andExpect(jsonPath("$.contenido", hasSize(1)))
+                .andExpect(jsonPath("$.contenido[0].id").value(conflicto))
+                .andExpect(jsonPath("$.contenido[0].idExterno").value("BK-2"))
+                .andExpect(jsonPath("$.contenido[0].apartamento").value("APT-101"))
+                .andExpect(jsonPath("$.contenido[0].estado").value("PENDIENTE"));
         enviar(put("/api/conflictos/" + conflicto + "/resolver"), "{\"decision\": \" \"}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("decision: es obligatoria")));
@@ -160,7 +160,7 @@ class CanalesControllerTest extends PruebaRestDeReservas {
                 .andExpect(status().isConflict());
         enviar(put("/api/conflictos/CON-99999/resolver"), "{\"decision\": \"Otra\"}")
                 .andExpect(status().isNotFound());
-        mvc.perform(get("/api/conflictos/pendientes")).andExpect(jsonPath("$").isEmpty());
+        mvc.perform(get("/api/conflictos/pendientes")).andExpect(jsonPath("$.contenido").isEmpty());
     }
 
     @Test

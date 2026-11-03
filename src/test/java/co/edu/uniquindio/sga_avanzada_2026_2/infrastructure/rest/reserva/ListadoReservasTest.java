@@ -56,11 +56,11 @@ class ListadoReservasTest extends PruebaRestDeReservas {
     @Test
     @Tag("CU-25")
     @Tag("DEC-18")
-    void sinFiltrosListaTodasDeLaQueEntraPrimero() throws Exception {
+    void sinFiltrosListaTodasDeLaMasRecienteALaMasAntigua() throws Exception {
         listar()
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElementos").value(3))
-                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaPendiente, eva, anaConfirmada)));
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva, anaConfirmada, anaPendiente)));
         listar("pagina", "1").andExpect(jsonPath("$.contenido").isEmpty());
     }
 
@@ -80,9 +80,9 @@ class ListadoReservasTest extends PruebaRestDeReservas {
     @Tag("DEC-72")
     void porFechasEntraLaQueSeCruzaConElRango() throws Exception {
         listar("desde", dia(6), "hasta", dia(11))
-                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaPendiente, anaConfirmada)));
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaConfirmada, anaPendiente)));
         listar("desde", dia(7), "hasta", dia(10)).andExpect(jsonPath("$.contenido").isEmpty());
-        listar("hasta", dia(6)).andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaPendiente, eva)));
+        listar("hasta", dia(6)).andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva, anaPendiente)));
         listar("desde", dia(11)).andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaConfirmada)));
     }
 

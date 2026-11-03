@@ -18,6 +18,8 @@ interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String>, JpaSpe
 
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
 
+    List<ReservaJpa> findByEstadoInAndVehiculosGreaterThan(Collection<EstadoReserva> estados, int vehiculos);
+
     Optional<ReservaJpa> findByCanalIdAndIdExterno(String canalId, String idExterno);
 
     List<ReservaJpa> findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva estado, LocalDateTime limite);

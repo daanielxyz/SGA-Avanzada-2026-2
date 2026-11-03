@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
+import java.util.Optional;
+import jakarta.validation.constraints.Min;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaCommand;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -41,10 +43,18 @@ public record CrearReservaRequest(
         @NotEmpty(message = "debe tener al menos un ocupante")
         List<@Valid @NotNull(message = "no puede ser nulo") OcupanteRequest> ocupantes,
 
-        LocalTime horaEstimadaLlegada) {
+        LocalTime horaEstimadaLlegada,
+
+        // Opcionales: sin ellos, ni vehículos ni mascotas (RP-02 · RP-03)
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer vehiculos,
+
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer mascotas) {
 
     CrearReservaCommand aCommand() {
         return new CrearReservaCommand(apartamento, entrada, salida, canalOrigen, titular.aCommand(),
-                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada);
+                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada, Optional.ofNullable(vehiculos).orElse(0),
+                Optional.ofNullable(mascotas).orElse(0));
     }
 }

@@ -26,14 +26,14 @@ class DisponibilidadControllerTest extends PruebaRestDeReservas {
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", ENTRADA.toString())
                         .param("salida", ENTRADA.plusDays(2).toString()).param("ocupantes", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].codigo").value(hasItem("APT-102")));
+                .andExpect(jsonPath("$.contenido", hasSize(2)))
+                .andExpect(jsonPath("$.contenido[*].codigo").value(hasItem("APT-102")));
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", ENTRADA.toString())
                         .param("salida", ENTRADA.plusDays(2).toString()).param("ocupantes", "3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].codigo").value("APT-101"))
-                .andExpect(jsonPath("$[0].capacidad").value(4));
+                .andExpect(jsonPath("$.contenido", hasSize(1)))
+                .andExpect(jsonPath("$.contenido[0].codigo").value("APT-101"))
+                .andExpect(jsonPath("$.contenido[0].capacidad").value(4));
     }
 
     @Test
@@ -44,8 +44,8 @@ class DisponibilidadControllerTest extends PruebaRestDeReservas {
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", ENTRADA.plusDays(1).toString())
                         .param("salida", ENTRADA.plusDays(4).toString()).param("ocupantes", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].codigo").value("APT-102"));
+                .andExpect(jsonPath("$.contenido", hasSize(1)))
+                .andExpect(jsonPath("$.contenido[0].codigo").value("APT-102"));
     }
 
     @Test
@@ -85,7 +85,7 @@ class DisponibilidadControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.total").value(600000));
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", ENTRADA.toString())
                         .param("salida", ENTRADA.plusDays(3).toString()).param("ocupantes", "3"))
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$.contenido", hasSize(1)));
     }
 
     @Test

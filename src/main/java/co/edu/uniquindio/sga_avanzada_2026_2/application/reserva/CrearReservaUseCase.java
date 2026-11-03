@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.GeneradorCodigos;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.SerieCodigo;
@@ -48,6 +49,7 @@ public class CrearReservaUseCase {
     private final PoliticaCancelacionRepository politicas;
     private final DisponibilidadDomainService disponibilidad;
     private final TarificacionDomainService tarificacion;
+    private final CupoParqueaderoDomainService cupoParqueadero;
     private final GeneradorCodigos codigos;
     private final AvisosReserva avisos;
     private final Clock reloj;
@@ -56,6 +58,7 @@ public class CrearReservaUseCase {
                                TitularRepository titulares, TarifaRepository tarifas,
                                PoliticaCancelacionRepository politicas,
                                DisponibilidadDomainService disponibilidad, TarificacionDomainService tarificacion,
+                               CupoParqueaderoDomainService cupoParqueadero,
                                GeneradorCodigos codigos, AvisosReserva avisos, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
@@ -65,6 +68,7 @@ public class CrearReservaUseCase {
         this.politicas = politicas;
         this.disponibilidad = disponibilidad;
         this.tarificacion = tarificacion;
+        this.cupoParqueadero = cupoParqueadero;
         this.codigos = codigos;
         this.avisos = avisos;
         this.reloj = reloj;
@@ -101,8 +105,15 @@ public class CrearReservaUseCase {
                 titular, estancia, CanalOrigen.valueOf(comando.canalOrigen()), null, null, ocupantes,
                 comando.horaEstimadaLlegada(), cotizacion, politica.id(), apartamento.capacidad(),
                 calendario.estanciaMinimaPara(estancia), parametros.umbralEdadFacturable(), ahora);
+        // RP-03 · RP-02
+        parametros.exigirMascotas(comando.mascotas());
+        cupoParqueadero.exigirCupo(estancia, comando.vehiculos(), reservas.buscarActivasConVehiculos(), null,
+                parametros.cupoParqueadero());
+        reserva.declararVehiculosYMascotas(comando.vehiculos(), comando.mascotas());
         Folio folio = Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
                 reserva.valorTotal(), ahora.toLocalDate());
+        parametros.cargoPorMascotas(comando.mascotas()).ifPresent(cargo -> folio.agregarServicioAdicional(
+                "Mascotas (" + comando.mascotas() + ")", cargo, ahora.toLocalDate()));
 
         titulares.guardar(titular);
         reservas.guardar(reserva);

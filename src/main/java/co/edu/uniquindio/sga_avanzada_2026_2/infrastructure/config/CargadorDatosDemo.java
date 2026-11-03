@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 /**
  * Datos de ejemplo para probar a mano y para las demos (DEC-81): cuatro apartamentos activos, con fotos, dotación y
- * tarifas en la temporada base y en dos temporadas altas. Solo con {@code SGA_DATOS_DEMO=true}, nunca en un servidor
+ * tarifas en la temporada base y en dos temporadas altas. Se apagan con {@code SGA_DATOS_DEMO=false} en un servidor
  * real. Se cargan con los mismos casos de uso del administrador, así que cumplen las reglas del dominio; si ya están,
  * no hace nada, y si algo falla, no deja nada a medias y el backend arranca igual.
  */

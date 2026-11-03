@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.usuario;
 
+import java.net.URI;
+import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.GestionUsuarios;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Rol;
@@ -29,11 +31,12 @@ public class UsuarioController {
         this.gestion = gestion;
     }
 
-    /** Nace sin contraseña: le llega al correo el código para fijarla. Sin Location: no tiene {@code GET} por id. */
+    /** Nace sin contraseña: le llega al correo el código para fijarla. No tiene {@code GET} por id: ubica el listado. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UsuarioResponse crear(@Valid @RequestBody CrearUsuarioRequest solicitud) {
-        return UsuarioResponse.de(gestion.crear(solicitud.correo(), Rol.valueOf(solicitud.rol()), solicitud.aDatos()));
+    public ResponseEntity<UsuarioResponse> crear(@Valid @RequestBody CrearUsuarioRequest solicitud) {
+        return ResponseEntity.created(URI.create("/api/usuarios"))
+                .body(UsuarioResponse.de(gestion.crear(solicitud.correo(), Rol.valueOf(solicitud.rol()), solicitud.aDatos())));
     }
 
     @GetMapping

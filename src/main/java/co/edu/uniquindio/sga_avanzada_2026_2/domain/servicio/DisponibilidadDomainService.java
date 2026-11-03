@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
@@ -17,6 +18,8 @@ import java.util.stream.Stream;
  * Reservas, que recibe por parámetro (DISP-02).
  */
 public class DisponibilidadDomainService {
+
+    private static final int MAXIMO_NOCHES_CALENDARIO = 186;
 
     /**
      * Disponible si en todas las noches: el apartamento está activo y su capacidad alcanza (DISP-02 · RN-02), no
@@ -43,6 +46,18 @@ public class DisponibilidadDomainService {
      * Igual que {@link #verificarDisponibilidad}, sin contar la reserva que se está modificando: sus propias noches
      * no le quitan disponibilidad (RN-14).
      */
+    public List<NocheCalendario> calendario(Apartamento apartamento, Estancia rango, List<Reserva> reservas,
+                                            ParametrosAlojamiento parametros) {
+        if (rango.cantidadNoches() > MAXIMO_NOCHES_CALENDARIO) {
+            throw new ReglaDominioException("El calendario se consulta de máximo " + MAXIMO_NOCHES_CALENDARIO
+                    + " noches a la vez");
+        }
+        return rango.noches().stream()
+                .map(noche -> new NocheCalendario(noche.fecha(), verificarDisponibilidad(apartamento,
+                        new Estancia(noche.fecha(), noche.fecha().plusDays(1)), 1, reservas, parametros).disponible()))
+                .toList();
+    }
+
     public Disponibilidad verificarParaModificar(Reserva reserva, Apartamento apartamento, Estancia estancia,
                                                  int ocupantes, List<Reserva> reservas,
                                                  ParametrosAlojamiento parametros) {

@@ -163,10 +163,10 @@ class ApartamentoTest {
 
     @Test
     @Tag("EOPE-02")
-    void deberiaCambiarEstadoOperativoPermitido() {
+    void deberiaOcuparUnApartamentoPreparado() {
         Apartamento apartamento = activo();
 
-        apartamento.cambiarEstadoOperativo(EstadoOperativo.OCUPADO);
+        apartamento.ocupar();
 
         assertEquals(EstadoOperativo.OCUPADO, apartamento.estadoOperativo());
     }
@@ -177,8 +177,46 @@ class ApartamentoTest {
         Apartamento apartamento = apartamento(List.of(PRINCIPAL), CARACTERISTICAS, EstadoOperativo.OCUPADO, true);
 
         assertThrows(ReglaDominioException.class,
-                () -> apartamento.cambiarEstadoOperativo(EstadoOperativo.FUERA_DE_SERVICIO));
+                apartamento::declararFueraDeServicio);
         assertEquals(EstadoOperativo.OCUPADO, apartamento.estadoOperativo());
+    }
+
+    @Test
+    @Tag("EOPE-02")
+    void deberiaRecorrerLaRutaDePreparacion() {
+        Apartamento apartamento = apartamento(List.of(PRINCIPAL), CARACTERISTICAS, EstadoOperativo.OCUPADO, true);
+
+        apartamento.marcarPendientePreparacion();
+        assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, apartamento.estadoOperativo());
+        apartamento.iniciarPreparacion();
+        assertEquals(EstadoOperativo.EN_PREPARACION, apartamento.estadoOperativo());
+        apartamento.marcarPreparado();
+        assertEquals(EstadoOperativo.PREPARADO, apartamento.estadoOperativo());
+    }
+
+    @Test
+    @Tag("EOPE-02")
+    void noDeberiaSaltarsePasosDeLaPreparacion() {
+        Apartamento apartamento = apartamento(List.of(PRINCIPAL), CARACTERISTICAS,
+                EstadoOperativo.PENDIENTE_PREPARACION, true);
+
+        assertThrows(ReglaDominioException.class, apartamento::marcarPreparado);
+        assertThrows(ReglaDominioException.class, apartamento::ocupar);
+        assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, apartamento.estadoOperativo());
+    }
+
+    @Test
+    @Tag("EOPE-02")
+    @Tag("DEC-21")
+    void deFueraDeServicioSoloSeVuelveALaPreparacion() {
+        Apartamento apartamento = activo();
+
+        apartamento.declararFueraDeServicio();
+
+        assertEquals(EstadoOperativo.FUERA_DE_SERVICIO, apartamento.estadoOperativo());
+        assertThrows(ReglaDominioException.class, apartamento::ocupar);
+        apartamento.marcarPendientePreparacion();
+        assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, apartamento.estadoOperativo());
     }
 
     // --- Bloqueos

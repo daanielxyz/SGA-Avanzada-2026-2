@@ -18,7 +18,7 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                               LocalDate salida, String estado, String canalOrigen,
                               List<OcupanteResponse> ocupantes, LocalTime horaEstimadaLlegada,
                               CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
-                              String avisoCuenta) {
+                              String avisoCuenta, int vehiculos, int mascotas) {
 
     public record OcupanteResponse(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                    String numeroDocumento, String nacionalidad) {
@@ -32,6 +32,6 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                                 o.numeroDocumento(), o.nacionalidad()))
                         .toList(),
                 r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
-                r.avisoCuenta());
+                r.avisoCuenta(), r.vehiculos(), r.mascotas());
     }
 }

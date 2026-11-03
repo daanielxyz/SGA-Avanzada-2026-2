@@ -24,7 +24,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Con {@code SGA_DATOS_DEMO=true} el arranque deja cuatro apartamentos a la venta (DEC-81), en una base H2 propia y
+ * Con {@code SGA_DATOS_DEMO=true} el arranque deja los diez apartamentos a la venta (DEC-81), en una base H2 propia y
  * con los valores reales de {@code src/main/resources/application.properties}, como en un computador de desarrollo.
  */
 @SpringBootTest
@@ -69,8 +69,8 @@ class CargadorDatosDemoTest {
     @Test
     @Tag("APA-11")
     @Tag("TEM-04")
-    void alArrancarDejaCuatroApartamentosALaVentaConDosTemporadasAltas() {
-        assertEquals(4, apartamentos.buscarActivos(ALO).size());
+    void alArrancarDejaLosDiezApartamentosALaVentaConDosTemporadasAltas() {
+        assertEquals(10, apartamentos.buscarActivos(ALO).size());
         assertEquals(3, calendarios.buscarPorAlojamiento(ALO).orElseThrow().temporadas().size());
     }
 
@@ -100,7 +100,7 @@ class CargadorDatosDemoTest {
     void arrancarOtraVezNoDuplicaNada() {
         cargador.run(new DefaultApplicationArguments());
 
-        assertEquals(4, apartamentos.buscarActivos(ALO).size());
+        assertEquals(10, apartamentos.buscarActivos(ALO).size());
         assertEquals(3, calendarios.buscarPorAlojamiento(ALO).orElseThrow().temporadas().size());
     }
 }
