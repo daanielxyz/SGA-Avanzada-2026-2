@@ -85,6 +85,41 @@ Para construir y cerrar cada tarea siguen las de flujo de código, que son globa
 - **`break-ui`** quiere un selector «Demo / Worst case» en la pantalla. Aquí los datos extremos van en los datos simulados de las pruebas (Testing Library) o en una ruta solo de desarrollo; nunca llegan a la versión publicada.
 - **`image-to-code`** dice ser para Codex y pide generar imágenes. Aquí el mockup de Claude Design es la imagen de referencia.
 
+## Sprint 2: acciones, crear reserva y tablero
+Mockups en `pms/diseno/mockups-meridian-sprint2/` (48 pantallas, con su LEEME). Excepciones a este archivo solo para este sprint:
+- **DEC-84**: si algo no queda listo el viernes, no se entrega a medias; se dice en el cierre y se termina después (esto reemplaza «el diseño no frena la demo»).
+- **Layouts**: Claude Design propuso la distribución, sin layouts a mano. Los mockups son borradores.
+- **Backend**: no se cambia por los mockups; ver «Para hablar con el equipo».
+
+| # | Rama | Pantallas | Estado |
+|---|---|---|---|
+| 1 | `feature/pms/acciones-reserva` | Botones según el estado, bloque Pago, diálogos de registrar pago, confirmar, cancelar y no-show | Hecho |
+| 2 | `feature/pms/crear-reserva` | `/reservas/nueva` en cuatro pasos y «Nueva reserva» en el listado | Pendiente |
+| 3 | `feature/pms/tablero-ocupacion` | `/ocupacion`, opción en el menú y en la bienvenida | Pendiente |
+
+Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
+- **Detalle**: política por su id y titular con nombre e id, como en el sprint 1. El nombre del apartamento sale de `GET /api/apartamentos/{codigo}`; si falla, queda el código. «Vehículos» y «Mascotas» se conservan.
+- **Pago**: el saldo llega positivo, así que su título dice «Saldo pendiente» o «Saldo a favor». El anticipo es el valor congelado por `anticipoPct`, sin mascotas. Las mascotas y otros servicios van en «Otros cargos», porque suman al saldo y no al total. En una reserva terminada, el anticipo se cambia por «Valor retenido», y «Registrar pago» solo aparece si todavía debe.
+- **Confirmar**: al terminar se cierra y deja el aviso en el detalle. Cancelar y no-show sí muestran su resultado, porque hablan de dinero.
+- **Cancelar y no-show**: sin «Se retendrá $ X» ni sus estados, que necesitan el cambio 1 de la lista de abajo; se avisa que puede haber retención.
+- **Desglose**: en pantallas angostas quedan Noche, Temporada y Subtotal, con la tarifa bajo la fecha, para que las noches sumen el total.
+- **Crear reserva** (al programarla): elegir un apartamento avanza de una vez; tras una noche vendida, vuelve al paso 4. Los pasos van en `?paso=`, para que «Atrás» del navegador no borre el formulario, y se avisa antes de recargar. Los datos personales no se guardan en el navegador. El cargo por mascota se cobra una vez por estancia y va en una línea aparte del total. Edad del titular según `umbralEdadFacturable`.
+- **Tablero** (al programarlo): el campo es «Última noche» y a la API se le envía un día más, porque `hasta` es exclusiva. La barra lleva código y `titularId`. Primera columna de 200 px y 56 px por día, para que quepan las 14 noches a 1280 px.
+
+## Para hablar con el equipo (backend)
+Los mockups del sprint 2 son borradores: mientras se termina el frontend, **se adaptan al backend que existe y el backend no se cambia por ellos**. Esto se discute con todo el equipo cuando el frontend esté listo; nada de esta lista está aprobado.
+
+| # | Posible cambio | Por qué serviría | Qué hace el frontend mientras tanto |
+|---|---|---|---|
+| 1 | Consultar cuánto se retendrá antes de cancelar o declarar no-show | Recepción conocería el costo antes de decidir | El valor retenido se muestra solo después, con `CancelacionResponse` |
+| 2 | `titularNombre` en las reservas de `OcupacionResponse` | Recepción identificaría más rápido cada reserva en el tablero | La barra muestra el código y el `titularId` |
+| 3 | Un `motivo` en los errores 409 de `REGLA_NEGOCIO` | Cada error podría salir junto a su causa, sin comparar textos | Se muestra el `mensaje` de la API en un aviso general, con las acciones para corregir |
+| 4 | Indicar qué noche se vendió | Se podría marcar en el desglose, como en el mockup | El aviso se refiere a las fechas de la reserva |
+| 5 | Cupos libres del parqueadero por fechas | Se avisaría antes de enviar la reserva | Se muestra el error de la API al crear |
+| 6 | Monto del anticipo exigido en la respuesta | La pantalla no repetiría ese cálculo | La pantalla lo calcula con `anticipoPct`; el backend decide al confirmar |
+| 7 | Nombre legible de la política para recepción | Hoy recepción solo puede ver el id | Se muestra `politicaId` |
+| 8 | Mensajes de los 409 pensados para recepción | Hoy algunos son técnicos: «Transición de reserva no permitida: CANCELADA → CANCELADA», «desde 2029-07-12T22:00» | Se muestran tal cual; los botones ya evitan la mayoría de esos casos |
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

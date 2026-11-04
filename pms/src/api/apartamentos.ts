@@ -17,3 +17,8 @@ export async function listarCodigosDeApartamentos(): Promise<string[]> {
   }
   return codigos
 }
+
+/** `GET /api/apartamentos/{codigo}` (público): su nombre, que la reserva no trae. */
+export function consultarApartamento(codigo: string): Promise<{ codigo: string; nombre: string }> {
+  return pedir(`/api/apartamentos/${encodeURIComponent(codigo)}`)
+}

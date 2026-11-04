@@ -9,3 +9,11 @@ afterEach(() => {
   vi.unstubAllGlobals()
   localStorage.clear()
 })
+
+// jsdom todavía no trae las ventanas modales del navegador
+HTMLDialogElement.prototype.showModal ??= function showModal(this: HTMLDialogElement) {
+  this.setAttribute('open', '')
+}
+HTMLDialogElement.prototype.close ??= function close(this: HTMLDialogElement) {
+  this.removeAttribute('open')
+}

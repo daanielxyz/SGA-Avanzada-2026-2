@@ -62,3 +62,28 @@ export function iniciales(nombre: string): string {
 export function cantidad(valor: number, singular: string, plural: string): string {
   return `${valor} ${valor === 1 ? singular : plural}`
 }
+
+/** «14 nov», sin el año. */
+export function fechaSinAnio(fecha: string): string {
+  const [, mes, dia] = partes(fecha)
+  return `${dia} ${MESES[mes - 1]}`
+}
+
+/** La fecha de hoy como AAAA-MM-DD, en la zona del navegador. */
+export function fechaHoy(ahora: Date = new Date()): string {
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0')
+  const dia = String(ahora.getDate()).padStart(2, '0')
+  return `${ahora.getFullYear()}-${mes}-${dia}`
+}
+
+/** Suma días a una fecha AAAA-MM-DD sin que la zona horaria la corra. */
+export function sumarDias(fecha: string, dias: number): string {
+  const [anio, mes, dia] = partes(fecha)
+  return new Date(Date.UTC(anio, mes - 1, dia + dias)).toISOString().slice(0, 10)
+}
+
+/** «Pago en línea» a partir de «PAGO_EN_LINEA». */
+export function nombreLegible(valor: string): string {
+  const texto = valor.replaceAll('_', ' ').toLowerCase()
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
