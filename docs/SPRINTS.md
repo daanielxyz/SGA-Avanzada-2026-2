@@ -83,7 +83,8 @@ Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confi
   - [ ] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas».
 - **pms**
   - [ ] Tablero de ocupación por apartamento y fechas (el endpoint ya existe: `GET /api/ocupacion`, DEC-86).
-  - [ ] Crear reserva directa; confirmar, cancelar y declarar no-show.
+  - [x] Confirmar, cancelar y declarar no-show, con registrar pago y el bloque Pago en el detalle (`feature/pms/acciones-reserva`).
+  - [ ] Crear reserva directa.
 - **Cierre 2 (vie 6 nov)**.
 
 ## Sprint 3 · 9 – 13 nov · «Operar la estancia»

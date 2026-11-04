@@ -60,12 +60,16 @@
   --error-fondo: #3a2024;
   --error-texto: #f8d9d4;
   --error-campo: #f8b4aa;
+  --error-encima: #f3a398;
   --info: #7fb2d0;
   --info-fondo: #12384d;
   --info-texto: #dcebf4;
   --advertencia: var(--marca-terracota);
   --advertencia-fondo: #3a2a20;
   --advertencia-texto: #f4e0d3;
+  --exito: #8fb08f;
+  --exito-fondo: #16301f;
+  --exito-texto: #ddebdd;
   --estado-pendiente: var(--marca-arena);
   --estado-confirmada: #8fb08f;
   --estado-en-curso: var(--info);
@@ -90,6 +94,7 @@
   --radio: 10px;
   --radio-chico: 6px;
   --sombra-menu: 8px 0 24px rgb(3 13 20 / 45%);
+  --sombra-dialogo: 0 24px 60px rgb(0 0 0 / 50%);
 
   font-family: var(--letra-interfaz);
   font-size: 16px;
@@ -1256,19 +1261,6 @@ button {
   line-height: 28px;
 }
 
-.espacio-reservado {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 var(--espacio-4);
-  border: 1.5px dashed var(--borde-fuerte);
-  border-radius: var(--radio-chico);
-  color: var(--texto-suave);
-  font-size: 13px;
-  text-align: center;
-}
-
 .detalle-seccion {
   display: flex;
   flex-direction: column;
@@ -1357,8 +1349,17 @@ button {
   color: var(--texto-suave);
 }
 
-.tabla-desglose {
-  min-width: 620px;
+.tabla-desglose th:nth-child(3),
+.tabla-desglose th:nth-child(4),
+.tabla-desglose td:nth-child(3),
+.tabla-desglose td:nth-child(4) {
+  display: none;
+}
+
+.desglose-detalle {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 13px;
 }
 
 .tabla-desglose td {
@@ -1693,10 +1694,6 @@ button {
     line-height: 40px;
   }
 
-  .espacio-reservado {
-    min-width: 300px;
-  }
-
   .datos {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1772,6 +1769,271 @@ button {
 }
 
 /* Con el dedo, todo control mide al menos 44 px; con el mouse se conserva la densidad del mockup */
+/* Acciones del detalle, bloque Pago y diálogos (sprint 2) */
+.detalle-codigo h1:focus {
+  outline: none;
+}
+
+.boton-peligro {
+  border-color: var(--error);
+  background: var(--error);
+  color: var(--sobre-acento);
+}
+
+.boton-peligro-borde {
+  border-color: var(--error);
+  background: transparent;
+  color: var(--error-campo);
+}
+
+.acciones-reserva {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.acciones-reserva .boton {
+  width: 100%;
+}
+
+.campo-pista {
+  margin-top: 6px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.campo-rotulo-nota {
+  color: var(--texto-suave);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.aviso-exito {
+  border-color: var(--exito);
+  background: var(--exito-fondo);
+  color: var(--exito-texto);
+}
+
+.aviso-exito .aviso-sello {
+  background: var(--exito);
+}
+
+/* En el celular el botón baja después de los valores; en el computador sube junto al título */
+.pago-cabecera {
+  display: contents;
+}
+
+.pago h2 {
+  order: 1;
+}
+
+.pago .datos-pago {
+  order: 2;
+}
+
+.pago-situacion {
+  order: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.pago-registrar {
+  order: 4;
+  width: 100%;
+}
+
+.pago-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+.dialogo {
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+.dialogo[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialogo::backdrop {
+  background: var(--velo);
+}
+
+.dialogo-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  padding: var(--espacio-4);
+  padding-top: max(var(--espacio-4), env(safe-area-inset-top));
+  border-bottom: 1px solid var(--borde);
+}
+
+.dialogo-titulos {
+  min-width: 0;
+}
+
+.dialogo-titulos h2:focus {
+  outline: none;
+}
+
+.dialogo-subtitulo {
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.dialogo-contenido {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dialogo-cuerpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--espacio-4);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dialogo-pie {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+  padding-bottom: max(var(--espacio-4), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--borde);
+}
+
+.dialogo-texto {
+  font-size: 15px;
+}
+
+.resumen-dialogo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 18px;
+  margin: 0;
+  padding: var(--espacio-3) 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-pagina);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.resumen-dialogo dt {
+  color: var(--texto-suave);
+}
+
+.resumen-dialogo dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* Desde aquí caben las cinco columnas al lado del menú y la pista queda bajo su botón */
+@media (min-width: 960px) {
+  .acciones-reserva-noshow {
+    text-align: right;
+  }
+
+  .tabla-desglose {
+    min-width: 620px;
+  }
+
+  .tabla-desglose th:nth-child(3),
+  .tabla-desglose th:nth-child(4),
+  .tabla-desglose td:nth-child(3),
+  .tabla-desglose td:nth-child(4) {
+    display: table-cell;
+  }
+
+  .desglose-detalle {
+    display: none;
+  }
+}
+
+@media (min-width: 800px) {
+  .detalle-titulo {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .detalle-codigo {
+    justify-content: flex-start;
+  }
+
+  .acciones-reserva {
+    flex: none;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .acciones-reserva .boton {
+    width: auto;
+  }
+
+  .pago-cabecera {
+    order: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espacio-4);
+  }
+
+  .pago-registrar {
+    width: auto;
+  }
+
+  .datos-pago {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+
+  .dialogo {
+    width: 480px;
+    height: fit-content;
+    max-height: calc(100dvh - 48px);
+    margin: auto;
+    border: 1px solid var(--borde-fuerte);
+    border-radius: 12px;
+    box-shadow: var(--sombra-dialogo);
+  }
+
+  .dialogo-cabecera {
+    padding: var(--espacio-5) var(--espacio-5) var(--espacio-4) var(--espacio-6);
+  }
+
+  .dialogo-cuerpo {
+    padding: var(--espacio-4) var(--espacio-6);
+  }
+
+  .dialogo-pie {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: var(--espacio-4) var(--espacio-6) var(--espacio-5);
+  }
+}
+
 @media (pointer: coarse) {
   .boton-chico,
   .filtro-activo,
@@ -1788,6 +2050,14 @@ button {
 
 /* En un celular el «encima» se quedaría pegado después de tocar */
 @media (hover: hover) and (pointer: fine) {
+  .boton-peligro:hover:not(:disabled) {
+    background: var(--error-encima);
+  }
+
+  .boton-peligro-borde:hover:not(:disabled) {
+    background: var(--error-fondo);
+  }
+
   a:hover {
     color: var(--enlace-encima);
   }

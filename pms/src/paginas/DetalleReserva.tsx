@@ -1,24 +1,50 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
+import { consultarApartamento } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
-import { consultarReserva, NOMBRE_DEL_CANAL, type Ocupante, type Reserva } from '../api/reservas'
+import { consultarReserva, NOMBRE_DEL_CANAL, type Liquidacion, type Ocupante, type Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
+import Dato from '../componentes/Dato'
+import Dialogo from '../componentes/Dialogo'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
+import TablaDesglose from '../componentes/TablaDesglose'
 import { useTitulo } from '../componentes/useTitulo'
-import { dinero, edadEn, fechaCorta, hora, noches } from '../formato'
+import { cantidad, dinero, edadEn, fechaCorta, hora, noches } from '../formato'
+import AccionesReserva, { type Accion } from '../reserva/AccionesReserva'
+import BloquePago from '../reserva/BloquePago'
+import DialogoConfirmar from '../reserva/DialogoConfirmar'
+import DialogoLiquidar from '../reserva/DialogoLiquidar'
+import FormularioPago from '../reserva/FormularioPago'
+import { mediosDeRecepcion, montoSugerido } from '../reserva/pago'
+import { useDatosDePago } from '../reserva/useDatosDePago'
 
 type Resultado = { clave: string; reserva: Reserva } | { clave: string; error: unknown }
 
-/** Detalle de una reserva (CU-49): sus datos, su grupo y el valor congelado por noche. */
+/** Detalle de una reserva (CU-49): sus datos, su pago, su grupo, el valor por noche y lo que se puede hacer con ella. */
 export default function DetalleReserva() {
   const { codigo = '' } = useParams()
   const volverA = (useLocation().state as { volverA?: string } | null)?.volverA ?? ''
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState<Resultado | null>(null)
+  const [nombreApartamento, setNombreApartamento] = useState<{ codigo: string; nombre: string } | null>(null)
+  const [dialogo, setDialogo] = useState<Accion | 'pago' | null>(null)
+  const [enviandoPago, setEnviandoPago] = useState(false)
+  const [exito, setExito] = useState<{ asunto: string; mensaje: string } | null>(null)
+  const titulo = useRef<HTMLHeadingElement>(null)
+  const enfocarTitulo = useRef(false)
+  const pago = useDatosDePago(codigo)
   const clave = `${codigo}#${intento}`
   const listado = `/reservas${volverA}`
   useTitulo(codigo)
+
+  // Al terminar una acción, el botón que abrió el diálogo suele desaparecer: el foco queda en el título de la reserva
+  useEffect(() => {
+    if (dialogo === null && enfocarTitulo.current) {
+      enfocarTitulo.current = false
+      titulo.current?.focus()
+    }
+  }, [dialogo])
 
   useEffect(() => {
     let vigente = true
@@ -33,6 +59,29 @@ export default function DetalleReserva() {
       vigente = false
     }
   }, [codigo, clave])
+
+  const apartamento = resultado && 'reserva' in resultado ? resultado.reserva.apartamento : null
+  useEffect(() => {
+    if (!apartamento) return
+    let vigente = true
+    // Si no se puede leer el nombre, basta el código: no vale la pena un error en la pantalla
+    consultarApartamento(apartamento)
+      .then(({ nombre }) => {
+        if (vigente) setNombreApartamento({ codigo: apartamento, nombre })
+      })
+      .catch(() => undefined)
+    return () => {
+      vigente = false
+    }
+  }, [apartamento])
+
+  /** Vuelve a leer la reserva y su pago sin mostrar «cargando»: pudieron cambiar. */
+  function actualizar() {
+    const leerReserva = consultarReserva(codigo)
+      .then((reserva) => setResultado({ clave, reserva }))
+      .catch(() => undefined)
+    return Promise.all([leerReserva, pago.recargar()])
+  }
 
   const actual = resultado?.clave === clave ? resultado : null
   if (!actual) return <Cargando />
@@ -72,25 +121,45 @@ export default function DetalleReserva() {
   }
 
   const { reserva } = actual
+
+  async function alConfirmar() {
+    await actualizar()
+    setExito({ asunto: 'La reserva quedó confirmada', mensaje: 'Ya no vence por falta de confirmación.' })
+    enfocarTitulo.current = true
+    setDialogo(null)
+  }
+
+  async function alLiquidar(liquidacion: Liquidacion, asunto: string) {
+    await actualizar()
+    const total = noches(reserva.entrada, reserva.salida)
+    const retencion = liquidacion.retenido > 0 ? `Se retuvo ${dinero(liquidacion.retenido)}.` : 'No se retuvo ningún valor.'
+    setExito({ asunto, mensaje: `Se liberó lo reservado (${cantidad(total, 'noche', 'noches')}). ${retencion}` })
+    enfocarTitulo.current = true
+  }
+
   return (
     <div className="detalle">
       <div>
         <VolverAReservas listado={listado} />
         <div className="detalle-titulo">
           <div className="detalle-codigo">
-            <h1 className="codigo">{reserva.codigo}</h1>
+            <h1 className="codigo" ref={titulo} tabIndex={-1}>
+              {reserva.codigo}
+            </h1>
             <EtiquetaEstado estado={reserva.estado} />
           </div>
-          {/* TODO(equipo): confirmar, cancelar y no-show llegan en el sprint 2 */}
-          <div className="espacio-reservado">Espacio reservado · acciones (sprint 2)</div>
+          <AccionesReserva reserva={reserva} alojamiento={pago.datos?.alojamiento ?? null} alElegir={setDialogo} />
         </div>
       </div>
+
+      {exito && <Aviso tipo="exito" asunto={exito.asunto} mensaje={exito.mensaje} />}
 
       <section aria-labelledby="titulo-datos" className="detalle-seccion">
         <h2 id="titulo-datos">Datos de la reserva</h2>
         <dl className="tarjeta datos">
-          <Dato nombre="Apartamento" codigo>
-            {reserva.apartamento}
+          <Dato nombre="Apartamento">
+            <span className="codigo">{reserva.apartamento}</span>
+            {nombreApartamento?.codigo === reserva.apartamento && ` · ${nombreApartamento.nombre}`}
           </Dato>
           <Dato nombre="Titular">
             {reserva.titularNombre && <span className="dato-titular">{reserva.titularNombre}</span>}
@@ -115,6 +184,8 @@ export default function DetalleReserva() {
           <Dato nombre="Mascotas">{reserva.mascotas}</Dato>
         </dl>
       </section>
+
+      <BloquePago reserva={reserva} pago={pago} alRegistrarPago={() => setDialogo('pago')} />
 
       <section aria-labelledby="titulo-ocupantes" className="detalle-seccion">
         <h2 id="titulo-ocupantes">Ocupantes ({reserva.ocupantes.length})</h2>
@@ -144,43 +215,51 @@ export default function DetalleReserva() {
 
       <section aria-labelledby="titulo-desglose" className="detalle-seccion">
         <h2 id="titulo-desglose">Desglose por noche</h2>
-        <div className="tarjeta tabla-marco">
-          <div className="desplazable" tabIndex={0} role="group" aria-labelledby="titulo-desglose">
-            <table className="tabla tabla-desglose" aria-labelledby="titulo-desglose">
-              <thead>
-                <tr>
-                  <th scope="col">Noche</th>
-                  <th scope="col">Temporada</th>
-                  <th scope="col" className="derecha">
-                    Tarifa por ocupante facturable
-                  </th>
-                  <th scope="col" className="derecha">
-                    Ocupantes facturables
-                  </th>
-                  <th scope="col" className="derecha">
-                    Subtotal
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {reserva.valor.desglose.map((noche) => (
-                  <tr key={noche.noche}>
-                    <td>{fechaCorta(noche.noche)}</td>
-                    <td>{noche.temporada}</td>
-                    <td className="derecha codigo">{dinero(noche.tarifa)}</td>
-                    <td className="derecha numero">{noche.ocupantesFacturables}</td>
-                    <td className="derecha codigo">{dinero(noche.subtotal)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="desglose-total">
-            <span className="desglose-total-rotulo">Total</span>
-            <span className="codigo desglose-total-valor">{dinero(reserva.valor.total)}</span>
-          </p>
-        </div>
+        <TablaDesglose idTitulo="titulo-desglose" desglose={reserva.valor.desglose} total={reserva.valor.total} />
       </section>
+
+      {dialogo === 'confirmar' && (
+        <DialogoConfirmar
+          reserva={reserva}
+          datos={pago.datos}
+          alCerrar={() => setDialogo(null)}
+          alConfirmar={alConfirmar}
+          alFallar={actualizar}
+          alRegistrarPago={pago.ponerFolio}
+        />
+      )}
+      {(dialogo === 'cancelar' || dialogo === 'noShow') && (
+        <DialogoLiquidar
+          tipo={dialogo}
+          reserva={reserva}
+          alCerrar={() => setDialogo(null)}
+          alTerminar={(liquidacion) =>
+            alLiquidar(liquidacion, dialogo === 'cancelar' ? 'Reserva cancelada' : 'No-show declarado')}
+          alFallar={actualizar}
+        />
+      )}
+      {dialogo === 'pago' && pago.datos && (
+        <Dialogo
+          titulo="Registrar pago"
+          subtitulo={<>{reserva.codigo} · Saldo <span className="codigo">{dinero(pago.datos.folio.saldo)}</span></>}
+          ocupado={enviandoPago}
+          alCerrar={() => setDialogo(null)}
+        >
+          <FormularioPago
+            codigo={reserva.codigo}
+            medios={mediosDeRecepcion(pago.datos.alojamiento)}
+            montoInicial={montoSugerido(reserva, pago.datos.folio, pago.datos.alojamiento)}
+            textoVolver="Volver"
+            alVolver={() => setDialogo(null)}
+            alEnviar={setEnviandoPago}
+            alRegistrar={(folio) => {
+              pago.ponerFolio(folio)
+              setExito({ asunto: 'Pago registrado', mensaje: 'El bloque Pago ya muestra el nuevo saldo.' })
+              setDialogo(null)
+            }}
+          />
+        </Dialogo>
+      )}
     </div>
   )
 }
@@ -190,19 +269,6 @@ function VolverAReservas({ listado }: { listado: string }) {
     <Link to={listado} className="volver">
       <span aria-hidden="true">←</span> Volver a reservas
     </Link>
-  )
-}
-
-function Dato({ nombre, codigo = false, children }: {
-  nombre: string
-  codigo?: boolean
-  children: ReactNode
-}) {
-  return (
-    <div className="dato">
-      <dt>{nombre}</dt>
-      <dd className={codigo ? 'codigo' : undefined}>{children}</dd>
-    </div>
   )
 }
 

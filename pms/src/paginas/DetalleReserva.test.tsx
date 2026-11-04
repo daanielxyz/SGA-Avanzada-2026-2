@@ -33,7 +33,6 @@ describe('detalle de una reserva (CU-49)', () => {
     expect(screen.getByText('Vehículos').nextSibling).toHaveTextContent('1')
     expect(screen.getByText('Mascotas').nextSibling).toHaveTextContent('2')
     expect(screen.getByText('Noches').nextSibling).toHaveTextContent('3')
-    expect(screen.getByText('Espacio reservado · acciones (sprint 2)')).toBeInTheDocument()
   })
 
   it('sin hora de llegada dice que no se ha informado', async () => {

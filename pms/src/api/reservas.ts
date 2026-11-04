@@ -1,5 +1,6 @@
 // Reservas que consulta recepción (CU-25 · CU-49 · DEC-72).
 import { pedir } from './cliente'
+import type { SituacionSaldo } from './folio'
 
 export type EstadoReserva = 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA' | 'NO_SHOW'
 export type CanalOrigen = 'PORTAL' | 'DIRECTO' | 'EXTERNO'
@@ -83,4 +84,54 @@ export function listarReservas(consulta: string): Promise<Pagina<Reserva>> {
  */
 export function consultarReserva(codigo: string): Promise<Reserva> {
   return pedir<Reserva>(`/api/reservas/${encodeURIComponent(codigo)}`)
+}
+
+/** `CancelacionResponse` del backend: lo que queda en el folio después de cancelar o declarar el no-show. */
+export interface Liquidacion {
+  codigo: string
+  estado: EstadoReserva
+  retenido: number
+  saldo: number
+  situacionSaldo: SituacionSaldo
+}
+
+function accion<T>(codigo: string, nombre: string, cuerpo?: unknown): Promise<T> {
+  return pedir<T>(`/api/reservas/${encodeURIComponent(codigo)}/${nombre}`, { method: 'PUT', cuerpo })
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/hora-llegada`.
+ *
+ * @param hora HH:mm
+ * @throws ErrorApi 409 si la reserva ya inició o terminó
+ */
+export function indicarHoraLlegada(codigo: string, hora: string): Promise<Reserva> {
+  return accion(codigo, 'hora-llegada', { hora })
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/confirmar` (RN-08 · RN-09 · RES-15).
+ *
+ * @throws ErrorApi 409 si no está pendiente, le falta la hora de llegada o lo pagado no cubre el anticipo
+ */
+export function confirmarReserva(codigo: string): Promise<Reserva> {
+  return accion(codigo, 'confirmar')
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/cancelar` (RN-08 · RN-13).
+ *
+ * @throws ErrorApi 409 si no está pendiente ni confirmada
+ */
+export function cancelarReserva(codigo: string): Promise<Liquidacion> {
+  return accion(codigo, 'cancelar')
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/no-show` (RN-08 · RES-16).
+ *
+ * @throws ErrorApi 409 si no está confirmada o aún no llega la hora límite
+ */
+export function declararNoShow(codigo: string): Promise<Liquidacion> {
+  return accion(codigo, 'no-show')
 }

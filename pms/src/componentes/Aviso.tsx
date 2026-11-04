@@ -4,6 +4,7 @@ const TIPOS = {
   error: { titulo: 'Error', sello: '!', rol: 'alert' },
   info: { titulo: 'Información', sello: 'i', rol: 'status' },
   advertencia: { titulo: 'Advertencia', sello: '!', rol: 'status' },
+  exito: { titulo: 'Listo', sello: '✓', rol: 'status' },
 } as const
 
 /**
@@ -22,13 +23,15 @@ export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: 
   accion?: ReactNode
 }) {
   const { titulo, sello, rol } = TIPOS[tipo]
+  // Un éxito se entiende por lo que dice: «Reserva cancelada» no necesita «Listo ·» delante
+  const encabezado = asunto ? (tipo === 'exito' ? asunto : `${titulo} · ${asunto}`) : titulo
   return (
     <div className={`aviso aviso-${tipo}`} role={rol}>
       <span className="aviso-sello" aria-hidden="true">
         {sello}
       </span>
       <div className="aviso-cuerpo">
-        <strong>{asunto ? `${titulo} · ${asunto}` : titulo}</strong>
+        <strong>{encabezado}</strong>
         <p>{mensaje}</p>
         {detalles.length > 0 && (
           <ul>
