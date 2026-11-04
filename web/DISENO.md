@@ -17,7 +17,7 @@ La web es un solo esqueleto para todos los hoteles (DEC-83). Lo lee el equipo we
 - Campos de 16 px y controles de 44 px como mínimo. El hover solo con `(hover: hover) and (pointer: fine)`.
 
 ## Qué necesita un hotel para tener su marca
-Los valores de `Marca` en `src/api/alojamiento.ts`. Todos son opcionales: lo que falte queda neutro.
+Los valores de `marca` en `GET /api/alojamiento`, que se cambian con `PUT /api/alojamiento/marca` sin desplegar código (BL-05 · DEC-87). Todos son opcionales: lo que falte queda neutro.
 
 Antes de usar una paleta **se mide el contraste**: el texto necesita 4,5:1 y los bordes de campos y botones 3:1. Los valores de un brandbook no se dan por buenos.
 
@@ -52,6 +52,6 @@ Valores finales de la marca de ejemplo:
 - Nada de una segunda skill de dirección visual: se contradicen.
 
 ## Pendiente
-- BL-05: que la API envíe `marca` (`feature/nucleo/marca-alojamiento`). Hasta entonces, con el backend real la web se ve neutra.
+- La pantalla de marca en el PMS (`PUT /api/alojamiento/marca` ya existe, DEC-87), y el logo y la portada definitivos de la marca de ejemplo.
 - Calendario de noches libres en la página del apartamento: `GET /api/apartamentos/{codigo}/calendario` ya existe (DEC-86).
 - El botón «Reservar» y su barra fija en el celular, con el flujo del sprint 2.

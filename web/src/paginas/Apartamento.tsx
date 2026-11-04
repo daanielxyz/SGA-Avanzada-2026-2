@@ -167,7 +167,8 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
   if (antesDeLlamar) {
     return <p role="alert" className="aviso">{antesDeLlamar}</p>
   }
-  if (calculo === null || calculo.clave !== clave) {
+  const calculando = calculo?.clave !== clave
+  if (calculo === null || (calculando && calculo.estado === 'problema')) {
     return <p className="suave" aria-live="polite">Calculando el precio…</p>
   }
   if (calculo.estado === 'problema') {
@@ -178,11 +179,15 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
   if (!disponible) {
     // Sin ninguna noche libre en el año, no es culpa de las fechas elegidas: no se dice que esas no sirven
     if (proximaNocheLibre === null) {
-      return <p className="aviso" aria-live="polite">Este apartamento no tiene fechas libres en el próximo año.</p>
+      return (
+        <p className="aviso" aria-live="polite" aria-busy={calculando}>
+          Este apartamento no tiene fechas libres en el próximo año.
+        </p>
+      )
     }
     const n = noches(estadia.entrada, estadia.salida)
     return (
-      <div className="precio" aria-live="polite">
+      <div className="precio" aria-live="polite" aria-busy={calculando}>
         <p className="aviso">No está libre en esas fechas.</p>
         <button type="button" className="secundario"
           onClick={() => alCambiar({ entrada: proximaNocheLibre, salida: masDias(proximaNocheLibre, n) }, grupo)}>
@@ -193,7 +198,8 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
   }
   const n = precio.desglose.length
   return (
-    <div className="precio" aria-live="polite">
+    // Mientras llega el nuevo, el precio anterior se queda atenuado: la página no salta
+    <div className="precio" aria-live="polite" aria-busy={calculando}>
       <p className="total-estancia">
         Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{enPesos(precio.total)}</strong>
       </p>

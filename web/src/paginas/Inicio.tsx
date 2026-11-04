@@ -16,7 +16,7 @@ import { fechaCorta, noches } from '../formato'
 
 /** Lo que se ve debajo del filtro: todos los apartamentos o los libres para unas fechas, de 10 en 10. */
 type Vista =
-  | { estado: 'cargando' }
+  | { estado: 'cargando'; porBusqueda: boolean }
   | { estado: 'error'; mensaje: string }
   | { estado: 'todos'; pagina: Pagina<ApartamentoPublico> }
   | { estado: 'filtrados'; estadia: Estadia; grupo: Grupo; pagina: Pagina<ApartamentoPublico> }
@@ -26,19 +26,19 @@ function mensajeDe(error: unknown) {
 }
 
 /**
- * Página de inicio: abre con el hotel y debajo todos los apartamentos con lo que paga un adulto su próxima noche libre, y
- * un filtro opcional por fechas y personas que deja solo los libres con el precio del grupo (CU-07 · CU-09 · RN-06).
+ * Página de inicio: abre con el hotel y debajo todos los apartamentos con lo que paga un adulto su próxima noche libre,
+ * y un filtro opcional por fechas y personas que deja solo los libres con el precio del grupo (CU-07 · CU-09 · RN-06).
  * Ambos van de 10 en 10.
  *
- * @param alojamiento nombre, descripción, marca y edad desde la que se paga; vacío mientras llega o si la API no responde
+ * @param alojamiento nombre, descripción, marca y edad desde la que se paga; vacío mientras llega o si la API falla
  */
 export default function Inicio({ alojamiento }: { alojamiento: Alojamiento | null }) {
-  const [vista, setVista] = useState<Vista>({ estado: 'cargando' })
+  const [vista, setVista] = useState<Vista>({ estado: 'cargando', porBusqueda: false })
   const [fotoDeRespaldo, setFotoDeRespaldo] = useState<string | null>(null)
   const resultados = useRef<HTMLElement>(null)
 
   async function verTodos(numero = 0) {
-    setVista({ estado: 'cargando' })
+    setVista({ estado: 'cargando', porBusqueda: false })
     try {
       setVista({ estado: 'todos', pagina: await listarApartamentos(numero) })
     } catch (error) {
@@ -47,7 +47,7 @@ export default function Inicio({ alojamiento }: { alojamiento: Alojamiento | nul
   }
 
   async function filtrar(estadia: Estadia, grupo: Grupo, numero = 0) {
-    setVista({ estado: 'cargando' })
+    setVista({ estado: 'cargando', porBusqueda: true })
     try {
       setVista({ estado: 'filtrados', estadia, grupo, pagina: await buscarDisponibles(estadia, grupo, numero) })
     } catch (error) {
@@ -84,7 +84,8 @@ export default function Inicio({ alojamiento }: { alojamiento: Alojamiento | nul
     <>
       <Portada alojamiento={alojamiento} foto={alojamiento?.marca?.portadaUrl ?? fotoDeRespaldo} />
       <main className="inicio">
-        <FormularioBusqueda buscando={vista.estado === 'cargando'} filtrando={vista.estado === 'filtrados'}
+        <FormularioBusqueda buscando={vista.estado === 'cargando' && vista.porBusqueda}
+          filtrando={vista.estado === 'filtrados'}
           umbral={alojamiento?.parametros.umbralEdadFacturable ?? null} alBuscar={filtrar} />
 
         <section aria-live="polite" className="resultados" ref={resultados}>
@@ -117,11 +118,13 @@ function Portada({ alojamiento, foto }: { alojamiento: Alojamiento | null; foto:
   const ciudad = escrito(alojamiento?.ciudad)
   return (
     <section className="portada">
-      {foto && <img src={foto} alt="" />}
+      {foto && <img key={foto} src={foto} alt="" onLoad={(e) => { e.currentTarget.dataset.cargada = 'true' }} />}
       <div className="portada-texto">
         <h1>{alojamiento?.nombre ?? 'Reserva tu estadía'}</h1>
         {ciudad && <p className="portada-ciudad">{ciudad}</p>}
-        <p>{escrito(alojamiento?.descripcion) ?? 'Elige un apartamento o busca tus fechas para ver solo los libres.'}</p>
+        <p>
+          {escrito(alojamiento?.descripcion) ?? 'Elige un apartamento o busca tus fechas para ver solo los libres.'}
+        </p>
       </div>
     </section>
   )

@@ -139,6 +139,14 @@ describe('Inicio', () => {
     expect(resumen).not.toHaveTextContent('¿Cuándo vienes?')
   })
 
+  it('el botón dice Buscando solo cuando alguien busca, no mientras carga la lista al abrir', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
+    abrirInicio()
+
+    expect(screen.getByRole('button', { name: 'Buscar' })).toBeEnabled()
+    expect(screen.getByText('Cargando apartamentos…')).toBeInTheDocument()
+  })
+
   it('cada tarjeta lleva a la página del apartamento con la noche de su precio', async () => {
     laApiResponde([200, pagina(SUITE)])
     abrirInicio()

@@ -2,24 +2,24 @@
 import { pedir } from './cliente'
 
 /**
- * La marca de un hotel (BL-05): todo opcional, lo que falte queda con los valores neutros del esqueleto. La API todavía
- * no la envía; llega en `feature/nucleo/marca-alojamiento`.
+ * `MarcaResponse`: la marca de un hotel (BL-05 · DEC-87). Todo opcional: lo que venga vacío queda con los valores
+ * neutros del esqueleto.
  */
 export interface Marca {
   colores?: {
-    fondo?: string
-    superficie?: string
-    texto?: string
-    textoSuave?: string
-    borde?: string
-    bordeCampo?: string
-    acento?: string
-    textoSobreAcento?: string
-    peligro?: string
-    exito?: string
+    fondo?: string | null
+    superficie?: string | null
+    texto?: string | null
+    textoSuave?: string | null
+    borde?: string | null
+    bordeCampo?: string | null
+    acento?: string | null
+    textoSobreAcento?: string | null
+    peligro?: string | null
+    exito?: string | null
   }
-  fuentes?: { titulos?: string; texto?: string }
-  radio?: { pequeno?: string; mediano?: string; grande?: string }
+  fuentes?: { titulos?: string | null; texto?: string | null }
+  radio?: { pequeno?: string | null; mediano?: string | null; grande?: string | null }
   logoUrl?: string | null
   portadaUrl?: string | null
 }

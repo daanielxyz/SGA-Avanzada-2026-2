@@ -10,9 +10,9 @@ export default function Encabezado({ nombre, logoUrl }: Props) {
   return (
     <header className="encabezado">
       {nombre && (
-        <Link to="/" className="marca">
+        <Link to="/" className="marca" title={nombre}>
           {logoUrl && <img src={logoUrl} alt="" />}
-          {nombre}
+          <span>{nombre}</span>
         </Link>
       )}
     </header>
