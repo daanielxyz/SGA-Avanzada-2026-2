@@ -9,6 +9,14 @@ export interface Alojamiento {
     anticipoPct: number
     /** Desde esta hora del día de entrada se puede declarar el no-show (RES-16). */
     horaLimiteNoShow: string
+    /** Desde esta edad, a la fecha de entrada, un ocupante paga (RN-06). */
+    umbralEdadFacturable: number
+    aceptaMascotas: boolean
+    limiteMascotas: number
+    /** Por mascota, una vez por estancia (RP-03). */
+    cargoMascota: number
+    /** Vehículos que admite el parqueadero cada noche; 0 = no hay (RP-02). */
+    cupoParqueadero: number
   }
   mediosPago: string[]
 }

@@ -94,7 +94,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint2/` (48 pantallas, con su LEEME). 
 | # | Rama | Pantallas | Estado |
 |---|---|---|---|
 | 1 | `feature/pms/acciones-reserva` | Botones según el estado, bloque Pago, diálogos de registrar pago, confirmar, cancelar y no-show | Hecho |
-| 2 | `feature/pms/crear-reserva` | `/reservas/nueva` en cuatro pasos y «Nueva reserva» en el listado | Pendiente |
+| 2 | `feature/pms/crear-reserva` | `/reservas/nueva` en cuatro pasos y «Nueva reserva» en el listado | Hecho |
 | 3 | `feature/pms/tablero-ocupacion` | `/ocupacion`, opción en el menú y en la bienvenida | Pendiente |
 
 Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
@@ -103,7 +103,7 @@ Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
 - **Confirmar**: al terminar se cierra y deja el aviso en el detalle. Cancelar y no-show sí muestran su resultado, porque hablan de dinero.
 - **Cancelar y no-show**: sin «Se retendrá $ X» ni sus estados, que necesitan el cambio 1 de la lista de abajo; se avisa que puede haber retención.
 - **Desglose**: en pantallas angostas quedan Noche, Temporada y Subtotal, con la tarifa bajo la fecha, para que las noches sumen el total.
-- **Crear reserva** (al programarla): elegir un apartamento avanza de una vez; tras una noche vendida, vuelve al paso 4. Los pasos van en `?paso=`, para que «Atrás» del navegador no borre el formulario, y se avisa antes de recargar. Los datos personales no se guardan en el navegador. El cargo por mascota se cobra una vez por estancia y va en una línea aparte del total. Edad del titular según `umbralEdadFacturable`.
+- **Crear reserva**: elegir un apartamento avanza de una vez y, si las personas ya están listas, llega al paso 4. Los pasos van en `?paso=`, para que «Atrás» del navegador no borre el formulario, y se pregunta antes de recargar o seguir un enlace. Los datos personales no se guardan en el navegador. Un rechazo al crear muestra el mensaje de la API con tres salidas: otro apartamento, cambiar fechas o revisar personas. Vehículos solo aparece si `cupoParqueadero` es mayor que 0, y mascotas si `aceptaMascotas` está activo. El cargo por mascota se cobra una vez por estancia y va en una línea aparte del total. Edad del titular según `umbralEdadFacturable`.
 - **Tablero** (al programarlo): el campo es «Última noche» y a la API se le envía un día más, porque `hasta` es exclusiva. La barra lleva código y `titularId`. Primera columna de 200 px y 56 px por día, para que quepan las 14 noches a 1280 px.
 
 ## Para hablar con el equipo (backend)
@@ -119,6 +119,8 @@ Los mockups del sprint 2 son borradores: mientras se termina el frontend, **se a
 | 6 | Monto del anticipo exigido en la respuesta | La pantalla no repetiría ese cálculo | La pantalla lo calcula con `anticipoPct`; el backend decide al confirmar |
 | 7 | Nombre legible de la política para recepción | Hoy recepción solo puede ver el id | Se muestra `politicaId` |
 | 8 | Mensajes de los 409 pensados para recepción | Hoy algunos son técnicos: «Transición de reserva no permitida: CANCELADA → CANCELADA», «desde 2029-07-12T22:00» | Se muestran tal cual; los botones ya evitan la mayoría de esos casos |
+| 9 | Reservar para otra persona: un titular que no se aloja | Hoy el backend exige que el titular sea un ocupante que paga (TIT-01), así que la casilla «El titular también se aloja» casi no tiene uso | Sin marcarla, hay que escribir su documento en otro ocupante; si no, se avisa antes de enviar |
+| 10 | Nombre de la temporada en el desglose | Hoy llega su id (`TEM-1`), no «Alta» o «Baja» | Se muestra lo que llega |
 
 ## Estado
 - [x] Flujo acordado (DEC-84).

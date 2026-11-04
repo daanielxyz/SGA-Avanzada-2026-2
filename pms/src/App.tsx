@@ -8,6 +8,7 @@ import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
+import NuevaReserva from './paginas/NuevaReserva'
 import Panel from './paginas/Panel'
 import SinPermiso from './paginas/SinPermiso'
 import { useSesion } from './sesion/contexto'
@@ -37,6 +38,14 @@ export default function App() {
             }
           />
         ))}
+        <Route
+          path="/reservas/nueva"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <NuevaReserva />
+            </SoloPara>
+          }
+        />
         <Route
           path="/reservas/:codigo"
           element={

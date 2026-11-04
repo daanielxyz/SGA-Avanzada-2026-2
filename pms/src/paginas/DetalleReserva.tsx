@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { consultarApartamento } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import { consultarReserva, NOMBRE_DEL_CANAL, type Liquidacion, type Ocupante, type Reserva } from '../api/reservas'
@@ -21,22 +21,40 @@ import { useDatosDePago } from '../reserva/useDatosDePago'
 
 type Resultado = { clave: string; reserva: Reserva } | { clave: string; error: unknown }
 
+/** Lo que manda «Nueva reserva» al terminar. */
+interface ReservaRecienCreada {
+  asunto: string
+  mensaje: string
+  avisoCuenta: string | null
+}
+
 /** Detalle de una reserva (CU-49): sus datos, su pago, su grupo, el valor por noche y lo que se puede hacer con ella. */
 export default function DetalleReserva() {
   const { codigo = '' } = useParams()
-  const volverA = (useLocation().state as { volverA?: string } | null)?.volverA ?? ''
+  const ubicacion = useLocation()
+  const navegar = useNavigate()
+  const estadoRecibido = ubicacion.state as { volverA?: string; creada?: ReservaRecienCreada } | null
+  const volverA = estadoRecibido?.volverA ?? ''
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [nombreApartamento, setNombreApartamento] = useState<{ codigo: string; nombre: string } | null>(null)
   const [dialogo, setDialogo] = useState<Accion | 'pago' | null>(null)
   const [enviandoPago, setEnviandoPago] = useState(false)
-  const [exito, setExito] = useState<{ asunto: string; mensaje: string } | null>(null)
+  const [exito, setExito] = useState<{ asunto: string; mensaje: string } | null>(estadoRecibido?.creada ?? null)
+  const [avisoCuenta] = useState(estadoRecibido?.creada?.avisoCuenta ?? null)
   const titulo = useRef<HTMLHeadingElement>(null)
   const enfocarTitulo = useRef(false)
   const pago = useDatosDePago(codigo)
   const clave = `${codigo}#${intento}`
   const listado = `/reservas${volverA}`
   useTitulo(codigo)
+
+  // El aviso de recién creada se muestra una vez: al recargar ya no debe salir
+  useEffect(() => {
+    if (estadoRecibido?.creada) {
+      navegar(ubicacion.pathname, { replace: true, state: { volverA: estadoRecibido.volverA } })
+    }
+  }, [estadoRecibido, navegar, ubicacion.pathname])
 
   // Al terminar una acción, el botón que abrió el diálogo suele desaparecer: el foco queda en el título de la reserva
   useEffect(() => {
@@ -153,6 +171,7 @@ export default function DetalleReserva() {
       </div>
 
       {exito && <Aviso tipo="exito" asunto={exito.asunto} mensaje={exito.mensaje} />}
+      {avisoCuenta && <Aviso tipo="info" asunto="Cuenta del titular" mensaje={avisoCuenta} />}
 
       <section aria-labelledby="titulo-datos" className="detalle-seccion">
         <h2 id="titulo-datos">Datos de la reserva</h2>

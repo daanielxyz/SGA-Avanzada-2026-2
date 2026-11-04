@@ -98,7 +98,12 @@ export default function ListadoReservas() {
   return (
     <div className="reservas">
       <div className="reservas-titulo">
-        <h1>Reservas</h1>
+        <div className="reservas-encabezado">
+          <h1>Reservas</h1>
+          <Link to="/reservas/nueva" className="boton">
+            <span aria-hidden="true">+</span> Nueva reserva
+          </Link>
+        </div>
         <IrALaReserva />
       </div>
 
