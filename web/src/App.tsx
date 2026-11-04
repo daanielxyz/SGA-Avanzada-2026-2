@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { consultarAlojamiento, type Alojamiento } from './api/alojamiento'
 import Encabezado from './Encabezado'
+import { aplicarMarca } from './marca'
 import Apartamento from './paginas/Apartamento'
 import Inicio from './paginas/Inicio'
 import NoEncontrada from './paginas/NoEncontrada'
@@ -20,6 +21,7 @@ export default function App() {
         if (vigente) {
           setAlojamiento(a)
           document.title = `${a.nombre} · Reservas`
+          aplicarMarca(a.marca ?? null)
         }
       })
       .catch(() => {})
@@ -32,9 +34,9 @@ export default function App() {
 
   return (
     <>
-      <Encabezado nombre={alojamiento?.nombre ?? null} />
+      <Encabezado nombre={alojamiento?.nombre ?? null} logoUrl={alojamiento?.marca?.logoUrl} />
       <Routes>
-        <Route path="/" element={<Inicio umbral={umbral} />} />
+        <Route path="/" element={<Inicio alojamiento={alojamiento} />} />
         <Route path="/apartamentos/:codigo" element={<Apartamento umbral={umbral} />} />
         <Route path="*" element={<NoEncontrada />} />
       </Routes>

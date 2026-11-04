@@ -15,6 +15,8 @@ import DesglosePrecio from '../busqueda/DesglosePrecio'
 import Foto from '../busqueda/Foto'
 import { enPesos, fechaCorta, fechaDesdeHoy, masDias, noches } from '../formato'
 
+const NOCHES_CON_DETALLE_ABIERTO = 4
+
 type Carga =
   | { estado: 'cargando' }
   | { estado: 'no-existe' }
@@ -80,13 +82,8 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
   const fotos = [...apartamento.imagenes].sort((a, b) => Number(b.principal) - Number(a.principal))
 
   return (
-    <main>
-      <Link to="/">← Todos los apartamentos</Link>
-      <h1>{apartamento.nombre}</h1>
-      <p className="suave">
-        Hasta {apartamento.capacidad} {apartamento.capacidad === 1 ? 'persona' : 'personas'} ·{' '}
-        {apartamento.dormitorios} {apartamento.dormitorios === 1 ? 'dormitorio' : 'dormitorios'}
-      </p>
+    <main className="ficha">
+      <Link to="/" className="volver">← Todos los apartamentos</Link>
       {fotos.length > 0 && (
         <div className="galeria">
           {fotos.map((f, i) => (
@@ -95,21 +92,38 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
           ))}
         </div>
       )}
-      {apartamento.descripcion && <p className="descripcion-completa">{apartamento.descripcion}</p>}
-      {apartamento.caracteristicas.length > 0 && (
-        <ul className="dotacion" aria-label="Dotación">
-          {apartamento.caracteristicas.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-      )}
-
-      <h2>Tus fechas</h2>
-      <div className="busqueda">
-        <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} capacidad={apartamento.capacidad}
-          alCambiar={cambiar} />
+      {/* En pantallas anchas, la información a la izquierda y el panel fijo a la derecha; en el celular, el panel va
+          justo después del nombre, para ver el precio sin recorrer toda la descripción */}
+      <div className="ficha-columnas">
+        <div className="ficha-cabeza">
+          <h1>{apartamento.nombre}</h1>
+          <p className="suave">
+            Hasta {apartamento.capacidad} {apartamento.capacidad === 1 ? 'persona' : 'personas'} ·{' '}
+            {apartamento.dormitorios} {apartamento.dormitorios === 1 ? 'dormitorio' : 'dormitorios'}
+          </p>
+        </div>
+        <aside className="panel-reserva" aria-labelledby="titulo-panel">
+          <h2 id="titulo-panel">Tus fechas</h2>
+          <div className="panel-campos">
+            <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} capacidad={apartamento.capacidad}
+              alCambiar={cambiar} />
+          </div>
+          <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar} />
+        </aside>
+        <div className="ficha-detalle">
+          {apartamento.descripcion && <p className="descripcion-completa">{apartamento.descripcion}</p>}
+          {apartamento.caracteristicas.length > 0 && (
+            <>
+              <h2>Qué incluye</h2>
+              <ul className="dotacion" aria-label="Qué incluye">
+                {apartamento.caracteristicas.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
       </div>
-      <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar} />
     </main>
   )
 }
@@ -180,13 +194,20 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
   const n = precio.desglose.length
   return (
     <div className="precio" aria-live="polite">
-      <p className="por-noche">
-        <strong>{enPesos(precio.desglose[0].tarifa)}</strong> por adulto, noche del {fechaCorta(estadia.entrada)}
-      </p>
-      <p>
+      <p className="total-estancia">
         Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{enPesos(precio.total)}</strong>
       </p>
-      <DesglosePrecio precio={precio} />
+      <p className="por-noche suave">
+        {enPesos(precio.desglose[0].tarifa)} por adulto, noche del {fechaCorta(estadia.entrada)}
+      </p>
+      {/* Con una noche el detalle repite el total. Las estadías largas lo abren a pedido, para que el panel no crezca
+          más que la pantalla */}
+      {n > 1 && (
+        <details key={n} open={n <= NOCHES_CON_DETALLE_ABIERTO}>
+          <summary>Ver detalle por noche</summary>
+          <DesglosePrecio precio={precio} />
+        </details>
+      )}
     </div>
   )
 }

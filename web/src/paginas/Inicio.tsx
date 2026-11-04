@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { Alojamiento } from '../api/alojamiento'
 import {
   buscarDisponibles,
   listarApartamentos,
@@ -25,13 +26,15 @@ function mensajeDe(error: unknown) {
 }
 
 /**
- * Página de inicio: todos los apartamentos con lo que paga un adulto su próxima noche libre, y un filtro opcional por
- * fechas y personas que deja solo los libres con el precio del grupo (CU-07 · CU-09 · RN-06). Ambos van de 10 en 10.
+ * Página de inicio: abre con el hotel y debajo todos los apartamentos con lo que paga un adulto su próxima noche libre, y
+ * un filtro opcional por fechas y personas que deja solo los libres con el precio del grupo (CU-07 · CU-09 · RN-06).
+ * Ambos van de 10 en 10.
  *
- * @param umbral edad desde la que se paga, del alojamiento; vacía mientras llega
+ * @param alojamiento nombre, descripción, marca y edad desde la que se paga; vacío mientras llega o si la API no responde
  */
-export default function Inicio({ umbral }: { umbral: number | null }) {
+export default function Inicio({ alojamiento }: { alojamiento: Alojamiento | null }) {
   const [vista, setVista] = useState<Vista>({ estado: 'cargando' })
+  const [fotoDeRespaldo, setFotoDeRespaldo] = useState<string | null>(null)
   const resultados = useRef<HTMLElement>(null)
 
   async function verTodos(numero = 0) {
@@ -65,7 +68,12 @@ export default function Inicio({ umbral }: { umbral: number | null }) {
   useEffect(() => {
     let vigente = true // si la página se cierra antes de que responda, no se toca nada
     listarApartamentos()
-      .then((pagina) => vigente && setVista({ estado: 'todos', pagina }))
+      .then((pagina) => {
+        if (vigente) {
+          setVista({ estado: 'todos', pagina })
+          setFotoDeRespaldo(primeraFoto(pagina.contenido))
+        }
+      })
       .catch((error: unknown) => vigente && setVista({ estado: 'error', mensaje: mensajeDe(error) }))
     return () => {
       vigente = false
@@ -73,23 +81,70 @@ export default function Inicio({ umbral }: { umbral: number | null }) {
   }, [])
 
   return (
-    <main>
-      <h1>Reserva tu estadía</h1>
-      <p className="suave">Elige un apartamento o busca tus fechas para ver solo los libres.</p>
+    <>
+      <Portada alojamiento={alojamiento} foto={alojamiento?.marca?.portadaUrl ?? fotoDeRespaldo} />
+      <main className="inicio">
+        <FormularioBusqueda buscando={vista.estado === 'cargando'} filtrando={vista.estado === 'filtrados'}
+          umbral={alojamiento?.parametros.umbralEdadFacturable ?? null} alBuscar={filtrar} />
 
-      <FormularioBusqueda buscando={vista.estado === 'cargando'} umbral={umbral} alBuscar={filtrar} />
+        <section aria-live="polite" className="resultados" ref={resultados}>
+          {vista.estado === 'cargando' && <Cargando />}
+          {vista.estado === 'error' && (
+            <p role="alert" className="aviso">
+              {vista.mensaje}
+            </p>
+          )}
+          {vista.estado === 'todos' && <Todos pagina={vista.pagina} alCambiarPagina={irA} />}
+          {vista.estado === 'filtrados' && <Filtrados {...vista} alVerTodos={() => verTodos()} alCambiarPagina={irA} />}
+        </section>
+      </main>
+    </>
+  )
+}
 
-      <section aria-live="polite" className="resultados" ref={resultados}>
-        {vista.estado === 'cargando' && <p className="suave">Cargando apartamentos…</p>}
-        {vista.estado === 'error' && (
-          <p role="alert" className="aviso">
-            {vista.mensaje}
-          </p>
-        )}
-        {vista.estado === 'todos' && <Todos pagina={vista.pagina} alCambiarPagina={irA} />}
-        {vista.estado === 'filtrados' && <Filtrados {...vista} alVerTodos={() => verTodos()} alCambiarPagina={irA} />}
-      </section>
-    </main>
+// Sin foto de portada propia, un hotel igual abre con una imagen: la de su primer apartamento que tenga
+function primeraFoto(apartamentos: ApartamentoPublico[]) {
+  const fotos = apartamentos.flatMap((a) => a.imagenes)
+  return (fotos.find((f) => f.principal) ?? fotos[0])?.url ?? null
+}
+
+// Valor inicial de sga.alojamiento.* mientras el hotel no escribe el suyo: no se le muestra al huésped
+function escrito(dato: string | null | undefined) {
+  return dato && dato !== 'Por definir' ? dato : null
+}
+
+function Portada({ alojamiento, foto }: { alojamiento: Alojamiento | null; foto: string | null }) {
+  const ciudad = escrito(alojamiento?.ciudad)
+  return (
+    <section className="portada">
+      {foto && <img src={foto} alt="" />}
+      <div className="portada-texto">
+        <h1>{alojamiento?.nombre ?? 'Reserva tu estadía'}</h1>
+        {ciudad && <p className="portada-ciudad">{ciudad}</p>}
+        <p>{escrito(alojamiento?.descripcion) ?? 'Elige un apartamento o busca tus fechas para ver solo los libres.'}</p>
+      </div>
+    </section>
+  )
+}
+
+// Recuadros con la forma de las filas: los resultados aparecen en su lugar, sin que la página salte
+function Cargando() {
+  return (
+    <>
+      <p className="visualmente-oculto">Cargando apartamentos…</p>
+      <div className="filas" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="tarjeta esqueleto">
+            <div className="sin-foto" />
+            <div className="esqueleto-lineas">
+              <span />
+              <span />
+              <span />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -148,8 +203,10 @@ function Filtrados({ estadia, grupo, pagina, alVerTodos, alCambiarPagina }: Prop
       <h2>
         {total} {total === 1 ? 'apartamento libre' : 'apartamentos libres'}
       </h2>
-      <p className="suave">{resumen}</p>
-      {verTodos}
+      <div className="resumen-filtro">
+        <p className="suave">{resumen}</p>
+        {verTodos}
+      </div>
       <div className="filas">
         {pagina.contenido.map((a) => (
           <TarjetaApartamento key={a.codigo} apartamento={a} busqueda={{ estadia, grupo }} />
