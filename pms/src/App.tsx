@@ -9,6 +9,7 @@ import Inicio from './paginas/Inicio'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
 import NuevaReserva from './paginas/NuevaReserva'
+import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
 import SinPermiso from './paginas/SinPermiso'
 import { useSesion } from './sesion/contexto'
@@ -17,6 +18,7 @@ import type { Rol } from './sesion/roles'
 // Las pantallas del menú que ya existen; las demás llegan en los sprints siguientes (docs/SPRINTS.md)
 const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
+  '/ocupacion': <Ocupacion />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */

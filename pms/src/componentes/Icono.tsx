@@ -78,6 +78,12 @@ const TRAZOS = {
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
+  ocupacion: (
+    <>
+      <rect x="3" y="5" width="18" height="15" rx="2" />
+      <path d="M3 10h18M9 10v10M15 10v10" />
+    </>
+  ),
   construccion: <path d="M14.5 6.5l3 3M4 20l1-4L16 5l3 3L8 19l-4 1z" />,
   noEncontrada: (
     <>

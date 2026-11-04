@@ -8,7 +8,7 @@ function titulos(rol: Parameters<typeof menuPara>[0]) {
 describe('menú por rol (PermisosPorRol · DEC-67)', () => {
   it('recepción ve reservas y titulares, no la operación ni la configuración', () => {
     expect(menuPara('RECEPCIONISTA').map((g) => g.grupo)).toEqual(['Recepción', 'Mi cuenta'])
-    expect(titulos('RECEPCIONISTA')).toEqual(['Reservas', 'Titulares', 'Mi perfil'])
+    expect(titulos('RECEPCIONISTA')).toEqual(['Reservas', 'Ocupación', 'Titulares', 'Mi perfil'])
   })
 
   it('el personal de servicio ve la preparación y las novedades, no las reservas', () => {

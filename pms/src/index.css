@@ -67,6 +67,13 @@
   --advertencia: var(--marca-terracota);
   --advertencia-fondo: #3a2a20;
   --advertencia-texto: #f4e0d3;
+  --barra-pendiente: #4a412f;
+  --barra-confirmada: #223f34;
+  --barra-en-curso: #1b4560;
+  --barra-bloqueo-1: #2a3943;
+  --barra-bloqueo-2: #22313b;
+  --ocupacion-hoy: rgb(217 201 176 / 8%);
+  --ocupacion-hoy-cabecera: #1d4560;
   --exito: #8fb08f;
   --exito-fondo: #16301f;
   --exito-texto: #ddebdd;
@@ -2471,6 +2478,398 @@ button {
   }
 }
 
+/* Tablero de ocupación (sprint 2) */
+.ocupacion {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.ocupacion-controles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+  align-items: start;
+  padding: var(--espacio-4);
+}
+
+.ocupacion-apartamento,
+.ocupacion-mover {
+  grid-column: 1 / -1;
+}
+
+.ocupacion-mover {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: var(--espacio-2);
+}
+
+.ocupacion-mover .boton {
+  padding: 0 var(--espacio-2);
+}
+
+.ocupacion-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-4);
+  margin: 0;
+  padding: 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+  list-style: none;
+}
+
+.ocupacion-leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ocupacion-muestra {
+  width: 26px;
+  height: 14px;
+  border: 1px solid;
+  border-radius: 4px;
+}
+
+.ocupacion-muestra-hoy {
+  border-color: var(--borde);
+  background: var(--ocupacion-hoy-cabecera);
+}
+
+.barra-pendiente {
+  border-color: var(--estado-pendiente);
+  background: var(--barra-pendiente);
+}
+
+.barra-confirmada {
+  border-color: var(--estado-confirmada);
+  background: var(--barra-confirmada);
+}
+
+.barra-en-curso {
+  border-color: var(--estado-en-curso);
+  background: var(--barra-en-curso);
+}
+
+.barra-bloqueo {
+  border: 1px dashed var(--borde-fuerte);
+  background: repeating-linear-gradient(135deg, var(--barra-bloqueo-1) 0 8px, var(--barra-bloqueo-2) 8px 16px);
+  color: var(--texto-suave);
+}
+
+.ocupacion-cuadricula {
+  display: none;
+}
+
+.ocupacion-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ocupacion-lista-apartamento {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  padding: var(--espacio-4);
+}
+
+.ocupacion-lista-apartamento strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.ocupacion-lista-codigo {
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.ocupacion-lista-vacia {
+  margin-top: var(--espacio-2);
+  font-size: 14px;
+}
+
+.ocupacion-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.ocupacion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  margin-top: var(--espacio-2);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radio-chico);
+  color: var(--texto);
+  font-size: 14px;
+  line-height: 20px;
+  text-decoration: none;
+}
+
+.ocupacion-item.barra-bloqueo {
+  border-style: dashed;
+  color: var(--texto);
+}
+
+.ocupacion-item-textos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ocupacion-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+/* Las columnas se reparten el ancho: a 1280 px caben 14 noches sin desplazarse; con más, la tabla se desplaza */
+.ocupacion-tablero {
+  --ancho-apartamento: 200px;
+  min-width: calc(var(--ancho-apartamento) + var(--noches) * 52px);
+}
+
+.ocupacion-cabecera,
+.ocupacion-fila {
+  display: grid;
+  grid-template-columns: var(--ancho-apartamento) minmax(0, 1fr);
+}
+
+.ocupacion-cabecera {
+  background: var(--superficie-2);
+  border-bottom: 1px solid var(--borde);
+}
+
+.ocupacion-filas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ocupacion-fila {
+  border-bottom: 1px solid var(--borde);
+}
+
+.ocupacion-fila:last-child {
+  border-bottom: 0;
+}
+
+.ocupacion-celda-apartamento {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-right: 1px solid var(--borde-fuerte);
+  background: var(--superficie);
+}
+
+.ocupacion-celda-apartamento .codigo {
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ocupacion-celda-apartamento strong {
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ocupacion-cabecera .ocupacion-celda-apartamento {
+  background: var(--superficie-2);
+  color: var(--texto-suave);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ocupacion-dias,
+.ocupacion-noches {
+  display: grid;
+  grid-template-columns: repeat(var(--noches), minmax(0, 1fr));
+}
+
+.ocupacion-dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  border-left: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ocupacion-dia:first-child,
+.ocupacion-noche:first-child {
+  border-left: 0;
+}
+
+.ocupacion-dia b {
+  color: var(--texto);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.ocupacion-mes {
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.ocupacion-dia-hoy {
+  background: var(--ocupacion-hoy-cabecera);
+}
+
+.ocupacion-dia-hoy b {
+  color: var(--acento);
+}
+
+.ocupacion-noches {
+  grid-template-rows: repeat(var(--carriles), minmax(68px, auto));
+}
+
+.ocupacion-noche {
+  grid-row: 1 / -1;
+  border-left: 1px solid var(--borde);
+}
+
+.ocupacion-noche-hoy {
+  background: var(--ocupacion-hoy);
+}
+
+.barra {
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-width: 0;
+  margin: var(--espacio-2) 2px;
+  padding: 2px 6px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radio-chico);
+  color: var(--texto);
+  font-size: 12px;
+  line-height: 16px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.barra.barra-bloqueo {
+  border-style: dashed;
+  color: var(--texto-suave);
+}
+
+.barra-corte-inicio {
+  margin-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left-style: dotted;
+}
+
+.barra-corte-fin {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right-style: dotted;
+}
+
+.barra-textos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.barra-titulo,
+.barra-detalle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.barra-titulo {
+  font-weight: 600;
+}
+
+.barra-titulo .etiqueta-forma {
+  display: inline-block;
+  vertical-align: -1px;
+}
+
+.barra-ir {
+  flex: none;
+  color: var(--texto-suave);
+  font-size: 16px;
+}
+
+/* La cuadrícula se elige por el ancho que hay, igual que la tabla del listado */
+@container (min-width: 640px) {
+  .ocupacion-cuadricula {
+    display: block;
+  }
+
+  .ocupacion-lista {
+    display: none;
+  }
+
+  .ocupacion-controles {
+    grid-template-columns: repeat(2, minmax(0, 170px)) minmax(0, 280px);
+    justify-content: start;
+  }
+
+  .ocupacion-apartamento {
+    grid-column: auto;
+  }
+
+  .ocupacion-mover {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ocupacion-mover .boton {
+    padding: 0 var(--espacio-5);
+  }
+}
+
+@container (min-width: 900px) {
+  .ocupacion-controles {
+    grid-template-columns: repeat(2, 170px) 220px 1fr;
+  }
+
+  .ocupacion-mover {
+    grid-column: auto;
+    margin-top: 26px;
+  }
+}
+
 @media (pointer: coarse) {
   .boton-chico,
   .filtro-activo,
@@ -2487,6 +2886,11 @@ button {
 
 /* En un celular el «encima» se quedaría pegado después de tocar */
 @media (hover: hover) and (pointer: fine) {
+  a.barra:hover,
+  a.ocupacion-item:hover {
+    filter: brightness(1.15);
+  }
+
   .boton-peligro:hover:not(:disabled) {
     background: var(--error-encima);
   }
