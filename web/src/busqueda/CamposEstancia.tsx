@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { Estadia, Grupo } from '../api/apartamentos'
 import { fechaDesdeHoy, masDias } from '../formato'
 
@@ -26,16 +27,17 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, tecl
     <>
       <label>
         Llegada
-        <input type="date" value={estadia.entrada} min={hoy} required onChange={(e) => cambiarEntrada(e.target.value)} />
+        <input type="date" value={estadia.entrada} min={hoy} required onClick={abrirCalendario}
+          onChange={(e) => cambiarEntrada(e.target.value)} />
       </label>
       <label>
         Salida
-        <input type="date" value={estadia.salida} min={masDias(estadia.entrada, 1)} required
+        <input type="date" value={estadia.salida} min={masDias(estadia.entrada, 1)} required onClick={abrirCalendario}
           onChange={(e) => alCambiar({ ...estadia, salida: e.target.value }, grupo)} />
       </label>
       <CampoPersonas
         nombre="Adultos"
-        ayuda={umbral === null ? 'Pagan' : `${umbral} años o más`}
+        ayuda={umbral === null ? null : `${umbral} años o más`}
         minimo={1}
         maximo={capacidad}
         teclaEnter={teclaEnter}
@@ -44,7 +46,7 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, tecl
       />
       <CampoPersonas
         nombre="Niños"
-        ayuda={umbral === null ? 'No pagan' : `Menores de ${umbral}, no pagan`}
+        ayuda={umbral === null ? null : `Menores de ${umbral}`}
         minimo={0}
         maximo={capacidad}
         teclaEnter={teclaEnter}
@@ -55,10 +57,19 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, tecl
   )
 }
 
+// Todo el campo abre el calendario, no solo su ícono. Sin showPicker en el navegador, queda el comportamiento normal
+function abrirCalendario(evento: MouseEvent<HTMLInputElement>) {
+  try {
+    evento.currentTarget.showPicker?.()
+  } catch {
+    // El navegador puede negarlo (por ejemplo, dentro de un iframe); el ícono sigue funcionando
+  }
+}
+
 interface PropsCampo {
   nombre: string
-  /** La edad que cuenta, debajo del campo; los lectores de pantalla la leen después del nombre. */
-  ayuda: string
+  /** La edad que cuenta, debajo del campo; se lee después del nombre en lectores de pantalla. Vacía mientras llega. */
+  ayuda: string | null
   minimo: number
   maximo?: number
   teclaEnter: 'search' | 'done'
@@ -80,12 +91,14 @@ function CampoPersonas({ nombre, ayuda, minimo, maximo, teclaEnter, valor, alCam
         min={minimo}
         max={maximo}
         value={valor}
-        aria-describedby={`${id}-ayuda`}
+        aria-describedby={ayuda ? `${id}-ayuda` : undefined}
         onChange={(e) => alCambiar(Math.max(minimo, Number(e.target.value) || minimo))}
       />
-      <span id={`${id}-ayuda`} className="ayuda">
-        {ayuda}
-      </span>
+      {ayuda && (
+        <span id={`${id}-ayuda`} className="ayuda">
+          {ayuda}
+        </span>
+      )}
     </div>
   )
 }

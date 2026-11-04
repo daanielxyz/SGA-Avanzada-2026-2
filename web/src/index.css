@@ -183,6 +183,29 @@ input {
   color: var(--texto);
 }
 
+/* El campo de fecha abre el calendario entero; su ícono se ve como lo que es: algo que se presiona */
+input[type='date'] {
+  cursor: pointer;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  padding: 6px;
+  margin-inline-end: -4px;
+  border-radius: var(--radio-pequeno);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  input[type='date']:hover {
+    border-color: var(--texto);
+  }
+
+  input[type='date']:hover::-webkit-calendar-picker-indicator {
+    background-color: var(--relleno);
+  }
+}
+
 button {
   border: none;
   background: var(--acento);

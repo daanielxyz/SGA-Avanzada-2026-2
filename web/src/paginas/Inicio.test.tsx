@@ -147,6 +147,30 @@ describe('Inicio', () => {
     expect(screen.getByText('Cargando apartamentos…')).toBeInTheDocument()
   })
 
+  it('hacer clic en cualquier parte de un campo de fecha abre el calendario', async () => {
+    laApiResponde([200, pagina()])
+    const abrir = vi.fn()
+    HTMLInputElement.prototype.showPicker = abrir // jsdom no lo trae
+    abrirInicio()
+
+    await userEvent.click(screen.getByLabelText('Llegada'))
+    await userEvent.click(screen.getByLabelText('Salida'))
+
+    expect(abrir).toHaveBeenCalledTimes(2)
+    Reflect.deleteProperty(HTMLInputElement.prototype, 'showPicker')
+  })
+
+  it('sin la edad todavía, los campos de personas no muestran ayuda', () => {
+    laApiResponde([200, pagina()])
+    render(
+      <MemoryRouter>
+        <Inicio alojamiento={null} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByLabelText('Niños')).toHaveAccessibleDescription('')
+  })
+
   it('cada tarjeta lleva a la página del apartamento con la noche de su precio', async () => {
     laApiResponde([200, pagina(SUITE)])
     abrirInicio()
@@ -187,7 +211,7 @@ describe('Inicio', () => {
     abrirInicio(10)
 
     expect(screen.getByLabelText('Adultos')).toHaveAccessibleDescription('10 años o más')
-    expect(screen.getByLabelText('Niños')).toHaveAccessibleDescription('Menores de 10, no pagan')
+    expect(screen.getByLabelText('Niños')).toHaveAccessibleDescription('Menores de 10')
   })
 
   it('el filtro deja solo los libres, con el total del grupo, y se puede volver a ver todos', async () => {
