@@ -16,6 +16,7 @@ import BloqueVacio from '../componentes/BloqueVacio'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import Icono from '../componentes/Icono'
 import Paginador from '../componentes/Paginador'
+import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, dinero, fechaCorta, noches } from '../formato'
 
 const FILTROS = ['desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
@@ -49,6 +50,9 @@ function parametrosDe(valores: ValoresFiltro): URLSearchParams {
 
 type Resultado = { clave: string; pagina: Pagina<Reserva> } | { clave: string; error: unknown }
 
+// Dónde iba la persona al abrir una reserva, para dejarla ahí mismo al volver al listado
+let posicionAlSalir: { busqueda: string; y: number } | null = null
+
 /** Listado de reservas de recepción (CU-25 · DEC-72). Los filtros y la página viven en la dirección de la pantalla. */
 export default function ListadoReservas() {
   const [parametros, setParametros] = useSearchParams()
@@ -57,6 +61,7 @@ export default function ListadoReservas() {
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const consulta = parametros.toString()
   const clave = `${consulta}#${intento}`
+  useTitulo('Reservas')
 
   useEffect(() => {
     let vigente = true
@@ -187,7 +192,10 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
   alQuitar: (filtro: Filtro) => void
 }) {
   const [borrador, setBorrador] = useState(valores)
-  const [abiertos, setAbiertos] = useState(false)
+  // Mientras la persona no los pliegue o despliegue, en el celular solo se abren si hay un error de filtro: si no,
+  // no se verían ni el error ni el campo por corregir
+  const [eleccion, setEleccion] = useState<boolean | null>(null)
+  const abiertos = eleccion ?? Boolean(errorDeFiltro)
   const [apartamentos, setApartamentos] = useState<string[]>([])
   const activos = FILTROS.filter((filtro) => valores[filtro])
   const rangoInvalido = errorDeFiltro?.estado === 409 && Boolean(valores.desde && valores.hasta)
@@ -224,7 +232,7 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
         className="boton boton-secundario boton-bloque boton-filtros"
         aria-expanded={abiertos}
         aria-controls="filtros-reservas"
-        onClick={() => setAbiertos(!abiertos)}
+        onClick={() => setEleccion(!abiertos)}
       >
         <span>Filtros{activos.length > 0 && ` (${activos.length})`}</span>
         <Icono nombre="abajo" />
@@ -359,7 +367,7 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
         </div>
 
         {errorDeFiltro && (
-          <div id="filtros-error">
+          <div id="filtros-error" className="filtros-error">
             <Aviso
               tipo="error"
               asunto="No se pudo aplicar el filtro"
@@ -397,6 +405,14 @@ function Resultados({ pagina, hayFiltros, volverA, alLimpiar, alCambiarPagina }:
   alLimpiar: () => void
   alCambiarPagina: (pagina: number) => void
 }) {
+  useEffect(() => {
+    if (posicionAlSalir?.busqueda === volverA && posicionAlSalir.y > 0) window.scrollTo(0, posicionAlSalir.y)
+    posicionAlSalir = null
+  }, [volverA])
+  const recordarPosicion = () => {
+    posicionAlSalir = { busqueda: volverA, y: window.scrollY }
+  }
+
   if (pagina.contenido.length === 0) {
     if (pagina.numero > 0) {
       return (
@@ -465,11 +481,20 @@ function Resultados({ pagina, hayFiltros, volverA, alLimpiar, alCambiarPagina }:
               {pagina.contenido.map((reserva) => (
                 <tr key={reserva.codigo}>
                   <td>
-                    <Link to={`/reservas/${reserva.codigo}`} state={{ volverA }} className="codigo enlace-codigo">
+                    <Link
+                      to={`/reservas/${reserva.codigo}`}
+                      state={{ volverA }}
+                      className="codigo enlace-codigo"
+                      onClick={recordarPosicion}
+                    >
                       {reserva.codigo}
                     </Link>
                   </td>
-                  <td className="codigo">{reserva.apartamento}</td>
+                  <td className="codigo">
+                    <span className="apartamento-recortado" title={reserva.apartamento}>
+                      {reserva.apartamento}
+                    </span>
+                  </td>
                   <td className="celda-titular">
                     <Titular reserva={reserva} />
                   </td>
@@ -496,7 +521,12 @@ function Resultados({ pagina, hayFiltros, volverA, alLimpiar, alCambiarPagina }:
           const totalNoches = noches(reserva.entrada, reserva.salida)
           return (
             <li key={reserva.codigo}>
-              <Link to={`/reservas/${reserva.codigo}`} state={{ volverA }} className="reserva-tarjeta">
+              <Link
+                to={`/reservas/${reserva.codigo}`}
+                state={{ volverA }}
+                className="reserva-tarjeta"
+                onClick={recordarPosicion}
+              >
                 <span className="reserva-tarjeta-fila">
                   <span className="codigo reserva-tarjeta-codigo">{reserva.codigo}</span>
                   <EtiquetaEstado estado={reserva.estado} />
@@ -541,7 +571,9 @@ function Titular({ reserva }: { reserva: Reserva }) {
           {reserva.titularNombre}
         </span>
       )}
-      <span className={reserva.titularNombre ? 'codigo titular-id' : 'codigo'}>{reserva.titularId}</span>
+      <span className="codigo titular-id" title={reserva.titularId}>
+        {reserva.titularId}
+      </span>
     </>
   )
 }

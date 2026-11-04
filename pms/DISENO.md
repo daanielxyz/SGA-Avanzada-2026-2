@@ -57,7 +57,7 @@ Están en `pms/diseno/mockups/`, solo en cada clon: la carpeta `pms/diseno/` est
 - **Menú**: manda `src/navegacion.ts`. El mockup de Administración trae «Tarifas», «Temporadas» y «Políticas» y no trae «Canales de venta».
 - **Política en el detalle**: la reserva solo trae `politicaId` y `/api/politicas` queda para el administrador (`PermisosPorRol`), así que se muestra el id, no «Flexible · 48 h». Para mostrar el texto hace falta un cambio de backend.
 - **Agregado al detalle**: `vehiculos` y `mascotas` (el mockup no los tiene).
-- **Corregido en el listado**: a 1280 px la tabla del mockup se salía y cortaba la columna Total, así que Entrada y Salida van en una sola columna, para dejarle espacio al nombre del titular; las fechas son campos de fecha; el filtro de apartamento trae su lista de `GET /api/apartamentos`; en el celular, los filtros activos con ✕ miden 44 px.
+- **Corregido en el listado**: a 1280 px la tabla del mockup se salía y cortaba la columna Total, así que Entrada y Salida van en una sola columna, para dejarle espacio al nombre del titular. Cuando el contenido mide menos de 960 px (ventanas medianas o con zoom) se muestran las tarjetas del celular, en dos columnas desde 640 px; las fechas son campos de fecha; el filtro de apartamento trae su lista de `GET /api/apartamentos`; en el celular, los filtros activos con ✕ miden 44 px.
 
 ## Skills
 Las skills salen del documento «Playbooks Web y SaaS con Claude Code». El PMS es la parte *app* del playbook 2 (SaaS), pero los mockups de Claude Design hacen de referencia, como en el playbook 1.2. Por eso hay **una sola skill de dirección visual (`impeccable`)**, y en el código manda el mockup, no el gusto de la skill.
@@ -95,4 +95,4 @@ Para construir y cerrar cada tarea siguen las de flujo de código, que son globa
 - [x] Base visual en `src/index.css` y pantallas 1, 2 y 5 en código (`feature/pms/diseno-base`).
 - [x] Fuentes Satoshi e Inter en `public/fuentes/` (Satoshi fuera de git).
 - [x] Pantallas 3 y 4 en código, con el nombre del titular (`feature/pms/listado-reservas`).
-- [ ] Auditoría de las cinco pantallas con las skills elegidas (paso 5).
+- [x] Auditoría de las cinco pantallas con las skills elegidas (paso 5). Quedó pendiente: márgenes laterales para la muesca con el celular en horizontal (hay que probarlo en un teléfono), pasar a variables los tamaños de letra y los espacios fijos (20 % libre del sprint siguiente) y la dominancia del azul (se muestra al cliente en el cierre).

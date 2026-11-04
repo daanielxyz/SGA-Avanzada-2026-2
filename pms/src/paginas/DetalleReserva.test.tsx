@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { paginaDe, reservaDePrueba } from '../pruebas/reservasDePrueba'
 import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
@@ -94,7 +94,7 @@ describe('detalle de una reserva (CU-49)', () => {
     laApiRespondePorRuta({})
     abrir('/reservas/RES-2026-09999')
 
-    expect(await screen.findByRole('heading', { name: 'Reserva no encontrada' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Reserva no encontrada' })).toBeInTheDocument()
     expect(screen.getByText('RES-2026-09999')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Volver al listado de reservas' })).toHaveAttribute('href', '/reservas')
   })
@@ -107,6 +107,32 @@ describe('detalle de una reserva (CU-49)', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Algo falló en el servidor')
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+  })
+
+  it('un dato imposible no deja el PMS en blanco: se explica y el menú sigue ahí', async () => {
+    const silencio = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    laApiRespondePorRuta({ [RUTA]: [200, { ...reservaDePrueba(), valor: null }] })
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: 'Algo salió mal' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Menú principal' })).toBeInTheDocument()
+    silencio.mockRestore()
+  })
+
+  it('el desglose ancho se puede recorrer con el teclado', async () => {
+    laApiRespondePorRuta({ [RUTA]: [200, reservaDePrueba()] })
+    abrir()
+
+    const zona = await screen.findByRole('group', { name: 'Desglose por noche' })
+    expect(zona).toHaveAttribute('tabindex', '0')
+  })
+
+  it('dice en la pestaña qué reserva está abierta', async () => {
+    laApiRespondePorRuta({ [RUTA]: [200, reservaDePrueba()] })
+    abrir()
+
+    await screen.findByRole('heading', { level: 1, name: 'RES-2026-00042' })
+    expect(document.title).toBe('RES-2026-00042 · Meridian')
   })
 
   it('volver conserva los filtros con los que se llegó', async () => {

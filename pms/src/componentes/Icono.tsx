@@ -98,6 +98,7 @@ const TRAZOS = {
     </>
   ),
   abajo: <path d="M6 9l6 6 6-6" />,
+  alerta: <path d="M12 3l9 16H3zM12 10v4M12 17h.01" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   cerrar: <path d="M6 6l12 12M18 6L6 18" />,
 } satisfies Record<string, ReactNode>

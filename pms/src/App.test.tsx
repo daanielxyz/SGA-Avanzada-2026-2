@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from './App'
-import { entrarComo, laApiResponde, llamada } from './pruebas/sesionDePrueba'
+import { entrarComo, laApiResponde, laApiRespondePorRuta, llamada } from './pruebas/sesionDePrueba'
 import { leerSesion, sesionPerdida } from './sesion/almacen'
 import ProveedorSesion from './sesion/ProveedorSesion'
 
@@ -52,6 +52,18 @@ describe('entrada del personal', () => {
     })
     expect(leerSesion()?.token).toBe('token-nuevo')
     expect(screen.getByText('Luis Pérez')).toBeInTheDocument()
+  })
+
+  it('si la sesión venció en un listado filtrado, al entrar vuelve con los mismos filtros', async () => {
+    const fetch = laApiRespondePorRuta({ '/api/auth/login': [200, SESION_RECEPCION] })
+    abrir('/reservas?estado=CONFIRMADA')
+
+    await escribirYEntrar('luis@sga.co', 'Clave1234')
+
+    await screen.findByRole('heading', { name: 'Reservas' })
+    await waitFor(() =>
+      expect(fetch.mock.calls.map(([url]) => url)).toContain('/api/reservas?estado=CONFIRMADA'),
+    )
   })
 
   it('con credenciales erradas muestra el mensaje del backend y no entra', async () => {
@@ -149,6 +161,31 @@ describe('panel según el rol', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalled())
     expect(screen.getByRole('heading', { name: 'Hola, Ana Gómez' })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
+describe('navegar con teclado y lector de pantalla', () => {
+  it('al cambiar de pantalla el foco pasa al contenido y cambia el título de la pestaña', async () => {
+    entrarComo('RECEPCIONISTA')
+    laApiRespondePorRuta({})
+    abrir('/')
+    expect(document.title).toBe('Inicio · Meridian')
+
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' })
+    await userEvent.setup().click(within(menu).getByRole('link', { name: 'Titulares' }))
+
+    expect(screen.getByRole('main')).toHaveFocus()
+    expect(document.title).toBe('Titulares · Meridian')
+  })
+
+  it('el enlace de salto lleva directo al contenido', async () => {
+    entrarComo('RECEPCIONISTA')
+    laApiRespondePorRuta({})
+    abrir('/')
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Saltar al contenido' }))
+
+    expect(screen.getByRole('main')).toHaveFocus()
   })
 })
 

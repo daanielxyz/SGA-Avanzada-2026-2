@@ -12,6 +12,8 @@ function partes(fecha: string): [number, number, number] {
 
 /** «14 nov 2026». También sirve con una fecha y hora: toma solo la fecha. */
 export function fechaCorta(fecha: string): string {
+  // Una dirección escrita a mano puede traer cualquier cosa: se muestra tal cual, sin inventar una fecha
+  if (!/^\d{4}-\d{2}-\d{2}/.test(fecha)) return fecha
   const [anio, mes, dia] = partes(fecha)
   return `${dia} ${MESES[mes - 1]} ${anio}`
 }
@@ -43,6 +45,17 @@ export function edadEn(nacimiento: string, fecha: string): number {
   const [anio, mes, dia] = partes(fecha)
   const yaCumplio = mes > mesN || (mes === mesN && dia >= diaN)
   return anio - anioN - (yaCumplio ? 0 : 1)
+}
+
+/** Las primeras letras de las dos primeras palabras. Separa por caracteres completos: un emoji ocupa varias unidades. */
+export function iniciales(nombre: string): string {
+  const separador = new Intl.Segmenter('es', { granularity: 'grapheme' })
+  return nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => [...separador.segment(parte)][0].segment.toUpperCase())
+    .join('')
 }
 
 /** «1 noche», «3 noches». */

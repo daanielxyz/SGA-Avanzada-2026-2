@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
 import Icono from '../componentes/Icono'
+import { useTitulo } from '../componentes/useTitulo'
 import { menuPara } from '../navegacion'
 import { useSesion } from '../sesion/contexto'
 
 /** Primera pantalla después de entrar: saludo y accesos a lo que el rol puede hacer. */
 export default function Inicio() {
   const { sesion } = useSesion()
+  useTitulo('Inicio')
   if (!sesion) return null
 
   return (

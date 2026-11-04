@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
+import ProteccionErrores from './componentes/ProteccionErrores'
 import { OPCIONES, RECEPCION } from './navegacion'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
@@ -20,6 +21,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
 export default function App() {
   return (
+    <ProteccionErrores global>
     <Routes>
       <Route path="/ingresar" element={<IniciarSesion />} />
       <Route element={<ConSesion />}>
@@ -46,15 +48,16 @@ export default function App() {
         <Route path="*" element={<NoEncontrada />} />
       </Route>
     </Routes>
+    </ProteccionErrores>
   )
 }
 
 /** Sin sesión, toda pantalla manda a entrar y recuerda adónde se quería ir. */
 function ConSesion() {
   const { sesion } = useSesion()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   if (!sesion) {
-    return <Navigate to="/ingresar" replace state={{ desde: pathname }} />
+    return <Navigate to="/ingresar" replace state={{ desde: pathname + search }} />
   }
   return <Panel sesion={sesion} />
 }

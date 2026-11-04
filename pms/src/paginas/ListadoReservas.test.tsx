@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
+import type { Reserva } from '../api/reservas'
 import { paginaDe, reservaDePrueba } from '../pruebas/reservasDePrueba'
 import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
 import ProveedorSesion from '../sesion/ProveedorSesion'
@@ -36,6 +37,41 @@ describe('listado de reservas (CU-25)', () => {
     expect(within(fila).getByText('No se presentó')).toBeInTheDocument()
     expect(within(fila).getByText('$ 1.250.000')).toBeInTheDocument()
     expect(within(fila).getByText('Portal')).toBeInTheDocument()
+  })
+
+  it('sin nombre del titular muestra su id, y un estado desconocido no rompe la pantalla', async () => {
+    laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([
+        reservaDePrueba({ titularNombre: null, estado: 'ESTADO_NUEVO' as Reserva['estado'] }),
+      ])],
+    })
+    abrir()
+
+    const tabla = await screen.findByRole('table', { name: 'Reservas' })
+    expect(within(tabla).getByText('TIT-7')).toBeInTheDocument()
+    expect(within(tabla).getByText('ESTADO_NUEVO')).toBeInTheDocument()
+  })
+
+  it('los datos extremos se muestran completos y como texto', async () => {
+    const nombre = 'María Constanza Wiśniewska-Kowalczyk Rodríguez de la Hoz y Fernández-Villamizar Oberhauser'
+    laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([
+        reservaDePrueba({
+          titularNombre: nombre,
+          apartamento: 'APT-SUITE-PRESIDENCIAL-TORRE-NORTE-1204',
+          valor: { desglose: [], total: 999999999 },
+        }),
+        reservaDePrueba({ codigo: 'RES-2026-00043', titularNombre: '<script>alert(1)</script>' }),
+      ])],
+    })
+    abrir()
+
+    const tabla = await screen.findByRole('table', { name: 'Reservas' })
+    expect(within(tabla).getByText('$ 999.999.999')).toBeInTheDocument()
+    // Lo que la tabla recorta se puede leer completo al pasar el cursor
+    expect(within(tabla).getByTitle(nombre)).toBeInTheDocument()
+    expect(within(tabla).getByTitle('APT-SUITE-PRESIDENCIAL-TORRE-NORTE-1204')).toBeInTheDocument()
+    expect(within(tabla).getByText('<script>alert(1)</script>')).toBeInTheDocument()
   })
 
   it('mientras carga lo dice', () => {
@@ -104,6 +140,17 @@ describe('listado de reservas (CU-25)', () => {
     expect(await within(filtros).findByRole('alert')).toHaveTextContent('La fecha desde debe ser anterior a la fecha hasta')
     expect(within(filtros).getByLabelText('Desde')).toBeInvalid()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    // En el celular los filtros van plegados: el error los abre para que se vea
+    expect(screen.getByRole('button', { name: /^Filtros/ })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('una fecha inválida en la dirección no muestra basura en el filtro aplicado', async () => {
+    laApiRespondePorRuta({
+      '/api/reservas': [400, { estado: 400, codigo: 'VALIDACION', mensaje: 'Datos inválidos', detalles: [] }],
+    })
+    abrir('/reservas?desde=xxx')
+
+    expect(await screen.findByRole('button', { name: 'Quitar filtro Desde: xxx' })).toBeInTheDocument()
   })
 
   it('un filtro con formato inválido muestra los detalles del 400', async () => {

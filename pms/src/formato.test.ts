@@ -1,10 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { cantidad, dinero, edadEn, fechaCorta, hora, noches } from './formato'
+import { cantidad, dinero, edadEn, fechaCorta, hora, iniciales, noches } from './formato'
 
 describe('formatos del PMS', () => {
   it('la fecha no se corre un día con la zona horaria', () => {
     expect(fechaCorta('2026-11-14')).toBe('14 nov 2026')
     expect(fechaCorta('2026-01-01T23:59:00')).toBe('1 ene 2026')
+  })
+
+  it('lo que no es una fecha se muestra tal cual', () => {
+    expect(fechaCorta('xxx')).toBe('xxx')
+  })
+
+  it('las iniciales aguantan nombres poco comunes', () => {
+    expect(iniciales('María Constanza Rodríguez')).toBe('MC')
+    expect(iniciales('Jo')).toBe('J')
+    expect(iniciales('  Sam   Lee ')).toBe('SL')
+    expect(iniciales('Ólafur Ólafsson')).toBe('ÓÓ')
+    expect(iniciales('🦊 Fox')).toBe('🦊F')
   })
 
   it('el dinero va en pesos, sin decimales y con punto de miles', () => {

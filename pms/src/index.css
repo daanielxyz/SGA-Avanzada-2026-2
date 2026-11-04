@@ -248,6 +248,10 @@ button {
   font-size: 16px;
 }
 
+.campo-control-grande {
+  height: 48px;
+}
+
 .campo-control::placeholder {
   color: var(--texto-pista);
 }
@@ -544,6 +548,7 @@ button {
 
 .cabecera .logo {
   order: 1;
+  min-height: 44px;
 }
 
 .quien {
@@ -631,6 +636,11 @@ button {
   transform: none;
 }
 
+/* Con el cajón abierto, lo de atrás no se mueve */
+:root:has(.menu.abierto) {
+  overflow: hidden;
+}
+
 .menu-cabecera {
   display: flex;
   align-items: center;
@@ -658,11 +668,9 @@ button {
 }
 
 .menu-persona-dato {
-  overflow: hidden;
   color: var(--texto-suave);
   font-size: 13px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 18px;
 }
 
 .menu h2 {
@@ -878,6 +886,33 @@ button {
   overscroll-behavior-x: contain;
 }
 
+/* El marco recorta lo que sobresale: el foco se dibuja por dentro para que se vea */
+.desplazable:focus-visible {
+  outline-offset: -3px;
+}
+
+.saltar {
+  position: absolute;
+  top: var(--espacio-2);
+  left: var(--espacio-2);
+  z-index: 30;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio-chico);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
+.saltar:focus {
+  transform: none;
+}
+
+/* El contenido recibe el foco por código al cambiar de pantalla; no es un control, así que no se marca */
+.contenido:focus {
+  outline: none;
+}
+
 .enlace {
   min-height: 44px;
   padding: 0 var(--espacio-2);
@@ -908,6 +943,12 @@ button {
   gap: var(--espacio-3);
   padding: 36px var(--espacio-6);
   text-align: center;
+}
+
+.bloque-vacio h1 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
 }
 
 .bloque-vacio p {
@@ -944,6 +985,12 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--espacio-4);
+}
+
+/* La tabla o las tarjetas se eligen por el ancho que de verdad hay, no por el de la pantalla: así también responde
+   al menú lateral y al zoom del navegador */
+.reservas {
+  container-type: inline-size;
 }
 
 .reservas-titulo {
@@ -1015,6 +1062,11 @@ button {
   gap: var(--espacio-4);
 }
 
+/* En el celular el formulario es largo: el error va arriba para que se vea sin desplazarse */
+.filtros-error {
+  order: -1;
+}
+
 .filtros-botones {
   display: flex;
   justify-content: flex-end;
@@ -1028,7 +1080,14 @@ button {
 }
 
 .tabla-reservas {
-  min-width: 860px;
+  min-width: 940px;
+}
+
+.apartamento-recortado {
+  display: block;
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .estancia {
@@ -1064,6 +1123,7 @@ button {
 .celda-titular {
   width: 100%;
   max-width: 0;
+  overflow: hidden;
 }
 
 .titular-nombre {
@@ -1074,7 +1134,9 @@ button {
 
 .titular-id {
   display: block;
+  overflow: hidden;
   color: var(--texto-suave);
+  text-overflow: ellipsis;
   font-size: 12px;
   line-height: 16px;
 }
@@ -1090,6 +1152,7 @@ button {
 
 .reserva-tarjeta {
   display: block;
+  height: 100%;
   padding: 14px var(--espacio-4);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
@@ -1101,12 +1164,14 @@ button {
 
 .reserva-tarjeta-fila {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--espacio-2);
 }
 
 .reserva-tarjeta-codigo {
+  white-space: nowrap;
   color: var(--acento);
   font-size: 15px;
   font-weight: 600;
@@ -1127,6 +1192,23 @@ button {
 
 .reserva-tarjeta-pie .importe {
   font-size: 16px;
+}
+
+@container (min-width: 640px) {
+  .reservas-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 960px) {
+  .reservas-tarjetas {
+    display: none;
+  }
+
+  .reservas-tabla {
+    display: block;
+  }
 }
 
 .paginador p {
@@ -1558,8 +1640,7 @@ button {
   }
 
   .boton-filtros,
-  .filtros-activos-limpiar,
-  .reservas-tarjetas {
+  .filtros-activos-limpiar {
     display: none;
   }
 
@@ -1577,12 +1658,12 @@ button {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .filtros-botones {
-    grid-column: span 2;
+  .filtros-error {
+    order: 0;
   }
 
-  .reservas-tabla {
-    display: block;
+  .filtros-botones {
+    grid-column: span 2;
   }
 
   .paginador .paginador-botones {
@@ -1687,6 +1768,21 @@ button {
   .tabla-ocupantes .ocupante-nacimiento {
     margin: 0;
     color: inherit;
+  }
+}
+
+/* Con el dedo, todo control mide al menos 44 px; con el mouse se conserva la densidad del mockup */
+@media (pointer: coarse) {
+  .boton-chico,
+  .filtro-activo,
+  .paginador-botones .boton {
+    min-height: 44px;
+  }
+
+  .enlace-codigo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
   }
 }
 

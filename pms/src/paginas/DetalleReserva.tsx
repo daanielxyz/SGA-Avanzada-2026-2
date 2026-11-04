@@ -5,6 +5,7 @@ import { consultarReserva, NOMBRE_DEL_CANAL, type Ocupante, type Reserva } from 
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
+import { useTitulo } from '../componentes/useTitulo'
 import { dinero, edadEn, fechaCorta, hora, noches } from '../formato'
 
 type Resultado = { clave: string; reserva: Reserva } | { clave: string; error: unknown }
@@ -17,6 +18,7 @@ export default function DetalleReserva() {
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const clave = `${codigo}#${intento}`
   const listado = `/reservas${volverA}`
+  useTitulo(codigo)
 
   useEffect(() => {
     let vigente = true
@@ -39,6 +41,7 @@ export default function DetalleReserva() {
     if (actual.error instanceof ErrorApi && actual.error.estado === 404) {
       return (
         <BloqueVacio
+          encabezado="h1"
           icono="reservaNoEncontrada"
           titulo="Reserva no encontrada"
           accion={
@@ -142,7 +145,7 @@ export default function DetalleReserva() {
       <section aria-labelledby="titulo-desglose" className="detalle-seccion">
         <h2 id="titulo-desglose">Desglose por noche</h2>
         <div className="tarjeta tabla-marco">
-          <div className="desplazable">
+          <div className="desplazable" tabIndex={0} role="group" aria-labelledby="titulo-desglose">
             <table className="tabla tabla-desglose" aria-labelledby="titulo-desglose">
               <thead>
                 <tr>

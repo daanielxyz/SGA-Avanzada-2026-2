@@ -32,6 +32,9 @@ const SIN_CONEXION: ErrorRespuesta = {
   detalles: [],
 }
 
+// Pasado este tiempo se da por caído: la pantalla explica el error en vez de quedarse cargando para siempre
+const ESPERA_MAXIMA_MS = 30_000
+
 // Vacío en desarrollo: las rutas /api las reenvía Vite (vite.config.ts). En un servidor real se define al construir.
 const BASE = import.meta.env.VITE_API_URL ?? ''
 
@@ -49,6 +52,7 @@ export async function pedir<T>(ruta: string, opciones: RequestInit & { cuerpo?: 
   let respuesta: Response
   try {
     respuesta = await fetch(BASE + ruta, {
+      signal: AbortSignal.timeout(ESPERA_MAXIMA_MS),
       ...resto,
       headers: { Accept: 'application/json', ...(cuerpo === undefined ? {} : { 'Content-Type': 'application/json' }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers },
