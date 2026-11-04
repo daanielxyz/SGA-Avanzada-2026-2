@@ -3,13 +3,13 @@
 Cómo se reparte el trabajo para que dos equipos avancen en paralelo sin pisarse (DEC-77). Lo leen las personas **y Claude** antes de tocar cualquier archivo. El plan por semanas está en `docs/SPRINTS.md`.
 
 ## Productos
-Un solo backend (este repositorio, `src/`) y dos frontends en React, cada uno en su carpeta:
+Un solo backend (`backend/`, el proyecto Gradle completo; DEC-83) y dos frontends en React, cada uno en su carpeta:
 
 | Producto | Carpeta | Para quién | Habla con |
 |---|---|---|---|
 | **Web de reservas** | `web/` | El huésped: busca, cotiza, reserva, paga y ve su cuenta | `/api/portal/**`, `/api/auth/huesped/**`, `/api/mi-cuenta`, `/api/mis-reservas`, `/api/apartamentos/disponibles`, `/api/apartamentos/{codigo}/calendario`, `/api/cotizaciones` |
 | **PMS** | `pms/` | Recepción y administración: toda la gestión del hotel | El resto de `/api/**` (con JWT del personal) |
-| **Backend (API)** | `src/` | Ambos frontends y los canales externos | PostgreSQL, correo, Channex |
+| **Backend (API)** | `backend/` | Ambos frontends y los canales externos | PostgreSQL, correo, Channex |
 
 ## Equipos
 | Equipo | Producto | Prefijo de rama |
@@ -43,15 +43,15 @@ Regla general: **cada equipo edita solo lo suyo**. Lo del otro equipo se lee y s
 Lo que usan los dos y donde está el riesgo de vender dos veces la misma noche. **Solo se cambia en una rama `feature/nucleo/…`, en un PR pequeño que revisa y aprueba el otro equipo**, y nunca mezclado con trabajo propio:
 - `domain/` (salvo lo asignado arriba), `application/compartido/`.
 - `application/reserva/{CrearReserva, CancelarReserva, VencerReserva, BuscarDisponibles, BuscarReservasVencidas, CotizarEstancia}UseCase.java`, `CargadorReserva`, `AvisosReserva`, `TitularParaReserva`.
-- `infrastructure/persistencia/` y `src/main/resources/db/` (migraciones), `infrastructure/config/`, `infrastructure/externos/{NotificadorLocal, NotificadorSmtp}.java`.
+- `infrastructure/persistencia/` y `backend/src/main/resources/db/` (migraciones), `infrastructure/config/`, `infrastructure/externos/{NotificadorLocal, NotificadorSmtp}.java`.
 - `infrastructure/rest/{ManejadorErrores, ErrorResponse, PaginaResponse, UsuarioActual, AlojamientoActual}.java`, `infrastructure/seguridad/{PermisosPorRol, SeguridadConfig}.java`.
-- `build.gradle`, `settings.gradle`, `src/*/resources/application*.properties`, `CLAUDE.md`, `docs/EQUIPOS.md`, `docs/MODELO.md`, `docs/modelo-relacional.drawio`.
+- `backend/build.gradle`, `backend/settings.gradle`, `backend/src/*/resources/application*.properties`, `CLAUDE.md`, `docs/EQUIPOS.md`, `docs/MODELO.md`, `docs/modelo-relacional.drawio`.
 
 Excepción práctica: agregar **una línea** propia en `PermisosPorRol` o en `ManejadorErrores` para un endpoint nuevo del equipo puede ir en la rama del equipo, avisándolo en el PR.
 
 ## Ramas
 - `main`: lo que ve el cliente. Solo recibe `develop` al **cierre de cada sprint**, con la etiqueta `sprint-N`.
-- `develop`: integración. Todo entra por PR, con `./gradlew build` verde (y `npm run build` y `npm test` si se tocó `web/` o `pms/`).
+- `develop`: integración. Todo entra por PR, con `cd backend && ./gradlew build` verde (y `npm run build` y `npm test` si se tocó `web/` o `pms/`).
 - `feature/<equipo>/<tema>`: una por tarea, corta (menos de una semana), en minúsculas y con guiones: `feature/web/busqueda-disponibilidad`, `feature/pms/registro-llegada`, `feature/nucleo/cors-frontends`.
 - `fix/<equipo>/<tema>`: corrección de algo ya integrado.
 - La rama personal `Arias` se integra a `develop` y deja de usarse.
