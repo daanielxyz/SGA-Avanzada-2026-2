@@ -55,6 +55,8 @@ export interface Reserva {
   creadaEn: string
   vehiculos: number
   mascotas: number
+  /** Solo llega al crear: el titular ya tenía una cuenta con otro correo. */
+  avisoCuenta?: string | null
 }
 
 /** `PaginaResponse` del backend: `numero` empieza en 0 y las páginas son de 10 (DEC-18). */
@@ -134,4 +136,52 @@ export function cancelarReserva(codigo: string): Promise<Liquidacion> {
  */
 export function declararNoShow(codigo: string): Promise<Liquidacion> {
   return accion(codigo, 'no-show')
+}
+
+/** `CotizacionResponse`: el valor de una estancia, antes de crear la reserva. */
+export interface Cotizacion {
+  desglose: Noche[]
+  total: number
+}
+
+/**
+ * `POST /api/cotizaciones` (público).
+ *
+ * @throws ErrorApi 409 si falta una tarifa o la estancia es inválida
+ */
+export function cotizarEstancia(datos: {
+  apartamento: string
+  entrada: string
+  salida: string
+  fechasNacimiento: string[]
+}): Promise<Cotizacion> {
+  return pedir<Cotizacion>('/api/cotizaciones', { method: 'POST', cuerpo: datos })
+}
+
+export interface NuevaReserva {
+  apartamento: string
+  entrada: string
+  salida: string
+  canalOrigen: 'DIRECTO'
+  titular: { nombre: string; tipoDocumento: string; numeroDocumento: string; correo: string; telefono: string }
+  ocupantes: {
+    nombre: string
+    fechaNacimiento: string
+    tipoDocumento?: string
+    numeroDocumento?: string
+    nacionalidad?: string
+  }[]
+  horaEstimadaLlegada?: string
+  vehiculos: number
+  mascotas: number
+}
+
+/**
+ * `POST /api/reservas` (CU-11).
+ *
+ * @throws ErrorApi 400 si un campo no tiene el formato esperado; 409 si el apartamento ya no está disponible o se
+ *                  viola una regla de creación (RN-01 · RN-02 · RN-03 · RP-01 · RP-03 · TIT-01)
+ */
+export function crearReserva(datos: NuevaReserva): Promise<Reserva> {
+  return pedir<Reserva>('/api/reservas', { method: 'POST', cuerpo: datos })
 }

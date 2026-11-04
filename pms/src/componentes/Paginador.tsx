@@ -5,16 +5,18 @@ import { cantidad } from '../formato'
  *
  * @param numero empieza en 0, como en la API (DEC-18)
  */
-export default function Paginador({ numero, totalPaginas, totalElementos, alCambiar }: {
+export default function Paginador({ numero, totalPaginas, totalElementos, unidad = ['reserva', 'reservas'], alCambiar }: {
   numero: number
   totalPaginas: number
   totalElementos: number
+  /** Qué se está contando: singular y plural. */
+  unidad?: readonly [string, string]
   alCambiar: (pagina: number) => void
 }) {
   return (
     <nav className="paginador" aria-label="Paginación">
       <p>
-        Página {numero + 1} de {Math.max(totalPaginas, 1)} · {cantidad(totalElementos, 'reserva', 'reservas')}
+        Página {numero + 1} de {Math.max(totalPaginas, 1)} · {cantidad(totalElementos, unidad[0], unidad[1])}
       </p>
       <div className="paginador-botones">
         <button
