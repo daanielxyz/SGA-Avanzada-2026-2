@@ -57,6 +57,7 @@ html {
 
 body {
   margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
 main {
@@ -75,6 +76,7 @@ h3 {
 
 h1 {
   font-size: var(--texto-2xl);
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
@@ -130,6 +132,14 @@ a {
   text-decoration: none;
 }
 
+/* Un nombre muy largo se lee completo en la portada: aquí, máximo dos líneas */
+.marca span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .marca img {
   width: 40px;
   height: 40px;
@@ -173,13 +183,36 @@ input {
   color: var(--texto);
 }
 
+/* El campo de fecha abre el calendario entero; su ícono se ve como lo que es: algo que se presiona */
+input[type='date'] {
+  cursor: pointer;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator {
+  padding: 6px;
+  margin-inline-end: -4px;
+  border-radius: var(--radio-pequeno);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  input[type='date']:hover {
+    border-color: var(--texto);
+  }
+
+  input[type='date']:hover::-webkit-calendar-picker-indicator {
+    background-color: var(--relleno);
+  }
+}
+
 button {
   border: none;
   background: var(--acento);
   color: var(--texto-sobre-acento);
   font-weight: 600;
   cursor: pointer;
-  transition: transform 120ms var(--salida-suave), opacity 120ms var(--salida-suave);
+  transition: transform 120ms var(--salida-suave), opacity 120ms var(--salida-suave), filter 120ms ease;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -188,6 +221,12 @@ button {
 button,
 a {
   touch-action: manipulation;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button:hover:not(:disabled) {
+    filter: brightness(0.96);
+  }
 }
 
 /* Responde al apoyar el dedo, no al soltarlo */
@@ -229,6 +268,12 @@ button.secundario {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+
+.portada img[data-cargada='true'] {
+  opacity: 1;
 }
 
 .portada::after {
@@ -329,6 +374,7 @@ button.secundario {
   /* El botón a la altura de los campos, no de las ayudas */
   .busqueda-campos button[type='submit'] {
     margin-top: calc(var(--texto-sm) * 1.5 + 4px);
+    min-width: 120px;
     padding-inline: 24px;
   }
 
@@ -383,12 +429,37 @@ button.secundario {
   background-color: var(--fondo);
 }
 
+.filas > .tarjeta:not(.esqueleto) {
+  animation: aparecer 220ms var(--salida-suave) both;
+}
+
+.filas > .tarjeta:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.filas > .tarjeta:nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.filas > .tarjeta:nth-child(n + 4) {
+  animation-delay: 120ms;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 .tarjeta img,
 .tarjeta .sin-foto {
   width: 112px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: var(--radio-pequeno);
+  outline: 1px solid rgb(0 0 0 / 8%);
+  outline-offset: -1px;
   background: var(--relleno);
 }
 
@@ -655,6 +726,11 @@ button.secundario {
     grid-row: 2;
   }
 
+  /* Con el panel ancho, cada fecha del detalle cabe en una línea */
+  .desglose td:first-child {
+    white-space: nowrap;
+  }
+
   .panel-reserva {
     grid-column: 2;
     grid-row: 1 / span 2;
@@ -675,6 +751,15 @@ button.secundario {
 
 .precio p {
   margin: 0;
+}
+
+.precio,
+.aviso {
+  transition: opacity 120ms ease;
+}
+
+[aria-busy='true'] {
+  opacity: 0.5;
 }
 
 .total-estancia {
@@ -701,10 +786,27 @@ button.secundario {
 .precio summary {
   display: flex;
   align-items: center;
+  gap: 8px;
   min-height: 44px;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.precio summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border-right: 1.5px solid currentcolor;
+  border-bottom: 1.5px solid currentcolor;
+  transform: rotate(45deg);
+  transition: transform 160ms var(--salida-suave);
+}
+
+.precio details[open] summary::after {
+  margin-top: 3px;
+  transform: rotate(225deg);
 }
 
 .desglose {
@@ -752,10 +854,19 @@ button.secundario {
   visibility: hidden;
 }
 
+/* Movimiento reducido: sin desplazamientos; los fundidos, que ayudan a entender, se quedan */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition: none !important;
+  button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .precio summary::after {
+    transition: none;
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+    }
   }
 }

@@ -28,6 +28,14 @@ describe('aplicarMarca', () => {
     expect(document.querySelector('#fuentes-marca')).toBeNull()
   })
 
+  it('un campo que la API envía vacío también se queda con el valor neutro', () => {
+    aplicarMarca({ colores: { acento: null, fondo: '#F8F7F1' }, fuentes: { titulos: null, texto: null } })
+
+    expect(raiz().getPropertyValue('--acento')).toBe('')
+    expect(raiz().getPropertyValue('--fondo')).toBe('#F8F7F1')
+    expect(document.querySelector('#fuentes-marca')).toBeNull()
+  })
+
   it('sin marca vuelve a los valores neutros y quita las fuentes', () => {
     aplicarMarca({ colores: { acento: '#F4B942' }, fuentes: { texto: 'Inter' } })
     aplicarMarca(null)

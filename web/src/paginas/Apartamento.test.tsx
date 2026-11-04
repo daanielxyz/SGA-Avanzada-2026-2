@@ -128,6 +128,28 @@ describe('Apartamento', () => {
     expect(screen.getByLabelText('Niños')).toHaveAttribute('max', '4')
   })
 
+  it('al cambiar los datos deja el precio anterior atenuado hasta que llega el nuevo, sin saltar', async () => {
+    const laNueva: { responder?: (r: Response) => void } = {}
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(SUITE)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(UNA_NOCHE_LIBRE)))
+      .mockReturnValueOnce(new Promise<Response>((resolver) => { laNueva.responder = resolver }))
+    vi.stubGlobal('fetch', fetch)
+    abrir('/apartamentos/APT-101')
+    await screen.findByText(/por adulto, noche del/)
+
+    fireEvent.change(screen.getByLabelText('Adultos'), { target: { value: '2' } })
+
+    const anterior = screen.getByText(/por adulto, noche del/).closest('.precio')
+    expect(anterior).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Calculando el precio…')).not.toBeInTheDocument()
+
+    laNueva.responder?.(new Response(JSON.stringify({ ...UNA_NOCHE_LIBRE,
+      precio: { ...UNA_NOCHE_LIBRE.precio, total: 200000 } })))
+    expect(await screen.findByText(/Total 1 noche/)).toHaveTextContent(/\$\s*200\.000/)
+    expect(screen.getByText(/por adulto, noche del/).closest('.precio')).toHaveAttribute('aria-busy', 'false')
+  })
+
   it('si el grupo no cabe lo dice sin llamar a la API', async () => {
     const fetch = laApiResponde([200, SUITE], [200, UNA_NOCHE_LIBRE])
     abrir('/apartamentos/APT-101')
