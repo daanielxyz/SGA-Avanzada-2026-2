@@ -1,12 +1,41 @@
-/* Estilos base. Los colores y la tipografía definitivos se acuerdan con el cliente (cierre 1). */
+/*
+ * El esqueleto de la web, igual para todos los hoteles (web/DISENO.md). Solo se escriben aquí los valores neutros: la
+ * marca de cada hotel reemplaza colores, fuentes y radios desde la API (marca.ts · DEC-83 · BL-05). Nada de colores
+ * sueltos en el resto del archivo: todo sale de estas variables.
+ */
 :root {
+  /* Lo que cambia cada hotel */
+  --fondo: #fafaf7;
+  --superficie: #ffffff;
   --texto: #1f2328;
   --texto-suave: #59636e;
-  --fondo: #ffffff;
-  --borde: #d1d9e0;
-  --acento: #b45309;
+  --borde: #e2e2db;
+  --borde-campo: #868e96;
+  --acento: #1f2328;
+  --texto-sobre-acento: #ffffff;
+  --peligro: #b3261e;
+  --exito: #1e7a3f;
+  --fuente-titulos: Georgia, serif;
+  --fuente-texto: system-ui, sans-serif;
+  --radio-pequeno: 6px;
+  --radio-mediano: 12px;
+  --radio-grande: 20px;
 
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  /* Lo que es igual para todos. El relleno de lo que aún no tiene imagen sale del borde de cada hotel, más suave */
+  --relleno: color-mix(in srgb, var(--borde) 45%, var(--superficie));
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.875rem;
+  --texto-md: 1rem;
+  --texto-lg: 1.25rem;
+  --texto-xl: clamp(1.5rem, 1.25rem + 1vw, 1.75rem);
+  --texto-2xl: clamp(2.25rem, 1.5rem + 3.5vw, 3.5rem);
+  --ancho: 1040px;
+  --margen: 16px;
+  --sombra: 0 2px 8px rgb(0 0 0 / 8%);
+  --sombra-alta: 0 8px 24px rgb(0 0 0 / 12%);
+  --salida-suave: cubic-bezier(0.23, 1, 0.32, 1);
+
+  font-family: var(--fuente-texto);
   line-height: 1.5;
   color: var(--texto);
   background: var(--fondo);
@@ -31,37 +60,90 @@ body {
 }
 
 main {
-  max-width: 960px;
+  max-width: var(--ancho);
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 24px var(--margen) 64px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fuente-titulos);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--texto-2xl);
+  margin: 0;
+}
+
+h2 {
+  font-size: var(--texto-xl);
+  margin: 0 0 12px;
 }
 
 a {
-  color: var(--acento);
+  color: inherit;
+  text-underline-offset: 3px;
 }
 
-/* Cabecera con el nombre del alojamiento; con su logo cuando la API lo traiga (BL-05) */
+:focus-visible {
+  outline: 2px solid var(--texto);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--acento);
+  color: var(--texto-sobre-acento);
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Cabecera con el logo y el nombre del alojamiento */
 .encabezado {
-  max-width: 960px;
-  min-height: 56px;
-  margin: 0 auto;
-  padding: 12px 16px 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 8px max(var(--margen), calc((100% - var(--ancho)) / 2 + var(--margen)));
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
 }
 
 .marca {
-  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-family: var(--fuente-titulos);
+  font-size: var(--texto-lg);
   font-weight: 600;
-  color: var(--texto);
+  line-height: 1.2;
   text-decoration: none;
 }
 
-/* Textos de apoyo y avisos de error */
+.marca img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Textos de apoyo y avisos */
 .suave {
   color: var(--texto-suave);
 }
 
 .aviso {
-  color: #b42318;
+  color: var(--peligro);
   font-weight: 500;
 }
 
@@ -70,7 +152,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 0.9rem;
+  font-size: var(--texto-sm);
   font-weight: 500;
 }
 
@@ -80,20 +162,24 @@ button {
   font-size: 16px;
   min-height: 44px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radio-pequeno);
 }
 
 input {
-  border: 1px solid var(--borde);
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--borde-campo);
+  background: var(--superficie);
+  color: var(--texto);
 }
 
 button {
   border: none;
   background: var(--acento);
-  color: #ffffff;
+  color: var(--texto-sobre-acento);
   font-weight: 600;
   cursor: pointer;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--salida-suave), opacity 120ms var(--salida-suave);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -114,11 +200,99 @@ button:disabled {
   cursor: default;
 }
 
-/* Búsqueda: en el celular un campo debajo del otro; en pantallas anchas, en una fila */
+/* El botón secundario se ve como un enlace: la acción principal de cada pantalla es una sola */
+button.secundario {
+  justify-self: start;
+  padding-inline: 0;
+  background: transparent;
+  color: var(--texto);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Portada del inicio: el hotel primero. El velo oscuro garantiza el contraste sobre cualquier foto. */
+.portada {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(320px, 52svh, 480px);
+  padding: 32px var(--margen) 72px;
+  overflow: hidden;
+  background: var(--texto);
+  color: #ffffff;
+}
+
+.portada img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.portada::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(0 0 0 / 72%), rgb(0 0 0 / 28%) 55%, rgb(0 0 0 / 8%));
+}
+
+.portada-texto {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: calc(var(--ancho) - 2 * var(--margen));
+  margin: 0 auto;
+}
+
+.portada-texto p {
+  max-width: 60ch;
+  margin: 8px 0 0;
+  font-size: var(--texto-lg);
+  line-height: 1.4;
+}
+
+.portada-texto .portada-ciudad {
+  font-size: var(--texto-md);
+  font-weight: 500;
+}
+
+/* La búsqueda se monta sobre el borde de la portada */
+.inicio {
+  padding-top: 0;
+}
+
 .busqueda {
-  display: grid;
+  position: relative;
+  z-index: 2;
+  margin: -44px 0 32px;
+  padding: 12px;
+  background: var(--superficie);
+  border-radius: var(--radio-mediano);
+  box-shadow: var(--sombra-alta);
+}
+
+/* En el celular, un resumen que se despliega; los campos no tapan los apartamentos */
+.busqueda-resumen {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
-  margin: 24px 0;
+  width: 100%;
+  background: transparent;
+  color: var(--texto);
+  text-align: left;
+}
+
+.busqueda-campos {
+  display: none;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.busqueda[data-abierta='true'] .busqueda-campos {
+  display: grid;
 }
 
 .campo {
@@ -127,51 +301,86 @@ button:disabled {
   gap: 4px;
 }
 
+.campo label {
+  display: block;
+}
+
 .ayuda {
-  font-size: 0.8rem;
+  font-size: var(--texto-xs);
   color: var(--texto-suave);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 720px) {
   .busqueda {
-    grid-template-columns: 1fr 1fr 110px 110px auto;
+    padding: 16px;
+  }
+
+  .busqueda-resumen {
+    display: none;
+  }
+
+  .busqueda-campos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.7fr) minmax(0, 0.7fr) auto;
     align-items: start;
+    padding-top: 0;
   }
 
   /* El botón a la altura de los campos, no de las ayudas */
-  .busqueda button {
-    margin-top: calc(0.9rem * 1.5 + 4px);
+  .busqueda-campos button[type='submit'] {
+    margin-top: calc(var(--texto-sm) * 1.5 + 4px);
+    padding-inline: 24px;
   }
 
-  .busqueda .aviso {
+  .busqueda-campos .aviso {
     grid-column: 1 / -1;
+    margin: 0;
   }
 }
 
-/* Resultados: un apartamento por fila, con el precio en columna para comparar (variante «Lista» del prototipo) */
+/* Resultados: un apartamento por fila, con el precio en columna para comparar */
+.resultados {
+  scroll-margin-top: 16px;
+}
+
+.resumen-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0 16px;
+  margin-bottom: 12px;
+}
+
+.resumen-filtro p {
+  margin: 0;
+}
+
 .filas {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .tarjeta {
+  position: relative;
   display: grid;
   grid-template-columns: 112px minmax(0, 1fr);
   gap: 12px;
   padding: 12px;
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-  transition: border-color 150ms ease-out, background-color 120ms ease-out;
+  background: var(--superficie);
+  border-radius: var(--radio-mediano);
+  box-shadow: var(--sombra);
+  transition: box-shadow 200ms var(--salida-suave), background-color 120ms var(--salida-suave);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .tarjeta:hover {
-    border-color: var(--texto-suave);
+  .tarjeta:not(.esqueleto):hover {
+    box-shadow: var(--sombra-alta);
   }
 }
 
 .tarjeta:active {
-  background-color: #f6f8fa;
+  background-color: var(--fondo);
 }
 
 .tarjeta img,
@@ -179,13 +388,13 @@ button:disabled {
   width: 112px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
-  border-radius: 8px;
-  background: var(--borde);
+  border-radius: var(--radio-pequeno);
+  background: var(--relleno);
 }
 
 .tarjeta-cuerpo {
   display: grid;
-  gap: 2px;
+  gap: 4px;
   align-content: start;
   min-width: 0;
 }
@@ -195,13 +404,17 @@ button:disabled {
   margin: 0;
 }
 
+.tarjeta-cuerpo .suave {
+  font-size: var(--texto-sm);
+}
+
 /* El nombre completo se ve en la página del apartamento; aquí, máximo tres líneas */
 .tarjeta h3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 1rem;
+  font-size: var(--texto-lg);
   overflow-wrap: anywhere;
 }
 
@@ -211,19 +424,20 @@ button:disabled {
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--texto-sm);
 }
 
 .tarjeta .dotacion {
-  gap: 4px 10px;
+  gap: 2px 12px;
   margin-top: 4px;
-  font-size: 0.8rem;
+  font-size: var(--texto-xs);
   color: var(--texto-suave);
 }
 
 .tarjeta .dotacion li {
   border: 0;
   padding: 0;
+  background: transparent;
 }
 
 /* En el celular el precio va abajo, a lo ancho; en pantallas anchas, en su columna a la derecha */
@@ -235,25 +449,25 @@ button:disabled {
   gap: 2px 10px;
   padding-top: 8px;
   border-top: 1px solid var(--borde);
-  font-size: 0.85rem;
+  font-size: var(--texto-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .tarjeta-precio strong {
-  font-size: 1.15rem;
+  font-size: var(--texto-lg);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 720px) {
   .tarjeta {
     /* El precio nunca se recorta: la columna crece si el número no cabe */
-    grid-template-columns: 160px minmax(0, 1fr) minmax(180px, auto);
-    gap: 16px;
+    grid-template-columns: 208px minmax(0, 1fr) minmax(224px, auto);
+    gap: 20px;
   }
 
   .tarjeta img,
   .tarjeta .sin-foto {
-    width: 160px;
-    aspect-ratio: 4 / 3;
+    width: 208px;
+    aspect-ratio: 3 / 2;
   }
 
   .descripcion {
@@ -263,98 +477,71 @@ button:disabled {
   .tarjeta-precio {
     grid-column: auto;
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: flex-end;
     justify-content: center;
-    padding: 0 0 0 16px;
+    padding: 0 8px 0 20px;
     border-top: 0;
     border-left: 1px solid var(--borde);
     text-align: right;
   }
 }
 
+/* Mientras cargan los apartamentos */
+.esqueleto-lineas {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding-top: 4px;
+}
+
+.esqueleto-lineas span {
+  height: 14px;
+  border-radius: var(--radio-pequeno);
+  background: var(--relleno);
+}
+
+.esqueleto-lineas span:first-child {
+  width: 60%;
+  height: 20px;
+}
+
+.esqueleto-lineas span:last-child {
+  width: 40%;
+}
+
 /* Sin foto, o la foto no cargó: un recuadro gris del mismo tamaño */
 .sin-foto {
-  border-radius: 8px;
-  background: var(--borde);
+  border-radius: var(--radio-mediano);
+  background: var(--relleno);
 }
 
 /* La descripción en la página del apartamento conserva sus saltos de línea */
 .descripcion-completa {
+  max-width: 70ch;
+  margin: 0 0 24px;
   white-space: pre-line;
 }
 
-/* Dotación completa, en la página del apartamento */
+/* Lo que incluye el apartamento, completo en su página */
 .dotacion {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .dotacion li {
+  padding: 4px 12px;
+  background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 0.8rem;
-}
-
-/* Precio de la estancia en la página del apartamento, con su detalle noche por noche */
-.precio {
-  display: grid;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid var(--borde);
-  font-variant-numeric: tabular-nums;
-}
-
-.por-noche strong {
-  font-size: 1.25rem;
-}
-
-button.secundario {
-  justify-self: start;
-  margin-top: 4px;
-  background: transparent;
-  color: var(--acento);
-  border: 1px solid var(--borde);
-}
-
-.precio table {
-  width: 100%;
-  margin-top: 8px;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.precio caption {
-  text-align: left;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.precio th,
-.precio td {
-  padding: 6px 4px;
-  border-bottom: 1px solid var(--borde);
-  text-align: right;
-}
-
-.precio th:first-child,
-.precio td:first-child {
-  text-align: left;
-}
-
-.precio tfoot {
-  font-weight: 700;
+  font-size: var(--texto-sm);
 }
 
 /* Toda la tarjeta lleva a la página del apartamento: el enlace del nombre la cubre entera */
-.tarjeta {
-  position: relative;
-}
-
 .enlace-tarjeta {
   color: inherit;
   text-decoration: none;
@@ -364,31 +551,40 @@ button.secundario {
   content: '';
   position: absolute;
   inset: 0;
-}
-
-.enlace-tarjeta:focus-visible {
-  text-decoration: underline;
+  border-radius: var(--radio-mediano);
 }
 
 .enlace-tarjeta:focus-visible {
   outline: none;
+  text-decoration: underline;
 }
 
 .tarjeta:has(.enlace-tarjeta:focus-visible) {
-  outline: 2px solid var(--acento);
+  outline: 2px solid var(--texto);
   outline-offset: 2px;
 }
 
-/* Página del apartamento: fotos en fila que se desliza en el celular */
+/* Página del apartamento */
+.volver {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--texto-sm);
+}
+
+/* Fotos en fila que se desliza: una casi entera en el celular y se asoma la siguiente */
 .galeria {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(260px, 80%);
+  grid-auto-columns: 86%;
   gap: 8px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  margin: 16px 0;
+  margin: 4px 0 24px;
+  border-radius: var(--radio-grande);
+  scrollbar-color: var(--borde-campo) transparent;
+  scrollbar-width: thin;
 }
 
 .galeria img,
@@ -396,15 +592,151 @@ button.secundario {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: var(--radio-mediano);
   scroll-snap-align: start;
-  background: var(--borde);
+  background: var(--relleno);
 }
 
-@media (min-width: 640px) {
+.ficha-columnas {
+  display: grid;
+  gap: 24px;
+}
+
+.ficha-cabeza .suave {
+  margin: 8px 0 0;
+}
+
+.ficha h1 {
+  font-size: var(--texto-xl);
+  overflow-wrap: anywhere;
+}
+
+.ficha-detalle {
+  min-width: 0;
+}
+
+/* El panel de reserva: siempre a la vista en pantallas anchas */
+.panel-reserva {
+  padding: 20px;
+  background: var(--superficie);
+  border-radius: var(--radio-grande);
+  box-shadow: var(--sombra-alta);
+}
+
+.panel-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
   .galeria {
-    grid-auto-columns: minmax(300px, 45%);
+    grid-auto-columns: minmax(420px, 56%);
   }
+
+  .ficha h1 {
+    font-size: 2.25rem;
+  }
+
+  .ficha-columnas {
+    grid-template-columns: minmax(0, 1fr) 372px;
+    grid-template-rows: auto 1fr;
+    column-gap: 40px;
+  }
+
+  .ficha-cabeza {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ficha-detalle {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .panel-reserva {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+    position: sticky;
+    top: 16px;
+  }
+}
+
+.precio {
+  display: grid;
+  gap: 4px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+  font-variant-numeric: tabular-nums;
+}
+
+.precio p {
+  margin: 0;
+}
+
+.total-estancia {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0 12px;
+}
+
+.total-estancia strong {
+  font-size: var(--texto-xl);
+}
+
+.por-noche {
+  font-size: var(--texto-sm);
+}
+
+.precio details {
+  margin-top: 8px;
+  font-size: var(--texto-sm);
+}
+
+.precio summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.desglose {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.desglose caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.desglose th,
+.desglose td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--borde);
+  font-weight: 400;
+  text-align: right;
+}
+
+.desglose th:first-child,
+.desglose td:first-child {
+  text-align: left;
+}
+
+.desglose tfoot th,
+.desglose tfoot td {
+  border-bottom: 0;
+  font-weight: 700;
 }
 
 /* Anterior y siguiente bajo los listados de 10 en 10 */
@@ -413,13 +745,17 @@ button.secundario {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 16px;
-}
-
-.paginacion button.secundario {
-  margin-top: 0;
+  margin-top: 24px;
 }
 
 .paginacion button:disabled {
   visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+  }
 }

@@ -66,7 +66,7 @@ describe('Apartamento', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Suite Jardín' })).toBeInTheDocument()
     expect(screen.getAllByRole('img').map((i) => i.getAttribute('src')))
       .toEqual(['https://cdn.sga.co/suite.jpg', 'https://cdn.sga.co/otra.jpg'])
-    expect(screen.getByRole('list', { name: 'Dotación' })).toHaveTextContent('BalcónCocinaWifiJacuzzi')
+    expect(screen.getByRole('list', { name: 'Qué incluye' })).toHaveTextContent('BalcónCocinaWifiJacuzzi')
     expect(screen.getByLabelText('Llegada')).toHaveValue('2026-12-14')
     expect(screen.getByLabelText('Salida')).toHaveValue('2026-12-15')
     expect(screen.getByLabelText('Adultos')).toHaveValue(1)

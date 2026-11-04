@@ -36,7 +36,7 @@ export default function TarjetaApartamento({ apartamento, busqueda }: Props) {
         </p>
         {apartamento.descripcion && <p className="descripcion">{apartamento.descripcion}</p>}
         {servicios.length > 0 && (
-          <ul className="dotacion" aria-label="Dotación">
+          <ul className="dotacion" aria-label="Qué incluye">
             {servicios.slice(0, SERVICIOS_A_LA_VISTA).map((c) => (
               <li key={c}>{c}</li>
             ))}
@@ -75,7 +75,7 @@ function PrecioDeLaTarjeta({ apartamento: { precio }, busqueda }: Props) {
     <div className="tarjeta-precio">
       <strong>{enPesos(llegada.tarifa)}</strong>
       <span className="suave">por adulto y noche</span>
-      <span className="suave">noche del {fechaCorta(llegada.noche)}</span>
+      <span className="suave">libre desde el {fechaCorta(llegada.noche)}</span>
     </div>
   )
 }
