@@ -1,11 +1,16 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarMarcaAlojamientoCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarMarcaAlojamientoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.MarcaDatos;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ApartamentoDisponibleResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.BuscarDisponiblesUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CotizarEstanciaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
 import org.junit.jupiter.api.Tag;
@@ -22,6 +27,8 @@ import java.time.MonthDay;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Con {@code SGA_DATOS_DEMO=true} el arranque deja los diez apartamentos a la venta (DEC-81), en una base H2 propia y
@@ -45,6 +52,15 @@ class CargadorDatosDemoTest {
 
     @Autowired
     private CargadorDatosDemo cargador;
+
+    @Autowired
+    private CargadorMarcaDemo cargadorMarca;
+
+    @Autowired
+    private CambiarMarcaAlojamientoUseCase cambiarMarca;
+
+    @Autowired
+    private AlojamientoRepository alojamientos;
 
     @Autowired
     private ApartamentoRepository apartamentos;
@@ -94,6 +110,32 @@ class CargadorDatosDemoTest {
                 entrada.plusDays(2), 5)).stream().map(ApartamentoDisponibleResult::codigo).toList();
 
         assertEquals(List.of("APT-103"), libres);
+    }
+
+    @Test
+    @Tag("BL-05")
+    void elHotelDeEjemploQuedaConSuMarcaYSusDatos() {
+        Alojamiento alojamiento = alojamientos.buscarPorId(ALO).orElseThrow();
+
+        assertEquals("#F4B942", alojamiento.marca().colores().acento());
+        assertEquals("Playfair Display", alojamiento.marca().fuentes().titulos());
+        assertTrue(alojamiento.marca().logoUrl().startsWith("data:image/svg+xml,"));
+        assertEquals("Salento, Quindío", alojamiento.ciudad());
+        assertFalse(alojamiento.descripcion().contains("Por definir"));
+    }
+
+    @Test
+    @Tag("BL-05")
+    void noLePisaLaMarcaAUnHotelQueYaTieneLaSuya() {
+        MarcaDatos propia = new MarcaDatos(new MarcaDatos.ColoresDatos(null, null, null, null, null, null, "#123456",
+                null, null, null), new MarcaDatos.FuentesDatos(null, null), new MarcaDatos.RadiosDatos(null, null, null),
+                null, null);
+        cambiarMarca.ejecutar(new CambiarMarcaAlojamientoCommand(ALO.valor(), propia));
+
+        cargadorMarca.run(new DefaultApplicationArguments());
+
+        assertEquals("#123456", alojamientos.buscarPorId(ALO).orElseThrow().marca().colores().acento());
+        cambiarMarca.ejecutar(new CambiarMarcaAlojamientoCommand(ALO.valor(), CargadorMarcaDemo.MARCA));
     }
 
     @Test

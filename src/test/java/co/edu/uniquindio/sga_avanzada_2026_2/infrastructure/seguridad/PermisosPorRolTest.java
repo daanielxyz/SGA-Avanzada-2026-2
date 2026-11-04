@@ -93,6 +93,7 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
         como(Rol.RECEPCIONISTA, post("/api/apartamentos/APT-101/bloqueos"), "{}")
                 .andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, put("/api/alojamiento/parametros"), "{}").andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, put("/api/alojamiento/marca"), "{}").andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, get("/api/apartamentos/APT-101/tarifas")).andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, get("/api/politicas/vigente")).andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, get("/api/conflictos/pendientes")).andExpect(status().isForbidden());

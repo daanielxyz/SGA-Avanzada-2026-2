@@ -64,6 +64,8 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
   - [~] Definir con el cliente qué datos del apartamento ve el público (pendiente de DEC-67) y ajustar la respuesta pública: supuesto en DEC-80, se valida en el cierre 1.
   - [x] Núcleo: `feature/nucleo/contrato-api`, la documentación OpenAPI de la API para que ambos frontends la consulten.
   - [x] Núcleo: `feature/nucleo/cotizar-por-cantidad` y `feature/nucleo/proxima-noche-libre`: cotizar sabiendo cuántos pagan y la próxima noche libre de cada apartamento (DEC-85).
+  - [x] Diseño base de la web: un esqueleto con variables para la marca de cada hotel, portada y panel de reserva (`feature/web/diseno-base`, DEC-87; `web/DISENO.md`).
+  - [x] Núcleo: `feature/nucleo/marca-alojamiento`, la marca de cada alojamiento por la API, cargada en los datos demo (BL-05, DEC-87).
   - [x] Núcleo: `feature/nucleo/datos-demo`, apartamentos, temporadas y tarifas de ejemplo con `SGA_DATOS_DEMO=true` para probar a mano y para la demo (DEC-81).
 - **pms**
   - [x] Crear `pms/` (React + Vite + TypeScript), inicio de sesión del personal y menú según el rol (`feature/pms/estructura-pms`).

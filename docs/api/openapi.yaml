@@ -1204,6 +1204,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/marca:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: cambiarMarca
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/MarcaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/usuarios:
     get:
       tags:
@@ -3545,6 +3569,60 @@ components:
           type: array
           items:
             type: string
+        marca:
+          "$ref": "#/components/schemas/MarcaResponse"
+    MarcaResponse:
+      type: object
+      properties:
+        colores:
+          "$ref": "#/components/schemas/ColoresResponse"
+        fuentes:
+          "$ref": "#/components/schemas/FuentesResponse"
+        radio:
+          "$ref": "#/components/schemas/RadiosResponse"
+        logoUrl:
+          type: string
+        portadaUrl:
+          type: string
+    ColoresResponse:
+      type: object
+      properties:
+        fondo:
+          type: string
+        superficie:
+          type: string
+        texto:
+          type: string
+        textoSuave:
+          type: string
+        borde:
+          type: string
+        bordeCampo:
+          type: string
+        acento:
+          type: string
+        textoSobreAcento:
+          type: string
+        peligro:
+          type: string
+        exito:
+          type: string
+    FuentesResponse:
+      type: object
+      properties:
+        titulos:
+          type: string
+        texto:
+          type: string
+    RadiosResponse:
+      type: object
+      properties:
+        pequeno:
+          type: string
+        mediano:
+          type: string
+        grande:
+          type: string
     ParametrosResponse:
       type: object
       properties:
@@ -3705,6 +3783,83 @@ components:
         - plazoPagoEnLineaMinutos
         - tiempoPreparacionHoras
         - umbralEdadFacturable
+    MarcaRequest:
+      type: object
+      properties:
+        colores:
+          "$ref": "#/components/schemas/ColoresRequest"
+        fuentes:
+          "$ref": "#/components/schemas/FuentesRequest"
+        radio:
+          "$ref": "#/components/schemas/RadiosRequest"
+        logoUrl:
+          type: string
+          maxLength: 2000
+          minLength: 0
+          pattern: "(https?://|data:image/)\\S+"
+        portadaUrl:
+          type: string
+          maxLength: 2000
+          minLength: 0
+          pattern: "(https?://|data:image/)\\S+"
+      required:
+        - colores
+        - fuentes
+        - radio
+    ColoresRequest:
+      type: object
+      properties:
+        fondo:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        superficie:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        texto:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        textoSuave:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        borde:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        bordeCampo:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        acento:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        textoSobreAcento:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        peligro:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+        exito:
+          type: string
+          pattern: "#[0-9A-Fa-f]{6}"
+    FuentesRequest:
+      type: object
+      properties:
+        titulos:
+          type: string
+          pattern: "[\\p{L}0-9 ]{1,60}"
+        texto:
+          type: string
+          pattern: "[\\p{L}0-9 ]{1,60}"
+    RadiosRequest:
+      type: object
+      properties:
+        pequeno:
+          type: string
+          pattern: "\\d{1,2}px"
+        mediano:
+          type: string
+          pattern: "\\d{1,2}px"
+        grande:
+          type: string
+          pattern: "\\d{1,2}px"
     ActualizarDatosAlojamientoRequest:
       type: object
       properties:
