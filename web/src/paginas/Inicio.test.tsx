@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Alojamiento } from '../api/alojamiento'
 import type { ApartamentoPublico, Pagina } from '../api/apartamentos'
 import { fechaDesdeHoy } from '../formato'
 import Inicio from './Inicio'
@@ -57,10 +58,14 @@ function urlDeLaLlamada(fetch: ReturnType<typeof vi.fn>, n: number) {
   return (fetch.mock.calls[n] as [string])[0]
 }
 
+function alojamiento(umbral: number, datos: Partial<Alojamiento> = {}): Alojamiento {
+  return { nombre: 'Hotel de Prueba', parametros: { umbralEdadFacturable: umbral }, ...datos }
+}
+
 function abrirInicio(umbral = 12) {
   render(
     <MemoryRouter>
-      <Inicio umbral={umbral} />
+      <Inicio alojamiento={alojamiento(umbral)} />
     </MemoryRouter>,
   )
 }
@@ -76,11 +81,62 @@ describe('Inicio', () => {
     expect(urlDeLaLlamada(fetch, 0)).toBe('/api/portal/apartamentos?pagina=0')
     expect(within(tarjeta).getByRole('img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
     expect(within(tarjeta).getByText('Hasta 4 personas · 2 dormitorios')).toBeInTheDocument()
-    expect(within(tarjeta).getByRole('list', { name: 'Dotación' })).toHaveTextContent('BalcónCocinaWifiJacuzzi+1')
+    expect(within(tarjeta).getByRole('list', { name: 'Qué incluye' })).toHaveTextContent('BalcónCocinaWifiJacuzzi+1')
     expect(within(tarjeta).getByText(/\$\s*100\.000/)).toBeInTheDocument()
     expect(within(tarjeta).getByText('por adulto y noche')).toBeInTheDocument()
-    expect(within(tarjeta).getByText(/noche del/)).toBeInTheDocument()
+    expect(within(tarjeta).getByText(/libre desde el/)).toBeInTheDocument()
     expect(within(tarjeta).queryByText(/Total/)).not.toBeInTheDocument()
+  })
+
+  it('abre con el hotel: su nombre, ciudad y descripción, y su portada o la foto de un apartamento (DEC-83)', async () => {
+    laApiResponde([200, pagina(SUITE)])
+    const { rerender } = render(
+      <MemoryRouter>
+        <Inicio alojamiento={alojamiento(12, { ciudad: 'Salento', descripcion: 'Descansa entre cafetales' })} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Hotel de Prueba' })).toBeInTheDocument()
+    expect(screen.getByText('Salento')).toBeInTheDocument()
+    expect(screen.getByText('Descansa entre cafetales')).toBeInTheDocument()
+    await screen.findByRole('article', { name: 'Suite Jardín' })
+    expect(document.querySelector('.portada img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
+
+    rerender(
+      <MemoryRouter>
+        <Inicio alojamiento={alojamiento(12, { marca: { portadaUrl: 'https://cdn.sga.co/portada.jpg' } })} />
+      </MemoryRouter>,
+    )
+    expect(document.querySelector('.portada img')).toHaveAttribute('src', 'https://cdn.sga.co/portada.jpg')
+  })
+
+  it('no le muestra al huésped los valores iniciales que el hotel todavía no escribe', async () => {
+    laApiResponde([200, pagina()])
+    render(
+      <MemoryRouter>
+        <Inicio alojamiento={alojamiento(12, { ciudad: 'Por definir', descripcion: 'Por definir' })} />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('heading', { level: 2 })
+    expect(screen.queryByText('Por definir')).not.toBeInTheDocument()
+    expect(screen.getByText(/Elige un apartamento/)).toBeInTheDocument()
+  })
+
+  it('el resumen de la búsqueda se despliega y, al buscar, muestra las fechas', async () => {
+    laApiResponde([200, pagina(SUITE)], [200, pagina(SUITE)])
+    abrirInicio()
+    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
+
+    const resumen = screen.getByRole('button', { name: /¿Cuándo vienes\?/ })
+    expect(resumen).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(resumen)
+    expect(resumen).toHaveAttribute('aria-expanded', 'true')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
+    await screen.findByRole('heading', { name: '1 apartamento libre' })
+    expect(resumen).toHaveAttribute('aria-expanded', 'false')
+    expect(resumen).not.toHaveTextContent('¿Cuándo vienes?')
   })
 
   it('cada tarjeta lleva a la página del apartamento con la noche de su precio', async () => {

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { aplicarMarca } from './marca'
 
 function abrir(direccion: string) {
   render(
@@ -28,6 +29,19 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('App', () => {
+  it('aplica la marca que trae la API (DEC-83)', async () => {
+    vi.stubGlobal('fetch', vi.fn((ruta: string) => Promise.resolve(new Response(JSON.stringify(ruta === '/api/alojamiento'
+      ? { nombre: 'Hotel de Prueba', parametros: { umbralEdadFacturable: 12 },
+        marca: { colores: { acento: '#123456' }, logoUrl: 'https://cdn.sga.co/logo.svg' } }
+      : { contenido: [], numero: 0, tamano: 10, totalElementos: 0, totalPaginas: 0 })))))
+    abrir('/')
+
+    const nombre = await screen.findByRole('link', { name: 'Hotel de Prueba' })
+    expect(nombre.querySelector('img')).toHaveAttribute('src', 'https://cdn.sga.co/logo.svg')
+    expect(document.documentElement.style.getPropertyValue('--acento')).toBe('#123456')
+    aplicarMarca(null)
+  })
+
   it('muestra la página de inicio', () => {
     abrir('/')
 
