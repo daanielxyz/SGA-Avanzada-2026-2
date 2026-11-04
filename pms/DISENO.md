@@ -95,7 +95,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint2/` (48 pantallas, con su LEEME). 
 |---|---|---|---|
 | 1 | `feature/pms/acciones-reserva` | Botones según el estado, bloque Pago, diálogos de registrar pago, confirmar, cancelar y no-show | Hecho |
 | 2 | `feature/pms/crear-reserva` | `/reservas/nueva` en cuatro pasos y «Nueva reserva» en el listado | Hecho |
-| 3 | `feature/pms/tablero-ocupacion` | `/ocupacion`, opción en el menú y en la bienvenida | Pendiente |
+| 3 | `feature/pms/tablero-ocupacion` | `/ocupacion`, opción en el menú y en la bienvenida | Hecho |
 
 Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
 - **Detalle**: política por su id y titular con nombre e id, como en el sprint 1. El nombre del apartamento sale de `GET /api/apartamentos/{codigo}`; si falla, queda el código. «Vehículos» y «Mascotas» se conservan.
@@ -104,7 +104,7 @@ Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
 - **Cancelar y no-show**: sin «Se retendrá $ X» ni sus estados, que necesitan el cambio 1 de la lista de abajo; se avisa que puede haber retención.
 - **Desglose**: en pantallas angostas quedan Noche, Temporada y Subtotal, con la tarifa bajo la fecha, para que las noches sumen el total.
 - **Crear reserva**: elegir un apartamento avanza de una vez y, si las personas ya están listas, llega al paso 4. Los pasos van en `?paso=`, para que «Atrás» del navegador no borre el formulario, y se pregunta antes de recargar o seguir un enlace. Los datos personales no se guardan en el navegador. Un rechazo al crear muestra el mensaje de la API con tres salidas: otro apartamento, cambiar fechas o revisar personas. Vehículos solo aparece si `cupoParqueadero` es mayor que 0, y mascotas si `aceptaMascotas` está activo. El cargo por mascota se cobra una vez por estancia y va en una línea aparte del total. Edad del titular según `umbralEdadFacturable`.
-- **Tablero** (al programarlo): el campo es «Última noche» y a la API se le envía un día más, porque `hasta` es exclusiva. La barra lleva código y `titularId`. Primera columna de 200 px y 56 px por día, para que quepan las 14 noches a 1280 px.
+- **Tablero**: el campo es «Última noche» y a la API se le envía un día más, porque `hasta` es exclusiva; el rango va en la dirección. La barra lleva código y `titularId`. Primera columna de 200 px y al menos 52 px por noche, para que quepan las 14 a 1280 px. Debajo de 640 px de contenido se muestra la lista por apartamento, con el código y el `titularId`.
 
 ## Para hablar con el equipo (backend)
 Los mockups del sprint 2 son borradores: mientras se termina el frontend, **se adaptan al backend que existe y el backend no se cambia por ellos**. Esto se discute con todo el equipo cuando el frontend esté listo; nada de esta lista está aprobado.

@@ -82,7 +82,7 @@ Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confi
   - [ ] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación.
   - [ ] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas».
 - **pms**
-  - [ ] Tablero de ocupación por apartamento y fechas (el endpoint ya existe: `GET /api/ocupacion`, DEC-86).
+  - [x] Tablero de ocupación por apartamento y fechas (`GET /api/ocupacion`, DEC-86; `feature/pms/tablero-ocupacion`).
   - [x] Confirmar, cancelar y declarar no-show, con registrar pago y el bloque Pago en el detalle (`feature/pms/acciones-reserva`).
   - [x] Crear reserva directa en cuatro pasos, con «Nueva reserva» en el listado (`feature/pms/crear-reserva`).
 - **Cierre 2 (vie 6 nov)**.

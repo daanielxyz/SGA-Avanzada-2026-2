@@ -30,6 +30,14 @@ export const OPCIONES: readonly Opcion[] = [
     roles: RECEPCION,
   },
   {
+    titulo: 'Ocupación',
+    descripcion: 'Qué apartamentos están ocupados cada noche.',
+    icono: 'ocupacion',
+    ruta: '/ocupacion',
+    grupo: 'Recepción',
+    roles: RECEPCION,
+  },
+  {
     titulo: 'Titulares',
     descripcion: 'Datos de quienes reservan.',
     icono: 'titulares',
