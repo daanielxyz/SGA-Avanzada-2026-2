@@ -25,3 +25,9 @@ dist-ssr
 
 # Ejecutable de la skill impeccable (19 MB): no va a git y no se ejecuta (pms/DISENO.md, «Skills»)
 .claude/skills/impeccable/scripts/bin/
+
+# Material de referencia del diseño: se queda en cada clon (pms/DISENO.md)
+diseno/
+
+# La licencia de Satoshi no permite publicarla en un repositorio: cada clon la baja de Fontshare (pms/DISENO.md)
+public/fuentes/Satoshi-*

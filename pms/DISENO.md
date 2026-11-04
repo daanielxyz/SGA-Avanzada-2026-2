@@ -33,12 +33,12 @@ Ya en el sprint 4: activar la cuenta y recuperar la contraseña, con la misma pl
 ## Datos de cada pantalla (lo que trae la API hoy)
 - **Iniciar sesión**: `POST /api/auth/login` con correo y contraseña; devuelve el token, su vencimiento, el usuario, el nombre y el rol (`SesionResponse`).
 - **Marco del panel**: el nombre del alojamiento sale de `GET /api/alojamiento` (público); no hay logo ni colores de marca en la API todavía (BL-05).
-- **Listado** (`GET /api/reservas`, DEC-72): filtros opcionales `desde`, `hasta`, `estado`, `apartamento`, `canal` (de origen), `titular` (su id) y `pagina`, ordenado por entrada, de 10 en 10. Cada fila es un `ReservaResponse`.
-- **`ReservaResponse`**: `codigo` (RES-2026-00042), `apartamento` (APT-101), `titularId` (**solo el id, no el nombre**), `entrada`, `salida` (exclusiva: esa noche no se ocupa), `estado` (PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA, NO_SHOW), `canalOrigen` (PORTAL, DIRECTO, EXTERNO), `ocupantes` (nombre, fecha de nacimiento, tipo y número de documento, nacionalidad), `horaEstimadaLlegada`, `valor` (desglose congelado: por cada noche, `noche`, `temporada`, `tarifa` por ocupante facturable, `ocupantesFacturables` y `subtotal`; más el `total`), `politicaId`, `creadaEn` y `avisoCuenta` (solo llega al crear; en el listado y el detalle viene vacío).
+- **Listado** (`GET /api/reservas`, DEC-72): filtros opcionales `desde`, `hasta`, `estado`, `apartamento`, `canal` (de origen), `titular` (su id) y `pagina`, de la más reciente a la más antigua (DEC-86), de 10 en 10. Cada fila es un `ReservaResponse`.
+- **`ReservaResponse`**: `codigo` (RES-2026-00042), `apartamento` (APT-101), `titularId` (**solo el id, no el nombre**), `entrada`, `salida` (exclusiva: esa noche no se ocupa), `estado` (PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA, NO_SHOW), `canalOrigen` (PORTAL, DIRECTO, EXTERNO), `ocupantes` (nombre, fecha de nacimiento, tipo y número de documento, nacionalidad), `horaEstimadaLlegada`, `valor` (desglose congelado: por cada noche, `noche`, `temporada`, `tarifa` por ocupante facturable, `ocupantesFacturables` y `subtotal`; más el `total`), `politicaId`, `creadaEn`, `vehiculos`, `mascotas` y `avisoCuenta` (solo llega al crear; en el listado y el detalle viene vacío).
 - **Detalle** (`GET /api/reservas/{codigo}`): el mismo `ReservaResponse`, o 404 `NO_ENCONTRADO`. No trae el folio ni el saldo: esos son de otro endpoint, en el sprint 2.
 - **Errores**: todos llegan como `ErrorResponse` con `estado`, `codigo` (`VALIDACION`, `NO_AUTENTICADO`, `SIN_PERMISO`, `NO_ENCONTRADO`, `REGLA_NEGOCIO`…), `mensaje` y `detalles` (los errores por campo en un 400).
 - **No existe** hoy: buscar por código en el listado (para eso se abre el detalle directamente), buscar el titular por nombre ni el total de noches (se calcula con `salida − entrada`).
-- Si el mockup del listado muestra el nombre del titular, hace falta agregarlo al Response (un campo nuevo, sin quitar ninguno) o pedirlo aparte: se decide en `feature/pms/listado-reservas`.
+- **Nombre del titular en el listado y el detalle**: acordado que se muestra junto al id, porque solo con el id recepción no identifica rápido una reserva. Es un campo nuevo en el Response, sin quitar ninguno, y se hace en `feature/pms/listado-reservas`.
 - El contrato completo está en `docs/api/openapi.yaml` y en `/swagger-ui.html` (DEC-79 · DEC-86).
 
 ## Marca del producto (Meridian)
@@ -49,6 +49,15 @@ El PMS lleva la marca del **producto**, Meridian, «software de gestión hoteler
   - Medianoche y Carbón sirven para texto sobre Arena, Piedra o blanco (más de 9:1).
   - Oliva y Terracota **no** sirven como color de texto sobre fondos claros. Se usan como relleno de etiquetas de estado o de botones con texto Medianoche o Carbón encima (5,4:1 y 6:1 con Terracota; con Oliva, Carbón da solo 3,8:1, así que no sirve para texto pequeño). También pueden ir como texto sobre Medianoche (Terracota 5,4:1).
   - El rojo de error y los colores de estado de la reserva no salen del brandbook: se definen en la base y se revisan con `impeccable audit`.
+- **Tema**: por ahora solo oscuro, con los colores de los mockups; más adelante se agrega el claro. Los componentes usan variables semánticas (`--superficie`, `--texto`, `--acento`…), así que agregarlo será dar otros valores a esas variables. Sobre el fondo oscuro, **Oliva como texto da 3,45:1 y no sirve**; Terracota (5,4:1), Arena (9,15:1) y Piedra (11,9:1) sí sobre Medianoche.
+- **Archivos**: el logo está en `public/marca/` (símbolo y palabra, en Arena y con fondo transparente; falta el SVG). Las fuentes se sirven desde `public/fuentes/`. **Inter** (licencia OFL) va en git con su licencia. **Satoshi** no: su licencia (ITF FFL) permite usarla en nuestra aplicación, pero no publicarla en un repositorio ni modificarla o convertirla. Cada clon la descarga de [Fontshare](https://www.fontshare.com/fonts/satoshi) y deja `Fonts/WEB/fonts/Satoshi-Variable.woff2` en `public/fuentes/`; sin ella, los títulos salen con la fuente del sistema y `vite build` avisa que no la encontró. Al publicar el PMS, el archivo hay que ponerlo en el servidor. La foto genérica del inicio de sesión todavía no existe: se usa el degradado de prueba (`--fondo-entrada`).
+
+## Mockups
+Están en `pms/diseno/mockups/`, solo en cada clon: la carpeta `pms/diseno/` está en `pms/.gitignore`, así que quien los necesite los pide al equipo. Trae las imágenes para verlos y los `.html` con `base.css` para leer los valores exactos (no se abren solos en el navegador). Los datos son de ejemplo. Lo que se resolvió al compararlos con el contrato (paso 3):
+- **Menú**: manda `src/navegacion.ts`. El mockup de Administración trae «Tarifas», «Temporadas» y «Políticas» y no trae «Canales de venta».
+- **Política en el detalle**: la reserva solo trae `politicaId` y `/api/politicas` queda para el administrador (`PermisosPorRol`), así que se muestra el id, no «Flexible · 48 h». Para mostrar el texto hace falta un cambio de backend.
+- **Por agregar al detalle**: `vehiculos` y `mascotas` (el mockup no los tiene).
+- **Por corregir en el listado** (`feature/pms/listado-reservas`): a 1280 px la tabla se sale y corta la columna Total; las fechas pasan a campos de fecha; el filtro de apartamento necesita su lista (`GET /api/apartamentos`); en el celular, los filtros activos con ✕ miden menos de 44 px.
 
 ## Skills
 Las skills salen del documento «Playbooks Web y SaaS con Claude Code». El PMS es la parte *app* del playbook 2 (SaaS), pero los mockups de Claude Design hacen de referencia, como en el playbook 1.2. Por eso hay **una sola skill de dirección visual (`impeccable`)**, y en el código manda el mockup, no el gusto de la skill.
@@ -80,7 +89,10 @@ Para construir y cerrar cada tarea siguen las de flujo de código, que son globa
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.
 - [x] Copiar las skills a `pms/.claude/skills/` y que Claude revise cada `SKILL.md`.
-- [ ] Layouts a mano de las pantallas 1 a 5.
-- [ ] Mockups en Claude Design y base visual.
-- [ ] Base visual en `src/index.css` y aplicada a las pantallas existentes (`feature/pms/diseno-base`).
-- [ ] Auditoría de las pantallas con las skills elegidas.
+- [x] Layouts a mano de las pantallas 1 a 5.
+- [x] Mockups en Claude Design y base visual.
+- [x] Revisión de los mockups contra el contrato (paso 3).
+- [x] Base visual en `src/index.css` y pantallas 1, 2 y 5 en código (`feature/pms/diseno-base`).
+- [x] Fuentes Satoshi e Inter en `public/fuentes/` (Satoshi fuera de git).
+- [ ] Auditoría de las pantallas 1, 2 y 5 con las skills elegidas (paso 5).
+- [ ] Pantallas 3 y 4, con el nombre del titular (`feature/pms/listado-reservas`).
