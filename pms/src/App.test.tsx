@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -28,7 +28,7 @@ function abrir(direccion: string) {
 
 async function escribirYEntrar(correo: string, contrasena: string) {
   const usuario = userEvent.setup()
-  await usuario.type(screen.getByLabelText('Correo'), correo)
+  await usuario.type(screen.getByLabelText('Correo electrónico'), correo)
   await usuario.type(screen.getByLabelText('Contraseña'), contrasena)
   await usuario.click(screen.getByRole('button', { name: 'Entrar' }))
 }
@@ -37,7 +37,7 @@ describe('entrada del personal', () => {
   it('sin sesión, cualquier pantalla manda a entrar', () => {
     abrir('/reservas')
 
-    expect(screen.getByRole('heading', { name: 'Gestión del alojamiento' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
   })
 
   it('con correo y contraseña válidos entra, guarda la sesión y vuelve a la pantalla que se pidió', async () => {
@@ -72,8 +72,22 @@ describe('entrada del personal', () => {
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Entrar' }))
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Escribe tu correo y tu contraseña.')
+    expect(screen.getByLabelText('Correo electrónico')).toHaveAccessibleDescription('Escribe tu correo electrónico.')
+    expect(screen.getByLabelText('Contraseña')).toHaveAccessibleDescription('Escribe tu contraseña.')
+    expect(screen.getByLabelText('Correo electrónico')).toHaveFocus()
     expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('la contraseña se puede ver y volver a ocultar', async () => {
+    abrir('/')
+    const usuario = userEvent.setup()
+    const contrasena = screen.getByLabelText('Contraseña')
+
+    await usuario.click(screen.getByRole('button', { name: 'Mostrar contraseña' }))
+    expect(contrasena).toHaveAttribute('type', 'text')
+
+    await usuario.click(screen.getByRole('button', { name: 'Ocultar contraseña' }))
+    expect(contrasena).toHaveAttribute('type', 'password')
   })
 
   it('si el backend no responde, lo dice', async () => {
@@ -101,7 +115,7 @@ describe('panel según el rol', () => {
     entrarComo('RECEPCIONISTA')
     abrir('/usuarios')
 
-    expect(screen.getByRole('heading', { name: 'No tienes permiso para esta pantalla' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'No tienes permiso para ver esta pantalla' })).toBeInTheDocument()
   })
 
   it('el administrador abre la configuración', () => {
@@ -115,20 +129,80 @@ describe('panel según el rol', () => {
     entrarComo('ADMINISTRADOR')
     abrir('/no-existe')
 
-    expect(screen.getByRole('heading', { name: 'No encontramos esta página' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument()
+  })
+
+  it('muestra el nombre del alojamiento que trae la API', async () => {
+    entrarComo('RECEPCIONISTA')
+    const fetch = laApiResponde([200, { nombre: 'Hotel de Prueba' }])
+    abrir('/')
+
+    expect(await screen.findByText('Hotel de Prueba')).toBeInTheDocument()
+    expect(llamada(fetch, 0).url).toBe('/api/alojamiento')
+  })
+
+  it('sin el nombre del alojamiento el panel sigue funcionando', async () => {
+    entrarComo('RECEPCIONISTA')
+    const fetch = laApiResponde([404, { estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'No existe', detalles: [] }])
+    abrir('/')
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    expect(screen.getByRole('heading', { name: 'Hola, Ana Gómez' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
+describe('menú plegable del celular', () => {
+  it('se abre con el botón y muestra quién entró y cómo salir', async () => {
+    entrarComo('PERSONAL_SERVICIO')
+    abrir('/')
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' })
+    expect(within(menu).getByRole('button', { name: 'Cerrar menú' })).toHaveFocus()
+    expect(within(menu).getByText('Ana Gómez')).toBeInTheDocument()
+    expect(within(menu).getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument()
+  })
+
+  it('con Escape se cierra y el foco vuelve al botón que lo abrió', async () => {
+    entrarComo('PERSONAL_SERVICIO')
+    abrir('/')
+    const usuario = userEvent.setup()
+    const abrirMenu = screen.getByRole('button', { name: 'Abrir menú' })
+
+    await usuario.click(abrirMenu)
+    await usuario.keyboard('{Escape}')
+
+    expect(screen.queryByRole('button', { name: 'Cerrar menú' })).not.toBeInTheDocument()
+    expect(abrirMenu).toHaveFocus()
+    expect(abrirMenu).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('elegir una opción abre esa pantalla y cierra el menú', async () => {
+    entrarComo('PERSONAL_SERVICIO')
+    abrir('/')
+    const usuario = userEvent.setup()
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' })
+    await usuario.click(within(menu).getByRole('link', { name: 'Novedades' }))
+
+    expect(screen.getByRole('heading', { name: 'Novedades' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cerrar menú' })).not.toBeInTheDocument()
   })
 })
 
 describe('salida', () => {
   it('salir cierra la sesión en el backend y vuelve a la entrada', async () => {
     entrarComo('PERSONAL_SERVICIO')
-    const fetch = laApiResponde([200, { mensaje: 'La sesión quedó cerrada.' }])
+    const fetch = laApiResponde([200, { nombre: 'Hotel de Prueba' }], [200, { mensaje: 'La sesión quedó cerrada.' }])
     abrir('/')
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Salir' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
-    expect(await screen.findByRole('heading', { name: 'Gestión del alojamiento' })).toBeInTheDocument()
-    expect(llamada(fetch, 0)).toMatchObject({
+    expect(await screen.findByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
+    expect(llamada(fetch, 1)).toMatchObject({
       url: '/api/auth/logout', metodo: 'POST', cabeceras: { Authorization: 'Bearer token-PERSONAL_SERVICIO' },
     })
     expect(leerSesion()).toBeNull()
@@ -140,7 +214,7 @@ describe('salida', () => {
 
     act(() => sesionPerdida())
 
-    expect(screen.getByRole('heading', { name: 'Gestión del alojamiento' })).toBeInTheDocument()
-    expect(screen.getByText('Tu sesión terminó. Vuelve a entrar para continuar.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
+    expect(screen.getByText('Tu sesión terminó. Vuelve a entrar.')).toBeInTheDocument()
   })
 })

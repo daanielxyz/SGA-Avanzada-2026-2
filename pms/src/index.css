@@ -1,17 +1,104 @@
-/* Estilos base del PMS. Los colores y la tipografía definitivos se acuerdan con el cliente (cierre 1). */
-:root {
-  --texto: #1f2328;
-  --texto-suave: #59636e;
-  --fondo: #ffffff;
-  --fondo-menu: #f6f8fa;
-  --borde: #d1d9e0;
-  --acento: #1d4ed8;
+/* Base visual del PMS (DEC-84, pms/DISENO.md). Todo el aspecto son variables: los componentes solo usan las
+   semánticas, así que agregar el tema claro será dar otros valores a esas variables, sin tocar los componentes. */
 
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
+/* Los archivos van en public/fuentes; mientras no estén, se ve la fuente del sistema. */
+@font-face {
+  font-family: Satoshi;
+  src: url('/fuentes/Satoshi-Variable.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Inter;
+  src: url('/fuentes/InterVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  /* Marca Meridian (brandbook) */
+  --marca-medianoche: #0f2a3a;
+  --marca-arena: #d9c9b0;
+  --marca-oliva: #6b7f6b;
+  --marca-terracota: #c98f6b;
+  --marca-piedra: #e8e6e1;
+
+  /* Superficies y líneas */
+  --fondo-pagina: #0b2230;
+  --fondo-marco: #08202c;
+  --superficie: var(--marca-medianoche);
+  --superficie-2: #153448;
+  --superficie-fila: #123246;
+  --borde: #27475a;
+  --borde-fuerte: #5b7889;
+  --velo: rgb(3 13 20 / 60%);
+  --fondo-entrada: linear-gradient(
+    180deg,
+    #07182a 0%,
+    #0f2a3a 42%,
+    #3e4a52 64%,
+    #b5826a 76%,
+    #c98f6b 79%,
+    #17313f 80%,
+    #0a1e2b 100%
+  );
+  --fondo-lema: rgb(8 32 44 / 62%);
+
+  /* Texto y acento */
+  --texto: var(--marca-piedra);
+  --texto-suave: #a9bac3;
+  --texto-pista: #93a6b1;
+  --acento: var(--marca-arena);
+  --acento-encima: #e6d9c4;
+  --enlace-encima: #f0e4cf;
+  --sobre-acento: var(--marca-medianoche);
+  --foco: #f0d9a8;
+
+  /* Avisos y estados de la reserva: no salen del brandbook; se auditan en el paso 5 (pms/DISENO.md) */
+  --error: #ee8b7d;
+  --error-fondo: #3a2024;
+  --error-texto: #f8d9d4;
+  --error-campo: #f8b4aa;
+  --info: #7fb2d0;
+  --info-fondo: #12384d;
+  --info-texto: #dcebf4;
+  --advertencia: var(--marca-terracota);
+  --advertencia-fondo: #3a2a20;
+  --advertencia-texto: #f4e0d3;
+  --estado-pendiente: var(--marca-arena);
+  --estado-confirmada: #8fb08f;
+  --estado-en-curso: var(--info);
+  --estado-finalizada: var(--texto-suave);
+  --estado-cancelada: var(--error);
+  --estado-no-show: var(--marca-terracota);
+
+  /* Tipografía */
+  --letra-titulo: Satoshi, system-ui, sans-serif;
+  --letra-interfaz: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --letra-codigo: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Espacios, radios y sombras */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --espacio-7: 28px;
+  --espacio-8: 40px;
+  --radio: 10px;
+  --radio-chico: 6px;
+  --sombra-menu: 8px 0 24px rgb(3 13 20 / 45%);
+
+  font-family: var(--letra-interfaz);
+  font-size: 16px;
+  line-height: 24px;
   color: var(--texto);
-  background: var(--fondo);
-  color-scheme: light;
+  background: var(--fondo-pagina);
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
 }
 
 *,
@@ -24,172 +111,975 @@ body {
   margin: 0;
 }
 
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--letra-titulo);
+  color: var(--texto);
+}
+
+h1 {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 500;
+}
+
+p {
+  margin: 0;
+}
+
 a {
   color: var(--acento);
 }
 
-/* Textos de apoyo, avisos de error y notas */
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+a,
+button {
+  touch-action: manipulation;
+}
+
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .suave {
   color: var(--texto-suave);
 }
 
-.aviso {
-  color: #b42318;
+/* Códigos (RES-2026-00042, APT-101) y dinero: los dígitos quedan alineados */
+.codigo {
+  font-family: var(--letra-codigo);
+  font-variant-numeric: tabular-nums;
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botones. Encogen un poco al oprimirlos para que se sienta la respuesta. */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-2);
+  min-height: 44px;
+  padding: 0 var(--espacio-5);
+  border: 1px solid var(--acento);
+  border-radius: var(--radio-chico);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 160ms ease-out, background-color 160ms ease-out;
+}
+
+.boton:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.boton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.boton-secundario {
+  background: transparent;
+  border-color: var(--borde-fuerte);
+  color: var(--texto);
+}
+
+.boton-bloque {
+  width: 100%;
+}
+
+.boton-grande {
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.boton-chico {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.boton-icono {
+  flex: none;
+  width: 44px;
+  padding: 0;
+  color: var(--texto);
+}
+
+/* Campos. Letra de 16px para que el celular no acerque la página al tocar un campo. */
+.campo-rotulo {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
 }
 
-.aviso p,
-.aviso ul {
-  margin: 0;
-}
-
-.nota {
-  border-left: 4px solid var(--acento);
-  background: var(--fondo-menu);
-  padding: 8px 12px;
-}
-
-/* Campos y botones. Letra de 16px para que el celular no acerque la página al tocar un campo. */
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-input,
-button {
+.campo-control {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-pagina);
+  color: var(--texto);
   font: inherit;
   font-size: 16px;
-  min-height: 44px;
-  padding: 8px 12px;
-  border-radius: 8px;
 }
 
-input {
-  border: 1px solid var(--borde);
+.campo-control::placeholder {
+  color: var(--texto-pista);
 }
 
-button {
-  border: none;
-  background: var(--acento);
-  color: #ffffff;
+.campo-control:disabled {
+  opacity: 0.6;
+}
+
+.campo-control[aria-invalid='true'] {
+  border: 2px solid var(--error);
+}
+
+.campo-mensaje {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--error-campo);
+}
+
+.campo-clave {
+  position: relative;
+}
+
+.campo-clave .campo-control {
+  padding-right: 96px;
+}
+
+.ver-clave {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  min-width: 80px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font: inherit;
+  font-size: 14px;
   font-weight: 600;
+  text-decoration: underline;
   cursor: pointer;
 }
 
-button.secundario {
-  background: transparent;
-  color: var(--acento);
+/* Etiqueta de estado: lleva siempre texto; el color solo acompaña */
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 999px;
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tarjeta {
   border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: default;
+/* Avisos */
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) 14px;
+  border: 1px solid;
+  border-radius: var(--radio-chico);
+  font-size: 14px;
+  line-height: 20px;
 }
 
-/* Entrada: un formulario angosto en el centro */
+.aviso ul {
+  margin: var(--espacio-1) 0 0;
+  padding-left: 18px;
+}
+
+.aviso-sello {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--marca-medianoche);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.aviso-error {
+  border-color: var(--error);
+  background: var(--error-fondo);
+  color: var(--error-texto);
+}
+
+.aviso-error .aviso-sello {
+  background: var(--error);
+}
+
+.aviso-info {
+  border-color: var(--info);
+  background: var(--info-fondo);
+  color: var(--info-texto);
+}
+
+.aviso-info .aviso-sello {
+  background: var(--info);
+}
+
+.aviso-advertencia {
+  border-color: var(--advertencia);
+  background: var(--advertencia-fondo);
+  color: var(--advertencia-texto);
+}
+
+.aviso-advertencia .aviso-sello {
+  background: var(--advertencia);
+}
+
+/* Tablas densas de recepción */
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th {
+  padding: var(--espacio-3);
+  border-bottom: 1px solid var(--borde);
+  background: var(--superficie-2);
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tabla td {
+  padding: 13px var(--espacio-3);
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.tabla .derecha {
+  text-align: right;
+}
+
+/* Paginador y carga */
+.paginador {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
+.paginador-botones {
+  display: flex;
+  gap: var(--espacio-2);
+}
+
+.fantasma {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--superficie-2);
+}
+
+/* Entrada: arte y formulario lado a lado; en el celular, solo el formulario */
 .entrada {
-  max-width: 400px;
-  margin: 0 auto;
-  padding: 48px 16px;
+  display: flex;
+  min-height: 100dvh;
+  background: var(--fondo-marco);
+}
+
+.entrada-arte {
+  display: none;
+}
+
+.entrada-formulario {
+  flex: 1 1 50%;
+  display: flex;
+  justify-content: center;
+  padding: max(56px, env(safe-area-inset-top)) var(--espacio-6) var(--espacio-6);
 }
 
 .formulario {
-  display: grid;
-  gap: 12px;
-  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-5);
+  width: 100%;
+  max-width: 400px;
 }
 
-/* Panel: cabecera arriba; el menú arriba del contenido en el celular y a la izquierda en pantallas anchas */
+.entrada-titulo {
+  margin-top: var(--espacio-3);
+  text-align: center;
+}
+
+.entrada-titulo p {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+/* Logo de Meridian */
+.logo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.logo img {
+  display: block;
+  width: auto;
+}
+
+.logo-simbolo {
+  height: 28px;
+}
+
+.logo-palabra {
+  height: 11px;
+}
+
+.logo-apilado {
+  flex-direction: column;
+  align-self: center;
+  gap: var(--espacio-3);
+}
+
+.logo-apilado .logo-simbolo {
+  height: 60px;
+}
+
+.logo-apilado .logo-palabra {
+  height: 17px;
+}
+
+.icono {
+  flex: none;
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Marco del panel: en el celular la cabecera es de dos renglones y el menú es un cajón plegable */
 .panel {
   display: grid;
-  grid-template-areas: 'cabecera' 'menu' 'contenido';
-  min-height: 100vh;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: 'cabecera' 'contenido';
+  min-height: 100dvh;
+  background: var(--fondo-pagina);
 }
 
 .cabecera {
   grid-area: cabecera;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
+  gap: 10px;
+  padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
   border-bottom: 1px solid var(--borde);
+  background: var(--fondo-marco);
 }
 
-.marca {
-  font-weight: 700;
-  text-decoration: none;
+.cabecera-separador,
+.cabecera-salir {
+  display: none;
+}
+
+.abrir-menu {
+  order: 0;
+}
+
+.cabecera .logo {
+  order: 1;
 }
 
 .quien {
-  margin: 0 0 0 auto;
+  order: 2;
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+
+.quien-nombre {
+  display: block;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quien-rol {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.alojamiento {
+  order: 3;
+  flex-basis: 100%;
+  min-height: 18px;
+  overflow: hidden;
+  padding: 0 var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.avatar-cabecera {
+  display: none;
+}
+
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: var(--velo);
 }
 
 .menu {
-  grid-area: menu;
-  background: var(--fondo-menu);
-  padding: 8px 16px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: min(324px, 85vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-right: 1px solid var(--borde);
+  background: var(--fondo-marco);
+  box-shadow: var(--sombra-menu);
+  visibility: hidden;
+  transform: translateX(-100%);
+  transition: transform 200ms ease-out, visibility 200ms;
+}
+
+.menu.abierto {
+  visibility: visible;
+  transform: none;
+}
+
+.menu-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
   border-bottom: 1px solid var(--borde);
 }
 
-.menu h2 {
-  font-size: 0.8rem;
-  text-transform: uppercase;
+.menu-persona {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.menu-persona > div {
+  min-width: 0;
+}
+
+.menu-persona-nombre {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
+.menu-persona-dato {
+  overflow: hidden;
   color: var(--texto-suave);
-  margin: 12px 0 4px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu h2 {
+  padding: var(--espacio-5) var(--espacio-4) var(--espacio-2);
+  color: var(--texto-suave);
+  font-family: var(--letra-interfaz);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .menu ul {
-  list-style: none;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
-.menu a {
-  display: block;
-  padding: 6px 8px;
-  border-radius: 6px;
+.menu li a {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 48px;
+  padding: 0 var(--espacio-4);
+  border-left: 3px solid transparent;
+  color: var(--texto);
+  font-size: 16px;
   text-decoration: none;
 }
 
-.menu a.active {
-  background: var(--fondo);
-  font-weight: 600;
+.menu li a .icono {
+  width: 22px;
+  height: 22px;
+  color: var(--texto-suave);
+}
+
+.menu li a.active {
+  border-left-color: var(--acento);
+  background: var(--superficie-2);
+  font-weight: 500;
+}
+
+.menu li a.active .icono {
+  color: var(--acento);
+}
+
+.menu-pie {
+  margin-top: auto;
+  padding: var(--espacio-4);
+  border-top: 1px solid var(--borde);
 }
 
 .contenido {
   grid-area: contenido;
-  padding: 24px 16px;
+  min-width: 0;
+  padding: var(--espacio-4) var(--espacio-4) calc(var(--espacio-4) + env(safe-area-inset-bottom));
+}
+
+.contenido-ancho {
   max-width: 1100px;
+  margin: 0 auto;
 }
 
-@media (min-width: 800px) {
-  .panel {
-    grid-template-areas: 'cabecera cabecera' 'menu contenido';
-    grid-template-columns: 240px 1fr;
-    grid-template-rows: auto 1fr;
-  }
-
-  .menu {
-    border-bottom: none;
-    border-right: 1px solid var(--borde);
-  }
+/* Bienvenida: saludo y un acceso por cada opción del rol */
+.bienvenida {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding-top: var(--espacio-4);
 }
 
-/* Accesos de la pantalla de inicio */
+.bienvenida-saludo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-3);
+  text-align: center;
+}
+
 .accesos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  gap: var(--espacio-3);
 }
 
 .acceso {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 76px;
+  padding: 14px var(--espacio-4);
   border: 1px solid var(--borde);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto);
   text-decoration: none;
+  transition: background-color 160ms ease-out;
+}
+
+.acceso .icono {
+  width: 24px;
+  height: 24px;
+  color: var(--acento);
+}
+
+.acceso-titulo {
+  display: block;
+  font-size: 16px;
   font-weight: 600;
+}
+
+.acceso-texto {
+  display: block;
+  margin-top: 2px;
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* Páginas de estado: una sola plantilla */
+.icono-estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie-2);
+  color: var(--acento);
+}
+
+.icono-estado .icono {
+  width: 26px;
+  height: 26px;
+}
+
+.pagina-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-3);
+  max-width: 560px;
+  margin: var(--espacio-8) auto 0;
+  padding: 36px var(--espacio-6);
+  text-align: center;
+}
+
+.pagina-estado h1 {
+  font-size: 22px;
+  line-height: 30px;
+}
+
+.pagina-estado p {
+  font-size: 15px;
+}
+
+@media (min-width: 800px) {
+  h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+
+  .entrada-arte {
+    flex: 1 1 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--espacio-8);
+    background: var(--fondo-entrada);
+  }
+
+  .entrada-arte .logo-simbolo {
+    height: 36px;
+  }
+
+  .entrada-arte .logo-palabra {
+    height: 14px;
+  }
+
+  .entrada-lema {
+    max-width: 420px;
+    padding: var(--espacio-5) var(--espacio-6);
+    border-radius: var(--radio);
+    background: var(--fondo-lema);
+    color: var(--marca-piedra);
+  }
+
+  .entrada-lema-titulo {
+    font-family: var(--letra-titulo);
+    font-size: 30px;
+    line-height: 38px;
+    font-weight: 500;
+  }
+
+  .entrada-lema-texto {
+    margin-top: 6px;
+  }
+
+  .entrada-formulario {
+    align-items: center;
+    padding: var(--espacio-8);
+  }
+
+  .entrada-titulo {
+    margin-top: var(--espacio-2);
+  }
+
+  .entrada-titulo h1 {
+    font-size: 30px;
+    line-height: 38px;
+  }
+
+  .entrada-titulo p {
+    font-size: 16px;
+  }
+
+  .logo-apilado .logo-simbolo {
+    height: 64px;
+  }
+
+  .logo-apilado .logo-palabra {
+    height: 18px;
+  }
+
+  .panel {
+    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-areas: 'cabecera cabecera' 'menu contenido';
+  }
+
+  .cabecera {
+    flex-wrap: nowrap;
+    gap: var(--espacio-4);
+    height: 68px;
+    padding: 0 var(--espacio-6);
+  }
+
+  .abrir-menu,
+  .velo,
+  .menu-cabecera,
+  .menu-persona,
+  .menu-pie {
+    display: none;
+  }
+
+  .logo-simbolo {
+    height: 32px;
+  }
+
+  .logo-palabra {
+    height: 13px;
+  }
+
+  .cabecera-separador {
+    display: block;
+    flex: none;
+    width: 1px;
+    height: 28px;
+    background: var(--borde);
+  }
+
+  .alojamiento {
+    order: 0;
+    flex: 1;
+    flex-basis: auto;
+    min-width: 0;
+    padding: 0;
+    color: var(--texto);
+    font-family: var(--letra-titulo);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .avatar-cabecera {
+    display: flex;
+  }
+
+  .cabecera .logo,
+  .quien {
+    order: 0;
+  }
+
+  .quien {
+    flex: 0 1 270px;
+  }
+
+  .quien-nombre {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .quien-rol {
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .cabecera-salir {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .menu {
+    position: static;
+    grid-area: menu;
+    width: auto;
+    padding: var(--espacio-3) var(--espacio-3) var(--espacio-6);
+    box-shadow: none;
+    visibility: visible;
+    transform: none;
+    transition: none;
+  }
+
+  .menu section:first-of-type h2 {
+    padding-top: var(--espacio-3);
+  }
+
+  .menu h2 {
+    padding-right: var(--espacio-3);
+    padding-left: var(--espacio-3);
+  }
+
+  .menu li a {
+    min-height: 44px;
+    padding: 0 var(--espacio-3);
+    border-radius: var(--radio-chico);
+    font-size: 15px;
+  }
+
+  .menu li a .icono {
+    width: 18px;
+    height: 18px;
+  }
+
+  .contenido {
+    padding: var(--espacio-7) var(--espacio-7) 32px;
+  }
+
+  .bienvenida {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 56px;
+    align-items: center;
+  }
+
+  .accesos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--espacio-4);
+    width: 100%;
+    margin-top: var(--espacio-5);
+  }
+
+  .acceso {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacio-2);
+    padding: var(--espacio-5);
+  }
+
+  .acceso-titulo {
+    font-family: var(--letra-titulo);
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  .acceso-texto {
+    margin-top: 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+}
+
+/* En un celular el «encima» se quedaría pegado después de tocar */
+@media (hover: hover) and (pointer: fine) {
+  a:hover {
+    color: var(--enlace-encima);
+  }
+
+  .boton:hover:not(:disabled) {
+    background: var(--acento-encima);
+    color: var(--sobre-acento);
+  }
+
+  .boton-secundario:hover:not(:disabled) {
+    background: var(--superficie-2);
+    color: var(--texto);
+  }
+
+  .menu li a:hover {
+    background: var(--superficie);
+    color: var(--texto);
+  }
+
+  .menu li a.active:hover {
+    background: var(--superficie-2);
+  }
+
+  .acceso:hover {
+    border-color: var(--borde-fuerte);
+    background: var(--superficie-2);
+    color: var(--texto);
+  }
+
+  .tabla tbody tr:hover td {
+    background: var(--superficie-fila);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boton,
+  .menu,
+  .acceso {
+    transition: none;
+  }
+
+  .boton:active:not(:disabled) {
+    transform: none;
+  }
 }

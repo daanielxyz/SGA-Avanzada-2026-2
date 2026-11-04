@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import Icono from '../componentes/Icono'
 import { menuPara } from '../navegacion'
 import { useSesion } from '../sesion/contexto'
 
@@ -8,18 +9,27 @@ export default function Inicio() {
   if (!sesion) return null
 
   return (
-    <>
-      <h1>Hola, {sesion.nombre}</h1>
-      <p className="suave">Elige qué quieres hacer.</p>
+    <div className="bienvenida">
+      <div className="bienvenida-saludo">
+        <div className="icono-estado">
+          <Icono nombre="alojamiento" />
+        </div>
+        <h1>Hola, {sesion.nombre}</h1>
+        <p className="suave">Estos son los accesos de tu rol.</p>
+      </div>
       <div className="accesos">
         {menuPara(sesion.rol).flatMap(({ opciones }) =>
           opciones.map((opcion) => (
             <Link key={opcion.ruta} to={opcion.ruta} className="acceso">
-              {opcion.titulo}
+              <Icono nombre={opcion.icono} />
+              <span>
+                <span className="acceso-titulo">{opcion.titulo}</span>
+                <span className="acceso-texto">{opcion.descripcion}</span>
+              </span>
             </Link>
           )),
         )}
       </div>
-    </>
+    </div>
   )
 }
