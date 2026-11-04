@@ -25,13 +25,22 @@ public class Alojamiento {
     private ParametrosAlojamiento parametros;
     private final List<ServicioAdicional> serviciosAdicionales;
     private final List<MedioPago> mediosPago; // solo los habilitados
+    private MarcaAlojamiento marca;
+
+    public Alojamiento(AlojamientoId id, String nombre, String descripcion, String ciudad, String direccion,
+                       Ubicacion ubicacion, String normas, ParametrosAlojamiento parametros,
+                       List<ServicioAdicional> serviciosAdicionales, List<MedioPago> mediosPago) {
+        this(id, nombre, descripcion, ciudad, direccion, ubicacion, normas, parametros, serviciosAdicionales,
+                mediosPago, MarcaAlojamiento.neutra());
+    }
 
     // ALO-02 · ALO-06 · MPAG-01 · SERV-05
     public Alojamiento(AlojamientoId id, String nombre, String descripcion, String ciudad, String direccion,
                        Ubicacion ubicacion, String normas, ParametrosAlojamiento parametros,
-                       List<ServicioAdicional> serviciosAdicionales, List<MedioPago> mediosPago) {
+                       List<ServicioAdicional> serviciosAdicionales, List<MedioPago> mediosPago,
+                       MarcaAlojamiento marca) {
         if (id == null || ubicacion == null || parametros == null || serviciosAdicionales == null
-                || mediosPago == null) {
+                || mediosPago == null || marca == null) {
             throw new ReglaDominioException("Faltan datos obligatorios del alojamiento");
         }
         if (vacio(nombre) || vacio(descripcion) || vacio(ciudad) || vacio(direccion)) {
@@ -53,6 +62,7 @@ public class Alojamiento {
         this.parametros = parametros;
         this.serviciosAdicionales = new ArrayList<>(serviciosAdicionales);
         this.mediosPago = new ArrayList<>(mediosPago);
+        this.marca = marca;
         validarMinimos(parametros, this.mediosPago.size(), serviciosActivos());
     }
 
@@ -97,6 +107,13 @@ public class Alojamiento {
         Objects.requireNonNull(nuevos, "nuevos");
         validarMinimos(nuevos, mediosPago.size(), serviciosActivos());
         parametros = nuevos;
+    }
+
+    /**
+     * Reemplaza toda la marca que muestra la web de reservas, sin desplegar código (DEC-83 · BL-05).
+     */
+    public void cambiarMarca(MarcaAlojamiento nueva) {
+        marca = Objects.requireNonNull(nueva, "nueva");
     }
 
     /**
@@ -245,6 +262,10 @@ public class Alojamiento {
 
     public String normas() {
         return normas;
+    }
+
+    public MarcaAlojamiento marca() {
+        return marca;
     }
 
     public ParametrosAlojamiento parametros() {

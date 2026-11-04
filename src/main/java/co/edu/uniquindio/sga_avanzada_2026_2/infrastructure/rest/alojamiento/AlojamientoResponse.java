@@ -12,7 +12,8 @@ import java.util.List;
  */
 public record AlojamientoResponse(String id, String nombre, String descripcion, String ciudad, String direccion,
                                   double latitud, double longitud, String normas, ParametrosResponse parametros,
-                                  List<ServicioResponse> serviciosAdicionales, List<String> mediosPago) {
+                                  List<ServicioResponse> serviciosAdicionales, List<String> mediosPago,
+                                  MarcaResponse marca) {
 
     public record ParametrosResponse(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                      long tiempoPreparacionHoras, long plazoConfirmacionHoras,
@@ -39,6 +40,7 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                 r.serviciosAdicionales().stream()
                         .map(s -> new ServicioResponse(s.id(), s.nombre(), s.generaCargo(), s.valor(), s.activo()))
                         .toList(),
-                r.mediosPago());
+                r.mediosPago(),
+                MarcaResponse.de(r.marca()));
     }
 }

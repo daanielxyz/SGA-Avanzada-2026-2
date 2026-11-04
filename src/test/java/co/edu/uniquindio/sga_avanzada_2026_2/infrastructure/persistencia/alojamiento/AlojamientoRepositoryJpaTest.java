@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojam
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.MarcaAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicional;
@@ -11,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -56,6 +58,27 @@ class AlojamientoRepositoryJpaTest {
     private void sincronizar() {
         entityManager.flush();
         entityManager.clear();
+    }
+
+    @Test
+    @Tag("BL-05")
+    void laMarcaSeGuardaYSeCargaCompletaYSinMarcaQuedaNeutra() {
+        repositorio.guardar(puertaAlSol());
+        sincronizar();
+        assertTrue(repositorio.buscarPorId(ID).orElseThrow().marca().esNeutra());
+
+        MarcaAlojamiento marca = new MarcaAlojamiento(
+                new MarcaAlojamiento.Colores("#F8F7F1", "#FFFFFF", "#1B3A24", "#55705A", "#D9C9A3", "#8A8066",
+                        "#F4B942", "#1B3A24", "#B3261E", "#1E7A3F"),
+                new MarcaAlojamiento.Fuentes("Playfair Display", "Inter"),
+                new MarcaAlojamiento.Radios("6px", "12px", "20px"),
+                "data:image/svg+xml,%3Csvg%3E", "https://cdn.sga.co/portada.jpg");
+        Alojamiento alojamiento = repositorio.buscarPorId(ID).orElseThrow();
+        alojamiento.cambiarMarca(marca);
+        repositorio.guardar(alojamiento);
+        sincronizar();
+
+        assertEquals(marca, repositorio.buscarPorId(ID).orElseThrow().marca());
     }
 
     @Test

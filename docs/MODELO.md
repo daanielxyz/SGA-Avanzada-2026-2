@@ -13,7 +13,7 @@ Titular
 Temporada   (calendario de temporadas)
 Tarifa      (una por versión)                                                                  →Id: apartamento, temporada
 PoliticaCancelacion (una por versión) ─ TramoCancelacion, Porcentaje                           →Id: alojamiento
-Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPago(catálogo)
+Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPago(catálogo), MarcaAlojamiento
 Canal  ·  ConflictoCanal  ·  EventoCanal(bitácora, solo escritura)  ·  Novedad                →Id: canal, apartamento
 Transversales: Dinero, Noche, Documento, Correo, ids tipados.   Calculados (no se guardan): Disponibilidad, Cotizacion.
 Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada o nula hasta
@@ -66,6 +66,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 - **R Alojamiento**: id · nombre · descripcion · ciudad · direccion · ubicacion · normas · parametros: ParametrosAlojamiento · serviciosAdicionales: ServicioAdicional[] (≥1) · mediosPago: MedioPago[] (≥2).
 - **R Alojamiento** métodos: `crear(…)` (DEC-53) · `cambiarParametros(p)` · `cambiarUbicacion(u)` · `habilitarMedioPago(m)` · `deshabilitarMedioPago(m)` · `aceptaMedioPago(m)` · `agregarServicioAdicional(s)` · `cambiarValorServicio(id, valor)` · `desactivarServicio(id)` · `servicioCobrable(id)` (activo y que genera cargo, DEC-60).
 - **VO ParametrosAlojamiento**: umbralEdadFacturable · horaEntrada · horaSalida · tiempoPreparacion (Duration, horas enteras) · plazoConfirmacion (Duration) · pagoEnLinea (ModoPagoEnLinea: ANTICIPO | TOTAL) y plazoPagoEnLinea (Duration) del portal, con `plazoParaConfirmar(canal)` (DEC-70) · horaLimiteNoShow · anticipo (Porcentaje; 0 = no se exige) · minimoMediosPago · minimoServiciosAdicionales · minimoTemporadas · minimoTramosCancelacion (DEC-41) · minimoCapacidadesDistintas (CAP-05, DEC-51). Se guarda en la tabla `alojamiento`; `sga.*` solo da los valores iniciales (DEC-25).
+- **VO MarcaAlojamiento**: colores (fondo, superficie, texto, textoSuave, borde, bordeCampo, acento, textoSobreAcento, peligro, exito; `#RRGGBB`) · fuentes (titulos, texto) · radio (pequeno, mediano, grande; en píxeles) · logoUrl · portadaUrl (`http(s)` o `data:image`). Todo opcional; `neutra()` es sin nada propio. `Alojamiento.cambiarMarca(m)` la reemplaza (BL-05 · DEC-87)
 - **E ServicioAdicional**: id · nombre · generaCargo · valor: Dinero (≥0) · activo (el valor se congela en el Cargo) · **VO Ubicacion**(latitud −90..90, longitud −180..180)
 - **R Canal**: id · alojamientoId · nombre · tipo: CanalOrigen · referenciaCredencial (solo EXTERNO; el secreto vive en la configuración externa — DEC-47) · activo. `desactivar()` · `exigirReservasExternas()`
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · estanciaSolicitada · detectadoEn · motivo · estado (PENDIENTE|RESUELTO) · resueltoPor? · resueltoEn? · decision?. `registrar(…)` · `resolver(autor, decision, ahora)`

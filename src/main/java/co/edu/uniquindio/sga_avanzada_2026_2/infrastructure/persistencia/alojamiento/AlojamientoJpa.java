@@ -71,6 +71,24 @@ public class AlojamientoJpa {
 
     private BigDecimal cargoMascota;
 
+    private String marcaColorFondo;
+    private String marcaColorSuperficie;
+    private String marcaColorTexto;
+    private String marcaColorTextoSuave;
+    private String marcaColorBorde;
+    private String marcaColorBordeCampo;
+    private String marcaColorAcento;
+    private String marcaColorTextoSobreAcento;
+    private String marcaColorPeligro;
+    private String marcaColorExito;
+    private String marcaFuenteTitulos;
+    private String marcaFuenteTexto;
+    private String marcaRadioPequeno;
+    private String marcaRadioMediano;
+    private String marcaRadioGrande;
+    private String marcaLogoUrl;
+    private String marcaPortadaUrl;
+
     @Version
     private Long version;
 

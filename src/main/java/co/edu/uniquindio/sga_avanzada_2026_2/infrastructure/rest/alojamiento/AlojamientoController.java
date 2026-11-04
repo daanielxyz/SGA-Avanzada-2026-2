@@ -4,6 +4,7 @@ import java.net.URI;
 import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ActualizarDatosAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarMarcaAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarParametrosAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarUbicacionAlojamientoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarValorServicioUseCase;
@@ -36,6 +37,7 @@ public class AlojamientoController {
     private final AlojamientoActual alojamiento;
     private final ConsultarAlojamientoUseCase consultarAlojamiento;
     private final ActualizarDatosAlojamientoUseCase actualizarDatos;
+    private final CambiarMarcaAlojamientoUseCase cambiarMarca;
     private final CambiarParametrosAlojamientoUseCase cambiarParametros;
     private final CambiarUbicacionAlojamientoUseCase cambiarUbicacion;
     private final HabilitarMedioPagoUseCase habilitarMedioPago;
@@ -46,6 +48,7 @@ public class AlojamientoController {
 
     public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamientoUseCase consultarAlojamiento,
                                  ActualizarDatosAlojamientoUseCase actualizarDatos,
+                                 CambiarMarcaAlojamientoUseCase cambiarMarca,
                                  CambiarParametrosAlojamientoUseCase cambiarParametros,
                                  CambiarUbicacionAlojamientoUseCase cambiarUbicacion,
                                  HabilitarMedioPagoUseCase habilitarMedioPago,
@@ -56,6 +59,7 @@ public class AlojamientoController {
         this.alojamiento = alojamiento;
         this.consultarAlojamiento = consultarAlojamiento;
         this.actualizarDatos = actualizarDatos;
+        this.cambiarMarca = cambiarMarca;
         this.cambiarParametros = cambiarParametros;
         this.cambiarUbicacion = cambiarUbicacion;
         this.habilitarMedioPago = habilitarMedioPago;
@@ -73,6 +77,11 @@ public class AlojamientoController {
     @PutMapping("/datos")
     public AlojamientoResponse actualizarDatos(@Valid @RequestBody ActualizarDatosAlojamientoRequest solicitud) {
         return AlojamientoResponse.de(actualizarDatos.ejecutar(solicitud.aCommand(alojamiento.id())));
+    }
+
+    @PutMapping("/marca")
+    public AlojamientoResponse cambiarMarca(@Valid @RequestBody MarcaRequest solicitud) {
+        return AlojamientoResponse.de(cambiarMarca.ejecutar(solicitud.aCommand(alojamiento.id())));
     }
 
     @PutMapping("/parametros")

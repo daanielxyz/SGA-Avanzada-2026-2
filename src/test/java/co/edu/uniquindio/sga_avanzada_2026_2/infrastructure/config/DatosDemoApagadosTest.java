@@ -19,5 +19,6 @@ class DatosDemoApagadosTest {
     @Test
     void apagadosNoExisteElCargador() {
         assertTrue(contexto.getBeansOfType(CargadorDatosDemo.class).isEmpty());
+        assertTrue(contexto.getBeansOfType(CargadorMarcaDemo.class).isEmpty());
     }
 }

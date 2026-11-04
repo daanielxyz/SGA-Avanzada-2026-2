@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import com.jayway.jsonpath.JsonPath;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -68,6 +69,49 @@ class AlojamientoControllerTest {
 
     private ResultActions enviar(MockHttpServletRequestBuilder peticion, String json) throws Exception {
         return mvc.perform(peticion.contentType(MediaType.APPLICATION_JSON).content(json));
+    }
+
+    private static final String MARCA = """
+            {
+              "colores": { "acento": "#F4B942", "textoSobreAcento": "#1B3A24" },
+              "fuentes": { "titulos": "Playfair Display" },
+              "radio": { "mediano": "12px" },
+              "logoUrl": "https://cdn.sga.co/logo.svg"
+            }
+            """;
+
+    @Test
+    @Tag("BL-05")
+    void laMarcaEmpiezaVaciaYSeCambiaSinDesplegarCodigo() throws Exception {
+        conAlojamiento();
+        mvc.perform(get("/api/alojamiento")).andExpect(jsonPath("$.marca.colores.acento").isEmpty());
+
+        enviar(put("/api/alojamiento/marca"), MARCA)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.marca.colores.acento").value("#F4B942"));
+
+        mvc.perform(get("/api/alojamiento"))
+                .andExpect(jsonPath("$.marca.colores.textoSobreAcento").value("#1B3A24"))
+                .andExpect(jsonPath("$.marca.colores.fondo").isEmpty())
+                .andExpect(jsonPath("$.marca.fuentes.titulos").value("Playfair Display"))
+                .andExpect(jsonPath("$.marca.radio.mediano").value("12px"))
+                .andExpect(jsonPath("$.marca.logoUrl").value("https://cdn.sga.co/logo.svg"))
+                .andExpect(jsonPath("$.marca.portadaUrl").isEmpty());
+    }
+
+    @Test
+    @Tag("BL-05")
+    void unaMarcaConFormatoInvalidoSeRechazaSinCambiarNada() throws Exception {
+        conAlojamiento();
+
+        enviar(put("/api/alojamiento/marca"), MARCA.replace("#F4B942", "amarillo"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
+        enviar(put("/api/alojamiento/marca"), MARCA.replace("https://cdn.sga.co/logo.svg", "javascript:alert(1)"))
+                .andExpect(status().isBadRequest());
+        enviar(put("/api/alojamiento/marca"), "{}").andExpect(status().isBadRequest());
+
+        mvc.perform(get("/api/alojamiento")).andExpect(jsonPath("$.marca.colores.acento").isEmpty());
     }
 
     @Test
