@@ -3,9 +3,9 @@
 La gestión del alojamiento para recepción, el personal de servicio y la administración. React + Vite + TypeScript; solo habla con la API del backend (DEC-77). El diseño visual (flujo, pantallas por diseñar y auditoría) está en [`DISENO.md`](DISENO.md) (DEC-84).
 
 ## Correrlo en local
-1. Arrancar el backend (en la raíz del repositorio) en `http://localhost:8080`.
+1. Arrancar el backend (en `backend/`, con `./gradlew bootRun`) en `http://localhost:8080`.
 2. En esta carpeta: `npm install` (solo la primera vez) y luego `npm run dev`.
-3. Abrir `http://localhost:5174` y entrar con una cuenta del personal: las de los datos de prueba, en el `README.md` de la raíz, o el primer administrador del `.env` (`SGA_ADMIN_CORREO` y `SGA_ADMIN_CLAVE`), si se definió.
+3. Abrir `http://localhost:5174` y entrar con una cuenta del personal: las de los datos de prueba, en el `README.md` de la raíz, o el primer administrador de `backend/.env` (`SGA_ADMIN_CORREO` y `SGA_ADMIN_CLAVE`), si se definió.
 
 La web de reservas usa el puerto 5173, así que los dos frontends pueden correr a la vez.
 

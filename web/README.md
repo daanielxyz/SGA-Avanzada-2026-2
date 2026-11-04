@@ -3,7 +3,7 @@
 La web donde el huésped busca, cotiza, reserva y ve su cuenta. React + Vite + TypeScript; solo habla con la API del backend (DEC-77).
 
 ## Correrla en local
-1. Arrancar el backend (en la raíz del repositorio) en `http://localhost:8080`.
+1. Arrancar el backend (en `backend/`, con `./gradlew bootRun`) en `http://localhost:8080`.
 2. En esta carpeta: `npm install` (solo la primera vez) y luego `npm run dev`.
 3. Abrir `http://localhost:5173`.
 
