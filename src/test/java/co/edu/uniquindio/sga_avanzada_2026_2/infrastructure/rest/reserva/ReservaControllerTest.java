@@ -50,6 +50,7 @@ class ReservaControllerTest extends PruebaRestDeReservas {
         mvc.perform(get("/api/reservas/" + codigo))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.codigo").value(codigo))
+                .andExpect(jsonPath("$.titularNombre").value("Ana Ríos"))
                 .andExpect(jsonPath("$.ocupantes[1].nombre").value("Luis Ríos"));
         mvc.perform(get("/api/reservas/RES-2026-99999"))
                 .andExpect(status().isNotFound())

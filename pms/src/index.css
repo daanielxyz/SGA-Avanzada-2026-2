@@ -822,6 +822,509 @@ button {
   font-size: 15px;
 }
 
+/* Formas de la etiqueta de estado */
+.etiqueta-forma {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.etiqueta-forma .relleno {
+  fill: currentcolor;
+  stroke: none;
+}
+
+.etiqueta-pendiente .etiqueta-forma {
+  color: var(--estado-pendiente);
+}
+
+.etiqueta-confirmada .etiqueta-forma {
+  color: var(--estado-confirmada);
+}
+
+.etiqueta-en-curso .etiqueta-forma {
+  color: var(--estado-en-curso);
+}
+
+.etiqueta-finalizada .etiqueta-forma {
+  color: var(--estado-finalizada);
+}
+
+.etiqueta-cancelada .etiqueta-forma {
+  color: var(--estado-cancelada);
+}
+
+.etiqueta-no-show .etiqueta-forma {
+  color: var(--estado-no-show);
+}
+
+/* Piezas compartidas de las pantallas de datos */
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.desplazable {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.enlace {
+  min-height: 44px;
+  padding: 0 var(--espacio-2);
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.importe {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.aviso-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.bloque-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio-3);
+  padding: 36px var(--espacio-6);
+  text-align: center;
+}
+
+.bloque-vacio p {
+  max-width: 360px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.codigo-resaltado {
+  color: var(--texto);
+}
+
+.tabla-marco {
+  overflow: hidden;
+}
+
+.fila-fantasma {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 0.8fr 1.2fr;
+  gap: var(--espacio-4);
+  align-items: center;
+  padding: var(--espacio-4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.carga-texto {
+  padding: var(--espacio-3) var(--espacio-4);
+  font-size: 13px;
+}
+
+/* Listado de reservas */
+.reservas,
+.detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.reservas-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.ir-a-reserva {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+}
+
+.ir-a-reserva > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.ir-a-reserva .boton {
+  margin-top: 26px;
+}
+
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.boton-filtros {
+  justify-content: space-between;
+}
+
+.filtros-activos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.filtro-activo {
+  min-height: 44px;
+  padding: 0 var(--espacio-3);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.filtro-activo .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.filtros-cuerpo {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+  padding: var(--espacio-4);
+}
+
+.filtros-cuerpo.abierto {
+  display: flex;
+}
+
+.filtros-campos {
+  display: grid;
+  gap: var(--espacio-4);
+}
+
+.filtros-botones {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: var(--espacio-2);
+}
+
+.reservas-tabla {
+  display: none;
+  overflow: hidden;
+}
+
+.tabla-reservas {
+  min-width: 860px;
+}
+
+.estancia {
+  display: block;
+}
+
+.tabla-reservas th,
+.tabla-reservas td {
+  padding-right: var(--espacio-2);
+  padding-left: var(--espacio-2);
+  white-space: nowrap;
+}
+
+.tabla-reservas th:first-child,
+.tabla-reservas td:first-child {
+  padding-left: var(--espacio-3);
+}
+
+.tabla-reservas th:last-child,
+.tabla-reservas td:last-child {
+  padding-right: var(--espacio-3);
+}
+
+.tabla-reservas .codigo {
+  font-size: 13px;
+}
+
+.enlace-codigo {
+  font-weight: 600;
+}
+
+/* Se queda con el ancho que sobra y recorta los nombres largos, para que el Total siempre se vea */
+.celda-titular {
+  width: 100%;
+  max-width: 0;
+}
+
+.titular-nombre {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titular-id {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.reservas-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reserva-tarjeta {
+  display: block;
+  padding: 14px var(--espacio-4);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 160ms ease-out;
+}
+
+.reserva-tarjeta-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.reserva-tarjeta-codigo {
+  color: var(--acento);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.reserva-tarjeta-linea {
+  display: block;
+  margin-top: var(--espacio-1);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.reserva-tarjeta-pie {
+  align-items: baseline;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.reserva-tarjeta-pie .importe {
+  font-size: 16px;
+}
+
+.paginador p {
+  margin: 0;
+}
+
+.paginador .paginador-botones {
+  width: 100%;
+}
+
+.paginador-botones .boton {
+  flex: 1;
+}
+
+/* Detalle de una reserva */
+.detalle {
+  gap: var(--espacio-6);
+}
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.detalle-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.detalle-codigo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2) 14px;
+}
+
+.detalle-codigo h1 {
+  font-family: var(--letra-codigo);
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.espacio-reservado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--espacio-4);
+  border: 1.5px dashed var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  color: var(--texto-suave);
+  font-size: 13px;
+  text-align: center;
+}
+
+.detalle-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.datos {
+  margin: 0;
+}
+
+.dato {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  padding: var(--espacio-3) 14px;
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+}
+
+.dato:last-child {
+  border-bottom: 0;
+}
+
+.dato dt {
+  flex: none;
+  max-width: 45%;
+  color: var(--texto-suave);
+}
+
+.dato dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.dato-titular {
+  display: block;
+}
+
+/* Ocupantes: en el celular, una tarjeta por persona */
+.tabla-ocupantes,
+.tabla-ocupantes tbody,
+.tabla-ocupantes tr,
+.tabla-ocupantes td {
+  display: block;
+}
+
+.tabla-ocupantes thead {
+  display: none;
+}
+
+.tabla-ocupantes tr {
+  padding: 14px var(--espacio-4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.tabla-ocupantes tr:last-child {
+  border-bottom: 0;
+}
+
+.tabla-ocupantes td {
+  padding: 0;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+
+.tabla-ocupantes td:nth-child(2),
+.tabla-ocupantes td:nth-child(3) {
+  display: inline;
+}
+
+.tabla-ocupantes td:nth-child(2)::after {
+  content: ' · ';
+}
+
+.tabla-ocupantes .ocupante-nombre {
+  margin-bottom: var(--espacio-1);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.tabla-ocupantes .ocupante-nacimiento {
+  margin-top: var(--espacio-1);
+  color: var(--texto-suave);
+}
+
+.tabla-desglose {
+  min-width: 620px;
+}
+
+.tabla-desglose td {
+  white-space: nowrap;
+}
+
+.desglose-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  padding: var(--espacio-4);
+  background: var(--superficie-2);
+}
+
+.desglose-total-rotulo {
+  color: var(--texto-suave);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.desglose-total-valor {
+  color: var(--acento);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.fantasma-titulo {
+  width: 210px;
+  height: 30px;
+}
+
+.fantasma-etiqueta {
+  width: 100px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+.fantasma-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espacio-4);
+  padding: var(--espacio-4);
+}
+
 @media (min-width: 800px) {
   h1 {
     font-size: 32px;
@@ -1034,6 +1537,157 @@ button {
     font-size: 14px;
     line-height: 20px;
   }
+
+  .reservas {
+    gap: var(--espacio-5);
+  }
+
+  .reservas-titulo {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .ir-a-reserva {
+    flex: none;
+  }
+
+  .ir-a-reserva .campo-control {
+    width: 210px;
+  }
+
+  .boton-filtros,
+  .filtros-activos-limpiar,
+  .reservas-tarjetas {
+    display: none;
+  }
+
+  .filtro-activo {
+    min-height: 28px;
+  }
+
+  .filtros-cuerpo,
+  .filtros-cuerpo.abierto {
+    display: flex;
+    padding: var(--espacio-5);
+  }
+
+  .filtros-campos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .filtros-botones {
+    grid-column: span 2;
+  }
+
+  .reservas-tabla {
+    display: block;
+  }
+
+  .paginador .paginador-botones {
+    width: auto;
+  }
+
+  .paginador-botones .boton {
+    flex: none;
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 14px;
+  }
+
+  .detalle-titulo {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .detalle-codigo {
+    justify-content: flex-start;
+  }
+
+  .detalle-codigo h1 {
+    font-size: 32px;
+    line-height: 40px;
+  }
+
+  .espacio-reservado {
+    min-width: 300px;
+  }
+
+  .datos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px var(--espacio-6);
+    padding: var(--espacio-6);
+  }
+
+  .dato {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+    font-size: 15px;
+    line-height: 22px;
+  }
+
+  .dato dt {
+    max-width: none;
+    margin-bottom: var(--espacio-1);
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .dato dd {
+    text-align: left;
+  }
+
+  .tabla-ocupantes {
+    display: table;
+  }
+
+  .tabla-ocupantes thead {
+    display: table-header-group;
+  }
+
+  .tabla-ocupantes tbody {
+    display: table-row-group;
+  }
+
+  .tabla-ocupantes tr {
+    display: table-row;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .tabla-ocupantes td,
+  .tabla-ocupantes td:nth-child(2),
+  .tabla-ocupantes td:nth-child(3) {
+    display: table-cell;
+    padding: 13px var(--espacio-3);
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .tabla-ocupantes td:nth-child(2)::after {
+    content: none;
+  }
+
+  .tabla-ocupantes tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .tabla-ocupantes .ocupante-nombre {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .tabla-ocupantes .ocupante-nacimiento {
+    margin: 0;
+    color: inherit;
+  }
 }
 
 /* En un celular el «encima» se quedaría pegado después de tocar */
@@ -1061,6 +1715,16 @@ button {
     background: var(--superficie-2);
   }
 
+  .filtro-activo:hover {
+    background: var(--superficie-fila);
+  }
+
+  .reserva-tarjeta:hover {
+    border-color: var(--borde-fuerte);
+    background: var(--superficie-2);
+    color: inherit;
+  }
+
   .acceso:hover {
     border-color: var(--borde-fuerte);
     background: var(--superficie-2);
@@ -1075,7 +1739,8 @@ button {
 @media (prefers-reduced-motion: reduce) {
   .boton,
   .menu,
-  .acceso {
+  .acceso,
+  .reserva-tarjeta {
     transition: none;
   }
 

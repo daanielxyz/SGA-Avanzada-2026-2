@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaConTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShowUseCase;
@@ -11,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLleg
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaConTitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
@@ -42,6 +44,7 @@ public class ReservaController {
     private final UsuarioActual usuario;
     private final CrearReservaUseCase crearReserva;
     private final ConsultarReservaUseCase consultarReserva;
+    private final ConsultarReservaConTitularUseCase consultarConTitular;
     private final ModificarReservaUseCase modificarReserva;
     private final IndicarHoraLlegadaUseCase indicarHoraLlegada;
     private final ConfirmarReservaUseCase confirmarReserva;
@@ -50,13 +53,16 @@ public class ReservaController {
     private final ListarReservasUseCase listarReservas;
 
     public ReservaController(UsuarioActual usuario, CrearReservaUseCase crearReserva,
-                             ConsultarReservaUseCase consultarReserva, ModificarReservaUseCase modificarReserva,
+                             ConsultarReservaUseCase consultarReserva,
+                             ConsultarReservaConTitularUseCase consultarConTitular,
+                             ModificarReservaUseCase modificarReserva,
                              IndicarHoraLlegadaUseCase indicarHoraLlegada, ConfirmarReservaUseCase confirmarReserva,
                              CancelarReservaUseCase cancelarReserva, DeclararNoShowUseCase declararNoShow,
                              ListarReservasUseCase listarReservas) {
         this.usuario = usuario;
         this.crearReserva = crearReserva;
         this.consultarReserva = consultarReserva;
+        this.consultarConTitular = consultarConTitular;
         this.modificarReserva = modificarReserva;
         this.indicarHoraLlegada = indicarHoraLlegada;
         this.confirmarReserva = confirmarReserva;
@@ -94,9 +100,9 @@ public class ReservaController {
 
     @GetMapping("/{codigo}")
     public ReservaResponse consultar(@PathVariable String codigo) {
-        ReservaResult reserva = consultarReserva.ejecutar(codigo);
-        usuario.exigirAccesoA(reserva.titularId());
-        return ReservaResponse.de(reserva);
+        ReservaConTitularResult consulta = consultarConTitular.ejecutar(codigo);
+        usuario.exigirAccesoA(consulta.reserva().titularId());
+        return ReservaResponse.de(consulta);
     }
 
     @PutMapping("/{codigo}/modificar")
