@@ -6,7 +6,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,9 +22,11 @@ import java.util.Optional;
 public class ListarReservasUseCase {
 
     private final ReservaRepository reservas;
+    private final TitularRepository titulares;
 
-    public ListarReservasUseCase(ReservaRepository reservas) {
+    public ListarReservasUseCase(ReservaRepository reservas, TitularRepository titulares) {
         this.reservas = reservas;
+        this.titulares = titulares;
     }
 
     /**
@@ -30,12 +34,15 @@ public class ListarReservasUseCase {
      *         anterior a la fecha hasta
      */
     @Transactional(readOnly = true)
-    public Pagina<ReservaResult> ejecutar(ListarReservasCommand comando) {
+    public Pagina<ReservaConTitularResult> ejecutar(ListarReservasCommand comando) {
         FiltroReservas filtro = new FiltroReservas(comando.desde(), comando.hasta(),
                 Optional.ofNullable(comando.estado()).map(EstadoReserva::valueOf).orElse(null),
                 Optional.ofNullable(comando.apartamento()).map(ApartamentoId::new).orElse(null),
                 Optional.ofNullable(comando.canal()).map(CanalOrigen::valueOf).orElse(null),
                 Optional.ofNullable(comando.titular()).map(TitularId::new).orElse(null));
-        return reservas.buscar(filtro, comando.pagina()).map(ReservaResult::de);
+        // A lo sumo 10 consultas por clave primaria: el tamaño de la página (DEC-18)
+        return reservas.buscar(filtro, comando.pagina()).map(reserva -> new ReservaConTitularResult(
+                ReservaResult.de(reserva),
+                titulares.buscarPorId(reserva.titularId()).map(Titular::nombre).orElse(null)));
     }
 }

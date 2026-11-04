@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import { consultarAlojamiento } from '../api/alojamiento'
 import Icono from '../componentes/Icono'
 import Logo from '../componentes/Logo'
+import ProteccionErrores from '../componentes/ProteccionErrores'
+import { iniciales } from '../formato'
 import { menuPara } from '../navegacion'
 import type { Sesion } from '../sesion/almacen'
 import { useSesion } from '../sesion/contexto'
@@ -11,16 +13,6 @@ import { NOMBRE_DEL_ROL } from '../sesion/roles'
 // Desde este ancho el menú queda fijo a la izquierda (el mismo valor de src/index.css)
 const ANCHO_MENU_FIJO = 800
 
-/** Las dos primeras letras del nombre para el círculo de la cabecera. */
-function iniciales(nombre: string): string {
-  return nombre
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0].toUpperCase())
-    .join('')
-}
-
 /** Marco de todas las pantallas con sesión: el alojamiento, quién entró, el menú de su rol y el botón para salir. */
 export default function Panel({ sesion }: { sesion: Sesion }) {
   const { salir } = useSesion()
@@ -28,6 +20,9 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const abrirMenu = useRef<HTMLButtonElement>(null)
   const cerrarMenu = useRef<HTMLButtonElement>(null)
+  const contenido = useRef<HTMLElement>(null)
+  const { pathname } = useLocation()
+  const rutaAnterior = useRef(pathname)
   const rol = NOMBRE_DEL_ROL[sesion.rol]
 
   // Sin el nombre del alojamiento el PMS sigue funcionando: no se muestra y ya
@@ -63,8 +58,25 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
     }
   }, [menuAbierto])
 
+  // Al cambiar de pantalla el foco pasa al contenido nuevo; sin esto, quien usa teclado o lector se queda en el menú
+  useEffect(() => {
+    if (rutaAnterior.current === pathname) return
+    rutaAnterior.current = pathname
+    contenido.current?.focus({ preventScroll: true })
+  }, [pathname])
+
   return (
     <div className="panel">
+      <a
+        href="#contenido"
+        className="saltar"
+        onClick={(evento) => {
+          evento.preventDefault()
+          contenido.current?.focus()
+        }}
+      >
+        Saltar al contenido
+      </a>
       <header className="cabecera" inert={menuAbierto}>
         <button
           ref={abrirMenu}
@@ -155,9 +167,11 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
         )}
       </nav>
 
-      <main className="contenido" inert={menuAbierto}>
+      <main ref={contenido} id="contenido" tabIndex={-1} className="contenido" inert={menuAbierto}>
         <div className="contenido-ancho">
-          <Outlet />
+          <ProteccionErrores>
+            <Outlet />
+          </ProteccionErrores>
         </div>
       </main>
     </div>

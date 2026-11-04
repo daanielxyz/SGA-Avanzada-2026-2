@@ -3146,6 +3146,8 @@ components:
         mascotas:
           type: integer
           format: int32
+        titularNombre:
+          type: string
     HoraLlegadaRequest:
       type: object
       properties:

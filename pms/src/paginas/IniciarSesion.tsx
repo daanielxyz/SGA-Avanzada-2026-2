@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../api/cliente'
 import Aviso from '../componentes/Aviso'
 import Logo from '../componentes/Logo'
+import { useTitulo } from '../componentes/useTitulo'
 import { useSesion } from '../sesion/contexto'
 
 /** Lo que salió mal al entrar, tal como lo explica el backend. */
@@ -27,6 +28,7 @@ export default function IniciarSesion() {
   const [problema, setProblema] = useState<Problema | null>(null)
   const campoCorreo = useRef<HTMLInputElement>(null)
   const campoContrasena = useRef<HTMLInputElement>(null)
+  useTitulo('Iniciar sesión')
 
   if (sesion && !entrando) {
     return <Navigate to={desde} replace />
@@ -83,7 +85,7 @@ export default function IniciarSesion() {
             <input
               ref={campoCorreo}
               id="correo"
-              className="campo-control boton-grande"
+              className="campo-control campo-control-grande"
               type="email"
               placeholder="tu@correo.com"
               autoComplete="username"
@@ -111,7 +113,7 @@ export default function IniciarSesion() {
               <input
                 ref={campoContrasena}
                 id="contrasena"
-                className="campo-control boton-grande"
+                className="campo-control campo-control-grande"
                 type={verContrasena ? 'text' : 'password'}
                 placeholder="Ingresa tu contraseña"
                 autoComplete="current-password"

@@ -66,6 +66,13 @@ class ListadoReservasTest extends PruebaRestDeReservas {
 
     @Test
     @Tag("CU-25")
+    void cadaFilaTraeElNombreDelTitular() throws Exception {
+        listar()
+                .andExpect(jsonPath("$.contenido[*].titularNombre").value(contains("Eva Mora", "Ana Ríos", "Ana Ríos")));
+    }
+
+    @Test
+    @Tag("CU-25")
     void cadaFiltroRestringeYSeCombinan() throws Exception {
         listar("estado", "CONFIRMADA").andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaConfirmada)));
         listar("apartamento", "APT-102").andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva)));

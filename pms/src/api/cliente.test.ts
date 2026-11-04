@@ -6,6 +6,14 @@ import { ErrorApi, pedir } from './cliente'
 const SIN_TOKEN = { estado: 401, codigo: 'NO_AUTENTICADO', mensaje: 'Debes iniciar sesión', detalles: [] }
 
 describe('pedir', () => {
+  it('no espera para siempre: toda llamada lleva un tiempo máximo', async () => {
+    const fetch = laApiResponde([200, []])
+
+    await pedir('/api/reservas')
+
+    expect((fetch.mock.calls[0][1] as RequestInit).signal).toBeInstanceOf(AbortSignal)
+  })
+
   it('devuelve el JSON cuando la API responde bien', async () => {
     laApiResponde([200, [{ codigo: 'RES-2026-00001' }]])
 

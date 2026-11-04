@@ -85,6 +85,20 @@ const TRAZOS = {
       <path d="M20 20l-4-4M9 9l4 4M13 9l-4 4" />
     </>
   ),
+  buscar: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-4-4" />
+    </>
+  ),
+  reservaNoEncontrada: (
+    <>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5M9.5 13.5l5 5M14.5 13.5l-5 5" />
+    </>
+  ),
+  abajo: <path d="M6 9l6 6 6-6" />,
+  alerta: <path d="M12 3l9 16H3zM12 10v4M12 17h.01" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   cerrar: <path d="M6 6l12 12M18 6L6 18" />,
 } satisfies Record<string, ReactNode>

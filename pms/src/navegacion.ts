@@ -15,7 +15,7 @@ export interface Opcion {
   roles: readonly Rol[]
 }
 
-const RECEPCION: readonly Rol[] = ['RECEPCIONISTA', 'ADMINISTRADOR']
+export const RECEPCION: readonly Rol[] = ['RECEPCIONISTA', 'ADMINISTRADOR']
 const OPERACION: readonly Rol[] = ['PERSONAL_SERVICIO', 'ADMINISTRADOR']
 const ADMINISTRACION: readonly Rol[] = ['ADMINISTRADOR']
 const TODOS: readonly Rol[] = ['RECEPCIONISTA', 'PERSONAL_SERVICIO', 'ADMINISTRADOR']

@@ -31,6 +31,21 @@ export function laApiResponde(...respuestas: [number, unknown][]) {
   return fetch
 }
 
+/**
+ * La API simulada responde según la ruta, sin importar el orden de las llamadas, porque cada pantalla pide lo suyo
+ * al abrirse. Lo que no esté en la lista responde 404.
+ */
+export function laApiRespondePorRuta(rutas: Record<string, [number, unknown]>) {
+  const fetch = vi.fn((url: string) => {
+    const [estado, cuerpo] = rutas[url.split('?')[0]] ?? [404, {
+      estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'No existe', detalles: [],
+    }]
+    return Promise.resolve(new Response(JSON.stringify(cuerpo), { status: estado }))
+  })
+  vi.stubGlobal('fetch', fetch)
+  return fetch
+}
+
 /** Dirección, método, cabeceras y cuerpo de la llamada número `n` a la API simulada. */
 export function llamada(fetch: ReturnType<typeof vi.fn>, n: number) {
   const [url, opciones] = fetch.mock.calls[n] as [string, RequestInit | undefined]

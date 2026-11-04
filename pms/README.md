@@ -9,6 +9,8 @@ La gestión del alojamiento para recepción, el personal de servicio y la admini
 
 La web de reservas usa el puerto 5173, así que los dos frontends pueden correr a la vez.
 
+La fuente de los títulos (Satoshi) no va en git por su licencia: bájala de Fontshare y déjala en `public/fuentes/` (ver «Archivos» en [`DISENO.md`](DISENO.md)). Sin ella, los títulos salen con la fuente del sistema.
+
 ## Variables
 Las mismas que `web/`, con el mismo significado (DEC-82):
 - `SGA_API_URL`: la lee Vite para el proxy. Vite reenvía las rutas `/api` al backend, así que no hace falta CORS en desarrollo. Solo se define si el backend corre en otra dirección (por ejemplo `SGA_API_URL=http://localhost:9090`).
