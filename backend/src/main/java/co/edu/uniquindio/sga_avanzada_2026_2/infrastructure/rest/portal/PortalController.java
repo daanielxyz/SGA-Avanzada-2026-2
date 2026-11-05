@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.PagarEnLineaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaPortalResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservarDesdePortalUseCase;
-import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.ReservaResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,7 +41,7 @@ public class PortalController {
 
     /** Si la pasarela aprueba, la reserva queda CONFIRMADA; si rechaza, 409 {@code PAGO_RECHAZADO} y sigue igual. */
     @PostMapping("/{codigo}/pago")
-    public ReservaResponse pagar(@PathVariable String codigo, @Valid @RequestBody PagoEnLineaRequest solicitud) {
-        return ReservaResponse.de(pagarEnLinea.ejecutar(solicitud.aCommand(codigo)));
+    public PagoPortalResponse pagar(@PathVariable String codigo, @Valid @RequestBody PagoEnLineaRequest solicitud) {
+        return PagoPortalResponse.de(pagarEnLinea.ejecutar(solicitud.aCommand(codigo)));
     }
 }

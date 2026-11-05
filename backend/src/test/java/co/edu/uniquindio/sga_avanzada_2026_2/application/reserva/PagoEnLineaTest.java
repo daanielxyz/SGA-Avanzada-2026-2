@@ -76,7 +76,7 @@ class PagoEnLineaTest {
                 new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", "300 123 4567"),
                 List.of(new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana"),
                         new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null)),
-                LocalTime.of(16, 0)));
+                LocalTime.of(16, 0), 0, 0));
     }
 
     private PagarEnLineaUseCase pagarEnLinea(Clock reloj) {

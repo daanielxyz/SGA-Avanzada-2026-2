@@ -1605,6 +1605,23 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/portal/politica:
+    get:
+      tags:
+        - politica-portal-controller
+      operationId: consultar_portal_politica
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PoliticaPortalResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
   "/api/portal/reservas/{codigo}/pago":
     post:
       tags:
@@ -1628,7 +1645,7 @@ paths:
           content:
             "*/*":
               schema:
-                "$ref": "#/components/schemas/ReservaResponse"
+                "$ref": "#/components/schemas/PagoPortalResponse"
         default:
           description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
           content:
@@ -4103,6 +4120,50 @@ components:
           minLength: 0
       required:
         - motivo
+    PagoPortalResponse:
+      type: object
+      properties:
+        codigo:
+          type: string
+        estado:
+          type: string
+        apartamento:
+          type: string
+        entrada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        total:
+          type: number
+    PoliticaPortalResponse:
+      type: object
+      properties:
+        tramos:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TramoPortalResponse"
+        penalizacionNoShow:
+          "$ref": "#/components/schemas/PenalizacionPortalResponse"
+    TramoPortalResponse:
+      type: object
+      properties:
+        antelacionMinHoras:
+          type: integer
+          format: int32
+        penalizacion:
+          "$ref": "#/components/schemas/PenalizacionPortalResponse"
+    PenalizacionPortalResponse:
+      type: object
+      properties:
+        base:
+          type: string
+        porcentaje:
+          type: integer
+          format: int32
+        montoFijo:
+          type: number
     ReservaPortalRequest:
       type: object
       properties:
@@ -4126,6 +4187,14 @@ components:
         horaEstimadaLlegada:
           type: string
           format: time-local
+        vehiculos:
+          type: integer
+          format: int32
+          minimum: 0
+        mascotas:
+          type: integer
+          format: int32
+          minimum: 0
       required:
         - apartamento
         - entrada

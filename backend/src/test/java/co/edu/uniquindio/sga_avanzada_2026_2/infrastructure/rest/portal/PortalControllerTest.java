@@ -99,6 +99,66 @@ class PortalControllerTest extends PruebaRestDeReservas {
 
     @Test
     @Tag("DEC-69")
+    void elPagoNoRevelaLosDatosDeLaReservaAQuienSoloTieneElCodigo() throws Exception {
+        pagar(reservar(), "tok_visa")
+                .andExpect(jsonPath("$.codigo").exists())
+                .andExpect(jsonPath("$.apartamento").value("APT-101"))
+                .andExpect(jsonPath("$.total").value(400000))
+                .andExpect(jsonPath("$.ocupantes").doesNotExist())
+                .andExpect(jsonPath("$.titularId").doesNotExist())
+                .andExpect(jsonPath("$.titularNombre").doesNotExist());
+    }
+
+    @Test
+    @Tag("DEC-41")
+    void cualquieraVeLaPoliticaDeCancelacionAntesDePagar() throws Exception {
+        visitante.perform(get("/api/portal/politica"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tramos").isNotEmpty())
+                .andExpect(jsonPath("$.tramos[0].antelacionMinHoras").exists())
+                .andExpect(jsonPath("$.tramos[0].penalizacion.base").exists())
+                .andExpect(jsonPath("$.penalizacionNoShow.base").exists())
+                .andExpect(jsonPath("$.alojamientoId").doesNotExist());
+    }
+
+    @Test
+    @Tag("RP-02")
+    @Tag("RP-03")
+    void elPortalDeclaraVehiculosYMascotasYSusReglasSeAplican() throws Exception {
+        String conExtras = reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 0,");
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": -1"))
+                .andExpect(status().isBadRequest());
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": 99"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"mascotas\": 0", "\"mascotas\": 99"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Tag("RP-02")
+    @Tag("RP-03")
+    void conParqueaderoYMascotasPermitidosLaReservaLosGuarda() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "cupoParqueadero": 2, "aceptaMascotas": true, "limiteMascotas": 1,
+                  "cargoMascota": 30000
+                }
+                """)).andExpect(status().isOk());
+
+        pedir(post("/api/portal/reservas"),
+                reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 1,"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.vehiculos").value(1))
+                .andExpect(jsonPath("$.reserva.mascotas").value(1));
+    }
+
+    @Test
+    @Tag("DEC-69")
     void unPagoRechazadoEs409YLaReservaSigueEsperandoElPago() throws Exception {
         String codigo = reservar();
 

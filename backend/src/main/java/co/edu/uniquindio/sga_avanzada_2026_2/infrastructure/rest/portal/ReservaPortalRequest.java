@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservarDesdePo
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.OcupanteRequest;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva.TitularReservaRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Cuerpo de {@code POST /api/portal/reservas} (CU-10). No trae canal (es siempre PORTAL) ni precio (lo calcula el
@@ -39,10 +41,18 @@ public record ReservaPortalRequest(
         List<@Valid OcupanteRequest> ocupantes,
 
         @NotNull(message = "es obligatoria")
-        LocalTime horaEstimadaLlegada) {
+        LocalTime horaEstimadaLlegada,
+
+        // Opcionales: sin ellos, ni vehículos ni mascotas (RP-02 · RP-03)
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer vehiculos,
+
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer mascotas) {
 
     ReservarDesdePortalCommand aCommand() {
         return new ReservarDesdePortalCommand(apartamento, entrada, salida, titular.aCommand(),
-                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada);
+                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada, Optional.ofNullable(vehiculos).orElse(0),
+                Optional.ofNullable(mascotas).orElse(0));
     }
 }

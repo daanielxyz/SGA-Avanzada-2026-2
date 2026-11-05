@@ -6,6 +6,7 @@ import { aplicarMarca } from './marca'
 import Apartamento from './paginas/Apartamento'
 import Inicio from './paginas/Inicio'
 import NoEncontrada from './paginas/NoEncontrada'
+import Reservar from './paginas/Reservar'
 
 /**
  * Mapa de la web: la cabecera común y qué página se muestra para cada dirección. Al abrir pide los datos del
@@ -38,6 +39,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Inicio alojamiento={alojamiento} />} />
         <Route path="/apartamentos/:codigo" element={<Apartamento umbral={umbral} />} />
+        <Route path="/apartamentos/:codigo/reservar" element={<Reservar alojamiento={alojamiento} />} />
         <Route path="*" element={<NoEncontrada />} />
       </Routes>
     </>

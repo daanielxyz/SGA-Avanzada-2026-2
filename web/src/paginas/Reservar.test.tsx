@@ -1,0 +1,248 @@
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { Alojamiento } from '../api/alojamiento'
+import type { ApartamentoPublico, EstanciaPortal, Precio } from '../api/apartamentos'
+import { fechaDesdeHoy, masDias } from '../formato'
+import Reservar from './Reservar'
+
+const ENTRADA = fechaDesdeHoy(10)
+const SALIDA = masDias(ENTRADA, 2)
+
+const precio = (pagan: number): Precio => ({
+  desglose: [
+    { noche: ENTRADA, tarifa: 100000, ocupantesFacturables: pagan, subtotal: 100000 * pagan },
+    { noche: masDias(ENTRADA, 1), tarifa: 100000, ocupantesFacturables: pagan, subtotal: 100000 * pagan },
+  ],
+  total: 200000 * pagan,
+})
+
+const SUITE: ApartamentoPublico = {
+  codigo: 'APT-101',
+  nombre: 'Suite Jardín',
+  descripcion: null,
+  capacidad: 4,
+  dormitorios: 2,
+  imagenes: [],
+  caracteristicas: ['Wifi'],
+  precio: null,
+  proximaNocheLibre: null,
+}
+
+const LIBRE: EstanciaPortal = { disponible: true, precio: precio(1), proximaNocheLibre: ENTRADA }
+
+const ALOJAMIENTO: Alojamiento = {
+  nombre: 'Hotel de Prueba',
+  parametros: {
+    umbralEdadFacturable: 12, horaEntrada: '15:00:00', cupoParqueadero: 5, aceptaMascotas: true, limiteMascotas: 2,
+    cargoMascota: 30000,
+  },
+}
+
+const POLITICA = {
+  tramos: [
+    { antelacionMinHoras: 0, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 50, montoFijo: null } },
+    { antelacionMinHoras: 48, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 0, montoFijo: null } },
+  ],
+  penalizacionNoShow: { base: 'VALOR_TOTAL', porcentaje: 100, montoFijo: null },
+}
+
+const APARTADA = {
+  reserva: { codigo: 'RES-2026-00042', valor: precio(1), avisoCuenta: null },
+  montoAPagar: 60000,
+  pagarAntesDe: `${ENTRADA}T15:30:00`,
+}
+
+const CONFIRMADA = {
+  codigo: 'RES-2026-00042', estado: 'CONFIRMADA', apartamento: 'APT-101', entrada: ENTRADA, salida: SALIDA,
+  total: 200000,
+}
+
+const respuesta = (cuerpo: unknown, estado = 200) => new Response(JSON.stringify(cuerpo), { status: estado })
+
+/** La API simulada responde según la ruta; `pagos` y `reservas` se consumen en orden. */
+function laApi({ estancia = LIBRE, cotizacion = precio(1), reservas = [respuesta(APARTADA, 201)],
+  pagos = [respuesta(CONFIRMADA)] }: {
+  estancia?: EstanciaPortal; cotizacion?: Precio; reservas?: Response[]; pagos?: Response[]
+} = {}) {
+  const fetch = vi.fn((ruta: string) => {
+    if (ruta.includes('/estancia')) return Promise.resolve(respuesta(estancia))
+    if (ruta === '/api/cotizaciones') return Promise.resolve(respuesta(cotizacion))
+    if (ruta === '/api/portal/politica') return Promise.resolve(respuesta(POLITICA))
+    if (ruta.endsWith('/pago')) return Promise.resolve(pagos.shift() ?? respuesta({}, 500))
+    if (ruta === '/api/portal/reservas') return Promise.resolve(reservas.shift() ?? respuesta({}, 500))
+    return Promise.resolve(respuesta(SUITE))
+  })
+  vi.stubGlobal('fetch', fetch)
+  return fetch
+}
+
+function cuerpoDe(fetch: ReturnType<typeof laApi>, ruta: string) {
+  const llamada = fetch.mock.calls.map((c) => c as unknown as [string, RequestInit])
+    .find(([r]) => r.endsWith(ruta))
+  return JSON.parse(String(llamada?.[1].body))
+}
+
+function abrir(grupo = 'adultos=1&ninos=0', entrada = ENTRADA) {
+  render(
+    <MemoryRouter initialEntries={[`/apartamentos/APT-101/reservar?entrada=${entrada}&salida=${SALIDA}&${grupo}`]}>
+      <Routes>
+        <Route path="/apartamentos/:codigo/reservar" element={<Reservar alojamiento={ALOJAMIENTO} />} />
+        <Route path="/apartamentos/:codigo" element={<h1>Página del apartamento</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+function llenarTitular() {
+  fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: 'Ana Ríos' } })
+  fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
+  fireEvent.change(screen.getByLabelText('Número de documento'), { target: { value: '1094' } })
+  fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ana@correo.co' } })
+  fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: '3001234567' } })
+}
+
+afterEach(() => vi.unstubAllGlobals())
+
+describe('Reservar', () => {
+  it('abre con el resumen de lo que se reserva y un campo de nombre por cada persona', async () => {
+    laApi()
+    abrir('adultos=2&ninos=1')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tus datos' })).toBeInTheDocument()
+    const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
+    expect(resumen).toHaveTextContent('2 adultos y 1 niño')
+    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*200\.000/)
+    expect(screen.getByLabelText('Nombre de la persona 2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Fecha de nacimiento de la persona 3')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Nombre de la persona 4')).not.toBeInTheDocument()
+  })
+
+  it('si ya no está libre lo dice y permite volver, sin mostrar el formulario', async () => {
+    laApi({ estancia: { ...LIBRE, disponible: false } })
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: 'Ya no está libre en esas fechas' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Correo')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Volver al apartamento' }).getAttribute('href'))
+      .toContain('/apartamentos/APT-101?')
+  })
+
+  it('con fechas que cambian quién paga, recalcula y avisa antes de continuar (RN-06)', async () => {
+    const fetch = laApi({ cotizacion: precio(2) })
+    abrir('adultos=1&ninos=1')
+    await screen.findByLabelText('Nombre completo')
+
+    fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Fecha de nacimiento de la persona 2'), { target: { value: '2005-01-01' } })
+
+    const aviso = await screen.findByRole('status')
+    expect(aviso).toHaveTextContent(/Tu total cambió a\s*\$\s*400\.000/)
+    expect(aviso).toHaveTextContent('pagan 2 personas')
+    expect(screen.getByRole('complementary', { name: 'Suite Jardín' })).toHaveTextContent(/\$\s*400\.000/)
+    expect(cuerpoDe(fetch, '/api/cotizaciones').fechasNacimiento).toEqual(['1990-05-01', '2005-01-01'])
+  })
+
+  it('si las fechas coinciden con lo que dijo al buscar, no avisa nada', async () => {
+    const fetch = laApi({ cotizacion: precio(1) })
+    abrir()
+    await screen.findByLabelText('Nombre completo')
+
+    fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
+
+    await vi.waitFor(() => expect(fetch.mock.calls.some(([r]) => r === '/api/cotizaciones')).toBe(true))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('envía el titular como primer ocupante con su documento, la hora del hotel y los extras', async () => {
+    const fetch = laApi()
+    abrir()
+    await screen.findByLabelText('Nombre completo')
+    llenarTitular()
+    fireEvent.change(screen.getByLabelText('Carros'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '1' } })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    expect(cuerpoDe(fetch, '/api/portal/reservas')).toEqual({
+      apartamento: 'APT-101',
+      entrada: ENTRADA,
+      salida: SALIDA,
+      titular: { nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co',
+        telefono: '3001234567' },
+      ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-05-01', tipoDocumento: 'CC', numeroDocumento: '1094' }],
+      horaEstimadaLlegada: '15:00',
+      vehiculos: 1,
+      mascotas: 1,
+    })
+  })
+
+  it('si el backend rechaza la reserva, muestra por qué y no pierde lo escrito', async () => {
+    laApi({ reservas: [respuesta({
+      estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'El apartamento ya está reservado en esas fechas', detalles: [],
+    }, 409)] })
+    abrir()
+    await screen.findByLabelText('Nombre completo')
+    llenarTitular()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('ya está reservado')
+    expect(screen.getByLabelText('Correo')).toHaveValue('ana@correo.co')
+    expect(screen.getByRole('button', { name: 'Continuar al pago' })).toBeEnabled()
+  })
+
+  it('el pago muestra cuánto y hasta cuándo, las condiciones de cancelación y luego confirma', async () => {
+    const fetch = laApi()
+    abrir()
+    await screen.findByLabelText('Nombre completo')
+    llenarTitular()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })).toHaveFocus()
+    expect(screen.getByText('Pagas ahora').nextElementSibling).toHaveTextContent(/\$\s*60\.000/)
+    expect(screen.getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*140\.000/)
+    const condiciones = await screen.findByRole('region', { name: 'Si necesitas cancelar' })
+    const lineas = within(condiciones).getAllByRole('listitem').map((l) => l.textContent)
+    expect(lineas).toEqual([
+      'Con 48 horas o más de antelación: no se retiene nada.',
+      'Con menos de 48 horas: se retiene el 50 % del total de la reserva.',
+      'Si no llegas: se retiene el 100 % del total de la reserva.',
+    ])
+
+    await userEvent.click(screen.getByRole('button', { name: /^Pagar/ }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: '¡Tu reserva está confirmada!' })).toHaveFocus()
+    expect(screen.getByText('RES-2026-00042')).toBeInTheDocument()
+    expect(cuerpoDe(fetch, '/pago')).toEqual({ tokenPago: 'tok_prueba' })
+  })
+
+  it('un pago rechazado se queda en el paso de pago, dice por qué y se puede reintentar', async () => {
+    const fetch = laApi({ pagos: [
+      respuesta({ estado: 409, codigo: 'PAGO_RECHAZADO', mensaje: 'Fondos insuficientes', detalles: [] }, 409),
+      respuesta(CONFIRMADA),
+    ] })
+    abrir()
+    await screen.findByLabelText('Nombre completo')
+    llenarTitular()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Simular un pago rechazado' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Fondos insuficientes')
+    expect(cuerpoDe(fetch, '/pago')).toEqual({ tokenPago: 'tok_rechazado' })
+    await userEvent.click(screen.getByRole('button', { name: /^Pagar/ }))
+    expect(await screen.findByRole('heading', { level: 1, name: '¡Tu reserva está confirmada!' })).toBeInTheDocument()
+  })
+
+  it('una llegada en el pasado no abre el formulario', async () => {
+    laApi()
+    abrir('adultos=1&ninos=0', fechaDesdeHoy(-1))
+
+    expect(await screen.findByRole('heading', { name: 'Revisa tus fechas' })).toBeInTheDocument()
+  })
+})

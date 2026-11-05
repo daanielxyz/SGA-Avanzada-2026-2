@@ -32,6 +32,13 @@ export interface Alojamiento {
   parametros: {
     /** Desde esta edad, cumplida el día de llegada, se paga (RN-06). */
     umbralEdadFacturable: number
+    /** `HH:mm:ss`: la hora desde la que se puede llegar. */
+    horaEntrada?: string
+    /** RP-02 y RP-03: lo que el huésped puede declarar al reservar. */
+    cupoParqueadero?: number
+    aceptaMascotas?: boolean
+    limiteMascotas?: number
+    cargoMascota?: number
   }
   marca?: Marca | null
 }

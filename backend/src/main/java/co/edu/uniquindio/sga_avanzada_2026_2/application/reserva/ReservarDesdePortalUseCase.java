@@ -40,7 +40,8 @@ public class ReservarDesdePortalUseCase {
     public ReservaPortalResult ejecutar(ReservarDesdePortalCommand comando) {
         pagoEnLinea.exigirHabilitado(cargador.alojamientoDe(cargador.apartamento(comando.apartamento())));
         ReservaResult creada = crearReserva.ejecutar(new CrearReservaCommand(comando.apartamento(), comando.entrada(),
-                comando.salida(), "PORTAL", comando.titular(), comando.ocupantes(), comando.horaEstimadaLlegada()));
+                comando.salida(), "PORTAL", comando.titular(), comando.ocupantes(), comando.horaEstimadaLlegada(),
+                comando.vehiculos(), comando.mascotas()));
         Reserva reserva = cargador.reserva(creada.codigo());
         Alojamiento alojamiento = cargador.alojamientoDe(reserva);
 

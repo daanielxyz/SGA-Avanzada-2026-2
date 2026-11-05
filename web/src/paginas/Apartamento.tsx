@@ -214,6 +214,11 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
           <DesglosePrecio precio={precio} />
         </details>
       )}
+      <Link className="boton accion-principal" aria-disabled={calculando}
+        to={`/apartamentos/${encodeURIComponent(codigo)}/reservar?${new URLSearchParams({ entrada, salida,
+          adultos: String(adultos), ninos: String(ninos) })}`}>
+        Reservar
+      </Link>
     </div>
   )
 }
