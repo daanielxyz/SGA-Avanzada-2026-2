@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useId, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { Estadia } from '../api/apartamentos'
 import { fechaCorta } from '../formato'
 import Calendario from './Calendario'
 
 const ANCHA = '(min-width: 720px)'
+const MARGEN_ABAJO = 16
+const DURACION_ENTRADA_MS = 160 // la de .fechas-panel en index.css; si no hay animación, se ajusta igual
 
 /** Dos meses caben en pantallas anchas; en el celular, uno. */
 function usePantallaAncha() {
@@ -18,7 +20,13 @@ function usePantallaAncha() {
   return ancha
 }
 
+/** Para abrir el calendario desde otro botón de la página, como el de reservar sin fechas. */
+export interface ControlFechas {
+  abrir: () => void
+}
+
 interface Props {
+  ref?: Ref<ControlFechas>
   estadia: Estadia
   alCambiar: (estadia: Estadia) => void
   /** Con un apartamento, el calendario tacha sus noches ocupadas. */
@@ -31,12 +39,40 @@ interface Props {
  * Llegada y salida: dos botones que abren el mismo calendario, con limpiar y cerrar. Se cierra también con Escape o
  * tocando fuera, y el foco vuelve al botón que lo abrió.
  */
-export default function SelectorFechas({ estadia, alCambiar, codigo, alinear = 'inicio' }: Props) {
+export default function SelectorFechas({ ref, estadia, alCambiar, codigo, alinear = 'inicio' }: Props) {
   const id = useId()
   const ancha = usePantallaAncha()
   const [abierto, setAbierto] = useState(false)
   const contenedor = useRef<HTMLDivElement>(null)
   const origen = useRef<HTMLButtonElement | null>(null)
+  const llegada = useRef<HTMLButtonElement | null>(null)
+  const panel = useRef<HTMLDivElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    abrir: () => {
+      origen.current = llegada.current
+      setAbierto(true)
+    },
+  }), [])
+
+  // Que se vea entero sin buscarlo: la página baja lo justo, con un respiro abajo. Se espera a que termine la
+  // animación de entrada, porque mientras dura el panel es más pequeño y la página aún no alcanza a bajar
+  useEffect(() => {
+    const elemento = panel.current
+    if (!abierto || !elemento) return
+    const ajustar = () => {
+      const falta = elemento.getBoundingClientRect().bottom + MARGEN_ABAJO - window.innerHeight
+      if (falta <= 0) return
+      const quieto = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      window.scrollBy?.({ top: falta, behavior: quieto ? 'auto' : 'smooth' })
+    }
+    elemento.addEventListener('animationend', ajustar, { once: true })
+    const sinAnimacion = window.setTimeout(ajustar, DURACION_ENTRADA_MS + 40)
+    return () => {
+      elemento.removeEventListener('animationend', ajustar)
+      window.clearTimeout(sinAnimacion)
+    }
+  }, [abierto])
 
   useEffect(() => {
     if (!abierto) return
@@ -63,6 +99,7 @@ export default function SelectorFechas({ estadia, alCambiar, codigo, alinear = '
     <div className="campo">
       <span className="rotulo-campo" id={`${id}-${rotulo}`}>{rotulo}</span>
       <button type="button" className="fecha-disparador" aria-expanded={abierto} aria-controls={`${id}-panel`}
+        ref={rotulo === 'Llegada' ? llegada : undefined}
         aria-labelledby={`${id}-${rotulo} ${id}-${rotulo}-valor`}
         onClick={(e) => {
           origen.current = e.currentTarget
@@ -85,7 +122,7 @@ export default function SelectorFechas({ estadia, alCambiar, codigo, alinear = '
       {disparador('Llegada', estadia.entrada)}
       {disparador('Salida', estadia.salida)}
       {abierto && (
-        <div id={`${id}-panel`} className="fechas-panel" data-alinear={alinear} role="dialog"
+        <div id={`${id}-panel`} ref={panel} className="fechas-panel" data-alinear={alinear} role="dialog"
           aria-label="Elegir fechas" onKeyDown={alTeclear}>
           <Calendario codigo={codigo} estadia={estadia} alCambiar={alCambiar} mesesVisibles={ancha ? 2 : 1} />
           <div className="fechas-acciones">

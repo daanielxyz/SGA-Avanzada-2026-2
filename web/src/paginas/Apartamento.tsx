@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {
   consultarApartamento,
@@ -10,6 +10,7 @@ import {
 } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import CamposEstancia from '../busqueda/CamposEstancia'
+import type { ControlFechas } from '../fechas/SelectorFechas'
 import { problemaDeEstadia } from '../busqueda/estadia'
 import DesglosePrecio from '../busqueda/DesglosePrecio'
 import Foto from '../busqueda/Foto'
@@ -68,10 +69,12 @@ export default function Apartamento({ umbral }: { umbral: number | null }) {
 
 function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbral: number | null }) {
   const [consulta, setConsulta] = useSearchParams()
-  // Sin fechas en la dirección, abre con su próxima noche libre; si el visitante las limpió, quedan vacías
-  const conFechas = consulta.has('entrada')
-  const entrada = conFechas ? consulta.get('entrada') ?? '' : apartamento.proximaNocheLibre ?? fechaDesdeHoy()
-  const estadia: Estadia = { entrada, salida: conFechas ? consulta.get('salida') ?? '' : masDias(entrada, 1) }
+  // Sin fechas en la dirección, abre con su próxima noche libre y una noche; con solo la llegada, una noche desde
+  // ella. Una fecha vacía en la dirección es que el visitante la limpió o aún no la elige: no se supone otra
+  const entrada = consulta.get('entrada') ?? apartamento.proximaNocheLibre ?? fechaDesdeHoy()
+  const salida = consulta.get('salida') ?? (entrada ? masDias(entrada, 1) : '')
+  const estadia: Estadia = { entrada, salida }
+  const fechas = useRef<ControlFechas>(null)
   const grupo: Grupo = {
     adultos: Math.max(1, Number(consulta.get('adultos')) || 1),
     ninos: Math.max(0, Number(consulta.get('ninos')) || 0),
@@ -108,9 +111,10 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
           <h2 id="titulo-panel">Tus fechas</h2>
           <div className="panel-campos">
             <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} capacidad={apartamento.capacidad}
-              codigo={apartamento.codigo} alinearCalendario="fin" alCambiar={cambiar} />
+              codigo={apartamento.codigo} alinearCalendario="fin" refFechas={fechas} alCambiar={cambiar} />
           </div>
-          <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar} />
+          <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar}
+            alPedirFechas={() => fechas.current?.abrir()} />
         </aside>
         <div className="ficha-detalle">
           {apartamento.descripcion && <p className="descripcion-completa">{apartamento.descripcion}</p>}
@@ -140,10 +144,12 @@ interface PropsPrecio {
   estadia: Estadia
   grupo: Grupo
   alCambiar: (estadia: Estadia, grupo: Grupo) => void
+  /** Sin las dos fechas, el botón de reservar abre el calendario. */
+  alPedirFechas: () => void
 }
 
 /** Se recalcula solo cada vez que cambian las fechas o el grupo. */
-function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPrecio) {
+function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar, alPedirFechas }: PropsPrecio) {
   const [calculo, setCalculo] = useState<Calculo | null>(null)
   const [vuelta, setVuelta] = useState(0)
   const { codigo, capacidad } = apartamento
@@ -176,7 +182,14 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
   }, [codigo, entrada, salida, adultos, ninos, clave, faltanFechas, antesDeLlamar, vuelta])
 
   if (faltanFechas) {
-    return <p className="suave">Elige la llegada y la salida para ver el precio y reservar.</p>
+    return (
+      <div className="precio">
+        <p className="suave">El precio aparece al elegir la llegada y la salida.</p>
+        <button type="button" className="accion-principal" onClick={alPedirFechas}>
+          {entrada ? 'Elige la fecha de salida' : 'Elige tus fechas'}
+        </button>
+      </div>
+    )
   }
   if (antesDeLlamar) {
     return <p role="alert" className="aviso">{antesDeLlamar}</p>

@@ -90,7 +90,9 @@ export default function Calendario({ codigo, estadia, alCambiar, mesesVisibles }
   useEffect(() => {
     if (!moverFoco.current) return
     moverFoco.current = false
-    contenedor.current?.querySelector<HTMLButtonElement>(`[data-fecha="${conTabulador}"]`)?.focus()
+    // Sin desplazar la página: de mostrar el calendario entero se encarga quien lo abre
+    contenedor.current?.querySelector<HTMLButtonElement>(`[data-fecha="${conTabulador}"]`)
+      ?.focus({ preventScroll: true })
   }, [conTabulador, desplazamiento])
 
   const eligiendoSalida = entrada !== '' && salida === ''

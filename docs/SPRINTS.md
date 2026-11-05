@@ -92,6 +92,7 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
 - **web**
   - [ ] Cambio de correo con verificación y edición de los datos de la cuenta (los endpoints ya existen).
   - [ ] Pulir la web: diseño adaptable al celular, textos y mensajes de error.
+  - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
   - [ ] Registro de llegada y corrección del registro.

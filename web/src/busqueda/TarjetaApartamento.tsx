@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import type { ApartamentoPublico, Estadia, Grupo } from '../api/apartamentos'
-import { enPesos, fechaCorta, noches } from '../formato'
+import { enPesos, fechaCorta, noches, masDias } from '../formato'
 import Foto from './Foto'
 
 interface Props {
@@ -93,7 +93,7 @@ function enlace({ codigo, precio }: ApartamentoPublico, busqueda: Props['busqued
   const parametros = busqueda
     ? new URLSearchParams({ ...busqueda.estadia, adultos: String(busqueda.grupo.adultos),
       ninos: String(busqueda.grupo.ninos) })
-    : new URLSearchParams(noche ? { entrada: noche } : {})
+    : new URLSearchParams(noche ? { entrada: noche, salida: masDias(noche, 1) } : {})
   const consulta = parametros.toString()
   return `/apartamentos/${encodeURIComponent(codigo)}${consulta ? `?${consulta}` : ''}`
 }

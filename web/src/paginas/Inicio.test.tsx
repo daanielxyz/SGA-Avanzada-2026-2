@@ -172,7 +172,7 @@ describe('Inicio', () => {
     abrirInicio()
 
     expect(await screen.findByRole('link', { name: 'Suite Jardín' }))
-      .toHaveAttribute('href', '/apartamentos/APT-101?entrada=2026-12-14')
+      .toHaveAttribute('href', '/apartamentos/APT-101?entrada=2026-12-14&salida=2026-12-15')
   })
 
   it('sin foto, o si la foto no carga, queda un recuadro en su lugar y la fila no se desarma', async () => {
