@@ -123,6 +123,48 @@ describe('Reservar', () => {
     expect(screen.queryByLabelText('Nombres de la persona 4')).not.toBeInTheDocument()
   })
 
+  it('una línea de pasos dice dónde va: el actual resaltado y los hechos marcados', async () => {
+    laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    const pasos = screen.getByRole('list', { name: 'Pasos de la reserva' })
+    expect(within(pasos).getAllByRole('listitem').map((p) => p.textContent)).toEqual(['1Tus datos', '2Pago',
+      '3Confirmación'])
+    expect(within(pasos).getByText('Tus datos').closest('li')).toHaveAttribute('aria-current', 'step')
+
+    llenarTitular()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    expect(within(pasos).getByText('Pago').closest('li')).toHaveAttribute('aria-current', 'step')
+    expect(within(pasos).getByText('Tus datos').closest('li')).toHaveTextContent('(hecho)')
+  })
+
+  it('sin salida en la dirección no abre el formulario: pide las fechas', async () => {
+    laApi()
+    render(
+      <MemoryRouter initialEntries={[`/apartamentos/APT-101/reservar?entrada=${ENTRADA}&adultos=1`]}>
+        <Routes>
+          <Route path="/apartamentos/:codigo/reservar" element={<Reservar alojamiento={ALOJAMIENTO} />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Revisa tus fechas' })).toBeInTheDocument()
+    expect(screen.getByText('Elige la llegada y la salida.')).toBeInTheDocument()
+  })
+
+  it('el campo de mascotas no deja pasar del límite del hotel', async () => {
+    laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '5' } })
+
+    expect(screen.getByLabelText('Mascotas')).toHaveValue(2)
+  })
+
   it('si ya no está libre lo dice y permite volver, sin mostrar el formulario', async () => {
     laApi({ estancia: { ...LIBRE, disponible: false } })
     abrir()

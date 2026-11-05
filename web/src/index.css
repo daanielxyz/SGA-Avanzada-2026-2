@@ -894,11 +894,6 @@ button.secundario {
   order: -1;
 }
 
-.paso-actual {
-  margin: 0 0 4px;
-  font-size: var(--texto-sm);
-}
-
 .reservar-principal h1 {
   margin-bottom: 16px;
 }
@@ -1560,13 +1555,10 @@ button.boton-peligro {
 }
 
 /* Calendario de noches libres en la página del apartamento */
-.disponibilidad {
-  margin-top: 32px;
-}
-
 .calendario-ayuda {
-  margin: 0 0 8px;
-  font-size: var(--texto-sm);
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .calendario-navegacion {
@@ -1581,10 +1573,8 @@ button.boton-peligro {
   margin-top: 8px;
 }
 
-@media (min-width: 720px) {
-  .calendario-meses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.calendario-meses[data-meses='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .calendario-mes {
@@ -1655,4 +1645,196 @@ button.boton-peligro {
   .calendario-mes .dia:not([aria-disabled='true']):not(.extremo):hover {
     border-color: var(--texto);
   }
+}
+
+/* Llegada y salida: dos botones con el aspecto de un campo, que abren el calendario */
+.selector-fechas {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 720px) {
+  .busqueda-campos .selector-fechas {
+    grid-column: span 2;
+  }
+}
+
+.rotulo-campo {
+  font-size: var(--texto-sm);
+  font-weight: 500;
+}
+
+.fecha-disparador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--superficie);
+  color: var(--texto);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-pequeno);
+  font-weight: 400;
+  text-align: start;
+  cursor: pointer;
+}
+
+.fecha-disparador[aria-expanded='true'] {
+  border-color: var(--texto);
+  box-shadow: 0 0 0 1px var(--texto);
+}
+
+.fecha-disparador svg {
+  flex: none;
+  color: var(--texto-suave);
+}
+
+.fecha-disparador span {
+  white-space: nowrap;
+}
+
+/* En el celular, el ícono le quita el espacio a la fecha: el botón ya dice qué es */
+@media (max-width: 399px) {
+  .fecha-disparador svg {
+    display: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .fecha-disparador:hover {
+    border-color: var(--texto);
+  }
+}
+
+.fechas-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-mediano);
+  box-shadow: var(--sombra-alta);
+  transform-origin: top center;
+  animation: aparecer-panel 160ms var(--salida-suave);
+}
+
+@media (min-width: 720px) {
+  .fechas-panel {
+    right: auto;
+    width: min(640px, calc(100vw - 2 * var(--margen)));
+    padding: 20px;
+  }
+
+  .fechas-panel[data-alinear='fin'] {
+    left: auto;
+    right: 0;
+    transform-origin: top right;
+  }
+}
+
+@keyframes aparecer-panel {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fechas-panel {
+    animation: none;
+  }
+}
+
+.fechas-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borde);
+}
+
+button.boton-cerrar {
+  padding-inline: 24px;
+  background: var(--acento);
+  color: var(--texto-sobre-acento);
+  font-weight: 600;
+}
+
+/* Los pasos de la reserva: una línea con un círculo por paso */
+.pasos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+
+.paso {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.paso + .paso::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  right: calc(50% + 20px);
+  left: calc(-50% + 20px);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--borde);
+}
+
+.paso-hecho + .paso::before {
+  background: var(--texto);
+}
+
+.paso-circulo {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--borde-campo);
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.paso-hecho .paso-circulo {
+  border-color: var(--texto);
+  background: var(--texto);
+  color: var(--superficie);
+}
+
+.paso-actual .paso-circulo {
+  border-color: var(--texto);
+  background: var(--acento);
+  color: var(--texto-sobre-acento);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--acento) 30%, transparent);
+}
+
+.paso-nombre {
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+}
+
+.paso-actual .paso-nombre {
+  color: var(--texto);
+  font-weight: 600;
 }

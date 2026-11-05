@@ -147,17 +147,13 @@ describe('Inicio', () => {
     expect(screen.getByText('Cargando apartamentos…')).toBeInTheDocument()
   })
 
-  it('hacer clic en cualquier parte de un campo de fecha abre el calendario', async () => {
+  it('las fechas se eligen en el mismo calendario desplegable de la página del apartamento', async () => {
     laApiResponde([200, pagina()])
-    const abrir = vi.fn()
-    HTMLInputElement.prototype.showPicker = abrir // jsdom no lo trae
     abrirInicio()
 
-    await userEvent.click(screen.getByLabelText('Llegada'))
-    await userEvent.click(screen.getByLabelText('Salida'))
+    await userEvent.click(screen.getByRole('button', { name: /^Salida/ }))
 
-    expect(abrir).toHaveBeenCalledTimes(2)
-    Reflect.deleteProperty(HTMLInputElement.prototype, 'showPicker')
+    expect(screen.getByRole('dialog', { name: 'Elegir fechas' })).toBeInTheDocument()
   })
 
   it('sin la edad todavía, los campos de personas no muestran ayuda', () => {
@@ -283,15 +279,17 @@ describe('Inicio', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('La estancia no es válida')
   })
 
-  it('no llama a la API si la salida no es después de la llegada', async () => {
+  it('no busca sin las dos fechas', async () => {
     const fetch = laApiResponde([200, pagina(SUITE)])
     abrirInicio()
     await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
 
-    fireEvent.change(screen.getByLabelText('Salida'), { target: { value: fechaDesdeHoy(1) } })
+    await userEvent.click(screen.getByRole('button', { name: /^Llegada/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar fechas' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
 
-    expect(screen.getByRole('alert')).toHaveTextContent('La salida debe ser al menos un día después de la llegada.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Elige la llegada y la salida.')
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 })

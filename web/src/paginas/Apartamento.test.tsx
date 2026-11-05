@@ -72,8 +72,8 @@ describe('Apartamento', () => {
     expect(screen.getAllByRole('img').map((i) => i.getAttribute('src')))
       .toEqual(['https://cdn.sga.co/suite.jpg', 'https://cdn.sga.co/otra.jpg'])
     expect(screen.getByRole('list', { name: 'Qué incluye' })).toHaveTextContent('BalcónCocinaWifiJacuzzi')
-    expect(screen.getByLabelText('Llegada')).toHaveValue('2026-12-14')
-    expect(screen.getByLabelText('Salida')).toHaveValue('2026-12-15')
+    expect(screen.getByRole('button', { name: /^Llegada/ })).toHaveTextContent('lun, 14 de dic')
+    expect(screen.getByRole('button', { name: /^Salida/ })).toHaveTextContent('mar, 15 de dic')
     expect(screen.getByLabelText('Adultos')).toHaveValue(1)
     expect(await screen.findByText(/por adulto, noche del/)).toHaveTextContent(/\$\s*100\.000 por adulto/)
     expect(urlDeLaLlamada(fetch, 1)).toBe(
@@ -110,8 +110,8 @@ describe('Apartamento', () => {
     expect(await screen.findByText('No está libre en esas fechas.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /Ver desde el/ }))
 
-    expect(screen.getByLabelText('Llegada')).toHaveValue('2026-12-20')
-    expect(screen.getByLabelText('Salida')).toHaveValue('2026-12-22')
+    expect(screen.getByRole('button', { name: /^Llegada/ })).toHaveTextContent('dom, 20 de dic')
+    expect(screen.getByRole('button', { name: /^Salida/ })).toHaveTextContent('mar, 22 de dic')
     expect(await screen.findByText(/por adulto, noche del/)).toBeInTheDocument()
     expect(urlDeLaLlamada(fetch, 2)).toContain('entrada=2026-12-20&salida=2026-12-22')
   })
@@ -167,6 +167,26 @@ describe('Apartamento', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Este apartamento admite hasta 4 personas.')
     expect(urlDeLaLlamada(fetch, 2)).toBeUndefined()
+  })
+
+  it('sin salida no calcula precio ni deja reservar: ninguna fecha se supone', async () => {
+    const fetch = laApiResponde([200, SUITE])
+    abrir('/apartamentos/APT-101?entrada=2026-12-14&salida=')
+
+    expect(await screen.findByText('Elige la llegada y la salida para ver el precio y reservar.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Reservar' })).not.toBeInTheDocument()
+    expect(urlDeLaLlamada(fetch, 1)).toBeUndefined()
+  })
+
+  it('el calendario se abre desde las fechas del panel y tacha las noches ocupadas del apartamento', async () => {
+    laApiResponde([200, SUITE], [200, UNA_NOCHE_LIBRE])
+    abrir('/apartamentos/APT-101')
+    await screen.findByText(/por adulto, noche del/)
+
+    await userEvent.click(screen.getByRole('button', { name: /^Llegada/ }))
+
+    expect(screen.getByRole('dialog', { name: 'Elegir fechas' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Disponibilidad' })).not.toBeInTheDocument()
   })
 
   it('un apartamento que no existe o ya no se vende dice que no lo encontramos', async () => {

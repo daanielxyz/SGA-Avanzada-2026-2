@@ -8,7 +8,6 @@ import {
   type Estadia,
   type Grupo,
 } from '../api/apartamentos'
-import CalendarioDisponibilidad from '../apartamento/CalendarioDisponibilidad'
 import { ErrorApi } from '../api/cliente'
 import CamposEstancia from '../busqueda/CamposEstancia'
 import { problemaDeEstadia } from '../busqueda/estadia'
@@ -69,8 +68,10 @@ export default function Apartamento({ umbral }: { umbral: number | null }) {
 
 function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbral: number | null }) {
   const [consulta, setConsulta] = useSearchParams()
-  const entrada = consulta.get('entrada') ?? apartamento.proximaNocheLibre ?? fechaDesdeHoy()
-  const estadia: Estadia = { entrada, salida: consulta.get('salida') ?? masDias(entrada, 1) }
+  // Sin fechas en la dirección, abre con su próxima noche libre; si el visitante las limpió, quedan vacías
+  const conFechas = consulta.has('entrada')
+  const entrada = conFechas ? consulta.get('entrada') ?? '' : apartamento.proximaNocheLibre ?? fechaDesdeHoy()
+  const estadia: Estadia = { entrada, salida: conFechas ? consulta.get('salida') ?? '' : masDias(entrada, 1) }
   const grupo: Grupo = {
     adultos: Math.max(1, Number(consulta.get('adultos')) || 1),
     ninos: Math.max(0, Number(consulta.get('ninos')) || 0),
@@ -107,7 +108,7 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
           <h2 id="titulo-panel">Tus fechas</h2>
           <div className="panel-campos">
             <CamposEstancia estadia={estadia} grupo={grupo} umbral={umbral} capacidad={apartamento.capacidad}
-              alCambiar={cambiar} />
+              codigo={apartamento.codigo} alinearCalendario="fin" alCambiar={cambiar} />
           </div>
           <PrecioDeLaEstancia apartamento={apartamento} estadia={estadia} grupo={grupo} alCambiar={cambiar} />
         </aside>
@@ -123,11 +124,6 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
               </ul>
             </>
           )}
-          <section aria-labelledby="titulo-disponibilidad" className="disponibilidad">
-            <h2 id="titulo-disponibilidad">Disponibilidad</h2>
-            <CalendarioDisponibilidad codigo={apartamento.codigo} estadia={estadia}
-              alCambiar={(e) => cambiar(e, grupo)} />
-          </section>
         </div>
       </div>
     </main>
@@ -149,15 +145,24 @@ interface PropsPrecio {
 /** Se recalcula solo cada vez que cambian las fechas o el grupo. */
 function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPrecio) {
   const [calculo, setCalculo] = useState<Calculo | null>(null)
+  const [vuelta, setVuelta] = useState(0)
   const { codigo, capacidad } = apartamento
   const { entrada, salida } = estadia
   const { adultos, ninos } = grupo
   const clave = `${codigo}|${entrada}|${salida}|${adultos}|${ninos}`
-  const antesDeLlamar = problemaDeEstadia(estadia)
+  const faltanFechas = !entrada || !salida
+  const antesDeLlamar = faltanFechas ? null : problemaDeEstadia(estadia)
     ?? (adultos + ninos > capacidad ? `Este apartamento admite hasta ${capacidad} personas.` : null)
 
+  // Al volver a la pestaña se recalcula: una reserva pudo vencer o tomarse mientras tanto
   useEffect(() => {
-    if (antesDeLlamar) return
+    const alVolver = () => document.visibilityState === 'visible' && setVuelta((v) => v + 1)
+    document.addEventListener('visibilitychange', alVolver)
+    return () => document.removeEventListener('visibilitychange', alVolver)
+  }, [])
+
+  useEffect(() => {
+    if (faltanFechas || antesDeLlamar) return
     let vigente = true // si cambian las fechas antes de que responda, se ignora la respuesta vieja
     consultarEstancia(codigo, { entrada, salida }, { adultos, ninos })
       .then((estancia) => vigente && setCalculo({ estado: 'listo', clave, estancia }))
@@ -168,8 +173,11 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar }: PropsPre
     return () => {
       vigente = false
     }
-  }, [codigo, entrada, salida, adultos, ninos, clave, antesDeLlamar])
+  }, [codigo, entrada, salida, adultos, ninos, clave, faltanFechas, antesDeLlamar, vuelta])
 
+  if (faltanFechas) {
+    return <p className="suave">Elige la llegada y la salida para ver el precio y reservar.</p>
+  }
   if (antesDeLlamar) {
     return <p role="alert" className="aviso">{antesDeLlamar}</p>
   }

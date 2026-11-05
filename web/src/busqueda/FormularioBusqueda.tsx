@@ -38,7 +38,11 @@ export default function FormularioBusqueda({ buscando, filtrando, umbral, alBusc
     <form className="busqueda" data-abierta={abierta} onSubmit={enviar} noValidate>
       <button type="button" className="busqueda-resumen" aria-expanded={abierta} aria-controls="busqueda-campos"
         onClick={() => setAbierta((a) => !a)}>
-        <span>{filtrando ? `${fechaCorta(estadia.entrada)} a ${fechaCorta(estadia.salida)}` : '¿Cuándo vienes?'}</span>
+        <span>
+          {filtrando && estadia.entrada && estadia.salida
+            ? `${fechaCorta(estadia.entrada)} a ${fechaCorta(estadia.salida)}`
+            : '¿Cuándo vienes?'}
+        </span>
         <span className="suave">
           {personas} {personas === 1 ? 'persona' : 'personas'}
         </span>

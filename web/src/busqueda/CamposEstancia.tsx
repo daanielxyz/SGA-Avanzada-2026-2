@@ -1,6 +1,5 @@
-import type { MouseEvent } from 'react'
 import type { Estadia, Grupo } from '../api/apartamentos'
-import { fechaDesdeHoy, masDias } from '../formato'
+import SelectorFechas from '../fechas/SelectorFechas'
 
 interface Props {
   estadia: Estadia
@@ -11,30 +10,20 @@ interface Props {
   capacidad?: number
   /** La tecla Enter del teclado del celular: «buscar» en el filtro, «listo» en la página del apartamento. */
   teclaEnter?: 'search' | 'done'
+  /** En la página de un apartamento: el calendario tacha sus noches ocupadas. */
+  codigo?: string
+  /** Hacia qué lado crece el calendario en pantallas anchas. */
+  alinearCalendario?: 'inicio' | 'fin'
   alCambiar: (estadia: Estadia, grupo: Grupo) => void
 }
 
 /** Llegada, salida, adultos y niños: los mismos campos en la búsqueda y en la página de cada apartamento. */
-export default function CamposEstancia({ estadia, grupo, umbral, capacidad, teclaEnter = 'done', alCambiar }: Props) {
-  const hoy = fechaDesdeHoy()
-
-  // Si la llegada alcanza la salida, la salida se corre para conservar al menos una noche
-  function cambiarEntrada(entrada: string) {
-    alCambiar({ entrada, salida: estadia.salida > entrada ? estadia.salida : masDias(entrada, 1) }, grupo)
-  }
-
+export default function CamposEstancia({ estadia, grupo, umbral, capacidad, teclaEnter = 'done', codigo,
+  alinearCalendario, alCambiar }: Props) {
   return (
     <>
-      <label>
-        Llegada
-        <input type="date" value={estadia.entrada} min={hoy} required onClick={abrirCalendario}
-          onChange={(e) => cambiarEntrada(e.target.value)} />
-      </label>
-      <label>
-        Salida
-        <input type="date" value={estadia.salida} min={masDias(estadia.entrada, 1)} required onClick={abrirCalendario}
-          onChange={(e) => alCambiar({ ...estadia, salida: e.target.value }, grupo)} />
-      </label>
+      <SelectorFechas estadia={estadia} codigo={codigo} alinear={alinearCalendario}
+        alCambiar={(nueva) => alCambiar(nueva, grupo)} />
       <CampoPersonas
         nombre="Adultos"
         ayuda={umbral === null ? null : `${umbral} años o más`}
@@ -55,15 +44,6 @@ export default function CamposEstancia({ estadia, grupo, umbral, capacidad, tecl
       />
     </>
   )
-}
-
-// Todo el campo abre el calendario, no solo su ícono. Sin showPicker en el navegador, queda el comportamiento normal
-function abrirCalendario(evento: MouseEvent<HTMLInputElement>) {
-  try {
-    evento.currentTarget.showPicker?.()
-  } catch {
-    // El navegador puede negarlo (por ejemplo, dentro de un iframe); el ícono sigue funcionando
-  }
 }
 
 interface PropsCampo {
