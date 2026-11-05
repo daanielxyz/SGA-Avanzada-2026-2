@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaConTitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -14,13 +15,19 @@ import java.util.List;
  * @param salida     exclusiva: esa noche no se ocupa (EST-01)
  * @param valor      el desglose congelado al crear o modificar (RN-22)
  * @param politicaId la versión de la política de cancelación que aceptó el huésped
+ * @param vehiculos  carros y motos, que ocupan el mismo cupo (RP-02)
+ * @param extras     lo que suman parqueadero y mascotas, aparte de {@code valor} (DEC-89)
  * @param titularNombre solo en el listado de recepción y en el detalle; en las demás respuestas, nulo
  */
 public record ReservaResponse(String codigo, String apartamento, String titularId, LocalDate entrada,
                               LocalDate salida, String estado, String canalOrigen,
                               List<OcupanteResponse> ocupantes, LocalTime horaEstimadaLlegada,
                               CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
-                              String avisoCuenta, int vehiculos, int mascotas, String titularNombre) {
+                              String avisoCuenta, int vehiculos, int mascotas, String titularNombre, int carros,
+                              int motos, ExtrasResponse extras) {
+
+    public record ExtrasResponse(BigDecimal parqueadero, BigDecimal mascotas, BigDecimal total) {
+    }
 
     public record OcupanteResponse(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                    String numeroDocumento, String nacionalidad) {
@@ -42,6 +49,7 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                                 o.numeroDocumento(), o.nacionalidad()))
                         .toList(),
                 r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
-                r.avisoCuenta(), r.vehiculos(), r.mascotas(), titularNombre);
+                r.avisoCuenta(), r.vehiculos(), r.mascotas(), titularNombre, r.carros(), r.motos(),
+                new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()));
     }
 }

@@ -82,7 +82,17 @@ public record ParametrosRequest(
         Integer limiteMascotas,
 
         @DecimalMin(value = "0", message = "no puede ser negativo")
-        BigDecimal cargoMascota) {
+        BigDecimal cargoMascota,
+
+        // Opcionales (DEC-89): sin ellos, el parqueadero no se cobra
+        @Pattern(regexp = "POR_NOCHE|POR_ESTADIA", message = "debe ser POR_NOCHE o POR_ESTADIA")
+        String cobroParqueadero,
+
+        @DecimalMin(value = "0", message = "no puede ser negativo")
+        BigDecimal cargoCarro,
+
+        @DecimalMin(value = "0", message = "no puede ser negativo")
+        BigDecimal cargoMoto) {
 
     CambiarParametrosAlojamientoCommand aCommand(String alojamientoId) {
         return new CambiarParametrosAlojamientoCommand(alojamientoId, new ParametrosCommand(umbralEdadFacturable,
@@ -90,6 +100,9 @@ public record ParametrosRequest(
                 anticipoPct, minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
                 minimoTramosCancelacion, minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLineaMinutos,
                 Optional.ofNullable(cupoParqueadero).orElse(0), Boolean.TRUE.equals(aceptaMascotas),
-                Optional.ofNullable(limiteMascotas).orElse(0), Optional.ofNullable(cargoMascota).orElse(BigDecimal.ZERO)));
+                Optional.ofNullable(limiteMascotas).orElse(0), Optional.ofNullable(cargoMascota).orElse(BigDecimal.ZERO),
+                Optional.ofNullable(cobroParqueadero).orElse("POR_NOCHE"),
+                Optional.ofNullable(cargoCarro).orElse(BigDecimal.ZERO),
+                Optional.ofNullable(cargoMoto).orElse(BigDecimal.ZERO)));
     }
 }

@@ -42,7 +42,10 @@ final class AlojamientoMapper {
                 jpa.getCupoParqueadero(),
                 jpa.isAceptaMascotas(),
                 jpa.getLimiteMascotas(),
-                new Dinero(jpa.getCargoMascota()));
+                new Dinero(jpa.getCargoMascota()),
+                jpa.getCobroParqueadero(),
+                new Dinero(jpa.getCargoCarro()),
+                new Dinero(jpa.getCargoMoto()));
         return new Alojamiento(
                 new AlojamientoId(jpa.getId()),
                 jpa.getNombre(),
@@ -100,6 +103,9 @@ final class AlojamientoMapper {
         jpa.setAceptaMascotas(p.aceptaMascotas());
         jpa.setLimiteMascotas(p.limiteMascotas());
         jpa.setCargoMascota(p.cargoMascota().monto());
+        jpa.setCobroParqueadero(p.cobroParqueadero());
+        jpa.setCargoCarro(p.cargoCarro().monto());
+        jpa.setCargoMoto(p.cargoMoto().monto());
         copiarMarca(alojamiento.marca(), jpa);
         jpa.getServiciosAdicionales().clear();
         alojamiento.serviciosAdicionales().forEach(s -> jpa.getServiciosAdicionales().add(new ServicioAdicionalJpa(

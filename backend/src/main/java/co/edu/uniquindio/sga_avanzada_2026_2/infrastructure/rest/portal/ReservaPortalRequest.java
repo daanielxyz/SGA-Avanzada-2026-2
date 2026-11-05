@@ -41,14 +41,17 @@ public record ReservaPortalRequest(
 
         // Opcionales: sin ellos, ni vehículos ni mascotas (RP-02 · RP-03)
         @Min(value = 0, message = "no puede ser negativo")
-        Integer vehiculos,
+        Integer carros,
+
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer motos,
 
         @Min(value = 0, message = "no puede ser negativo")
         Integer mascotas) {
 
     ReservarDesdePortalCommand aCommand() {
         return new ReservarDesdePortalCommand(apartamento, entrada, salida, titular.aCommand(),
-                OcupanteRequest.aCommands(ocupantes), Optional.ofNullable(vehiculos).orElse(0),
-                Optional.ofNullable(mascotas).orElse(0));
+                OcupanteRequest.aCommands(ocupantes), Optional.ofNullable(carros).orElse(0),
+                Optional.ofNullable(motos).orElse(0), Optional.ofNullable(mascotas).orElse(0));
     }
 }

@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojamiento;
 
 import java.math.BigDecimal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.CobroParqueadero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -70,6 +71,13 @@ public class AlojamientoJpa {
     private int limiteMascotas;
 
     private BigDecimal cargoMascota;
+
+    @Enumerated(EnumType.STRING)
+    private CobroParqueadero cobroParqueadero;
+
+    private BigDecimal cargoCarro;
+
+    private BigDecimal cargoMoto;
 
     private String marcaColorFondo;
     private String marcaColorSuperficie;

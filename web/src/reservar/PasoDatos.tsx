@@ -1,9 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import type { Alojamiento } from '../api/alojamiento'
 import type { Estadia, Grupo, Precio } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
-import { cotizar, reservar, type ReservaApartada, type TipoDocumento } from '../api/reservas'
-import { enPesos, fechaDesdeHoy, horaDelDia } from '../formato'
+import { cotizar, reservar, type Extras, type ReservaApartada, type TipoDocumento } from '../api/reservas'
+import { enPesos, fechaDesdeHoy, horaDelDia, noches } from '../formato'
 import CampoTelefono from './CampoTelefono'
 
 interface Props {
@@ -14,8 +14,8 @@ interface Props {
   /** Lo que se le mostró al buscar, con los adultos y niños que dijo. */
   precioBuscado: Precio
   alCambiarPrecio: (precio: Precio) => void
-  /** Lo que suman las mascotas al total. */
-  alCambiarCargos: (cargos: number) => void
+  /** Lo que suman el parqueadero y las mascotas al total. */
+  alCambiarExtras: (extras: Extras) => void
   alReservar: (apartada: ReservaApartada) => void
 }
 
@@ -40,7 +40,7 @@ const nombreCompleto = ({ nombres, apellidos }: Persona) => `${nombres.trim()} $
  * total se recalcula con la regla real (RN-06): si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
  */
 export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioBuscado, alCambiarPrecio,
-  alCambiarCargos, alReservar }: Props) {
+  alCambiarExtras, alReservar }: Props) {
   const hoy = fechaDesdeHoy()
   const [personas, setPersonas] = useState<Persona[]>(() =>
     Array.from({ length: grupo.adultos + grupo.ninos }, () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
@@ -48,7 +48,8 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
   const [numeroDocumento, setNumeroDocumento] = useState('')
   const [correo, setCorreo] = useState('')
   const [telefono, setTelefono] = useState('')
-  const [vehiculos, setVehiculos] = useState(0)
+  const [carros, setCarros] = useState(0)
+  const [motos, setMotos] = useState(0)
   const [mascotas, setMascotas] = useState(0)
   const [precioReal, setPrecioReal] = useState<Precio | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -57,7 +58,13 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
   const parametros = alojamiento?.parametros
   const cargoMascota = parametros?.cargoMascota ?? 0
   const { entrada, salida } = estadia
-  const cargos = Math.min(mascotas, parametros?.limiteMascotas ?? 0) * cargoMascota
+  const cargoCarro = parametros?.cargoCarro ?? 0
+  const cargoMoto = parametros?.cargoMoto ?? 0
+  const porNoche = parametros?.cobroParqueadero !== 'POR_ESTADIA'
+  // Solo para mostrarlo mientras escribe: lo que se cobra lo calcula el backend al crear la reserva (DEC-89)
+  const porParqueadero = (carros * cargoCarro + motos * cargoMoto) * (porNoche ? noches(entrada, salida) : 1)
+  const porMascotas = Math.min(mascotas, parametros?.limiteMascotas ?? 0) * cargoMascota
+  const totalExtras = porParqueadero + porMascotas
   const fechas = personas.map((p) => p.fechaNacimiento)
   const fechasListas = fechas.every((f) => f !== '' && f <= hoy)
   const claveFechas = fechasListas ? fechas.join('|') : null
@@ -79,7 +86,9 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
     }
   }, [codigo, entrada, salida, claveFechas, alCambiarPrecio])
 
-  useEffect(() => alCambiarCargos(cargos), [cargos, alCambiarCargos])
+  useEffect(() => {
+    alCambiarExtras({ parqueadero: porParqueadero, mascotas: porMascotas, total: porParqueadero + porMascotas })
+  }, [porParqueadero, porMascotas, alCambiarExtras])
 
   function cambiarPersona(indice: number, cambio: Partial<Persona>) {
     setPersonas((actuales) => actuales.map((p, i) => (i === indice ? { ...p, ...cambio } : p)))
@@ -99,7 +108,8 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
           { nombre: nombreCompleto(titular), fechaNacimiento: titular.fechaNacimiento, tipoDocumento, numeroDocumento },
           ...acompanantes.map((p) => ({ nombre: nombreCompleto(p), fechaNacimiento: p.fechaNacimiento })),
         ],
-        vehiculos,
+        carros,
+        motos,
         mascotas,
       }))
     } catch (error) {
@@ -167,26 +177,21 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
         )}
         {hayExtras && (
           <details className="extras">
-            <summary>¿Traes carro o mascota?</summary>
+            <summary>¿Traes vehículo o mascota?</summary>
             <div className="campos">
               {(parametros?.cupoParqueadero ?? 0) > 0 && (
-                <label>
-                  Carros
-                  <input type="number" inputMode="numeric" min={0} value={vehiculos}
-                    onChange={(e) => setVehiculos(Math.max(0, Number(e.target.value) || 0))} />
-                </label>
+                <>
+                  <CampoCantidad nombre="Carros" valor={carros} alCambiar={setCarros}
+                    ayuda={ayudaParqueadero(cargoCarro, porNoche)} />
+                  <CampoCantidad nombre="Motos" valor={motos} alCambiar={setMotos}
+                    ayuda={ayudaParqueadero(cargoMoto, porNoche)} />
+                </>
               )}
               {parametros?.aceptaMascotas && (
-                <div className="campo">
-                  <label htmlFor="mascotas">Mascotas</label>
-                  <input id="mascotas" type="number" inputMode="numeric" min={0} max={parametros.limiteMascotas}
-                    value={mascotas} aria-describedby="mascotas-ayuda"
-                    onChange={(e) => setMascotas(Math.max(0, Number(e.target.value) || 0))} />
-                  <span id="mascotas-ayuda" className="ayuda">
-                    Hasta {parametros.limiteMascotas}
-                    {cargoMascota > 0 && `; cada una suma ${enPesos(cargoMascota)} a tu total y se paga al llegar`}
-                  </span>
-                </div>
+                <CampoCantidad nombre="Mascotas" valor={mascotas} alCambiar={setMascotas}
+                  maximo={parametros.limiteMascotas}
+                  ayuda={`Hasta ${parametros.limiteMascotas}${cargoMascota > 0
+                    ? `; cada una suma ${enPesos(cargoMascota)} a tu total, una sola vez` : ''}`} />
               )}
             </div>
           </details>
@@ -195,7 +200,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
 
       {cambio && (
         <p className="aviso-cambio" role="status">
-          Tu total cambió a <strong>{enPesos(cambio.total + cargos)}</strong>: según las fechas de
+          Tu total cambió a <strong>{enPesos(cambio.total + totalExtras)}</strong>: según las fechas de
           nacimiento, pagan {pagan} {pagan === 1 ? 'persona' : 'personas'}. La edad que cuenta es la del día de
           llegada.
         </p>
@@ -210,6 +215,33 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
         {enviando ? 'Apartando tu reserva…' : 'Continuar al pago'}
       </button>
     </form>
+  )
+}
+
+// DEC-89: gratis no necesita explicación
+function ayudaParqueadero(cargo: number, porNoche: boolean) {
+  if (cargo <= 0) return undefined
+  return `Cada uno suma ${enPesos(cargo)} ${porNoche ? 'por noche' : 'por toda la estadía'}`
+}
+
+interface PropsCantidad {
+  nombre: string
+  valor: number
+  maximo?: number
+  ayuda?: string
+  alCambiar: (valor: number) => void
+}
+
+function CampoCantidad({ nombre, valor, maximo, ayuda, alCambiar }: PropsCantidad) {
+  const id = useId()
+  return (
+    <div className="campo">
+      <label htmlFor={id}>{nombre}</label>
+      <input id={id} type="number" inputMode="numeric" min={0} max={maximo} value={valor}
+        aria-describedby={ayuda ? `${id}-ayuda` : undefined}
+        onChange={(e) => alCambiar(Math.max(0, Number(e.target.value) || 0))} />
+      {ayuda && <span id={`${id}-ayuda`} className="ayuda">{ayuda}</span>}
+    </div>
   )
 }
 

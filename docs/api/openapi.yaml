@@ -3181,6 +3181,14 @@ components:
           format: date-time
         avisoCuenta:
           type: string
+        carros:
+          type: integer
+          format: int32
+        motos:
+          type: integer
+          format: int32
+        extras:
+          "$ref": "#/components/schemas/ExtrasResponse"
         vehiculos:
           type: integer
           format: int32
@@ -3555,6 +3563,15 @@ components:
       required:
         - latitud
         - longitud
+    ExtrasResponse:
+      type: object
+      properties:
+        parqueadero:
+          type: number
+        mascotas:
+          type: number
+        total:
+          type: number
     AlojamientoResponse:
       type: object
       properties:
@@ -3694,6 +3711,12 @@ components:
           format: int32
         cargoMascota:
           type: number
+        cobroParqueadero:
+          type: string
+        cargoCarro:
+          type: number
+        cargoMoto:
+          type: number
     ServicioResponse:
       type: object
       properties:
@@ -3783,6 +3806,15 @@ components:
           format: int32
           minimum: 0
         cargoMascota:
+          type: number
+          minimum: 0
+        cobroParqueadero:
+          type: string
+          pattern: POR_NOCHE|POR_ESTADIA
+        cargoCarro:
+          type: number
+          minimum: 0
+        cargoMoto:
           type: number
           minimum: 0
       required:
@@ -4041,7 +4073,17 @@ components:
         horaEstimadaLlegada:
           type: string
           format: time-local
+        carros:
+          type: integer
+          format: int32
+          minimum: 0
+        motos:
+          type: integer
+          format: int32
+          minimum: 0
         vehiculos:
+          deprecated: true
+          description: Cuenta como carros; usar carros y motos (DEC-89)
           type: integer
           format: int32
           minimum: 0
@@ -4184,7 +4226,11 @@ components:
           items:
             "$ref": "#/components/schemas/OcupanteRequest"
           minItems: 1
-        vehiculos:
+        carros:
+          type: integer
+          format: int32
+          minimum: 0
+        motos:
           type: integer
           format: int32
           minimum: 0
@@ -4208,8 +4254,6 @@ components:
         pagarAntesDe:
           type: string
           format: date-time
-        cargosAdicionales:
-          type: number
     PagoEnLineaRequest:
       type: object
       properties:

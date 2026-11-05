@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
@@ -64,6 +65,36 @@ public class Folio {
      */
     public CargoId agregarServicioAdicional(String concepto, Dinero valor, LocalDate fecha) {
         return agregar(TipoCargo.SERVICIO_ADICIONAL, concepto, valor, null, fecha, null);
+    }
+
+    /**
+     * Carga lo que la reserva suma por parqueadero y mascotas; lo que no cuesta no genera cargo (RP-02 · RP-03 ·
+     * DEC-89).
+     *
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07)
+     */
+    public void cargarExtras(Extras extras, LocalDate fecha) {
+        if (extras.parqueadero().esPositivo()) {
+            agregarServicioAdicional("Parqueadero", extras.parqueadero(), fecha);
+        }
+        if (extras.mascotas().esPositivo()) {
+            agregarServicioAdicional("Mascotas", extras.mascotas(), fecha);
+        }
+    }
+
+    /**
+     * Anula los extras de una reserva cancelada, vencida o con no-show: no se usaron, así que lo pagado por ellos
+     * queda a favor y recepción registra la devolución (PAG-06 · DEC-89).
+     *
+     * @param motivo «cancelación», «vencimiento» o «no-show»
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07)
+     */
+    public void anularExtras(Extras extras, String motivo, LocalDate fecha) {
+        if (extras.total().esPositivo()) {
+            validarAbierto();
+            agregar(TipoCargo.AJUSTE, "Anulación de extras por " + motivo, extras.total(), SentidoAjuste.DISMINUYE,
+                    fecha, null);
+        }
     }
 
     /**

@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -18,7 +20,8 @@ interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String>, JpaSpe
 
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
 
-    List<ReservaJpa> findByEstadoInAndVehiculosGreaterThan(Collection<EstadoReserva> estados, int vehiculos);
+    @Query("select r from ReservaJpa r where r.estado in :estados and (r.carros > 0 or r.motos > 0)")
+    List<ReservaJpa> buscarConVehiculos(@Param("estados") Collection<EstadoReserva> estados);
 
     Optional<ReservaJpa> findByCanalIdAndIdExterno(String canalId, String idExterno);
 

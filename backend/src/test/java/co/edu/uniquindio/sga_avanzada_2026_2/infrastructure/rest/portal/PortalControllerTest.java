@@ -74,7 +74,7 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.reserva.canalOrigen").value("PORTAL"))
                 .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("15:00:00"))
                 .andExpect(jsonPath("$.montoAPagar").value(120000))
-                .andExpect(jsonPath("$.cargosAdicionales").value(0))
+                .andExpect(jsonPath("$.reserva.extras.total").value(0))
                 .andExpect(jsonPath("$.pagarAntesDe").exists());
     }
 
@@ -126,14 +126,65 @@ class PortalControllerTest extends PruebaRestDeReservas {
     @Tag("RP-02")
     @Tag("RP-03")
     void elPortalDeclaraVehiculosYMascotasYSusReglasSeAplican() throws Exception {
-        String conExtras = reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 0,");
-        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": -1"))
+        String conExtras = reservaDelPortal().replaceFirst("\\{", "{\n  \"carros\": 1,\n  \"mascotas\": 0,");
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"carros\": 1", "\"carros\": -1"))
                 .andExpect(status().isBadRequest());
-        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": 99"))
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"carros\": 1", "\"carros\": 99"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
         pedir(post("/api/portal/reservas"), conExtras.replace("\"mascotas\": 0", "\"mascotas\": 99"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Tag("DEC-89")
+    void elAnticipoIncluyeElParqueaderoPorNocheYModificarLoRecalcula() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "cupoParqueadero": 5, "aceptaMascotas": true, "limiteMascotas": 1,
+                  "cargoMascota": 30000, "cobroParqueadero": "POR_NOCHE", "cargoCarro": 15000, "cargoMoto": 8000
+                }
+                """)).andExpect(status().isOk());
+
+        String respuesta = pedir(post("/api/portal/reservas"), reservaDelPortal().replaceFirst("\\{",
+                "{\n  \"carros\": 1,\n  \"motos\": 1,\n  \"mascotas\": 1,"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.carros").value(1))
+                .andExpect(jsonPath("$.reserva.motos").value(1))
+                .andExpect(jsonPath("$.reserva.vehiculos").value(2))
+                .andExpect(jsonPath("$.reserva.valor.total").value(400000))
+                .andExpect(jsonPath("$.reserva.extras.parqueadero").value(46000)) // (15.000 + 8.000) × 2 noches
+                .andExpect(jsonPath("$.reserva.extras.mascotas").value(30000))
+                .andExpect(jsonPath("$.montoAPagar").value(142800)) // 30 % de 476.000
+                .andReturn().getResponse().getContentAsString();
+        String codigo = JsonPath.read(respuesta, "$.reserva.codigo");
+
+        mvc.perform(put("/api/reservas/" + codigo + "/modificar").contentType(MediaType.APPLICATION_JSON)
+                        .content(reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(8))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.extras.parqueadero").value(69000)) // ahora son 3 noches
+                .andExpect(jsonPath("$.extras.mascotas").value(30000));
+    }
+
+    @Test
+    @Tag("DEC-89")
+    void unCobroDeParqueaderoDesconocidoSeRechaza() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "cobroParqueadero": "POR_MES", "cargoCarro": -1
+                }
+                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("cobroParqueadero: debe ser POR_NOCHE o POR_ESTADIA")))
+                .andExpect(jsonPath("$.detalles").value(hasItem("cargoCarro: no puede ser negativo")));
     }
 
     @Test
@@ -152,11 +203,12 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 """)).andExpect(status().isOk());
 
         pedir(post("/api/portal/reservas"),
-                reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 1,"))
+                reservaDelPortal().replaceFirst("\\{", "{\n  \"carros\": 1,\n  \"mascotas\": 1,"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reserva.vehiculos").value(1))
                 .andExpect(jsonPath("$.reserva.mascotas").value(1))
-                .andExpect(jsonPath("$.cargosAdicionales").value(30000));
+                .andExpect(jsonPath("$.reserva.extras.mascotas").value(30000))
+                .andExpect(jsonPath("$.montoAPagar").value(129000));
     }
 
     @Test

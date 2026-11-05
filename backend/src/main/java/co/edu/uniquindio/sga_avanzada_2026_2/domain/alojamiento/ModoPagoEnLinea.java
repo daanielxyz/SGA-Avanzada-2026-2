@@ -8,19 +8,19 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
  */
 public enum ModoPagoEnLinea {
 
-    /** El porcentaje de anticipo del alojamiento sobre el valor congelado (RES-15). */
+    /** El porcentaje de anticipo del alojamiento sobre el valor congelado con sus extras (RES-15 · DEC-89). */
     ANTICIPO {
         @Override
-        public Dinero exigido(Dinero valorTotal, Porcentaje anticipo) {
-            return valorTotal.porcentaje(anticipo);
+        public Dinero exigido(Dinero valorConExtras, Porcentaje anticipo) {
+            return valorConExtras.porcentaje(anticipo);
         }
     },
 
-    /** Toda la estancia. */
+    /** Toda la estancia y sus extras. */
     TOTAL {
         @Override
-        public Dinero exigido(Dinero valorTotal, Porcentaje anticipo) {
-            return valorTotal;
+        public Dinero exigido(Dinero valorConExtras, Porcentaje anticipo) {
+            return valorConExtras;
         }
     };
 
@@ -29,5 +29,5 @@ public enum ModoPagoEnLinea {
      *
      * @param anticipo {@code ParametrosAlojamiento.anticipo}
      */
-    public abstract Dinero exigido(Dinero valorTotal, Porcentaje anticipo);
+    public abstract Dinero exigido(Dinero valorConExtras, Porcentaje anticipo);
 }

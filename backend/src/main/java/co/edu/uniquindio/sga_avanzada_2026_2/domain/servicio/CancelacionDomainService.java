@@ -56,6 +56,7 @@ public class CancelacionDomainService {
         validarFolio(reserva, folio);
         reserva.expirar(ahora, parametros.plazoParaConfirmar(reserva.canalOrigen()));
         folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "vencimiento", ahora.toLocalDate());
+        folio.anularExtras(reserva.extras(), "vencimiento", ahora.toLocalDate());
     }
 
     // RN-13 · FOL-02: la retención sale de la política que el huésped aceptó, nunca de la vigente
@@ -75,13 +76,14 @@ public class CancelacionDomainService {
         }
     }
 
-    // DEC-41 · DEC-43
+    // DEC-41 · DEC-43 · DEC-89: se retiene solo sobre la estancia; los extras se anulan y lo pagado por ellos se devuelve
     static Dinero liquidar(Reserva reserva, Folio folio, Penalizacion penalizacion, ParametrosAlojamiento parametros,
                            String motivo, LocalDateTime ahora) {
         Dinero valorTotal = reserva.valorTotal();
-        Dinero retenido = penalizacion.calcular(valorTotal, folio.totalPagado(),
+        Dinero retenido = penalizacion.calcular(valorTotal, reserva.pagadoPorLaEstancia(folio.totalPagado()),
                 valorTotal.porcentaje(parametros.anticipo()));
         folio.liquidarPenalidad(valorTotal, retenido, motivo, ahora.toLocalDate());
+        folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
         return retenido;
     }
 }

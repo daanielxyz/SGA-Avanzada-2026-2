@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Capacidad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -16,6 +17,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 
 import java.time.Duration;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -46,8 +48,10 @@ public class Reserva {
     private List<LineaCotizacion> desglose;  // congelado, por noche
     private final PoliticaId politicaVersionId; // congelada
     private final LocalDateTime creadaEn;       // desde aquí corre el plazo de confirmación (RN-21)
-    private int vehiculos;                      // RP-02
+    private int carros;                         // RP-02
+    private int motos;                          // RP-02
     private int mascotas;                       // RP-03
+    private Extras extras;                      // congelados; DEC-89
 
     // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · REG-06 · SAL-01
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
@@ -59,12 +63,24 @@ public class Reserva {
                 salida, horaEstimadaLlegada, valorTotal, desglose, politicaVersionId, creadaEn, 0, 0);
     }
 
-    // Reconstrucción con lo que la reserva declaró de vehículos y mascotas (RP-02 · RP-03)
+    // Con vehículos y mascotas sin cobro, para lo que no usa esas reglas
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
                    EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
                    List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
                    LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
                    PoliticaId politicaVersionId, LocalDateTime creadaEn, int vehiculos, int mascotas) {
+        this(codigo, apartamentoId, titularId, estancia, estado, canalOrigen, canalId, idExterno, ocupantes, registros,
+                salida, horaEstimadaLlegada, valorTotal, desglose, politicaVersionId, creadaEn, vehiculos, 0, mascotas,
+                Extras.NINGUNO);
+    }
+
+    // Reconstrucción con lo que la reserva declaró de vehículos y mascotas y lo que cuestan (RP-02 · RP-03 · DEC-89)
+    public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
+                   EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
+                   List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
+                   LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
+                   PoliticaId politicaVersionId, LocalDateTime creadaEn, int carros, int motos, int mascotas,
+                   Extras extras) {
         if (codigo == null || apartamentoId == null || titularId == null || estancia == null || estado == null
                 || canalOrigen == null || ocupantes == null || registros == null || valorTotal == null
                 || desglose == null || politicaVersionId == null || creadaEn == null) {
@@ -95,31 +111,72 @@ public class Reserva {
         this.desglose = List.copyOf(desglose);
         this.politicaVersionId = politicaVersionId;
         this.creadaEn = creadaEn;
-        validarDeclarados(vehiculos, mascotas);
-        this.vehiculos = vehiculos;
+        validarDeclarados(carros, motos, mascotas, extras);
+        this.carros = carros;
+        this.motos = motos;
         this.mascotas = mascotas;
+        this.extras = extras;
     }
 
     /**
-     * Anota cuántos vehículos y mascotas lleva la reserva. Que quepan en el parqueadero (RP-02) lo verifica antes
-     * {@code CupoParqueaderoDomainService}, y que se acepten (RP-03), {@code ParametrosAlojamiento.exigirMascotas}.
+     * Anota los vehículos y mascotas de la reserva y congela lo que cuestan (DEC-89). Que quepan en el parqueadero
+     * (RP-02) lo verifica antes {@code CupoParqueaderoDomainService}, y que se acepten (RP-03),
+     * {@code ParametrosAlojamiento.exigirMascotas}.
      *
-     * @throws ReglaDominioException si alguna cantidad es negativa
+     * @param nuevosExtras de {@code ParametrosAlojamiento.calcularExtras}
+     * @throws ReglaDominioException si alguna cantidad es negativa o faltan los extras
      */
-    public void declararVehiculosYMascotas(int nuevosVehiculos, int nuevasMascotas) {
-        validarDeclarados(nuevosVehiculos, nuevasMascotas);
-        vehiculos = nuevosVehiculos;
+    public void declararExtras(int nuevosCarros, int nuevasMotos, int nuevasMascotas, Extras nuevosExtras) {
+        validarDeclarados(nuevosCarros, nuevasMotos, nuevasMascotas, nuevosExtras);
+        carros = nuevosCarros;
+        motos = nuevasMotos;
         mascotas = nuevasMascotas;
+        extras = nuevosExtras;
     }
 
-    private static void validarDeclarados(int vehiculos, int mascotas) {
-        if (vehiculos < 0 || mascotas < 0) {
+    private static void validarDeclarados(int carros, int motos, int mascotas, Extras extras) {
+        if (carros < 0 || motos < 0 || mascotas < 0) {
             throw new ReglaDominioException("Los vehículos y las mascotas de la reserva no pueden ser negativos");
+        }
+        if (extras == null) {
+            throw new ReglaDominioException("Faltan los extras de la reserva");
         }
     }
 
+    public int carros() {
+        return carros;
+    }
+
+    public int motos() {
+        return motos;
+    }
+
+    /** Carros y motos ocupan el mismo cupo (RP-02). */
     public int vehiculos() {
-        return vehiculos;
+        return carros + motos;
+    }
+
+    public Extras extras() {
+        return extras;
+    }
+
+    /** La estancia y sus extras: la base del anticipo (RES-15 · DEC-89). */
+    public Dinero valorConExtras() {
+        return valorTotal.sumar(extras.total());
+    }
+
+    /**
+     * La parte de lo pagado que corresponde a la estancia, repartida en proporción a su valor: la retención por
+     * cancelación o no-show no alcanza a los extras (DEC-89).
+     *
+     * @param pagado total pagado en el folio de la reserva
+     */
+    public Dinero pagadoPorLaEstancia(Dinero pagado) {
+        if (!extras.total().esPositivo()) {
+            return pagado;
+        }
+        return new Dinero(pagado.monto().multiply(valorTotal.monto())
+                .divide(valorConExtras().monto(), 0, RoundingMode.HALF_UP));
     }
 
     public int mascotas() {
@@ -210,7 +267,7 @@ public class Reserva {
 
     /**
      * Pasa de PENDIENTE a CONFIRMADA (RN-08). Exige la hora estimada de llegada (RN-09) y, si el alojamiento pide
-     * anticipo, que los pagos cubran ese porcentaje del valor congelado (RES-15).
+     * anticipo, que los pagos cubran ese porcentaje del valor congelado con sus extras (RES-15 · DEC-89).
      *
      * @param anticipo {@code ParametrosAlojamiento.anticipo}; 0 = no se exige
      * @param pagado   total pagado en el folio de la reserva
@@ -224,7 +281,7 @@ public class Reserva {
         if (horaEstimadaLlegada == null) {
             throw new ReglaDominioException("La reserva necesita hora estimada de llegada para confirmarse");
         }
-        Dinero exigido = valorTotal.porcentaje(anticipo);
+        Dinero exigido = valorConExtras().porcentaje(anticipo); // DEC-89
         if (pagado.esMenorQue(exigido)) {
             throw new ReglaDominioException("El pago (" + pagado.monto() + ") no cubre el anticipo exigido ("
                     + exigido.monto() + ")");

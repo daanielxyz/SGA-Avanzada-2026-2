@@ -82,7 +82,7 @@ public class AvisosReserva {
                 + "Entrada: " + reserva.estancia().entrada() + "\n"
                 + "Salida: " + reserva.estancia().salida() + "\n"
                 + "Personas: " + reserva.ocupantes().size() + "\n"
-                + "Valor total: $" + pesos(reserva.valorTotal()) + "\n"
+                + "Valor total: $" + pesos(reserva.valorConExtras()) + "\n"
                 + "Estado: " + reserva.estado() + "\n";
     }
 

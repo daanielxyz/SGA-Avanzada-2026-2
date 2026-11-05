@@ -23,18 +23,26 @@ export interface SolicitudReserva {
     tipoDocumento?: TipoDocumento
     numeroDocumento?: string
   }[]
-  vehiculos: number
+  carros: number
+  motos: number
   mascotas: number
 }
 
+/** Lo que suman parqueadero y mascotas a la estadía (DEC-89). */
+export interface Extras {
+  parqueadero: number
+  mascotas: number
+  total: number
+}
+
+export const SIN_EXTRAS: Extras = { parqueadero: 0, mascotas: 0, total: 0 }
+
 /** `ReservaPortalResponse`: la reserva apartada y lo que falta para confirmarla (DEC-69). */
 export interface ReservaApartada {
-  reserva: { codigo: string; valor: Precio; avisoCuenta: string | null }
+  reserva: { codigo: string; valor: Precio; avisoCuenta: string | null; extras: Extras }
   montoAPagar: number
   /** Hora de Colombia; si no se paga antes, la reserva vence. */
   pagarAntesDe: string
-  /** Lo que se suma a la estancia y se paga al llegar: hoy, las mascotas (RP-03). */
-  cargosAdicionales: number
 }
 
 /** `PagoPortalResponse`. */

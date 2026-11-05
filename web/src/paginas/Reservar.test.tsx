@@ -35,8 +35,9 @@ const LIBRE: EstanciaPortal = { disponible: true, precio: precio(1), proximaNoch
 const ALOJAMIENTO: Alojamiento = {
   nombre: 'Hotel de Prueba',
   parametros: {
-    umbralEdadFacturable: 12, horaEntrada: '15:00:00', horaSalida: '11:00:00', cupoParqueadero: 5, aceptaMascotas: true, limiteMascotas: 2,
-    cargoMascota: 30000,
+    umbralEdadFacturable: 12, horaEntrada: '15:00:00', horaSalida: '11:00:00', cupoParqueadero: 5,
+    aceptaMascotas: true, limiteMascotas: 2,
+    cargoMascota: 30000, cobroParqueadero: 'POR_NOCHE', cargoCarro: 15000, cargoMoto: 8000,
   },
 }
 
@@ -49,10 +50,11 @@ const POLITICA = {
 }
 
 const APARTADA = {
-  reserva: { codigo: 'RES-2026-00042', valor: precio(1), avisoCuenta: null },
+  reserva: {
+    codigo: 'RES-2026-00042', valor: precio(1), avisoCuenta: null, extras: { parqueadero: 0, mascotas: 0, total: 0 },
+  },
   montoAPagar: 60000,
   pagarAntesDe: `${ENTRADA}T15:30:00`,
-  cargosAdicionales: 0,
 }
 
 const CONFIRMADA = {
@@ -176,7 +178,8 @@ describe('Reservar', () => {
       titular: { nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co',
         telefono: '+573001234567' },
       ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-05-01', tipoDocumento: 'CC', numeroDocumento: '1094' }],
-      vehiculos: 1,
+      carros: 1,
+      motos: 0,
       mascotas: 1,
     })
   })
@@ -191,23 +194,76 @@ describe('Reservar', () => {
     expect(screen.queryByLabelText(/hora/i)).not.toBeInTheDocument()
   })
 
-  it('las mascotas suben el total del resumen y al pagar se dice que van al llegar', async () => {
-    laApi({ reservas: [respuesta({ ...APARTADA, montoAPagar: 200000, cargosAdicionales: 30000 }, 201)] })
+  it('parqueadero y mascotas suben el total, y al pagar el anticipo y el resto ya los incluyen', async () => {
+    laApi({ reservas: [respuesta({
+      ...APARTADA,
+      reserva: { ...APARTADA.reserva, extras: { parqueadero: 46000, mascotas: 30000, total: 76000 } },
+      montoAPagar: 82800,
+    }, 201)] })
     abrir()
     await screen.findByLabelText('Nombres')
     llenarTitular()
+    fireEvent.change(screen.getByLabelText('Carros'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Motos'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '1' } })
 
     const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
-    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*230\.000/)
-    expect(screen.getByLabelText('Mascotas')).toHaveAccessibleDescription(/se paga al llegar/)
+    expect(within(resumen).getByText('Parqueadero').nextElementSibling).toHaveTextContent(/\$\s*46\.000/)
+    expect(within(resumen).getByText('Mascotas').nextElementSibling).toHaveTextContent(/\$\s*30\.000/)
+    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*276\.000/)
+    expect(screen.getByLabelText('Carros')).toHaveAccessibleDescription(/\$\s*15\.000 por noche/)
+    expect(screen.getByLabelText('Motos')).toHaveAccessibleDescription(/\$\s*8\.000 por noche/)
 
     await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
     await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
 
-    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*230\.000/)
-    expect(screen.getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*30\.000/)
-    expect(screen.getByText(/Lo de las mascotas/)).toBeInTheDocument()
+    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*276\.000/)
+    expect(screen.getByText('Pagas ahora').nextElementSibling).toHaveTextContent(/\$\s*82\.800/)
+    expect(screen.getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*193\.200/)
+  })
+
+  it('si el hotel cobra el parqueadero por estadía, no lo multiplica por las noches', async () => {
+    laApi()
+    render(
+      <MemoryRouter initialEntries={[`/apartamentos/APT-101/reservar?entrada=${ENTRADA}&salida=${SALIDA}`]}>
+        <Routes>
+          <Route path="/apartamentos/:codigo/reservar" element={(
+            <Reservar alojamiento={{
+              ...ALOJAMIENTO,
+              parametros: { ...ALOJAMIENTO.parametros, cobroParqueadero: 'POR_ESTADIA' },
+            }} />
+          )} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await screen.findByLabelText('Nombres')
+    fireEvent.change(screen.getByLabelText('Carros'), { target: { value: '2' } })
+
+    const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
+    expect(within(resumen).getByText('Parqueadero').nextElementSibling).toHaveTextContent(/\$\s*30\.000/)
+    expect(screen.getByLabelText('Carros')).toHaveAccessibleDescription(/por toda la estadía/)
+  })
+
+  it('un hotel con parqueadero gratis no muestra precio ni línea en el resumen', async () => {
+    laApi()
+    render(
+      <MemoryRouter initialEntries={[`/apartamentos/APT-101/reservar?entrada=${ENTRADA}&salida=${SALIDA}`]}>
+        <Routes>
+          <Route path="/apartamentos/:codigo/reservar" element={(
+            <Reservar alojamiento={{
+              ...ALOJAMIENTO,
+              parametros: { ...ALOJAMIENTO.parametros, cargoCarro: 0, cargoMoto: 0 },
+            }} />
+          )} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await screen.findByLabelText('Nombres')
+    fireEvent.change(screen.getByLabelText('Carros'), { target: { value: '1' } })
+
+    const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
+    expect(within(resumen).queryByText('Parqueadero')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Carros')).not.toHaveAccessibleDescription()
   })
 
   it('el teléfono arranca en Colombia y se puede buscar otro país, que cambia el prefijo enviado', async () => {

@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserv
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
@@ -54,8 +55,10 @@ final class ReservaMapper {
                         .toList(),
                 new PoliticaId(jpa.getPoliticaVersionId()),
                 jpa.getCreadaEn(),
-                jpa.getVehiculos(),
-                jpa.getMascotas());
+                jpa.getCarros(),
+                jpa.getMotos(),
+                jpa.getMascotas(),
+                new Extras(new Dinero(jpa.getExtrasParqueadero()), new Dinero(jpa.getExtrasMascotas())));
     }
 
     /**
@@ -76,7 +79,10 @@ final class ReservaMapper {
         jpa.setValorTotal(reserva.valorTotal().monto());
         jpa.setPoliticaVersionId(reserva.politicaVersionId().valor());
         jpa.setCreadaEn(reserva.creadaEn());
-        jpa.setVehiculos(reserva.vehiculos());
+        jpa.setCarros(reserva.carros());
+        jpa.setMotos(reserva.motos());
+        jpa.setExtrasParqueadero(reserva.extras().parqueadero().monto());
+        jpa.setExtrasMascotas(reserva.extras().mascotas().monto());
         jpa.setMascotas(reserva.mascotas());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),

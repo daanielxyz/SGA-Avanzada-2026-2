@@ -8,12 +8,14 @@ import java.time.LocalDate;
 /**
  * Respuesta de {@code POST /api/portal/reservas/{codigo}/pago}: lo justo para confirmarle el pago a quien paga. Este
  * endpoint es público y los códigos son consecutivos, así que no lleva ocupantes, documentos ni datos del titular.
+ *
+ * @param total la estancia con sus extras (DEC-89)
  */
 public record PagoPortalResponse(String codigo, String estado, String apartamento, LocalDate entrada,
                                  LocalDate salida, BigDecimal total) {
 
     static PagoPortalResponse de(ReservaResult r) {
         return new PagoPortalResponse(r.codigo(), r.estado(), r.apartamento(), r.entrada(), r.salida(),
-                r.valor().total());
+                r.valor().total().add(r.extras().total()));
     }
 }

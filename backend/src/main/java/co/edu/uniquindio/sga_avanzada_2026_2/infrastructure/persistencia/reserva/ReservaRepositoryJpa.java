@@ -60,7 +60,7 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     @Override
     @Transactional(readOnly = true)
     public List<Reserva> buscarActivasConVehiculos() {
-        return filas.findByEstadoInAndVehiculosGreaterThan(ACTIVOS, 0).stream()
+        return filas.buscarConVehiculos(ACTIVOS).stream()
                 .map(ReservaMapper::aDominio)
                 .toList();
     }
