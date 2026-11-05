@@ -60,7 +60,8 @@ describe('App', () => {
     abrir('/')
 
     expect(await screen.findByRole('heading', { name: 'Reserva tu estadía' })).toBeInTheDocument()
-    expect(screen.queryByRole('banner')).toBeEmptyDOMElement()
+    expect(screen.getByRole('banner').querySelector('.marca')).toBeNull()
+    expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
     expect(document.title).toBe('Reservas')
   })
 

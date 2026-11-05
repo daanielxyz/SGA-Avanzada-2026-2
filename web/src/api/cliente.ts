@@ -1,5 +1,6 @@
 // Única puerta de la web hacia la API: toda llamada pasa por aquí para que los errores se traten igual en todas
 // las pantallas.
+import { leerSesion, perderSesion } from '../sesion/almacen'
 
 /** Cuerpo uniforme de los errores del backend (`ErrorResponse`, DEC-33). */
 export interface ErrorRespuesta {
@@ -38,23 +39,30 @@ const BASE = import.meta.env.VITE_API_URL ?? ''
  * Llama a la API y devuelve el JSON de la respuesta.
  *
  * @param ruta     empieza por /api, por ejemplo `/api/apartamentos/disponibles?...`
- * @param opciones lo mismo que acepta `fetch`; si trae `cuerpo`, se envía como JSON
- * @throws ErrorApi con el error del backend, o con `SIN_CONEXION` si no respondió o no respondió JSON
+ * @param opciones lo mismo que acepta `fetch`; si trae `cuerpo`, se envía como JSON. Con `conSesion`, envía el token
+ *                 del huésped: solo esas llamadas lo llevan, porque un token vencido haría fallar hasta lo público
+ * @throws ErrorApi con el error del backend, o con `SIN_CONEXION` si no respondió o no respondió JSON. Un 401 con
+ *                  sesión además la borra, para que la pantalla pida entrar de nuevo
  */
-export async function pedir<T>(ruta: string, opciones: RequestInit & { cuerpo?: unknown } = {}): Promise<T> {
-  const { cuerpo, headers, ...resto } = opciones
+export async function pedir<T>(ruta: string,
+  opciones: RequestInit & { cuerpo?: unknown; conSesion?: boolean } = {}): Promise<T> {
+  const { cuerpo, conSesion, headers, ...resto } = opciones
+  const token = conSesion ? leerSesion()?.token : undefined
   let respuesta: Response
   try {
     respuesta = await fetch(BASE + ruta, {
       ...resto,
       headers: { Accept: 'application/json', ...(cuerpo === undefined ? {} : { 'Content-Type': 'application/json' }),
-        ...headers },
+        ...(token ? { Authorization: `Bearer ${token}` } : {}), ...headers },
       body: cuerpo === undefined ? resto.body : JSON.stringify(cuerpo),
     })
   } catch {
     throw new ErrorApi(SIN_CONEXION)
   }
 
+  if (respuesta.status === 401 && token) {
+    perderSesion()
+  }
   if (respuesta.status === 204) {
     return undefined as T
   }

@@ -4,8 +4,13 @@ import { consultarAlojamiento, type Alojamiento } from './api/alojamiento'
 import Encabezado from './Encabezado'
 import { aplicarMarca } from './marca'
 import Apartamento from './paginas/Apartamento'
+import DetalleReserva from './paginas/DetalleReserva'
+import Entrar from './paginas/Entrar'
 import Inicio from './paginas/Inicio'
+import MiCuenta from './paginas/MiCuenta'
+import MisReservas from './paginas/MisReservas'
 import NoEncontrada from './paginas/NoEncontrada'
+import { ProveedorSesion, RutasDeHuesped } from './sesion/Sesion'
 
 // Sus banderas y datos de teléfono pesan: solo se descargan al entrar a reservar
 const Reservar = lazy(() => import('./paginas/Reservar'))
@@ -36,7 +41,7 @@ export default function App() {
   const umbral = alojamiento?.parametros.umbralEdadFacturable ?? null
 
   return (
-    <>
+    <ProveedorSesion>
       <Encabezado nombre={alojamiento?.nombre ?? null} logoUrl={alojamiento?.marca?.logoUrl} />
       <Routes>
         <Route path="/" element={<Inicio alojamiento={alojamiento} />} />
@@ -46,8 +51,14 @@ export default function App() {
             <Reservar alojamiento={alojamiento} />
           </Suspense>
         )} />
+        <Route path="/entrar" element={<Entrar />} />
+        <Route element={<RutasDeHuesped />}>
+          <Route path="/mi-cuenta" element={<MiCuenta />} />
+          <Route path="/mis-reservas" element={<MisReservas />} />
+          <Route path="/mis-reservas/:codigo" element={<DetalleReserva alojamiento={alojamiento} />} />
+        </Route>
         <Route path="*" element={<NoEncontrada />} />
       </Routes>
-    </>
+    </ProveedorSesion>
   )
 }
