@@ -79,7 +79,7 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
 ## Sprint 2 · 3 – 6 nov (lunes festivo) · «Reservar»
 Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confirma reservas directas sin papel.
 - **web**
-  - [ ] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación.
+  - [x] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación (`feature/web/reservar`, DEC-88).
   - [ ] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas».
 - **pms**
   - [x] Tablero de ocupación por apartamento y fechas (`GET /api/ocupacion`, DEC-86; `feature/pms/tablero-ocupacion`).

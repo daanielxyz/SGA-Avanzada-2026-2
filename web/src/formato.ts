@@ -13,6 +13,22 @@ export function fechaCorta(fecha: string) {
   return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
+/** «2026-12-20T15:30:00» → «dom, 20 de dic a las 3:30 p. m.», sin mover la hora: ya viene en hora de Colombia. */
+export function fechaHora(momento: string) {
+  const [fecha, hora] = momento.split('T')
+  const [horas, minutos] = hora.split(':').map(Number)
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  const textoHora = new Date(anio, mes - 1, dia, horas, minutos)
+    .toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+  return `${fechaCorta(fecha)} a las ${textoHora}`
+}
+
+/** «15:00:00» → «3:00 p. m.». */
+export function horaDelDia(hora: string) {
+  const [horas, minutos] = hora.split(':').map(Number)
+  return new Date(2000, 0, 1, horas, minutos).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+}
+
 /** La fecha de hoy, más los días dados, en el formato de los campos de fecha (`AAAA-MM-DD`). */
 export function fechaDesdeHoy(dias = 0) {
   const fecha = new Date()

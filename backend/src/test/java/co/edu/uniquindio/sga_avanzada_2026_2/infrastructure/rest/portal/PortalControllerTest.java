@@ -47,10 +47,10 @@ class PortalControllerTest extends PruebaRestDeReservas {
         return visitante.perform(peticion.contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
-    /** La reserva de {@link PruebaRestDeReservas}, sin canal y con la hora de llegada. */
+    /** La reserva de {@link PruebaRestDeReservas}, sin canal. */
     private static String reservaDelPortal() {
         return reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(7))
-                .replace("  \"canalOrigen\": \"DIRECTO\",\n", "  \"horaEstimadaLlegada\": \"16:00\",\n");
+                .replace("  \"canalOrigen\": \"DIRECTO\",\n", "");
     }
 
     private String reservar() throws Exception {
@@ -72,8 +72,9 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(header().string("Location", containsString("/api/reservas/RES-")))
                 .andExpect(jsonPath("$.reserva.estado").value("PENDIENTE"))
                 .andExpect(jsonPath("$.reserva.canalOrigen").value("PORTAL"))
-                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("16:00:00"))
+                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("15:00:00"))
                 .andExpect(jsonPath("$.montoAPagar").value(120000))
+                .andExpect(jsonPath("$.cargosAdicionales").value(0))
                 .andExpect(jsonPath("$.pagarAntesDe").exists());
     }
 
@@ -95,6 +96,67 @@ class PortalControllerTest extends PruebaRestDeReservas {
         pagar(codigo, "tok_visa")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("DEC-69")
+    void elPagoNoRevelaLosDatosDeLaReservaAQuienSoloTieneElCodigo() throws Exception {
+        pagar(reservar(), "tok_visa")
+                .andExpect(jsonPath("$.codigo").exists())
+                .andExpect(jsonPath("$.apartamento").value("APT-101"))
+                .andExpect(jsonPath("$.total").value(400000))
+                .andExpect(jsonPath("$.ocupantes").doesNotExist())
+                .andExpect(jsonPath("$.titularId").doesNotExist())
+                .andExpect(jsonPath("$.titularNombre").doesNotExist());
+    }
+
+    @Test
+    @Tag("DEC-41")
+    void cualquieraVeLaPoliticaDeCancelacionAntesDePagar() throws Exception {
+        visitante.perform(get("/api/portal/politica"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tramos").isNotEmpty())
+                .andExpect(jsonPath("$.tramos[0].antelacionMinHoras").exists())
+                .andExpect(jsonPath("$.tramos[0].penalizacion.base").exists())
+                .andExpect(jsonPath("$.penalizacionNoShow.base").exists())
+                .andExpect(jsonPath("$.alojamientoId").doesNotExist());
+    }
+
+    @Test
+    @Tag("RP-02")
+    @Tag("RP-03")
+    void elPortalDeclaraVehiculosYMascotasYSusReglasSeAplican() throws Exception {
+        String conExtras = reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 0,");
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": -1"))
+                .andExpect(status().isBadRequest());
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"vehiculos\": 1", "\"vehiculos\": 99"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        pedir(post("/api/portal/reservas"), conExtras.replace("\"mascotas\": 0", "\"mascotas\": 99"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Tag("RP-02")
+    @Tag("RP-03")
+    void conParqueaderoYMascotasPermitidosLaReservaLosGuarda() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "cupoParqueadero": 2, "aceptaMascotas": true, "limiteMascotas": 1,
+                  "cargoMascota": 30000
+                }
+                """)).andExpect(status().isOk());
+
+        pedir(post("/api/portal/reservas"),
+                reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 1,"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.vehiculos").value(1))
+                .andExpect(jsonPath("$.reserva.mascotas").value(1))
+                .andExpect(jsonPath("$.cargosAdicionales").value(30000));
     }
 
     @Test
@@ -127,14 +189,20 @@ class PortalControllerTest extends PruebaRestDeReservas {
 
     @Test
     @Tag("RN-09")
-    @Tag("DEC-68")
-    void elPortalPideLaHoraDeLlegadaYElContactoDelTitular() throws Exception {
-        String sinHora = reservaDelPortal().replace("  \"horaEstimadaLlegada\": \"16:00\",\n", "")
-                .replace(", \"telefono\": \"300 123 4567\"", "");
+    void laHoraDeLlegadaEsLaDeEntradaDelHotelAunqueElPedidoTraigaOtra() throws Exception {
+        pedir(post("/api/portal/reservas"),
+                reservaDelPortal().replaceFirst("\\{", "{\n  \"horaEstimadaLlegada\": \"23:00\","))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("15:00:00"));
+    }
 
-        pedir(post("/api/portal/reservas"), sinHora)
+    @Test
+    @Tag("DEC-68")
+    void elPortalPideElContactoDelTitular() throws Exception {
+        String sinTelefono = reservaDelPortal().replace(", \"telefono\": \"300 123 4567\"", "");
+
+        pedir(post("/api/portal/reservas"), sinTelefono)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detalles").value(hasItem("horaEstimadaLlegada: es obligatoria")))
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular.telefono: es obligatorio")));
         pagar("RES-2026-99999", "tok_visa").andExpect(status().isNotFound());
         pedir(post("/api/portal/reservas/RES-2026-99999/pago"), "{}")

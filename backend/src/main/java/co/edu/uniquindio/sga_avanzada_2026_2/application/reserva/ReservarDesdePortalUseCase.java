@@ -1,11 +1,13 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PagoEnLineaDomainService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
@@ -38,15 +40,20 @@ public class ReservarDesdePortalUseCase {
      */
     @Transactional
     public ReservaPortalResult ejecutar(ReservarDesdePortalCommand comando) {
-        pagoEnLinea.exigirHabilitado(cargador.alojamientoDe(cargador.apartamento(comando.apartamento())));
+        Alojamiento delApartamento = cargador.alojamientoDe(cargador.apartamento(comando.apartamento()));
+        pagoEnLinea.exigirHabilitado(delApartamento);
+        // RN-09: pagar confirma la reserva y confirmar exige la hora; en el portal es la de entrada del hotel
         ReservaResult creada = crearReserva.ejecutar(new CrearReservaCommand(comando.apartamento(), comando.entrada(),
-                comando.salida(), "PORTAL", comando.titular(), comando.ocupantes(), comando.horaEstimadaLlegada()));
+                comando.salida(), "PORTAL", comando.titular(), comando.ocupantes(),
+                delApartamento.parametros().horaEntrada(), comando.vehiculos(), comando.mascotas()));
         Reserva reserva = cargador.reserva(creada.codigo());
         Alojamiento alojamiento = cargador.alojamientoDe(reserva);
 
         return new ReservaPortalResult(creada,
                 pagoEnLinea.montoACobrar(reserva, cargador.folioDe(reserva), alojamiento, LocalDateTime.now(reloj))
                         .monto(),
-                reserva.venceEn(alojamiento.parametros().plazoParaConfirmar(reserva.canalOrigen())));
+                reserva.venceEn(alojamiento.parametros().plazoParaConfirmar(reserva.canalOrigen())),
+                alojamiento.parametros().cargoPorMascotas(reserva.mascotas()).map(Dinero::monto)
+                        .orElse(BigDecimal.ZERO));
     }
 }

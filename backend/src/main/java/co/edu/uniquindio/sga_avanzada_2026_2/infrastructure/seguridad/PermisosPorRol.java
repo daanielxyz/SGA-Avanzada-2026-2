@@ -51,7 +51,8 @@ final class PermisosPorRol {
                 // Buscar y cotizar en el portal, sin cuenta: solo datos públicos y un cálculo que no guarda nada
                 // (CU-07 · CU-08 · CU-09 · equipo web)
                 .requestMatchers(HttpMethod.GET, "/api/portal/apartamentos", "/api/portal/apartamentos/disponibles",
-                        "/api/portal/apartamentos/{codigo}", "/api/portal/apartamentos/{codigo}/estancia").permitAll()
+                        "/api/portal/apartamentos/{codigo}", "/api/portal/apartamentos/{codigo}/estancia",
+                        "/api/portal/politica").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/cotizaciones").permitAll()
 
                 // El contrato del canal no usa usuario: cada mensaje trae la clave del canal, que revisa
