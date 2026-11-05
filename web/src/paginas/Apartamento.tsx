@@ -8,6 +8,7 @@ import {
   type Estadia,
   type Grupo,
 } from '../api/apartamentos'
+import CalendarioDisponibilidad from '../apartamento/CalendarioDisponibilidad'
 import { ErrorApi } from '../api/cliente'
 import CamposEstancia from '../busqueda/CamposEstancia'
 import { problemaDeEstadia } from '../busqueda/estadia'
@@ -122,6 +123,11 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
               </ul>
             </>
           )}
+          <section aria-labelledby="titulo-disponibilidad" className="disponibilidad">
+            <h2 id="titulo-disponibilidad">Disponibilidad</h2>
+            <CalendarioDisponibilidad codigo={apartamento.codigo} estadia={estadia}
+              alCambiar={(e) => cambiar(e, grupo)} />
+          </section>
         </div>
       </div>
     </main>

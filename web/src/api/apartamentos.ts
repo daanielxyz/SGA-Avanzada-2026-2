@@ -79,6 +79,18 @@ export function consultarApartamento(codigo: string) {
   return pedir<ApartamentoPublico>(`/api/portal/apartamentos/${encodeURIComponent(codigo)}`)
 }
 
+/** `NocheCalendarioResponse`: si una noche se puede vender; no dice quién reservó (CU-08). */
+export interface NocheCalendario {
+  fecha: string
+  libre: boolean
+}
+
+/** @param hasta exclusiva, como la salida de una estancia */
+export function consultarCalendario(codigo: string, desde: string, hasta: string) {
+  return pedir<NocheCalendario[]>(
+    `/api/apartamentos/${encodeURIComponent(codigo)}/calendario?${new URLSearchParams({ desde, hasta })}`)
+}
+
 export function consultarEstancia(codigo: string, estadia: Estadia, grupo: Grupo) {
   return pedir<EstanciaPortal>(
     `/api/portal/apartamentos/${encodeURIComponent(codigo)}/estancia?${consulta(estadia, grupo)}`)

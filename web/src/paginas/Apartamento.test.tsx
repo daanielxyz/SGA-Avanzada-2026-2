@@ -32,18 +32,23 @@ const UNA_NOCHE_LIBRE: EstanciaPortal = {
   proximaNocheLibre: '2026-12-14',
 }
 
-/** La API simulada responde, en orden, lo que se le pase: un cuerpo JSON y su estado HTTP. */
+/**
+ * La API simulada responde, en orden, lo que se le pase: un cuerpo JSON y su estado HTTP. El calendario de noches
+ * libres se contesta aparte (todas libres), para que su llamada no corra el orden de las demás.
+ */
 function laApiResponde(...respuestas: [number, unknown][]) {
-  const fetch = vi.fn()
-  for (const [estado, cuerpo] of respuestas) {
-    fetch.mockResolvedValueOnce(new Response(JSON.stringify(cuerpo), { status: estado }))
-  }
+  const pendientes = [...respuestas]
+  const fetch = vi.fn((ruta: string) => {
+    if (ruta.includes('/calendario?')) return Promise.resolve(new Response('[]', { status: 200 }))
+    const [estado, cuerpo] = pendientes.shift() ?? [500, {}]
+    return Promise.resolve(new Response(JSON.stringify(cuerpo), { status: estado }))
+  })
   vi.stubGlobal('fetch', fetch)
   return fetch
 }
 
 function urlDeLaLlamada(fetch: ReturnType<typeof vi.fn>, n: number) {
-  return (fetch.mock.calls[n] as [string])[0]
+  return (fetch.mock.calls as [string][]).map(([ruta]) => ruta).filter((r) => !r.includes('/calendario?'))[n]
 }
 
 function abrir(direccion: string) {
@@ -130,11 +135,14 @@ describe('Apartamento', () => {
 
   it('al cambiar los datos deja el precio anterior atenuado hasta que llega el nuevo, sin saltar', async () => {
     const laNueva: { responder?: (r: Response) => void } = {}
-    const fetch = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify(SUITE)))
-      .mockResolvedValueOnce(new Response(JSON.stringify(UNA_NOCHE_LIBRE)))
-      .mockReturnValueOnce(new Promise<Response>((resolver) => { laNueva.responder = resolver }))
-    vi.stubGlobal('fetch', fetch)
+    const enOrden = [
+      Promise.resolve(new Response(JSON.stringify(SUITE))),
+      Promise.resolve(new Response(JSON.stringify(UNA_NOCHE_LIBRE))),
+      new Promise<Response>((resolver) => { laNueva.responder = resolver }),
+    ]
+    vi.stubGlobal('fetch', vi.fn((ruta: string) => (ruta.includes('/calendario?')
+      ? Promise.resolve(new Response('[]'))
+      : enOrden.shift())))
     abrir('/apartamentos/APT-101')
     await screen.findByText(/por adulto, noche del/)
 
@@ -158,7 +166,7 @@ describe('Apartamento', () => {
     fireEvent.change(screen.getByLabelText('Adultos'), { target: { value: '5' } })
 
     expect(screen.getByRole('alert')).toHaveTextContent('Este apartamento admite hasta 4 personas.')
-    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(urlDeLaLlamada(fetch, 2)).toBeUndefined()
   })
 
   it('un apartamento que no existe o ya no se vende dice que no lo encontramos', async () => {
