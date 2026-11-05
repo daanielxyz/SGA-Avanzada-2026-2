@@ -169,13 +169,31 @@ describe('Apartamento', () => {
     expect(urlDeLaLlamada(fetch, 2)).toBeUndefined()
   })
 
-  it('sin salida no calcula precio ni deja reservar: ninguna fecha se supone', async () => {
+  it('sin salida no calcula precio; el botón pide la salida y abre el calendario', async () => {
     const fetch = laApiResponde([200, SUITE])
     abrir('/apartamentos/APT-101?entrada=2026-12-14&salida=')
 
-    expect(await screen.findByText('Elige la llegada y la salida para ver el precio y reservar.')).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Elige la fecha de salida' }))
+
+    expect(screen.getByRole('dialog', { name: 'Elegir fechas' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Reservar' })).not.toBeInTheDocument()
     expect(urlDeLaLlamada(fetch, 1)).toBeUndefined()
+  })
+
+  it('sin ninguna fecha, el botón dice que las elija', async () => {
+    laApiResponde([200, SUITE])
+    abrir('/apartamentos/APT-101?entrada=&salida=')
+
+    expect(await screen.findByRole('button', { name: 'Elige tus fechas' })).toBeInTheDocument()
+  })
+
+  it('con solo la llegada en la dirección, la salida es el día siguiente', async () => {
+    const fetch = laApiResponde([200, SUITE], [200, UNA_NOCHE_LIBRE])
+    abrir('/apartamentos/APT-101?entrada=2026-12-14')
+
+    expect(await screen.findByRole('button', { name: /^Salida/ })).toHaveTextContent('mar, 15 de dic')
+    await screen.findByText(/por adulto, noche del/)
+    expect(urlDeLaLlamada(fetch, 1)).toContain('entrada=2026-12-14&salida=2026-12-15')
   })
 
   it('el calendario se abre desde las fechas del panel y tacha las noches ocupadas del apartamento', async () => {

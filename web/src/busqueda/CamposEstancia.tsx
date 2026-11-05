@@ -1,5 +1,6 @@
 import type { Estadia, Grupo } from '../api/apartamentos'
-import SelectorFechas from '../fechas/SelectorFechas'
+import type { Ref } from 'react'
+import SelectorFechas, { type ControlFechas } from '../fechas/SelectorFechas'
 
 interface Props {
   estadia: Estadia
@@ -14,15 +15,17 @@ interface Props {
   codigo?: string
   /** Hacia qué lado crece el calendario en pantallas anchas. */
   alinearCalendario?: 'inicio' | 'fin'
+  /** Para abrir el calendario desde otro botón. */
+  refFechas?: Ref<ControlFechas>
   alCambiar: (estadia: Estadia, grupo: Grupo) => void
 }
 
 /** Llegada, salida, adultos y niños: los mismos campos en la búsqueda y en la página de cada apartamento. */
 export default function CamposEstancia({ estadia, grupo, umbral, capacidad, teclaEnter = 'done', codigo,
-  alinearCalendario, alCambiar }: Props) {
+  alinearCalendario, refFechas, alCambiar }: Props) {
   return (
     <>
-      <SelectorFechas estadia={estadia} codigo={codigo} alinear={alinearCalendario}
+      <SelectorFechas ref={refFechas} estadia={estadia} codigo={codigo} alinear={alinearCalendario}
         alCambiar={(nueva) => alCambiar(nueva, grupo)} />
       <CampoPersonas
         nombre="Adultos"
