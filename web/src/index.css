@@ -1558,3 +1558,101 @@ button.boton-peligro {
 .mis-reservas h1 {
   margin-bottom: 16px;
 }
+
+/* Calendario de noches libres en la página del apartamento */
+.disponibilidad {
+  margin-top: 32px;
+}
+
+.calendario-ayuda {
+  margin: 0 0 8px;
+  font-size: var(--texto-sm);
+}
+
+.calendario-navegacion {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.calendario-meses {
+  display: grid;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+@media (min-width: 720px) {
+  .calendario-meses {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.calendario-mes {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendario-mes caption {
+  padding-bottom: 8px;
+  font-weight: 600;
+}
+
+.calendario-mes th {
+  padding-bottom: 4px;
+  color: var(--texto-suave);
+  font-size: var(--texto-xs);
+  font-weight: 500;
+}
+
+.calendario-mes abbr {
+  text-decoration: none;
+}
+
+.calendario-mes td {
+  padding: 1px;
+}
+
+.calendario-mes .dia {
+  width: 100%;
+  min-height: 44px;
+  aspect-ratio: 1;
+  padding: 0;
+  background: transparent;
+  color: var(--texto);
+  border: 1px solid transparent;
+  border-radius: var(--radio-pequeno);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.calendario-mes .dia[aria-disabled='true'] {
+  color: var(--texto-suave);
+  font-weight: 400;
+  cursor: default;
+}
+
+.calendario-mes .dia.no-libre {
+  text-decoration: line-through;
+}
+
+.calendario-mes .dia.hoy {
+  border-color: var(--borde-campo);
+}
+
+.calendario-mes .dia.en-rango {
+  background: color-mix(in srgb, var(--acento) 26%, var(--superficie));
+  border-radius: 0;
+}
+
+.calendario-mes .dia.extremo {
+  background: var(--acento);
+  color: var(--texto-sobre-acento);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .calendario-mes .dia:not([aria-disabled='true']):not(.extremo):hover {
+    border-color: var(--texto);
+  }
+}

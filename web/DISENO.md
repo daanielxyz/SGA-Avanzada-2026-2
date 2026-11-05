@@ -53,6 +53,5 @@ Valores finales de la marca de ejemplo:
 
 ## Pendiente
 - La pantalla de marca en el PMS (`PUT /api/alojamiento/marca` ya existe, DEC-87), y el logo y la portada definitivos de la marca de ejemplo.
-- Calendario de noches libres en la página del apartamento: `GET /api/apartamentos/{codigo}/calendario` ya existe (DEC-86).
 - Una barra fija con el total y «Reservar» en el celular, en la página del apartamento.
 - Quitar los botones de pago de prueba cuando llegue la pasarela real (BL-01).
