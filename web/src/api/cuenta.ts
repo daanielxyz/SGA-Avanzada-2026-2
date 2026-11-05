@@ -2,7 +2,7 @@
 // Request o Response del backend (el contrato está en docs/api/openapi.yaml).
 import type { Pagina, Precio } from './apartamentos'
 import { pedir } from './cliente'
-import type { Extras, TipoDocumento } from './reservas'
+import type { Extras, PoliticaCancelacion, TipoDocumento } from './reservas'
 
 export interface CredencialesHuesped {
   correo: string
@@ -99,6 +99,30 @@ export function consultarReserva(codigo: string) {
 
 export function consultarCuentaDeReserva(codigo: string) {
   return pedir<CuentaDeReserva>(`/api/reservas/${encodeURIComponent(codigo)}/folio`, { conSesion: true })
+}
+
+/** `SimulacionCancelacionResponse`: lo que pasaría al cancelar ahora, sin cancelar (DEC-91). */
+export interface SimulacionCancelacion {
+  retenido: number
+  saldo: number
+  situacionSaldo: SituacionSaldo
+}
+
+export function simularCancelacion(codigo: string) {
+  return pedir<SimulacionCancelacion>(`/api/reservas/${encodeURIComponent(codigo)}/cancelacion`, { conSesion: true })
+}
+
+/** `PagoPendienteResponse`: lo que falta para confirmar en línea una reserva pendiente (DEC-91). */
+export interface PagoPendiente {
+  montoAPagar: number
+  /** Hora de Colombia; si no se paga antes, la reserva vence. */
+  pagarAntesDe: string
+  /** La política congelada en la reserva: la que se le aplica, no la vigente (RN-13). */
+  condiciones: PoliticaCancelacion
+}
+
+export function consultarPagoPendiente(codigo: string) {
+  return pedir<PagoPendiente>(`/api/reservas/${encodeURIComponent(codigo)}/pago-en-linea`, { conSesion: true })
 }
 
 export function cancelarReserva(codigo: string) {

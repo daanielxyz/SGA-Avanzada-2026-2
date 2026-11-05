@@ -183,6 +183,22 @@ class PagoEnLineaTest {
     }
 
     @Test
+    @Tag("RN-09")
+    @Tag("DEC-91")
+    void sinHoraDeLlegadaNoSeCobraPorqueLaReservaNoSePodriaConfirmar() {
+        String deRecepcion = crearReserva(AL_CREAR).ejecutar(new CrearReservaCommand("APT-101", ENTRADA.plusDays(5),
+                ENTRADA.plusDays(6), "DIRECTO", new TitularCommand("Eva Mora", "CC", "2077", "eva@correo.co",
+                "300 555 1234"), List.of(new OcupanteCommand("Eva Mora", LocalDate.of(1985, 7, 9), "CC", "2077", null)),
+                null)).codigo();
+
+        assertThrows(ReglaDominioException.class,
+                () -> pagarEnLinea(AL_CREAR).ejecutar(new PagarEnLineaCommand(deRecepcion, "tok")));
+
+        assertTrue(cobrados.isEmpty());
+        assertEquals(EstadoReserva.PENDIENTE, escenario.cargador.reserva(deRecepcion).estado());
+    }
+
+    @Test
     @Tag("MPAG-02")
     void sinElMedioDePagoEnLineaNoSeReservaPorElPortal() {
         Alojamiento alojamiento = escenario.alojamientos.buscarPorId(ALO).orElseThrow();

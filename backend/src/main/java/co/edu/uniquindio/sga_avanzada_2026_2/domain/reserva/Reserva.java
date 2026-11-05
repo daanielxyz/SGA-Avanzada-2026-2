@@ -296,8 +296,17 @@ public class Reserva {
      * @throws ReglaDominioException si no está PENDIENTE ni CONFIRMADA (RN-08)
      */
     public void cancelar() {
-        validarTransicion(EstadoReserva.CANCELADA);
+        exigirCancelable();
         estado = EstadoReserva.CANCELADA;
+    }
+
+    /**
+     * RN-08: revisa que la reserva todavía se pueda cancelar, sin cambiarla (DEC-91).
+     *
+     * @throws ReglaDominioException si no está PENDIENTE ni CONFIRMADA
+     */
+    public void exigirCancelable() {
+        validarTransicion(EstadoReserva.CANCELADA);
     }
 
     /**

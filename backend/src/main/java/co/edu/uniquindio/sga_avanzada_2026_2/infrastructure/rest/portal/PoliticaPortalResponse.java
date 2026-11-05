@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * JSON de la política de cancelación vigente para el huésped: las condiciones que acepta al reservar (DEC-41).
+ * JSON de una política de cancelación para el huésped, la vigente o la congelada en su reserva (DEC-41).
  *
  * @param tramos            de cada antelación mínima, en horas antes de la llegada, cuánto se retiene si cancela
  * @param penalizacionNoShow cuánto se retiene si no llega
@@ -28,7 +28,7 @@ public record PoliticaPortalResponse(List<TramoResponse> tramos, PenalizacionRes
         }
     }
 
-    static PoliticaPortalResponse de(PoliticaResult r) {
+    public static PoliticaPortalResponse de(PoliticaResult r) {
         return new PoliticaPortalResponse(
                 r.tramos().stream()
                         .map(t -> new TramoResponse(t.antelacionMinHoras(), PenalizacionResponse.de(t.penalizacion())))

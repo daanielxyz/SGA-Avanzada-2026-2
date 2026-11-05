@@ -18,24 +18,31 @@ const TOKEN_RECHAZADO = 'tok_rechazado'
 interface Props {
   apartada: ReservaApartada
   alPagar: (pago: PagoAprobado) => void
+  /** Lo ya abonado, si se retoma el pago de una reserva con algún pago. */
+  yaPagado?: number
+  /** Las de esa reserva, si ya se conocen; si no, las vigentes, que son las que acaba de aceptar al reservar. */
+  condiciones?: PoliticaCancelacion
 }
 
 /** Paso 2: pagar lo que exige el hotel, con las condiciones de cancelación a la vista. Si falla, se reintenta. */
-export default function PasoPago({ apartada, alPagar }: Props) {
-  const [politica, setPolitica] = useState<PoliticaCancelacion | null>(null)
+export default function PasoPago({ apartada, alPagar, yaPagado = 0, condiciones }: Props) {
+  const [vigentes, setVigentes] = useState<PoliticaCancelacion | null>(null)
+  const politica = condiciones ?? vigentes
+  const conoceCondiciones = condiciones !== undefined
   const [pagando, setPagando] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const { reserva, montoAPagar, pagarAntesDe } = apartada
-  const resto = reserva.valor.total + reserva.extras.total - montoAPagar
+  const resto = reserva.valor.total + reserva.extras.total - yaPagado - montoAPagar
 
   useEffect(() => {
+    if (conoceCondiciones) return
     let vigente = true
     // Si no carga, se paga igual: las condiciones también llegan por correo
-    consultarPolitica().then((p) => vigente && setPolitica(p)).catch(() => {})
+    consultarPolitica().then((p) => vigente && setVigentes(p)).catch(() => {})
     return () => {
       vigente = false
     }
-  }, [])
+  }, [conoceCondiciones])
 
   async function intentar(token: string) {
     setProblema(null)

@@ -2434,6 +2434,54 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/cancelacion:
+    get:
+      tags:
+        - reserva-controller
+      operationId: simularCancelacion
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SimulacionCancelacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/pago-en-linea:
+    get:
+      tags:
+        - reserva-controller
+      operationId: consultarPagoPendiente
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PagoPendienteResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/mis-reservas:
     get:
       tags:
@@ -3047,6 +3095,25 @@ components:
           format: date-time
         autor:
           type: string
+    SimulacionCancelacionResponse:
+      type: object
+      properties:
+        retenido:
+          type: number
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+    PagoPendienteResponse:
+      type: object
+      properties:
+        montoAPagar:
+          type: number
+        pagarAntesDe:
+          type: string
+          format: date-time
+        condiciones:
+          "$ref": "#/components/schemas/PoliticaPortalResponse"
     CancelacionResponse:
       type: object
       properties:

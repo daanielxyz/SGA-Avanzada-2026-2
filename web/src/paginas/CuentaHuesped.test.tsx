@@ -28,6 +28,18 @@ const RESERVA = {
 
 const SUITE = { codigo: 'APT-101', nombre: 'Suite Jardín', imagenes: [] }
 const FOLIO = { totalPagado: 130800, saldo: 305200, situacionSaldo: 'PENDIENTE' }
+const SIMULACION = { retenido: 50000, saldo: 80800, situacionSaldo: 'A_FAVOR' }
+const POLITICA = {
+  tramos: [{ antelacionMinHoras: 0, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 50, montoFijo: null } }],
+  penalizacionNoShow: { base: 'VALOR_TOTAL', porcentaje: 100, montoFijo: null },
+}
+const CONGELADA = {
+  tramos: [{ antelacionMinHoras: 0, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 20, montoFijo: null } }],
+  penalizacionNoShow: { base: 'VALOR_TOTAL', porcentaje: 30, montoFijo: null },
+}
+const PAGO_PENDIENTE = { montoAPagar: 130800, pagarAntesDe: '2027-03-01T15:30:00', condiciones: CONGELADA }
+const PENDIENTE = { ...RESERVA, estado: 'PENDIENTE' }
+const SIN_PAGOS = { totalPagado: 0, saldo: 436000, situacionSaldo: 'PENDIENTE' }
 const PAGINA = (contenido: unknown[], totalPaginas = 1) =>
   ({ contenido, numero: 0, tamano: 10, totalElementos: contenido.length, totalPaginas })
 
@@ -46,6 +58,9 @@ function laApi(rutas: Record<string, Ruta> = {}) {
     }
     if (ruta.startsWith('/api/mis-reservas')) return Promise.resolve(respuesta(PAGINA([RESERVA])))
     if (ruta.endsWith('/folio')) return Promise.resolve(respuesta(FOLIO))
+    if (ruta.endsWith('/cancelacion')) return Promise.resolve(respuesta(SIMULACION))
+    if (ruta.endsWith('/pago-en-linea')) return Promise.resolve(respuesta(PAGO_PENDIENTE))
+    if (ruta === '/api/portal/politica') return Promise.resolve(respuesta(POLITICA))
     if (ruta.startsWith('/api/reservas/')) return Promise.resolve(respuesta(RESERVA))
     if (ruta.startsWith('/api/portal/apartamentos/')) return Promise.resolve(respuesta(SUITE))
     return Promise.resolve(respuesta(PAGINA([])))
@@ -70,6 +85,13 @@ async function pedirCodigo() {
   await userEvent.type(screen.getByLabelText('Número de documento'), '1094')
   await userEvent.click(screen.getByRole('button', { name: 'Enviarme un PIN' }))
   return screen.findByLabelText('PIN de 6 dígitos')
+}
+
+/** El botón se habilita cuando ya se sabe cuánto se retendría. */
+async function confirmarCancelacion() {
+  const boton = await screen.findByRole('button', { name: 'Sí, cancelar' })
+  await waitFor(() => expect(boton).toBeEnabled())
+  await userEvent.click(boton)
 }
 
 beforeEach(() => borrarSesion())
@@ -287,13 +309,159 @@ describe('Detalle de una reserva', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
     expect(llamadasA(fetch, '/api/reservas/RES-2026-00042/cancelar')).toHaveLength(0)
-    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }))
+    await confirmarCancelacion()
 
     const resultado = await screen.findByText('Tu reserva quedó cancelada.')
     expect(resultado.closest('[role="status"]')).toHaveTextContent(/se retienen \$\s*50\.000/)
     expect(resultado.closest('[role="status"]')).toHaveTextContent(/\$\s*80\.800 a tu favor/)
     expect(screen.queryByRole('button', { name: 'Cancelar esta reserva' })).not.toBeInTheDocument()
     expect(llamadasA(fetch, '/api/reservas/RES-2026-00042/cancelar')[0].method).toBe('PUT')
+  })
+
+  it('antes de cancelar dice cuánto se retendría y cuánto le devuelven, sin cancelar nada', async () => {
+    guardarSesion(SESION)
+    const fetch = laApi()
+    abrir('/mis-reservas/RES-2026-00042')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
+
+    expect((await screen.findByText('Se retiene')).nextElementSibling).toHaveTextContent(/\$\s*50\.000/)
+    expect(screen.getByText('Te devuelven').closest('dt')?.nextElementSibling).toHaveTextContent(/\$\s*80\.800/)
+    expect(new Headers(llamadasA(fetch, '/api/reservas/RES-2026-00042/cancelacion')[0].headers).get('Authorization'))
+      .toBe('Bearer token-de-prueba')
+    expect(llamadasA(fetch, '/api/reservas/RES-2026-00042/cancelar')).toHaveLength(0)
+  })
+
+  it('si quedaría debiendo, también lo dice antes', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042/cancelacion': () => respuesta({
+        retenido: 360000, saldo: 229200, situacionSaldo: 'PENDIENTE',
+      }),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
+
+    expect((await screen.findByText('Quedarías debiendo')).closest('dt')?.nextElementSibling)
+      .toHaveTextContent(/\$\s*229\.200/)
+  })
+
+  it('si no se puede calcular lo retenido, no deja cancelar a ciegas', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042/cancelacion': () => errorApi(409, 'REGLA_NEGOCIO', 'La reserva ya inició'),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('La reserva ya inició')
+    expect(screen.getByRole('button', { name: 'Sí, cancelar' })).toBeDisabled()
+  })
+
+  it('una reserva pendiente se puede pagar desde su detalle, y queda confirmada', async () => {
+    guardarSesion(SESION)
+    let pagada = false
+    const fetch = laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta(pagada ? RESERVA : PENDIENTE),
+      '/api/reservas/RES-2026-00042/folio': () => respuesta(pagada ? FOLIO : SIN_PAGOS),
+      '/api/portal/reservas/RES-2026-00042/pago': () => {
+        pagada = true
+        return respuesta({ codigo: RESERVA.codigo, estado: 'CONFIRMADA', total: 436000 })
+      },
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    const pago = await screen.findByRole('region', { name: 'Paga para confirmar' })
+    expect(within(pago).getByText('Pagas ahora').nextElementSibling).toHaveTextContent(/\$\s*130\.800/)
+    expect(within(pago).getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*305\.200/)
+    await userEvent.click(within(pago).getByRole('button', { name: /^Pagar/ }))
+
+    expect(await screen.findByText('Recibimos tu pago. Tu reserva quedó confirmada.')).toBeInTheDocument()
+    expect(await screen.findByText('Confirmada')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Paga para confirmar' })).not.toBeInTheDocument()
+    expect(llamadasA(fetch, '/api/portal/reservas/RES-2026-00042/pago')).toHaveLength(1)
+  })
+
+  it('después de pagar y cancelar, solo queda el aviso de la cancelación', async () => {
+    guardarSesion(SESION)
+    let estado = 'PENDIENTE'
+    laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta({ ...RESERVA, estado }),
+      '/api/portal/reservas/RES-2026-00042/pago': () => {
+        estado = 'CONFIRMADA'
+        return respuesta({ codigo: RESERVA.codigo, estado, total: 436000 })
+      },
+      '/api/reservas/RES-2026-00042/cancelar': () => {
+        estado = 'CANCELADA'
+        return respuesta({ codigo: RESERVA.codigo, estado, ...SIMULACION })
+      },
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    await userEvent.click(within(await screen.findByRole('region', { name: 'Paga para confirmar' }))
+      .getByRole('button', { name: /^Pagar/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
+    await confirmarCancelacion()
+
+    expect(await screen.findByText('Tu reserva quedó cancelada.')).toBeInTheDocument()
+    expect(screen.queryByText('Recibimos tu pago. Tu reserva quedó confirmada.')).not.toBeInTheDocument()
+    expect(screen.getByText(/ya no se cobran/)).toBeInTheDocument()
+  })
+
+  it('al retomar el pago muestra las condiciones congeladas en la reserva, no las vigentes', async () => {
+    guardarSesion(SESION)
+    const fetch = laApi({ '/api/reservas/RES-2026-00042': () => respuesta(PENDIENTE) })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    const condiciones = await screen.findByRole('region', { name: 'Si necesitas cancelar' })
+    expect(condiciones).toHaveTextContent('se retiene el 20 %')
+    expect(condiciones).toHaveTextContent('se retiene el 30 %')
+    expect(condiciones).not.toHaveTextContent('se retiene el 50 %')
+    expect(llamadasA(fetch, '/api/portal/politica')).toHaveLength(0)
+  })
+
+  it('al retomar el pago, lo que falta al llegar descuenta lo ya abonado', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta(PENDIENTE),
+      '/api/reservas/RES-2026-00042/folio': () => respuesta({ ...SIN_PAGOS, totalPagado: 30000 }),
+      '/api/reservas/RES-2026-00042/pago-en-linea': () => respuesta({ ...PAGO_PENDIENTE, montoAPagar: 100800 }),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    const pago = await screen.findByRole('region', { name: 'Paga para confirmar' })
+    expect(within(pago).getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*305\.200/)
+  })
+
+  it('un pago rechazado se explica y se puede reintentar', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta(PENDIENTE),
+      '/api/reservas/RES-2026-00042/folio': () => respuesta(SIN_PAGOS),
+      '/api/portal/reservas/RES-2026-00042/pago': () => errorApi(409, 'PAGO_RECHAZADO', 'El banco rechazó el pago'),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    const pago = await screen.findByRole('region', { name: 'Paga para confirmar' })
+    await userEvent.click(within(pago).getByRole('button', { name: /^Pagar/ }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('El banco rechazó el pago')
+    expect(within(pago).getByRole('button', { name: /^Pagar/ })).toBeEnabled()
+  })
+
+  it('si el plazo para pagar ya venció, lo dice y no ofrece pagar', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta(PENDIENTE),
+      '/api/reservas/RES-2026-00042/pago-en-linea': () =>
+        errorApi(409, 'REGLA_NEGOCIO', 'El plazo para pagarla terminó'),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    expect(await screen.findByText('El plazo para pagarla terminó')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Pagar/ })).not.toBeInTheDocument()
   })
 
   it('«No, conservarla» no cancela', async () => {
@@ -316,7 +484,7 @@ describe('Detalle de una reserva', () => {
     abrir('/mis-reservas/RES-2026-00042')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Cancelar esta reserva' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }))
+    await confirmarCancelacion()
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La reserva ya inició')
     expect(screen.getByRole('button', { name: 'Sí, cancelar' })).toBeEnabled()
