@@ -16,7 +16,10 @@ export default function Confirmacion({ pago, avisoCuenta }: Props) {
         también por correo, con los detalles de tu estadía.
       </p>
       {avisoCuenta && <p className="suave">{avisoCuenta}</p>}
-      <Link to="/" className="boton">Volver al inicio</Link>
+      <div className="confirmacion-acciones">
+        <Link to="/mis-reservas" className="boton">Ver mis reservas</Link>
+        <Link to="/">Volver al inicio</Link>
+      </div>
     </div>
   )
 }

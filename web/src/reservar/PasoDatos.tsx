@@ -131,7 +131,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
     <form className="formulario-reserva" onSubmit={enviar}>
       <fieldset>
         <legend>Quien reserva</legend>
-        <p className="suave">A este correo te llega la confirmación, y con él entras a ver tu reserva.</p>
+        <p className="suave">A este correo te llega la confirmación. Con él y tu documento entras a ver tu reserva.</p>
         <div className="campos">
           <CampoPersona indice={0} persona={personas[0]} hoy={hoy} alCambiar={cambiarPersona} />
           <label>

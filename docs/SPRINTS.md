@@ -80,7 +80,7 @@ Hipótesis: el huésped entiende qué hay disponible y cuánto cuesta; recepció
 Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confirma reservas directas sin papel.
 - **web**
   - [x] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación (`feature/web/reservar`, DEC-88).
-  - [ ] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas».
+  - [x] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas» (`feature/web/cuenta-huesped`, DEC-90).
 - **pms**
   - [x] Tablero de ocupación por apartamento y fechas (`GET /api/ocupacion`, DEC-86; `feature/pms/tablero-ocupacion`).
   - [x] Confirmar, cancelar y declarar no-show, con registrar pago y el bloque Pago en el detalle (`feature/pms/acciones-reserva`).
