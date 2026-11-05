@@ -4,6 +4,8 @@ import { ErrorApi } from '../api/cliente'
 import { iniciarSesion, solicitarPin } from '../api/cuenta'
 import { useSesion } from '../sesion/useSesion'
 
+// DEC-68: el PIN vale 15 minutos y sirve una sola vez; si esa regla cambia en el backend, cambia aquí
+const MINUTOS_PIN = 15
 const SIN_CONEXION = 'No pudimos comunicarnos con el servidor. Intenta de nuevo en un momento.'
 const mensajeDe = (error: unknown) => (error instanceof ErrorApi ? error.message : SIN_CONEXION)
 
@@ -99,8 +101,8 @@ export default function Entrar() {
       {pidiendoPin && (
         <form className="tarjeta-formulario" onSubmit={confirmarPin}>
           <p role="status">
-            Si los datos corresponden a una cuenta, te enviamos un PIN a <strong>{correo.trim()}</strong>. Vence en
-            pocos minutos; si no lo ves, revisa el correo no deseado.
+            Si los datos corresponden a una cuenta, te enviamos un PIN a <strong>{correo.trim()}</strong>. Vale
+            por {MINUTOS_PIN} minutos y una sola vez; si no lo ves, revisa el correo no deseado.
           </p>
           <label>
             PIN de 6 dígitos

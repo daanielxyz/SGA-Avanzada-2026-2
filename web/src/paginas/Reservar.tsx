@@ -12,8 +12,8 @@ import {
 import { ErrorApi } from '../api/cliente'
 import { SIN_EXTRAS, type Extras, type PagoAprobado, type ReservaApartada } from '../api/reservas'
 import { problemaDeEstadia } from '../busqueda/estadia'
-import { fechaDesdeHoy, masDias } from '../formato'
 import Confirmacion from '../reservar/Confirmacion'
+import Pasos from '../reservar/Pasos'
 import PasoDatos from '../reservar/PasoDatos'
 import PasoPago from '../reservar/PasoPago'
 import Resumen from '../reservar/Resumen'
@@ -39,8 +39,9 @@ const TITULOS = { 1: 'Tus datos', 2: 'Paga para confirmar', 3: '¡Tu reserva est
 export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | null }) {
   const { codigo = '' } = useParams()
   const [consulta] = useSearchParams()
-  const entrada = consulta.get('entrada') ?? fechaDesdeHoy()
-  const salida = consulta.get('salida') ?? masDias(entrada, 1)
+  // Sin las dos fechas no se reserva: ninguna se supone (problemaDeEstadia lo dice)
+  const entrada = consulta.get('entrada') ?? ''
+  const salida = consulta.get('salida') ?? ''
   const adultos = Math.max(1, Number(consulta.get('adultos')) || 1)
   const ninos = Math.max(0, Number(consulta.get('ninos')) || 0)
   const estadia: Estadia = { entrada, salida }
@@ -106,7 +107,7 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
       {paso.numero === 1 && <Link to={volver} className="volver">← Volver al apartamento</Link>}
       <div className="reservar-columnas">
         <div className="reservar-principal">
-          {paso.numero < 3 && <p className="suave paso-actual">Paso {paso.numero} de 2</p>}
+          <Pasos actual={paso.numero} />
           <h1 ref={titulo} tabIndex={-1}>{TITULOS[paso.numero]}</h1>
           {paso.numero === 1 && (
             <PasoDatos codigo={codigo} estadia={estadia} grupo={grupo} alojamiento={alojamiento}

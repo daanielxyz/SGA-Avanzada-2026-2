@@ -239,7 +239,7 @@ function CampoCantidad({ nombre, valor, maximo, ayuda, alCambiar }: PropsCantida
       <label htmlFor={id}>{nombre}</label>
       <input id={id} type="number" inputMode="numeric" min={0} max={maximo} value={valor}
         aria-describedby={ayuda ? `${id}-ayuda` : undefined}
-        onChange={(e) => alCambiar(Math.max(0, Number(e.target.value) || 0))} />
+        onChange={(e) => alCambiar(Math.min(maximo ?? Infinity, Math.max(0, Number(e.target.value) || 0)))} />
       {ayuda && <span id={`${id}-ayuda`} className="ayuda">{ayuda}</span>}
     </div>
   )

@@ -109,7 +109,7 @@ describe('Entrar con PIN', () => {
     abrir('/mis-reservas/RES-2026-00042')
 
     await userEvent.type(await pedirCodigo(), '123456')
-    expect(screen.getByRole('status')).toHaveTextContent('te enviamos un PIN a ana@correo.co')
+    expect(screen.getByRole('status')).toHaveTextContent(/te enviamos un PIN a ana@correo\.co\. Vale por 15 minutos/)
     await userEvent.click(screen.getByRole('button', { name: 'Entrar' }))
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Suite Jardín' })).toBeInTheDocument()
