@@ -23,6 +23,12 @@ export function fechaHora(momento: string) {
   return `${fechaCorta(fecha)} a las ${textoHora}`
 }
 
+/** «15:00:00» → «3:00 p. m.». */
+export function horaDelDia(hora: string) {
+  const [horas, minutos] = hora.split(':').map(Number)
+  return new Date(2000, 0, 1, horas, minutos).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+}
+
 /** La fecha de hoy, más los días dados, en el formato de los campos de fecha (`AAAA-MM-DD`). */
 export function fechaDesdeHoy(dias = 0) {
   const fecha = new Date()

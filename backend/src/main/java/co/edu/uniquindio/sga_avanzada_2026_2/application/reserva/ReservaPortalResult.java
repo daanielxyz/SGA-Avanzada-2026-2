@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
  *
  * @param montoAPagar  lo que se cobra en línea (el anticipo o el total, según el alojamiento)
  * @param pagarAntesDe si no se paga antes, la reserva vence y libera sus noches
+ * @param cargosAdicionales lo que el folio suma al valor de la estancia, hoy las mascotas (RP-03); no entra en el
+ *                     monto en línea, que sale solo del valor de la estancia
  */
-public record ReservaPortalResult(ReservaResult reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe) {
+public record ReservaPortalResult(ReservaResult reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe,
+                                  BigDecimal cargosAdicionales) {
 }

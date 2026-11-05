@@ -8,10 +8,12 @@ interface Props {
   grupo: Grupo
   /** Vacío mientras llega. */
   precio: Precio | null
+  /** Lo que suman las mascotas (RP-03). */
+  cargos: number
 }
 
 /** Lo que se está reservando, siempre a la vista durante los pasos. */
-export default function Resumen({ apartamento, estadia, grupo, precio }: Props) {
+export default function Resumen({ apartamento, estadia, grupo, precio, cargos }: Props) {
   const foto = apartamento.imagenes.find((i) => i.principal) ?? apartamento.imagenes[0]
   const n = noches(estadia.entrada, estadia.salida)
   const ninos = grupo.ninos > 0 ? ` y ${grupo.ninos} ${grupo.ninos === 1 ? 'niño' : 'niños'}` : ''
@@ -32,9 +34,17 @@ export default function Resumen({ apartamento, estadia, grupo, precio }: Props) 
           {grupo.adultos} {grupo.adultos === 1 ? 'adulto' : 'adultos'}
           {ninos}
         </dd>
+        {precio && cargos > 0 && (
+          <>
+            <dt>Alojamiento</dt>
+            <dd>{enPesos(precio.total)}</dd>
+            <dt>Mascotas</dt>
+            <dd>{enPesos(cargos)}</dd>
+          </>
+        )}
       </dl>
       <p className="total-estancia">
-        Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{precio ? enPesos(precio.total) : '…'}</strong>
+        Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{precio ? enPesos(precio.total + cargos) : '…'}</strong>
       </p>
     </aside>
   )

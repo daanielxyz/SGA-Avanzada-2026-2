@@ -23,8 +23,6 @@ export interface SolicitudReserva {
     tipoDocumento?: TipoDocumento
     numeroDocumento?: string
   }[]
-  /** `HH:mm`. */
-  horaEstimadaLlegada: string
   vehiculos: number
   mascotas: number
 }
@@ -35,6 +33,8 @@ export interface ReservaApartada {
   montoAPagar: number
   /** Hora de Colombia; si no se paga antes, la reserva vence. */
   pagarAntesDe: string
+  /** Lo que se suma a la estancia y se paga al llegar: hoy, las mascotas (RP-03). */
+  cargosAdicionales: number
 }
 
 /** `PagoPortalResponse`. */

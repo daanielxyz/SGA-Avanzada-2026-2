@@ -35,7 +35,7 @@ const LIBRE: EstanciaPortal = { disponible: true, precio: precio(1), proximaNoch
 const ALOJAMIENTO: Alojamiento = {
   nombre: 'Hotel de Prueba',
   parametros: {
-    umbralEdadFacturable: 12, horaEntrada: '15:00:00', cupoParqueadero: 5, aceptaMascotas: true, limiteMascotas: 2,
+    umbralEdadFacturable: 12, horaEntrada: '15:00:00', horaSalida: '11:00:00', cupoParqueadero: 5, aceptaMascotas: true, limiteMascotas: 2,
     cargoMascota: 30000,
   },
 }
@@ -52,6 +52,7 @@ const APARTADA = {
   reserva: { codigo: 'RES-2026-00042', valor: precio(1), avisoCuenta: null },
   montoAPagar: 60000,
   pagarAntesDe: `${ENTRADA}T15:30:00`,
+  cargosAdicionales: 0,
 }
 
 const CONFIRMADA = {
@@ -96,7 +97,8 @@ function abrir(grupo = 'adultos=1&ninos=0', entrada = ENTRADA) {
 }
 
 function llenarTitular() {
-  fireEvent.change(screen.getByLabelText('Nombre completo'), { target: { value: 'Ana Ríos' } })
+  fireEvent.change(screen.getByLabelText('Nombres'), { target: { value: 'Ana' } })
+  fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: 'Ríos' } })
   fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
   fireEvent.change(screen.getByLabelText('Número de documento'), { target: { value: '1094' } })
   fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ana@correo.co' } })
@@ -114,9 +116,9 @@ describe('Reservar', () => {
     const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
     expect(resumen).toHaveTextContent('2 adultos y 1 niño')
     expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*200\.000/)
-    expect(screen.getByLabelText('Nombre de la persona 2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nombres de la persona 2')).toBeInTheDocument()
     expect(screen.getByLabelText('Fecha de nacimiento de la persona 3')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Nombre de la persona 4')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Nombres de la persona 4')).not.toBeInTheDocument()
   })
 
   it('si ya no está libre lo dice y permite volver, sin mostrar el formulario', async () => {
@@ -132,7 +134,7 @@ describe('Reservar', () => {
   it('con fechas que cambian quién paga, recalcula y avisa antes de continuar (RN-06)', async () => {
     const fetch = laApi({ cotizacion: precio(2) })
     abrir('adultos=1&ninos=1')
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
 
     fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
@@ -148,7 +150,7 @@ describe('Reservar', () => {
   it('si las fechas coinciden con lo que dijo al buscar, no avisa nada', async () => {
     const fetch = laApi({ cotizacion: precio(1) })
     abrir()
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
 
     fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
 
@@ -156,10 +158,10 @@ describe('Reservar', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('envía el titular como primer ocupante con su documento, la hora del hotel y los extras', async () => {
+  it('envía el titular como primer ocupante con su documento, el nombre unido, el prefijo y los extras', async () => {
     const fetch = laApi()
     abrir()
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
     llenarTitular()
     fireEvent.change(screen.getByLabelText('Carros'), { target: { value: '1' } })
     fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '1' } })
@@ -172,12 +174,86 @@ describe('Reservar', () => {
       entrada: ENTRADA,
       salida: SALIDA,
       titular: { nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co',
-        telefono: '3001234567' },
+        telefono: '+573001234567' },
       ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-05-01', tipoDocumento: 'CC', numeroDocumento: '1094' }],
-      horaEstimadaLlegada: '15:00',
       vehiculos: 1,
       mascotas: 1,
     })
+  })
+
+  it('muestra la entrada y la salida del hotel sin dejar editarlas', async () => {
+    laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    expect(screen.getByText('Entrada desde').nextElementSibling).toHaveTextContent(/3:00/)
+    expect(screen.getByText('Salida hasta').nextElementSibling).toHaveTextContent(/11:00/)
+    expect(screen.queryByLabelText(/hora/i)).not.toBeInTheDocument()
+  })
+
+  it('las mascotas suben el total del resumen y al pagar se dice que van al llegar', async () => {
+    laApi({ reservas: [respuesta({ ...APARTADA, montoAPagar: 200000, cargosAdicionales: 30000 }, 201)] })
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+    fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '1' } })
+
+    const resumen = screen.getByRole('complementary', { name: 'Suite Jardín' })
+    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*230\.000/)
+    expect(screen.getByLabelText('Mascotas')).toHaveAccessibleDescription(/se paga al llegar/)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    expect(resumen).toHaveTextContent(/Total 2 noches:\s*\$\s*230\.000/)
+    expect(screen.getByText('Pagas al llegar').nextElementSibling).toHaveTextContent(/\$\s*30\.000/)
+    expect(screen.getByText(/Lo de las mascotas/)).toBeInTheDocument()
+  })
+
+  it('el teléfono arranca en Colombia y se puede buscar otro país, que cambia el prefijo enviado', async () => {
+    const fetch = laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+
+    await userEvent.click(screen.getByRole('button', { name: /País del teléfono: Colombia, \+57/ }))
+    await userEvent.type(screen.getByRole('combobox', { name: 'Buscar país' }), 'espana')
+    expect(within(screen.getByRole('listbox')).getAllByRole('option')).toHaveLength(1)
+    await userEvent.keyboard('{Enter}')
+
+    expect(screen.getByRole('button', { name: /País del teléfono: España, \+34/ })).toBeInTheDocument()
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: '612345678' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    expect(cuerpoDe(fetch, '/api/portal/reservas').titular.telefono).toBe('+34612345678')
+  })
+
+  it('un número pegado con prefijo ajusta el país solo', async () => {
+    laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: '+34 612 345 678' } })
+
+    expect(screen.getByRole('button', { name: /País del teléfono: España/ })).toBeInTheDocument()
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('612345678')
+  })
+
+  it('un teléfono que no es del país elegido no deja continuar', async () => {
+    const fetch = laApi()
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+    const telefono = screen.getByLabelText('Teléfono')
+    fireEvent.change(telefono, { target: { value: '123' } })
+    fireEvent.blur(telefono)
+
+    expect(telefono).toHaveAccessibleDescription(/no parece de Colombia/)
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+
+    expect(fetch.mock.calls.some(([ruta]) => ruta === '/api/portal/reservas')).toBe(false)
   })
 
   it('si el backend rechaza la reserva, muestra por qué y no pierde lo escrito', async () => {
@@ -185,7 +261,7 @@ describe('Reservar', () => {
       estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'El apartamento ya está reservado en esas fechas', detalles: [],
     }, 409)] })
     abrir()
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
     llenarTitular()
 
     await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
@@ -198,7 +274,7 @@ describe('Reservar', () => {
   it('el pago muestra cuánto y hasta cuándo, las condiciones de cancelación y luego confirma', async () => {
     const fetch = laApi()
     abrir()
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
     llenarTitular()
     await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
 
@@ -226,7 +302,7 @@ describe('Reservar', () => {
       respuesta(CONFIRMADA),
     ] })
     abrir()
-    await screen.findByLabelText('Nombre completo')
+    await screen.findByLabelText('Nombres')
     llenarTitular()
     await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
     await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })

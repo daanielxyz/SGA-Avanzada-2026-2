@@ -47,10 +47,10 @@ class PortalControllerTest extends PruebaRestDeReservas {
         return visitante.perform(peticion.contentType(MediaType.APPLICATION_JSON).content(json));
     }
 
-    /** La reserva de {@link PruebaRestDeReservas}, sin canal y con la hora de llegada. */
+    /** La reserva de {@link PruebaRestDeReservas}, sin canal. */
     private static String reservaDelPortal() {
         return reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(7))
-                .replace("  \"canalOrigen\": \"DIRECTO\",\n", "  \"horaEstimadaLlegada\": \"16:00\",\n");
+                .replace("  \"canalOrigen\": \"DIRECTO\",\n", "");
     }
 
     private String reservar() throws Exception {
@@ -72,8 +72,9 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(header().string("Location", containsString("/api/reservas/RES-")))
                 .andExpect(jsonPath("$.reserva.estado").value("PENDIENTE"))
                 .andExpect(jsonPath("$.reserva.canalOrigen").value("PORTAL"))
-                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("16:00:00"))
+                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("15:00:00"))
                 .andExpect(jsonPath("$.montoAPagar").value(120000))
+                .andExpect(jsonPath("$.cargosAdicionales").value(0))
                 .andExpect(jsonPath("$.pagarAntesDe").exists());
     }
 
@@ -154,7 +155,8 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 reservaDelPortal().replaceFirst("\\{", "{\n  \"vehiculos\": 1,\n  \"mascotas\": 1,"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reserva.vehiculos").value(1))
-                .andExpect(jsonPath("$.reserva.mascotas").value(1));
+                .andExpect(jsonPath("$.reserva.mascotas").value(1))
+                .andExpect(jsonPath("$.cargosAdicionales").value(30000));
     }
 
     @Test
@@ -187,14 +189,20 @@ class PortalControllerTest extends PruebaRestDeReservas {
 
     @Test
     @Tag("RN-09")
-    @Tag("DEC-68")
-    void elPortalPideLaHoraDeLlegadaYElContactoDelTitular() throws Exception {
-        String sinHora = reservaDelPortal().replace("  \"horaEstimadaLlegada\": \"16:00\",\n", "")
-                .replace(", \"telefono\": \"300 123 4567\"", "");
+    void laHoraDeLlegadaEsLaDeEntradaDelHotelAunqueElPedidoTraigaOtra() throws Exception {
+        pedir(post("/api/portal/reservas"),
+                reservaDelPortal().replaceFirst("\\{", "{\n  \"horaEstimadaLlegada\": \"23:00\","))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.horaEstimadaLlegada").value("15:00:00"));
+    }
 
-        pedir(post("/api/portal/reservas"), sinHora)
+    @Test
+    @Tag("DEC-68")
+    void elPortalPideElContactoDelTitular() throws Exception {
+        String sinTelefono = reservaDelPortal().replace(", \"telefono\": \"300 123 4567\"", "");
+
+        pedir(post("/api/portal/reservas"), sinTelefono)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detalles").value(hasItem("horaEstimadaLlegada: es obligatoria")))
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular.telefono: es obligatorio")));
         pagar("RES-2026-99999", "tok_visa").andExpect(status().isNotFound());
         pedir(post("/api/portal/reservas/RES-2026-99999/pago"), "{}")

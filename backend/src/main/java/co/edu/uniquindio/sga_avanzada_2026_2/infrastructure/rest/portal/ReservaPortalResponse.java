@@ -11,10 +11,13 @@ import java.time.LocalDateTime;
  *
  * @param montoAPagar  lo que se cobra en línea
  * @param pagarAntesDe hora de Colombia; si no se paga antes, la reserva vence
+ * @param cargosAdicionales lo que se suma al valor de la estancia y se paga al llegar, hoy las mascotas (RP-03)
  */
-public record ReservaPortalResponse(ReservaResponse reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe) {
+public record ReservaPortalResponse(ReservaResponse reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe,
+                                    BigDecimal cargosAdicionales) {
 
     static ReservaPortalResponse de(ReservaPortalResult r) {
-        return new ReservaPortalResponse(ReservaResponse.de(r.reserva()), r.montoAPagar(), r.pagarAntesDe());
+        return new ReservaPortalResponse(ReservaResponse.de(r.reserva()), r.montoAPagar(), r.pagarAntesDe(),
+                r.cargosAdicionales());
     }
 }

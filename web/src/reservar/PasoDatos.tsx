@@ -3,7 +3,8 @@ import type { Alojamiento } from '../api/alojamiento'
 import type { Estadia, Grupo, Precio } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import { cotizar, reservar, type ReservaApartada, type TipoDocumento } from '../api/reservas'
-import { enPesos, fechaDesdeHoy } from '../formato'
+import { enPesos, fechaDesdeHoy, horaDelDia } from '../formato'
+import CampoTelefono from './CampoTelefono'
 
 interface Props {
   codigo: string
@@ -13,11 +14,14 @@ interface Props {
   /** Lo que se le mostró al buscar, con los adultos y niños que dijo. */
   precioBuscado: Precio
   alCambiarPrecio: (precio: Precio) => void
+  /** Lo que suman las mascotas al total. */
+  alCambiarCargos: (cargos: number) => void
   alReservar: (apartada: ReservaApartada) => void
 }
 
 interface Persona {
-  nombre: string
+  nombres: string
+  apellidos: string
   fechaNacimiento: string
 }
 
@@ -28,23 +32,22 @@ const TIPOS_DOCUMENTO: { valor: TipoDocumento; texto: string }[] = [
   { valor: 'TI', texto: 'Tarjeta de identidad' },
 ]
 
-// El navegador envía la hora como HH:mm; el backend la da como HH:mm:ss
-const aHoraDeCampo = (hora: string | undefined) => hora?.slice(0, 5) ?? ''
+// Hasta el incremento del TRA (B5), el backend guarda un solo nombre: se envían unidos
+const nombreCompleto = ({ nombres, apellidos }: Persona) => `${nombres.trim()} ${apellidos.trim()}`
 
 /**
  * Paso 1: quién viaja. El titular es la primera persona del grupo (TIT-01). Con todas las fechas de nacimiento, el
  * total se recalcula con la regla real (RN-06): si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
  */
 export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioBuscado, alCambiarPrecio,
-  alReservar }: Props) {
+  alCambiarCargos, alReservar }: Props) {
   const hoy = fechaDesdeHoy()
   const [personas, setPersonas] = useState<Persona[]>(() =>
-    Array.from({ length: grupo.adultos + grupo.ninos }, () => ({ nombre: '', fechaNacimiento: '' })))
+    Array.from({ length: grupo.adultos + grupo.ninos }, () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>('CC')
   const [numeroDocumento, setNumeroDocumento] = useState('')
   const [correo, setCorreo] = useState('')
   const [telefono, setTelefono] = useState('')
-  const [horaLlegada, setHoraLlegada] = useState('')
   const [vehiculos, setVehiculos] = useState(0)
   const [mascotas, setMascotas] = useState(0)
   const [precioReal, setPrecioReal] = useState<Precio | null>(null)
@@ -54,7 +57,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
   const parametros = alojamiento?.parametros
   const cargoMascota = parametros?.cargoMascota ?? 0
   const { entrada, salida } = estadia
-  const hora = horaLlegada || aHoraDeCampo(parametros?.horaEntrada)
+  const cargos = Math.min(mascotas, parametros?.limiteMascotas ?? 0) * cargoMascota
   const fechas = personas.map((p) => p.fechaNacimiento)
   const fechasListas = fechas.every((f) => f !== '' && f <= hoy)
   const claveFechas = fechasListas ? fechas.join('|') : null
@@ -76,6 +79,8 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
     }
   }, [codigo, entrada, salida, claveFechas, alCambiarPrecio])
 
+  useEffect(() => alCambiarCargos(cargos), [cargos, alCambiarCargos])
+
   function cambiarPersona(indice: number, cambio: Partial<Persona>) {
     setPersonas((actuales) => actuales.map((p, i) => (i === indice ? { ...p, ...cambio } : p)))
   }
@@ -89,9 +94,11 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
       alReservar(await reservar({
         apartamento: codigo,
         ...estadia,
-        titular: { nombre: titular.nombre, tipoDocumento, numeroDocumento, correo, telefono },
-        ocupantes: [{ ...titular, tipoDocumento, numeroDocumento }, ...acompanantes],
-        horaEstimadaLlegada: hora,
+        titular: { nombre: nombreCompleto(titular), tipoDocumento, numeroDocumento, correo, telefono },
+        ocupantes: [
+          { nombre: nombreCompleto(titular), fechaNacimiento: titular.fechaNacimiento, tipoDocumento, numeroDocumento },
+          ...acompanantes.map((p) => ({ nombre: nombreCompleto(p), fechaNacimiento: p.fechaNacimiento })),
+        ],
         vehiculos,
         mascotas,
       }))
@@ -106,6 +113,9 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
   const cambio = precioReal && precioReal.total !== precioBuscado.total ? precioReal : null
   const pagan = cambio?.desglose[0]?.ocupantesFacturables
   const hayExtras = (parametros?.cupoParqueadero ?? 0) > 0 || parametros?.aceptaMascotas
+  const horaEntrada = parametros?.horaEntrada
+  const horaSalida = parametros?.horaSalida
+  const hayHorarios = horaEntrada && horaSalida
 
   return (
     <form className="formulario-reserva" onSubmit={enviar}>
@@ -130,11 +140,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
             <input type="email" value={correo} maxLength={150} required autoComplete="email"
               onChange={(e) => setCorreo(e.target.value)} />
           </label>
-          <label>
-            Teléfono
-            <input type="tel" value={telefono} maxLength={30} required autoComplete="tel"
-              onChange={(e) => setTelefono(e.target.value)} />
-          </label>
+          <CampoTelefono alCambiar={setTelefono} />
         </div>
       </fieldset>
 
@@ -149,14 +155,16 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
         </fieldset>
       )}
 
-      <fieldset>
-        <legend>Tu llegada</legend>
-        <div className="campos">
-          <label>
-            Hora estimada de llegada
-            <input type="time" value={hora} required onChange={(e) => setHoraLlegada(e.target.value)} />
-          </label>
-        </div>
+      {(hayHorarios || hayExtras) && <fieldset>
+        <legend>Tu estadía</legend>
+        {hayHorarios && (
+          <dl className="cuentas">
+            <dt>Entrada desde</dt>
+            <dd>{horaDelDia(horaEntrada)}</dd>
+            <dt>Salida hasta</dt>
+            <dd>{horaDelDia(horaSalida)}</dd>
+          </dl>
+        )}
         {hayExtras && (
           <details className="extras">
             <summary>¿Traes carro o mascota?</summary>
@@ -176,20 +184,20 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
                     onChange={(e) => setMascotas(Math.max(0, Number(e.target.value) || 0))} />
                   <span id="mascotas-ayuda" className="ayuda">
                     Hasta {parametros.limiteMascotas}
-                    {cargoMascota > 0 && `; cada una suma ${enPesos(cargoMascota)} a tu cuenta`}
+                    {cargoMascota > 0 && `; cada una suma ${enPesos(cargoMascota)} a tu total y se paga al llegar`}
                   </span>
                 </div>
               )}
             </div>
           </details>
         )}
-      </fieldset>
+      </fieldset>}
 
       {cambio && (
         <p className="aviso-cambio" role="status">
-          Tu total cambió a <strong>{enPesos(cambio.total)}</strong>: según las fechas de nacimiento,
-          pagan {pagan}{' '}
-          {pagan === 1 ? 'persona' : 'personas'}. La edad que cuenta es la del día de llegada.
+          Tu total cambió a <strong>{enPesos(cambio.total + cargos)}</strong>: según las fechas de
+          nacimiento, pagan {pagan} {pagan === 1 ? 'persona' : 'personas'}. La edad que cuenta es la del día de
+          llegada.
         </p>
       )}
       {problema && (
@@ -217,9 +225,16 @@ function CampoPersona({ indice, persona, hoy, alCambiar }: PropsPersona) {
   return (
     <>
       <label>
-        {titular ? 'Nombre completo' : `Nombre de la persona ${indice + 1}`}
-        <input value={persona.nombre} maxLength={120} required autoComplete={titular ? 'name' : 'off'}
-          onChange={(e) => alCambiar(indice, { nombre: e.target.value })} />
+        {titular ? 'Nombres' : `Nombres de la persona ${indice + 1}`}
+        <input value={persona.nombres} maxLength={59} pattern=".*\S.*" required
+          autoComplete={titular ? 'given-name' : 'off'}
+          onChange={(e) => alCambiar(indice, { nombres: e.target.value })} />
+      </label>
+      <label>
+        {titular ? 'Apellidos' : `Apellidos de la persona ${indice + 1}`}
+        <input value={persona.apellidos} maxLength={60} pattern=".*\S.*" required
+          autoComplete={titular ? 'family-name' : 'off'}
+          onChange={(e) => alCambiar(indice, { apellidos: e.target.value })} />
       </label>
       <label>
         {titular ? 'Fecha de nacimiento' : `Fecha de nacimiento de la persona ${indice + 1}`}

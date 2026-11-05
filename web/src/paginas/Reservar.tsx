@@ -49,6 +49,7 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
   const [carga, setCarga] = useState<Carga>({ estado: 'cargando' })
   const [paso, setPaso] = useState<Paso>({ numero: 1 })
   const [precioVigente, setPrecioVigente] = useState<Precio | null>(null)
+  const [cargosVigentes, setCargosVigentes] = useState(0)
   const titulo = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -109,7 +110,7 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
           <h1 ref={titulo} tabIndex={-1}>{TITULOS[paso.numero]}</h1>
           {paso.numero === 1 && (
             <PasoDatos codigo={codigo} estadia={estadia} grupo={grupo} alojamiento={alojamiento}
-              precioBuscado={carga.precio} alCambiarPrecio={setPrecioVigente}
+              precioBuscado={carga.precio} alCambiarPrecio={setPrecioVigente} alCambiarCargos={setCargosVigentes}
               alReservar={(apartada) => setPaso({ numero: 2, apartada })} />
           )}
           {paso.numero === 2 && (
@@ -119,7 +120,8 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
           {paso.numero === 3 && <Confirmacion pago={paso.pago} avisoCuenta={paso.apartada.reserva.avisoCuenta} />}
         </div>
         <Resumen apartamento={carga.apartamento} estadia={estadia} grupo={grupo}
-          precio={paso.numero === 1 ? precioVigente ?? carga.precio : paso.apartada.reserva.valor} />
+          precio={paso.numero === 1 ? precioVigente ?? carga.precio : paso.apartada.reserva.valor}
+          cargos={paso.numero === 1 ? cargosVigentes : paso.apartada.cargosAdicionales} />
       </div>
     </main>
   )

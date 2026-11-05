@@ -4184,9 +4184,6 @@ components:
           items:
             "$ref": "#/components/schemas/OcupanteRequest"
           minItems: 1
-        horaEstimadaLlegada:
-          type: string
-          format: time-local
         vehiculos:
           type: integer
           format: int32
@@ -4198,7 +4195,6 @@ components:
       required:
         - apartamento
         - entrada
-        - horaEstimadaLlegada
         - ocupantes
         - salida
         - titular
@@ -4212,6 +4208,8 @@ components:
         pagarAntesDe:
           type: string
           format: date-time
+        cargosAdicionales:
+          type: number
     PagoEnLineaRequest:
       type: object
       properties:

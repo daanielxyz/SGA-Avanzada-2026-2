@@ -949,6 +949,115 @@ fieldset p {
   border-top: 1px solid var(--borde);
 }
 
+.campo-telefono {
+  position: relative;
+}
+
+.telefono {
+  display: flex;
+  gap: 8px;
+}
+
+.telefono input {
+  flex: 1;
+  min-width: 0;
+}
+
+.selector-pais {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-pequeno);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.flecha-pais {
+  width: 7px;
+  height: 7px;
+  margin: -3px 2px 0;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.bandera {
+  flex: none;
+  display: block;
+  width: 24px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--borde);
+}
+
+.paises {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 20px);
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: var(--superficie);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-pequeno);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+}
+
+.paises input {
+  width: 100%;
+}
+
+.paises ul {
+  max-height: min(280px, 45dvh);
+  margin: 8px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.pais {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: var(--radio-pequeno);
+  cursor: pointer;
+}
+
+.pais.activo,
+.pais[aria-selected='true'] {
+  background: var(--fondo);
+}
+
+.pais-nombre {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pais-prefijo {
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.pais-vacio {
+  padding: 12px 8px;
+  color: var(--texto-suave);
+}
+
+.ayuda-error {
+  color: var(--peligro);
+}
+
 .extras {
   margin-top: 12px;
 }
