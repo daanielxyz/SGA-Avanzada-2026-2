@@ -138,6 +138,105 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-91")
+    @Tag("USU-04")
+    void elHuespedVeCuantoSeRetendriaSoloDeLoSuyoYSinCancelar() throws Exception {
+        String deAna = reservaPendiente(HOY.plusDays(5));
+        String deEva = reservaDeEva();
+        String simular = "/api/reservas/" + deAna + "/cancelacion";
+
+        cliente.perform(get(simular)).andExpect(status().isUnauthorized());
+        String token = entrarComoHuesped(ANA, "1094");
+        String simulacion = cliente.perform(con(token, get(simular)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.retenido").exists())
+                .andExpect(jsonPath("$.situacionSaldo").exists())
+                .andReturn().getResponse().getContentAsString();
+        cliente.perform(con(token, get("/api/reservas/" + deAna)))
+                .andExpect(jsonPath("$.estado").value("PENDIENTE"));
+        cliente.perform(con(token, get("/api/reservas/" + deEva + "/cancelacion"))).andExpect(status().isForbidden());
+
+        // Lo que anuncia es lo que hace
+        cliente.perform(con(token, put("/api/reservas/" + deAna + "/cancelar")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.retenido").value((Object) JsonPath.read(simulacion, "$.retenido")))
+                .andExpect(jsonPath("$.saldo").value((Object) JsonPath.read(simulacion, "$.saldo")))
+                .andExpect(jsonPath("$.situacionSaldo").value((Object) JsonPath.read(simulacion, "$.situacionSaldo")));
+
+        // RN-08: ya cancelada, no hay nada que simular
+        cliente.perform(con(token, get(simular)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("DEC-91")
+    @Tag("DEC-69")
+    @Tag("USU-04")
+    void elHuespedRetomaElPagoDeSuReservaPendiente() throws Exception {
+        mvc.perform(put("/api/alojamiento/medios-pago/PAGO_EN_LINEA/habilitar")).andExpect(status().isOk());
+        String deAna = reservaPendiente(HOY.plusDays(5));
+        String deEva = reservaDeEva();
+        String consultar = "/api/reservas/" + deAna + "/pago-en-linea";
+
+        cliente.perform(get(consultar)).andExpect(status().isUnauthorized());
+        String token = entrarComoHuesped(ANA, "1094");
+
+        // RN-09: sin hora de llegada, pagar no la podría confirmar; no se ofrece ni se cobra
+        cliente.perform(con(token, get(consultar))).andExpect(status().isConflict());
+        pedir(post("/api/portal/reservas/" + deAna + "/pago"), "{\"tokenPago\": \"tok_visa\"}")
+                .andExpect(status().isConflict());
+        cliente.perform(con(token, get("/api/reservas/" + deAna + "/folio")))
+                .andExpect(jsonPath("$.totalPagado").value(0));
+        enviar(put("/api/reservas/" + deAna + "/hora-llegada"), "{\"hora\": \"16:00\"}").andExpect(status().isOk());
+
+        String pendiente = cliente.perform(con(token, get(consultar)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagarAntesDe").exists())
+                .andReturn().getResponse().getContentAsString();
+        cliente.perform(con(token, get("/api/reservas/" + deEva + "/pago-en-linea"))).andExpect(status().isForbidden());
+
+        // Lo que anuncia es lo que se cobra
+        pedir(post("/api/portal/reservas/" + deAna + "/pago"), "{\"tokenPago\": \"tok_visa\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+        cliente.perform(con(token, get("/api/reservas/" + deAna + "/folio")))
+                .andExpect(jsonPath("$.totalPagado").value((Object) JsonPath.read(pendiente, "$.montoAPagar")));
+
+        // Ya confirmada, no falta nada que pagar en línea
+        cliente.perform(con(token, get(consultar)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("RN-13")
+    @Tag("DEC-91")
+    void alRetomarElPagoVeLasCondicionesQueAceptoYNoLasQuePublicoDespuesElHotel() throws Exception {
+        mvc.perform(put("/api/alojamiento/medios-pago/PAGO_EN_LINEA/habilitar")).andExpect(status().isOk());
+        String deAna = reservaPendiente(HOY.plusDays(5));
+        enviar(put("/api/reservas/" + deAna + "/hora-llegada"), "{\"hora\": \"16:00\"}").andExpect(status().isOk());
+        enviar(post("/api/politicas"), """
+                {
+                  "tramos": [
+                    {"antelacionMinHoras": 48, "penalizacion": {"base": "VALOR_TOTAL", "porcentaje": 10}},
+                    {"antelacionMinHoras": 0, "penalizacion": {"base": "VALOR_TOTAL", "porcentaje": 80}}
+                  ],
+                  "penalizacionNoShow": {"base": "VALOR_TOTAL", "porcentaje": 90}
+                }
+                """).andExpect(status().isCreated());
+        String token = entrarComoHuesped(ANA, "1094");
+
+        cliente.perform(con(token, get("/api/reservas/" + deAna + "/pago-en-linea")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.condiciones.penalizacionNoShow.porcentaje").value(100))
+                .andExpect(jsonPath("$.condiciones.tramos[?(@.antelacionMinHoras == 0)].penalizacion.porcentaje")
+                        .value(hasItem(50)));
+        cliente.perform(get("/api/portal/politica"))
+                .andExpect(jsonPath("$.penalizacionNoShow.porcentaje").value(90));
+    }
+
+    @Test
     @Tag("DEC-68")
     void elTokenDelHuespedLlevaSuTitularYSuRol() throws Exception {
         String titular = titularDe(reservaPendiente(HOY.plusDays(5)));

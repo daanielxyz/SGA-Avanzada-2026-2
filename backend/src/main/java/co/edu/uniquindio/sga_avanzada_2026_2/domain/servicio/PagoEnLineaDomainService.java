@@ -25,8 +25,9 @@ public class PagoEnLineaDomainService {
      * menos lo ya pagado (DEC-69 · DEC-89).
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
-     * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), la reserva no está PENDIENTE (RN-08) o
-     *                               ya venció su plazo (RN-21), el alojamiento no acepta pagos en línea (MPAG-02),
+     * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), la reserva no está PENDIENTE (RN-08), no
+     *                               tiene hora de llegada, sin la cual pagar no la podría confirmar (RN-09), o ya
+     *                               venció su plazo (RN-21), el alojamiento no acepta pagos en línea (MPAG-02),
      *                               el folio está cerrado (FOL-06) o ya no falta nada por pagar
      */
     public Dinero montoACobrar(Reserva reserva, Folio folio, Alojamiento alojamiento, LocalDateTime ahora) {
@@ -37,6 +38,10 @@ public class PagoEnLineaDomainService {
         }
         if (reserva.estado() != EstadoReserva.PENDIENTE) {
             throw new ReglaDominioException("Solo se paga en línea una reserva PENDIENTE; está " + reserva.estado());
+        }
+        if (reserva.horaEstimadaLlegada() == null) {
+            throw new ReglaDominioException("Esta reserva todavía no tiene hora de llegada: comunícate con el hotel"
+                    + " para confirmarla");
         }
         if (reserva.vencio(ahora, parametros.plazoParaConfirmar(reserva.canalOrigen()))) {
             throw new ReglaDominioException("La reserva " + reserva.codigo().valor()

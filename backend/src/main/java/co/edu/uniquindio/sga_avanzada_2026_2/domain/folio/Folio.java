@@ -219,10 +219,27 @@ public class Folio {
      * @return positivo = debe el huésped, a favor = negativo, al día = cero (SLD-03)
      */
     public Saldo saldo() {
-        BigDecimal cargosNetos = cargos.stream()
+        return Saldo.de(cargosNetos().subtract(totalPagado().monto()));
+    }
+
+    /**
+     * Cómo quedaría el saldo si se anulara ese valor y se retuviera esa penalidad, sin registrar nada: el mismo
+     * resultado de {@link #liquidarPenalidad} y {@link #anularExtras} (DEC-91).
+     *
+     * @param anulado   la estancia y sus extras
+     * @param penalidad lo que se retendría; cero si no hay penalidad
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07)
+     */
+    public Saldo saldoSiSeLiquida(Dinero anulado, Dinero penalidad) {
+        validarAbierto();
+        return Saldo.de(cargosNetos().subtract(anulado.monto()).add(penalidad.monto())
+                .subtract(totalPagado().monto()));
+    }
+
+    private BigDecimal cargosNetos() {
+        return cargos.stream()
                 .map(c -> c.aumentaSaldo() ? c.valor().monto() : c.valor().monto().negate())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return Saldo.de(cargosNetos.subtract(totalPagado().monto()));
     }
 
     /**

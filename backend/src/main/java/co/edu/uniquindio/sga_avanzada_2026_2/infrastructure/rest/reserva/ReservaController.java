@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CancelarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConfirmarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaConTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarPagoPendienteUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShowUseCase;
@@ -12,6 +13,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLleg
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.SimularCancelacionUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaConTitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
@@ -49,6 +51,8 @@ public class ReservaController {
     private final IndicarHoraLlegadaUseCase indicarHoraLlegada;
     private final ConfirmarReservaUseCase confirmarReserva;
     private final CancelarReservaUseCase cancelarReserva;
+    private final SimularCancelacionUseCase simularCancelacion;
+    private final ConsultarPagoPendienteUseCase consultarPagoPendiente;
     private final DeclararNoShowUseCase declararNoShow;
     private final ListarReservasUseCase listarReservas;
 
@@ -57,8 +61,10 @@ public class ReservaController {
                              ConsultarReservaConTitularUseCase consultarConTitular,
                              ModificarReservaUseCase modificarReserva,
                              IndicarHoraLlegadaUseCase indicarHoraLlegada, ConfirmarReservaUseCase confirmarReserva,
-                             CancelarReservaUseCase cancelarReserva, DeclararNoShowUseCase declararNoShow,
-                             ListarReservasUseCase listarReservas) {
+                             CancelarReservaUseCase cancelarReserva,
+                             SimularCancelacionUseCase simularCancelacion,
+                             ConsultarPagoPendienteUseCase consultarPagoPendiente,
+                             DeclararNoShowUseCase declararNoShow, ListarReservasUseCase listarReservas) {
         this.usuario = usuario;
         this.crearReserva = crearReserva;
         this.consultarReserva = consultarReserva;
@@ -67,6 +73,8 @@ public class ReservaController {
         this.indicarHoraLlegada = indicarHoraLlegada;
         this.confirmarReserva = confirmarReserva;
         this.cancelarReserva = cancelarReserva;
+        this.simularCancelacion = simularCancelacion;
+        this.consultarPagoPendiente = consultarPagoPendiente;
         this.declararNoShow = declararNoShow;
         this.listarReservas = listarReservas;
     }
@@ -120,6 +128,20 @@ public class ReservaController {
     @PutMapping("/{codigo}/confirmar")
     public ReservaResponse confirmar(@PathVariable String codigo) {
         return ReservaResponse.de(confirmarReserva.ejecutar(codigo));
+    }
+
+    /** Lo que pasaría al cancelar, sin cancelar; el huésped solo consulta las suyas (USU-04 · DEC-91). */
+    @GetMapping("/{codigo}/cancelacion")
+    public SimulacionCancelacionResponse simularCancelacion(@PathVariable String codigo) {
+        usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
+        return SimulacionCancelacionResponse.de(simularCancelacion.ejecutar(codigo));
+    }
+
+    /** Lo que falta pagar en línea para confirmarla; el huésped solo consulta las suyas (USU-04 · DEC-91). */
+    @GetMapping("/{codigo}/pago-en-linea")
+    public PagoPendienteResponse consultarPagoPendiente(@PathVariable String codigo) {
+        usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
+        return PagoPendienteResponse.de(consultarPagoPendiente.ejecutar(codigo));
     }
 
     /** El huésped solo cancela las suyas (USU-04 · CU-14). */

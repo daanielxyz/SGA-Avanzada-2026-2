@@ -33,11 +33,34 @@ public class CancelacionDomainService {
     public Dinero procesarCancelacion(Reserva reserva, Folio folio, PoliticaCancelacion politica,
                                       ParametrosAlojamiento parametros, LocalDateTime ahora) {
         validarCorrespondencia(reserva, folio, politica);
-        long horasAntelacion = Duration.between(ahora,
-                reserva.estancia().entrada().atTime(parametros.horaEntrada())).toHours();
-        Penalizacion penalizacion = politica.penalizacionPara(horasAntelacion);
+        Penalizacion penalizacion = penalizacionAl(ahora, reserva, politica, parametros);
         reserva.cancelar();
         return liquidar(reserva, folio, penalizacion, parametros, "cancelación", ahora);
+    }
+
+    /**
+     * Calcula lo que dejaría {@link #procesarCancelacion} en este momento, sin cambiar nada, para que el huésped lo
+     * sepa antes de decidir (DEC-91). Puede cambiar más tarde, al pasar a otro tramo de la política.
+     *
+     * @param politica   la versión congelada en la reserva
+     * @param parametros hora de entrada y porcentaje de anticipo del alojamiento
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si la política no es la congelada en la reserva (RN-13), el folio es de otra
+     *                               reserva (FOL-02) o está cerrado, o la reserva no puede cancelarse (RN-08)
+     */
+    public SimulacionCancelacion simularCancelacion(Reserva reserva, Folio folio, PoliticaCancelacion politica,
+                                                    ParametrosAlojamiento parametros, LocalDateTime ahora) {
+        validarCorrespondencia(reserva, folio, politica);
+        reserva.exigirCancelable();
+        Dinero retenido = retencion(reserva, folio, penalizacionAl(ahora, reserva, politica, parametros), parametros);
+        return new SimulacionCancelacion(retenido, folio.saldoSiSeLiquida(reserva.valorConExtras(), retenido));
+    }
+
+    // RN-13 · POL-05: el tramo sale de las horas que faltan para la entrada
+    private static Penalizacion penalizacionAl(LocalDateTime ahora, Reserva reserva, PoliticaCancelacion politica,
+                                               ParametrosAlojamiento parametros) {
+        return politica.penalizacionPara(Duration.between(ahora,
+                reserva.estancia().entrada().atTime(parametros.horaEntrada())).toHours());
     }
 
     /**
@@ -79,11 +102,16 @@ public class CancelacionDomainService {
     // DEC-41 · DEC-43 · DEC-89: se retiene solo sobre la estancia; los extras se anulan y lo pagado por ellos se devuelve
     static Dinero liquidar(Reserva reserva, Folio folio, Penalizacion penalizacion, ParametrosAlojamiento parametros,
                            String motivo, LocalDateTime ahora) {
-        Dinero valorTotal = reserva.valorTotal();
-        Dinero retenido = penalizacion.calcular(valorTotal, reserva.pagadoPorLaEstancia(folio.totalPagado()),
-                valorTotal.porcentaje(parametros.anticipo()));
-        folio.liquidarPenalidad(valorTotal, retenido, motivo, ahora.toLocalDate());
+        Dinero retenido = retencion(reserva, folio, penalizacion, parametros);
+        folio.liquidarPenalidad(reserva.valorTotal(), retenido, motivo, ahora.toLocalDate());
         folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
         return retenido;
+    }
+
+    private static Dinero retencion(Reserva reserva, Folio folio, Penalizacion penalizacion,
+                                    ParametrosAlojamiento parametros) {
+        Dinero valorTotal = reserva.valorTotal();
+        return penalizacion.calcular(valorTotal, reserva.pagadoPorLaEstancia(folio.totalPagado()),
+                valorTotal.porcentaje(parametros.anticipo()));
     }
 }

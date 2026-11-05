@@ -61,7 +61,8 @@ final class PermisosPorRol {
 
                 // El huésped: su cuenta y sus reservas; que cada reserva sea suya lo revisa el controlador (USU-04)
                 .requestMatchers("/api/mi-cuenta", "/api/mis-reservas").hasRole(HUESPED)
-                .requestMatchers(HttpMethod.GET, "/api/reservas/{codigo}", "/api/reservas/{codigo}/folio")
+                .requestMatchers(HttpMethod.GET, "/api/reservas/{codigo}", "/api/reservas/{codigo}/folio",
+                        "/api/reservas/{codigo}/cancelacion", "/api/reservas/{codigo}/pago-en-linea")
                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/cancelar")
                 .hasAnyRole(HUESPED, RECEPCIONISTA, ADMINISTRADOR)

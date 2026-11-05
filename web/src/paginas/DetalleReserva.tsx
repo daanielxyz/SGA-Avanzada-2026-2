@@ -7,13 +7,18 @@ import {
   cancelarReserva,
   ESTADOS,
   consultarCuentaDeReserva,
+  consultarPagoPendiente,
   consultarReserva,
+  simularCancelacion,
   type Cancelacion,
   type CuentaDeReserva,
+  type PagoPendiente,
   type ReservaDelHuesped,
+  type SimulacionCancelacion,
 } from '../api/cuenta'
 import Foto from '../busqueda/Foto'
 import { enPesos, fechaCorta, horaDelDia, noches } from '../formato'
+import PasoPago from '../reservar/PasoPago'
 
 type Carga =
   | { estado: 'cargando' }
@@ -32,6 +37,7 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
   const { codigo = '' } = useParams()
   const [carga, setCarga] = useState<Carga>({ estado: 'cargando' })
   const [resultado, setResultado] = useState<Cancelacion | null>(null)
+  const [pagoRecibido, setPagoRecibido] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -80,16 +86,27 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
   const horaEntrada = alojamiento?.parametros.horaEntrada
   const horaSalida = alojamiento?.parametros.horaSalida
 
-  async function alCancelar() {
-    const cancelacion = await cancelarReserva(codigo)
-    setResultado(cancelacion)
+  // Después de cancelar o pagar se vuelve a pedir: lo que se muestra siempre es lo que dice el backend
+  async function recargar(estado: ReservaDelHuesped['estado']) {
     const [nueva, nuevaCuenta] = await Promise.allSettled([consultarReserva(codigo), consultarCuentaDeReserva(codigo)])
     setCarga({
       estado: 'listo',
-      reserva: valorDe(nueva) ?? { ...reserva, estado: cancelacion.estado },
+      reserva: valorDe(nueva) ?? { ...reserva, estado },
       cuenta: valorDe(nuevaCuenta),
       apartamento,
     })
+  }
+
+  async function alCancelar() {
+    const cancelacion = await cancelarReserva(codigo)
+    setResultado(cancelacion)
+    setPagoRecibido(false)
+    await recargar(cancelacion.estado)
+  }
+
+  async function alPagar() {
+    setPagoRecibido(true)
+    await recargar('CONFIRMADA')
   }
 
   return (
@@ -105,10 +122,11 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
       </div>
 
       {resultado && <ResultadoCancelacion resultado={resultado} />}
+      {pagoRecibido && (
+        <p className="aviso-cambio" role="status"><strong>Recibimos tu pago. Tu reserva quedó confirmada.</strong></p>
+      )}
       {reserva.estado === 'PENDIENTE' && (
-        <p className="aviso-cambio">
-          Esta reserva aún no está pagada. Si el plazo para pagarla termina, las noches vuelven a quedar libres.
-        </p>
+        <PagoDeReserva reserva={reserva} yaPagado={cuenta?.totalPagado ?? 0} alPagar={alPagar} />
       )}
 
       <section aria-labelledby="titulo-estadia">
@@ -167,10 +185,15 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
             </>
           )}
         </dl>
+        {(reserva.estado === 'CANCELADA' || reserva.estado === 'NO_SHOW') && (
+          <p className="suave">
+            El alojamiento y los extras ya no se cobran; el saldo tiene en cuenta lo pagado y lo retenido.
+          </p>
+        )}
       </section>
 
       {(reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA') && (
-        <CancelarReserva alCancelar={alCancelar} />
+        <CancelarReserva codigo={codigo} alCancelar={alCancelar} />
       )}
     </main>
   )
@@ -199,8 +222,75 @@ function ResultadoCancelacion({ resultado: { retenido, saldo, situacionSaldo } }
   )
 }
 
-function CancelarReserva({ alCancelar }: { alCancelar: () => Promise<void> }) {
+interface PropsPago {
+  reserva: ReservaDelHuesped
+  yaPagado: number
+  alPagar: () => Promise<void>
+}
+
+/** Retomar el pago de una reserva pendiente, por ejemplo si se cerró la pantalla de pago (DEC-69 · DEC-91). */
+function PagoDeReserva({ reserva, yaPagado, alPagar }: PropsPago) {
+  const { codigo, valor, extras } = reserva
+  const [pago, setPago] = useState<PagoPendiente | null>(null)
+  const [problema, setProblema] = useState<string | null>(null)
+
+  useEffect(() => {
+    let vigente = true
+    consultarPagoPendiente(codigo)
+      .then((p) => vigente && setPago(p))
+      .catch((error: unknown) => vigente && setProblema(error instanceof ErrorApi
+        ? error.message
+        : 'No pudimos revisar el pago de esta reserva. Intenta de nuevo en un momento.'))
+    return () => {
+      vigente = false
+    }
+  }, [codigo])
+
+  if (problema) {
+    return <p className="aviso-cambio" role="status">{problema}</p>
+  }
+  if (!pago) {
+    return <p className="suave">Revisando el pago…</p>
+  }
+  return (
+    <section aria-labelledby="titulo-pago">
+      <h2 id="titulo-pago">Paga para confirmar</h2>
+      <PasoPago yaPagado={yaPagado} alPagar={alPagar} condiciones={pago.condiciones} apartada={{
+        reserva: { codigo, valor, extras, avisoCuenta: null },
+        montoAPagar: pago.montoAPagar,
+        pagarAntesDe: pago.pagarAntesDe,
+      }} />
+    </section>
+  )
+}
+
+function ConsecuenciasDeCancelar({ simulacion: { retenido, saldo, situacionSaldo } }: {
+  simulacion: SimulacionCancelacion
+}) {
+  return (
+    <dl className="datos datos-valores">
+      <dt>Se retiene</dt>
+      <dd>{enPesos(retenido)}</dd>
+      {situacionSaldo === 'A_FAVOR' && (
+        <>
+          <dt><strong>Te devuelven</strong></dt>
+          <dd><strong>{enPesos(saldo)}</strong></dd>
+        </>
+      )}
+      {situacionSaldo === 'PENDIENTE' && (
+        <>
+          <dt><strong>Quedarías debiendo</strong></dt>
+          <dd><strong>{enPesos(saldo)}</strong></dd>
+        </>
+      )}
+    </dl>
+  )
+}
+
+function CancelarReserva({ codigo, alCancelar }: { codigo: string; alCancelar: () => Promise<void> }) {
   const [preguntando, setPreguntando] = useState(false)
+  const [simulacion, setSimulacion] = useState<SimulacionCancelacion | null>(null)
+  const [calculando, setCalculando] = useState(false)
   const [cancelando, setCancelando] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const panel = useRef<HTMLDivElement>(null)
@@ -208,6 +298,21 @@ function CancelarReserva({ alCancelar }: { alCancelar: () => Promise<void> }) {
   useEffect(() => {
     if (preguntando) panel.current?.focus()
   }, [preguntando])
+
+  // Se calcula al abrir, y no antes: lo retenido depende de cuánto falte para la llegada (DEC-91)
+  async function preguntar() {
+    setPreguntando(true)
+    setProblema(null)
+    setSimulacion(null)
+    setCalculando(true)
+    try {
+      setSimulacion(await simularCancelacion(codigo))
+    } catch (error) {
+      setProblema(error instanceof ErrorApi ? error.message : 'No pudimos calcular cuánto se retendría.')
+    } finally {
+      setCalculando(false)
+    }
+  }
 
   async function confirmar() {
     setProblema(null)
@@ -222,7 +327,7 @@ function CancelarReserva({ alCancelar }: { alCancelar: () => Promise<void> }) {
 
   if (!preguntando) {
     return (
-      <button type="button" className="secundario peligroso" onClick={() => setPreguntando(true)}>
+      <button type="button" className="secundario peligroso" onClick={preguntar}>
         Cancelar esta reserva
       </button>
     )
@@ -230,13 +335,12 @@ function CancelarReserva({ alCancelar }: { alCancelar: () => Promise<void> }) {
   return (
     <div className="confirmar-cancelacion" ref={panel} tabIndex={-1} role="group" aria-labelledby="titulo-cancelar">
       <h2 id="titulo-cancelar">¿Cancelar esta reserva?</h2>
-      <p>
-        Las noches quedan libres de inmediato y no se puede deshacer. Se aplican las condiciones de cancelación que
-        aceptaste al reservar. Lo pagado por parqueadero y mascotas se te devuelve.
-      </p>
+      <p>Las noches quedan libres de inmediato y no se puede deshacer.</p>
+      {calculando && <p className="suave">Calculando cuánto se retendría…</p>}
+      {simulacion && <ConsecuenciasDeCancelar simulacion={simulacion} />}
       {problema && <p role="alert" className="aviso">{problema}</p>}
       <div className="confirmar-acciones">
-        <button type="button" className="boton-peligro" disabled={cancelando} onClick={confirmar}>
+        <button type="button" className="boton-peligro" disabled={cancelando || !simulacion} onClick={confirmar}>
           {cancelando ? 'Cancelando…' : 'Sí, cancelar'}
         </button>
         <button type="button" className="secundario" disabled={cancelando} onClick={() => setPreguntando(false)}>
