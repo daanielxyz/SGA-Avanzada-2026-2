@@ -45,8 +45,8 @@ class MascotasTest {
 
     @Test
     void cadaMascotaGeneraSuCargo() {
-        assertEquals(Optional.of(Dinero.de(60_000)), parametros(true, 2, 30_000).cargoPorMascotas(2));
-        assertEquals(Optional.empty(), parametros(true, 2, 30_000).cargoPorMascotas(0));
+        assertEquals(Dinero.de(60_000), parametros(true, 2, 30_000).calcularExtras(0, 0, 2, 3).mascotas());
+        assertEquals(Dinero.CERO, parametros(true, 2, 30_000).calcularExtras(0, 0, 0, 3).mascotas());
     }
 
     @Test

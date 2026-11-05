@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import java.math.BigDecimal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.CobroParqueadero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -20,7 +21,22 @@ public record ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada,
                                 int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
                                 int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
                                 String pagoEnLinea, int plazoPagoEnLineaMinutos, int cupoParqueadero,
-                                boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota) {
+                                boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota,
+                                String cobroParqueadero, BigDecimal cargoCarro, BigDecimal cargoMoto) {
+
+    /** Con parqueadero gratis (DEC-89). */
+    public ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
+                             int tiempoPreparacionHoras, int plazoConfirmacionHoras, LocalTime horaLimiteNoShow,
+                             int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
+                             int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
+                             String pagoEnLinea, int plazoPagoEnLineaMinutos, int cupoParqueadero,
+                             boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota) {
+        this(umbralEdadFacturable, horaEntrada, horaSalida, tiempoPreparacionHoras, plazoConfirmacionHoras,
+                horaLimiteNoShow, anticipoPct, minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
+                minimoTramosCancelacion, minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLineaMinutos,
+                cupoParqueadero, aceptaMascotas, limiteMascotas, cargoMascota, "POR_NOCHE", BigDecimal.ZERO,
+                BigDecimal.ZERO);
+    }
 
     /** Sin parqueadero ni mascotas (RP-02 · RP-03). */
     public ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
@@ -40,6 +56,7 @@ public record ParametrosCommand(int umbralEdadFacturable, LocalTime horaEntrada,
                 new Porcentaje(anticipoPct), minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas,
                 minimoTramosCancelacion, minimoCapacidadesDistintas, ModoPagoEnLinea.valueOf(pagoEnLinea),
                 Duration.ofMinutes(plazoPagoEnLineaMinutos), cupoParqueadero, aceptaMascotas, limiteMascotas,
-                new Dinero(cargoMascota));
+                new Dinero(cargoMascota), CobroParqueadero.valueOf(cobroParqueadero), new Dinero(cargoCarro),
+                new Dinero(cargoMoto));
     }
 }

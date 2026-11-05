@@ -46,7 +46,7 @@ public class InicializadorAlojamiento implements ApplicationRunner {
                         p.minimoMediosPago(), p.minimoServiciosAdicionales(), p.minimoTemporadas(),
                         p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas(), p.pagoEnLinea(),
                         p.plazoPagoEnLineaMinutos(), p.cupoParqueadero(), p.aceptaMascotas(), p.limiteMascotas(),
-                        p.cargoMascota()),
+                        p.cargoMascota(), p.cobroParqueadero(), p.cargoCarro(), p.cargoMoto()),
                 a.servicios().stream().map(s -> new ServicioCommand(s.nombre(), s.generaCargo(), s.valor())).toList(),
                 a.mediosPago(),
                 sga.politica().tramos().stream()

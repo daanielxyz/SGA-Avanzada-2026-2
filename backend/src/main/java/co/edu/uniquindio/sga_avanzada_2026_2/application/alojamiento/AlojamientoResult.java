@@ -21,7 +21,8 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                                    int minimoServiciosAdicionales, int minimoTemporadas, int minimoTramosCancelacion,
                                    int minimoCapacidadesDistintas, String pagoEnLinea,
                                    long plazoPagoEnLineaMinutos, int cupoParqueadero, boolean aceptaMascotas,
-                                   int limiteMascotas, BigDecimal cargoMascota) {
+                                   int limiteMascotas, BigDecimal cargoMascota, String cobroParqueadero,
+                                   BigDecimal cargoCarro, BigDecimal cargoMoto) {
     }
 
     public record ServicioResult(String id, String nombre, boolean generaCargo, BigDecimal valor, boolean activo) {
@@ -43,7 +44,8 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                         p.anticipo().valor(), p.minimoMediosPago(), p.minimoServiciosAdicionales(),
                         p.minimoTemporadas(), p.minimoTramosCancelacion(), p.minimoCapacidadesDistintas(),
                         p.pagoEnLinea().name(), p.plazoPagoEnLinea().toMinutes(), p.cupoParqueadero(),
-                        p.aceptaMascotas(), p.limiteMascotas(), p.cargoMascota().monto()),
+                        p.aceptaMascotas(), p.limiteMascotas(), p.cargoMascota().monto(), p.cobroParqueadero().name(),
+                        p.cargoCarro().monto(), p.cargoMoto().monto()),
                 alojamiento.serviciosAdicionales().stream()
                         .map(s -> new ServicioResult(s.id().valor(), s.nombre(), s.generaCargo(), s.valor().monto(),
                                 s.activo()))

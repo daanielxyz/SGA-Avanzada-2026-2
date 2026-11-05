@@ -47,6 +47,13 @@ public record CrearReservaRequest(
 
         // Opcionales: sin ellos, ni vehículos ni mascotas (RP-02 · RP-03)
         @Min(value = 0, message = "no puede ser negativo")
+        Integer carros,
+
+        @Min(value = 0, message = "no puede ser negativo")
+        Integer motos,
+
+        // TODO(equipo): se quita cuando recepción envíe carros y motos; mientras tanto, cuenta como carros (DEC-89)
+        @Min(value = 0, message = "no puede ser negativo")
         Integer vehiculos,
 
         @Min(value = 0, message = "no puede ser negativo")
@@ -54,7 +61,8 @@ public record CrearReservaRequest(
 
     CrearReservaCommand aCommand() {
         return new CrearReservaCommand(apartamento, entrada, salida, canalOrigen, titular.aCommand(),
-                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada, Optional.ofNullable(vehiculos).orElse(0),
-                Optional.ofNullable(mascotas).orElse(0));
+                OcupanteRequest.aCommands(ocupantes), horaEstimadaLlegada,
+                Optional.ofNullable(carros).or(() -> Optional.ofNullable(vehiculos)).orElse(0),
+                Optional.ofNullable(motos).orElse(0), Optional.ofNullable(mascotas).orElse(0));
     }
 }

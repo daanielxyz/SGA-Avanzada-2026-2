@@ -41,6 +41,10 @@ export interface Alojamiento {
     aceptaMascotas?: boolean
     limiteMascotas?: number
     cargoMascota?: number
+    /** DEC-89: si los precios del parqueadero son por noche o por estadía; 0 es gratis. */
+    cobroParqueadero?: 'POR_NOCHE' | 'POR_ESTADIA'
+    cargoCarro?: number
+    cargoMoto?: number
   }
   marca?: Marca | null
 }

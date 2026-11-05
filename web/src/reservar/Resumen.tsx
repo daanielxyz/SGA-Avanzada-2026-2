@@ -1,4 +1,5 @@
 import type { ApartamentoPublico, Estadia, Grupo, Precio } from '../api/apartamentos'
+import type { Extras } from '../api/reservas'
 import Foto from '../busqueda/Foto'
 import { enPesos, fechaCorta, noches } from '../formato'
 
@@ -8,12 +9,12 @@ interface Props {
   grupo: Grupo
   /** Vacío mientras llega. */
   precio: Precio | null
-  /** Lo que suman las mascotas (RP-03). */
-  cargos: number
+  /** Lo que suman el parqueadero y las mascotas (DEC-89). */
+  extras: Extras
 }
 
 /** Lo que se está reservando, siempre a la vista durante los pasos. */
-export default function Resumen({ apartamento, estadia, grupo, precio, cargos }: Props) {
+export default function Resumen({ apartamento, estadia, grupo, precio, extras }: Props) {
   const foto = apartamento.imagenes.find((i) => i.principal) ?? apartamento.imagenes[0]
   const n = noches(estadia.entrada, estadia.salida)
   const ninos = grupo.ninos > 0 ? ` y ${grupo.ninos} ${grupo.ninos === 1 ? 'niño' : 'niños'}` : ''
@@ -34,17 +35,28 @@ export default function Resumen({ apartamento, estadia, grupo, precio, cargos }:
           {grupo.adultos} {grupo.adultos === 1 ? 'adulto' : 'adultos'}
           {ninos}
         </dd>
-        {precio && cargos > 0 && (
+        {precio && extras.total > 0 && (
           <>
             <dt>Alojamiento</dt>
             <dd>{enPesos(precio.total)}</dd>
+          </>
+        )}
+        {extras.parqueadero > 0 && (
+          <>
+            <dt>Parqueadero</dt>
+            <dd>{enPesos(extras.parqueadero)}</dd>
+          </>
+        )}
+        {extras.mascotas > 0 && (
+          <>
             <dt>Mascotas</dt>
-            <dd>{enPesos(cargos)}</dd>
+            <dd>{enPesos(extras.mascotas)}</dd>
           </>
         )}
       </dl>
       <p className="total-estancia">
-        Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{precio ? enPesos(precio.total + cargos) : '…'}</strong>
+        Total {n} {n === 1 ? 'noche' : 'noches'}:{' '}
+        <strong>{precio ? enPesos(precio.total + extras.total) : '…'}</strong>
       </p>
     </aside>
   )

@@ -25,8 +25,8 @@ export default function PasoPago({ apartada, alPagar }: Props) {
   const [politica, setPolitica] = useState<PoliticaCancelacion | null>(null)
   const [pagando, setPagando] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
-  const { reserva, montoAPagar, pagarAntesDe, cargosAdicionales } = apartada
-  const resto = reserva.valor.total + cargosAdicionales - montoAPagar
+  const { reserva, montoAPagar, pagarAntesDe } = apartada
+  const resto = reserva.valor.total + reserva.extras.total - montoAPagar
 
   useEffect(() => {
     let vigente = true
@@ -65,9 +65,6 @@ export default function PasoPago({ apartada, alPagar }: Props) {
           </>
         )}
       </dl>
-      {cargosAdicionales > 0 && (
-        <p className="suave">Lo de las mascotas ({enPesos(cargosAdicionales)}) se paga al llegar.</p>
-      )}
 
       {politica && <Condiciones politica={politica} />}
 

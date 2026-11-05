@@ -107,13 +107,13 @@ public class CrearReservaUseCase {
                 calendario.estanciaMinimaPara(estancia), parametros.umbralEdadFacturable(), ahora);
         // RP-03 · RP-02
         parametros.exigirMascotas(comando.mascotas());
-        cupoParqueadero.exigirCupo(estancia, comando.vehiculos(), reservas.buscarActivasConVehiculos(), null,
+        cupoParqueadero.exigirCupo(estancia, comando.carros() + comando.motos(), reservas.buscarActivasConVehiculos(), null,
                 parametros.cupoParqueadero());
-        reserva.declararVehiculosYMascotas(comando.vehiculos(), comando.mascotas());
+        reserva.declararExtras(comando.carros(), comando.motos(), comando.mascotas(), parametros.calcularExtras(
+                comando.carros(), comando.motos(), comando.mascotas(), estancia.noches().size()));
         Folio folio = Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
                 reserva.valorTotal(), ahora.toLocalDate());
-        parametros.cargoPorMascotas(comando.mascotas()).ifPresent(cargo -> folio.agregarServicioAdicional(
-                "Mascotas (" + comando.mascotas() + ")", cargo, ahora.toLocalDate()));
+        folio.cargarExtras(reserva.extras(), ahora.toLocalDate());
 
         titulares.guardar(titular);
         reservas.guardar(reserva);

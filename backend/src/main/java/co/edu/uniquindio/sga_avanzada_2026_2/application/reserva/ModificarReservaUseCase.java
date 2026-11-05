@@ -72,7 +72,7 @@ public class ModificarReservaUseCase {
         LocalDate hoy = LocalDate.now(reloj);
         Estancia estancia = new Estancia(comando.entrada(), comando.salida());
         List<Ocupante> ocupantes = OcupanteCommand.aDominio(comando.ocupantes());
-        Dinero valorAnterior = reserva.valorTotal();
+        Dinero valorAnterior = reserva.valorConExtras();
 
         disponibilidad.verificarParaModificar(reserva, destino, estancia, ocupantes.size(),
                 reservas.buscarActivasPorApartamento(destino.codigo()), parametros).exigir();
@@ -85,7 +85,10 @@ public class ModificarReservaUseCase {
         // RP-02: las nuevas fechas también deben caber en el parqueadero
         cupoParqueadero.exigirCupo(estancia, reserva.vehiculos(), reservas.buscarActivasConVehiculos(), reserva,
                 parametros.cupoParqueadero());
-        folio.ajustarPorModificacion(valorAnterior, reserva.valorTotal(), hoy);
+        // DEC-89: modificar recalcula también los extras, porque el parqueadero puede cobrarse por noche
+        reserva.declararExtras(reserva.carros(), reserva.motos(), reserva.mascotas(), parametros.calcularExtras(
+                reserva.carros(), reserva.motos(), reserva.mascotas(), estancia.noches().size()));
+        folio.ajustarPorModificacion(valorAnterior, reserva.valorConExtras(), hoy);
 
         reservas.guardar(reserva);
         folios.guardar(folio);

@@ -26,7 +26,8 @@ public record SgaPropiedades(Alojamiento alojamiento, Parametros parametros, Pol
                              int anticipoPct, int minimoMediosPago, int minimoServiciosAdicionales,
                              int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
                              String pagoEnLinea, int plazoPagoEnLineaMinutos, int cupoParqueadero,
-                             boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota) {
+                             boolean aceptaMascotas, int limiteMascotas, BigDecimal cargoMascota,
+                             String cobroParqueadero, BigDecimal cargoCarro, BigDecimal cargoMoto) {
     }
 
     public record Politica(List<Tramo> tramos, Penalizacion noShow) {

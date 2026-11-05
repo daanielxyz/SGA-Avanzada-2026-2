@@ -21,7 +21,8 @@ public class PagoEnLineaDomainService {
     public static final MedioPago MEDIO = new MedioPago("PAGO_EN_LINEA");
 
     /**
-     * Cuánto falta cobrar en línea: lo que exige el alojamiento (anticipo o total) menos lo ya pagado (DEC-69).
+     * Cuánto falta cobrar en línea: lo que exige el alojamiento (anticipo o total, con los extras de la reserva)
+     * menos lo ya pagado (DEC-69 · DEC-89).
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
      * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), la reserva no está PENDIENTE (RN-08) o
@@ -45,7 +46,7 @@ public class PagoEnLineaDomainService {
         if (folio.cerrado()) {
             throw new ReglaDominioException("El folio de la reserva está cerrado");
         }
-        Dinero exigido = parametros.pagoEnLinea().exigido(reserva.valorTotal(), parametros.anticipo());
+        Dinero exigido = parametros.pagoEnLinea().exigido(reserva.valorConExtras(), parametros.anticipo());
         if (!folio.totalPagado().esMenorQue(exigido)) {
             throw new ReglaDominioException("La reserva ya tiene pagado lo que se exige; confírmela en recepción");
         }

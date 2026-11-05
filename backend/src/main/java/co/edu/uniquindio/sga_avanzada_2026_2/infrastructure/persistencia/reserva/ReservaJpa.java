@@ -56,7 +56,13 @@ public class ReservaJpa {
     private String politicaVersionId;
     private LocalDateTime creadaEn;
 
-    private int vehiculos;
+    private int carros;
+
+    private int motos;
+
+    private BigDecimal extrasParqueadero;
+
+    private BigDecimal extrasMascotas;
 
     private int mascotas;
 

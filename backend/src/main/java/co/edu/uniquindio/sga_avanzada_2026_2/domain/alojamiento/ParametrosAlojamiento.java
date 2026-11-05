@@ -1,7 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
-import java.util.Optional;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -29,6 +29,9 @@ import java.time.LocalTime;
  * @param aceptaMascotas             si el alojamiento recibe mascotas (L-16 · RP-03)
  * @param limiteMascotas             mascotas por reserva, si se aceptan (RP-03)
  * @param cargoMascota               lo que se cobra por cada mascota, una vez por estancia (RP-03)
+ * @param cobroParqueadero           si los precios del parqueadero son por noche o por estadía (DEC-89)
+ * @param cargoCarro                 lo que se cobra por cada carro; 0 si no se cobra (DEC-89)
+ * @param cargoMoto                  lo que se cobra por cada moto; 0 si no se cobra (DEC-89)
  */
 public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                     Duration tiempoPreparacion, Duration plazoConfirmacion,
@@ -36,7 +39,8 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
                                     int minimoServiciosAdicionales, int minimoTemporadas,
                                     int minimoTramosCancelacion, int minimoCapacidadesDistintas,
                                     ModoPagoEnLinea pagoEnLinea, Duration plazoPagoEnLinea, int cupoParqueadero,
-                                    boolean aceptaMascotas, int limiteMascotas, Dinero cargoMascota) {
+                                    boolean aceptaMascotas, int limiteMascotas, Dinero cargoMascota,
+                                    CobroParqueadero cobroParqueadero, Dinero cargoCarro, Dinero cargoMoto) {
 
     // ALO-02 · ALO-03 · ALO-06 · TPRE-01 · TEM-04 · POL-01 · CAP-05
     public ParametrosAlojamiento {
@@ -75,6 +79,22 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         if (cargoMascota == null) {
             throw new ReglaDominioException("El cargo por mascota es obligatorio (0 si no se cobra)");
         }
+        if (cobroParqueadero == null || cargoCarro == null || cargoMoto == null) {
+            throw new ReglaDominioException("Falta cómo se cobra el parqueadero y su precio (0 si no se cobra)");
+        }
+    }
+
+    /** Con parqueadero gratis, para lo que no usa los precios del parqueadero. */
+    public ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
+                                 Duration tiempoPreparacion, Duration plazoConfirmacion, LocalTime horaLimiteNoShow,
+                                 Porcentaje anticipo, int minimoMediosPago, int minimoServiciosAdicionales,
+                                 int minimoTemporadas, int minimoTramosCancelacion, int minimoCapacidadesDistintas,
+                                 ModoPagoEnLinea pagoEnLinea, Duration plazoPagoEnLinea, int cupoParqueadero,
+                                 boolean aceptaMascotas, int limiteMascotas, Dinero cargoMascota) {
+        this(umbralEdadFacturable, horaEntrada, horaSalida, tiempoPreparacion, plazoConfirmacion, horaLimiteNoShow,
+                anticipo, minimoMediosPago, minimoServiciosAdicionales, minimoTemporadas, minimoTramosCancelacion,
+                minimoCapacidadesDistintas, pagoEnLinea, plazoPagoEnLinea, cupoParqueadero, aceptaMascotas,
+                limiteMascotas, cargoMascota, CobroParqueadero.POR_NOCHE, Dinero.CERO, Dinero.CERO);
     }
 
     /** Sin parqueadero ni mascotas, para lo que no usa esas reglas. */
@@ -105,9 +125,11 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
         }
     }
 
-    /** RP-03: lo que se cobra por las mascotas de una reserva; vacío si no lleva o no se cobra. */
-    public Optional<Dinero> cargoPorMascotas(int mascotas) {
-        return Optional.of(cargoMascota.multiplicar(mascotas)).filter(Dinero::esPositivo);
+    /** RP-02 · RP-03 · DEC-89: lo que suman a la estancia los vehículos y las mascotas de una reserva. */
+    public Extras calcularExtras(int carros, int motos, int mascotas, int noches) {
+        Dinero porCarros = cobroParqueadero.cargoDeUnVehiculo(cargoCarro, noches).multiplicar(carros);
+        Dinero porMotos = cobroParqueadero.cargoDeUnVehiculo(cargoMoto, noches).multiplicar(motos);
+        return new Extras(porCarros.sumar(porMotos), cargoMascota.multiplicar(mascotas));
     }
 
     /**
