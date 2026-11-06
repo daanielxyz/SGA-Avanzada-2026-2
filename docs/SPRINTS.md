@@ -96,8 +96,12 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
-  - [ ] Registro de llegada y corrección del registro.
+  - [ ] Entrevista a la recepcionista: anotar en `docs/BACKLOG.md` lo que se toma y revisar si cambia este sprint.
+  - [ ] Ajustes del PMS por DEC-89, DEC-91 y DEC-93: anticipo con extras, carros y motos, límite de mascotas por apartamento, retención antes de cancelar y extras en el detalle (`pms/DISENO.md`).
+  - [ ] Núcleo, acordado el 6 nov: retención antes del no-show, `titularNombre` en el tablero, `motivo` en los 409, anticipo exigido en la respuesta, política legible para recepción, nombre de la temporada, el titular que no se aloja (cambia TIT-01) y quitar el pendiente de la tarifa de Temporada Media, que configura cada alojamiento (`pms/DISENO.md`, «Cambios de backend»).
+  - [ ] Registro de llegada y corrección del registro, con el cambio de titular si quien reservó no es quien llega (decisión del 6 nov).
   - [ ] Folio: cargos, pagos, devoluciones y reversos; cierre del folio y salida.
+  - [ ] Probar en un celular real las pantallas del sprint 2.
 - **Cierre 3 (vie 13 nov)**.
 
 ## Sprint 4 · 17 – 20 nov (lunes festivo) · «Configurar el hotel»
