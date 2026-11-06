@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.ClavesReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PagoEnLineaDomainService;
@@ -11,7 +12,8 @@ import java.time.LocalDateTime;
 
 /**
  * Caso de uso: el huésped reserva desde el portal, sin haber iniciado sesión (CU-10 · DEC-68). Crea la reserva como
- * {@link CrearReservaUseCase} con el canal PORTAL y responde cuánto pagar en línea y hasta cuándo (DEC-69).
+ * {@link CrearReservaUseCase} con el canal PORTAL y responde cuánto pagar en línea, hasta cuándo (DEC-69) y la clave
+ * con la que solo quien reservó puede pagarla o liberarla (DEC-93).
  */
 @Service
 public class ReservarDesdePortalUseCase {
@@ -19,13 +21,15 @@ public class ReservarDesdePortalUseCase {
     private final CrearReservaUseCase crearReserva;
     private final CargadorReserva cargador;
     private final PagoEnLineaDomainService pagoEnLinea;
+    private final ClavesReserva claves;
     private final Clock reloj;
 
     public ReservarDesdePortalUseCase(CrearReservaUseCase crearReserva, CargadorReserva cargador,
-                                      PagoEnLineaDomainService pagoEnLinea, Clock reloj) {
+                                      PagoEnLineaDomainService pagoEnLinea, ClavesReserva claves, Clock reloj) {
         this.crearReserva = crearReserva;
         this.cargador = cargador;
         this.pagoEnLinea = pagoEnLinea;
+        this.claves = claves;
         this.reloj = reloj;
     }
 
@@ -50,6 +54,7 @@ public class ReservarDesdePortalUseCase {
         return new ReservaPortalResult(creada,
                 pagoEnLinea.montoACobrar(reserva, cargador.folioDe(reserva), alojamiento, LocalDateTime.now(reloj))
                         .monto(),
-                reserva.venceEn(alojamiento.parametros().plazoParaConfirmar(reserva.canalOrigen())));
+                reserva.venceEn(alojamiento.parametros().plazoParaConfirmar(reserva.canalOrigen())),
+                claves.emitir(reserva.codigo().valor()));
     }
 }

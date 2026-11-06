@@ -301,6 +301,19 @@ public class Reserva {
     }
 
     /**
+     * Quien reservó en el portal se arrepiente antes de pagar: la reserva se cancela y libera sus noches de inmediato,
+     * sin esperar a que venza (RN-12 · DEC-93). Que no tenga pagos lo revisa {@code CancelacionDomainService}.
+     *
+     * @throws ReglaDominioException si no está PENDIENTE
+     */
+    public void liberar() {
+        if (estado != EstadoReserva.PENDIENTE) {
+            throw new ReglaDominioException("Solo se libera una reserva PENDIENTE; está " + estado);
+        }
+        estado = EstadoReserva.CANCELADA;
+    }
+
+    /**
      * RN-08: revisa que la reserva todavía se pueda cancelar, sin cambiarla (DEC-91).
      *
      * @throws ReglaDominioException si no está PENDIENTE ni CONFIRMADA

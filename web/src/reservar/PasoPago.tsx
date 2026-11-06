@@ -31,7 +31,7 @@ export default function PasoPago({ apartada, alPagar, yaPagado = 0, condiciones 
   const conoceCondiciones = condiciones !== undefined
   const [pagando, setPagando] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
-  const { reserva, montoAPagar, pagarAntesDe } = apartada
+  const { reserva, montoAPagar, pagarAntesDe, clave } = apartada
   const resto = reserva.valor.total + reserva.extras.total - yaPagado - montoAPagar
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function PasoPago({ apartada, alPagar, yaPagado = 0, condiciones 
     setProblema(null)
     setPagando(true)
     try {
-      alPagar(await pagar(reserva.codigo, token))
+      alPagar(await pagar(reserva.codigo, token, clave))
     } catch (error) {
       setProblema(error instanceof ErrorApi ? error.message : 'No pudimos procesar el pago. Intenta de nuevo.')
       setPagando(false)

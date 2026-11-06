@@ -44,6 +44,9 @@ public class ApartamentoJpa {
 
     private boolean activo;
 
+    /** Vacío: el del alojamiento (DEC-93). */
+    private Integer limiteMascotas;
+
     @Version
     private Long version;
 

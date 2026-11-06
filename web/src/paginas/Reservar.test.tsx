@@ -55,6 +55,7 @@ const APARTADA = {
   },
   montoAPagar: 60000,
   pagarAntesDe: `${ENTRADA}T15:30:00`,
+  clave: 'clave-de-la-reserva',
 }
 
 const CONFIRMADA = {
@@ -66,16 +67,18 @@ const respuesta = (cuerpo: unknown, estado = 200) => new Response(JSON.stringify
 
 /** La API simulada responde según la ruta; `pagos` y `reservas` se consumen en orden. */
 function laApi({ estancia = LIBRE, cotizacion = precio(1), reservas = [respuesta(APARTADA, 201)],
-  pagos = [respuesta(CONFIRMADA)] }: {
+  pagos = [respuesta(CONFIRMADA)], liberaciones = [new Response(null, { status: 204 })], apartamento = SUITE }: {
   estancia?: EstanciaPortal; cotizacion?: Precio; reservas?: Response[]; pagos?: Response[]
+  liberaciones?: Response[]; apartamento?: ApartamentoPublico
 } = {}) {
   const fetch = vi.fn((ruta: string) => {
     if (ruta.includes('/estancia')) return Promise.resolve(respuesta(estancia))
     if (ruta === '/api/cotizaciones') return Promise.resolve(respuesta(cotizacion))
     if (ruta === '/api/portal/politica') return Promise.resolve(respuesta(POLITICA))
     if (ruta.endsWith('/pago')) return Promise.resolve(pagos.shift() ?? respuesta({}, 500))
+    if (ruta.endsWith('/liberar')) return Promise.resolve(liberaciones.shift() ?? respuesta({}, 500))
     if (ruta === '/api/portal/reservas') return Promise.resolve(reservas.shift() ?? respuesta({}, 500))
-    return Promise.resolve(respuesta(SUITE))
+    return Promise.resolve(respuesta(apartamento))
   })
   vi.stubGlobal('fetch', fetch)
   return fetch
@@ -85,6 +88,10 @@ function cuerpoDe(fetch: ReturnType<typeof laApi>, ruta: string) {
   const llamada = fetch.mock.calls.map((c) => c as unknown as [string, RequestInit])
     .find(([r]) => r.endsWith(ruta))
   return JSON.parse(String(llamada?.[1].body))
+}
+
+function llamadaA(fetch: ReturnType<typeof laApi>, ruta: string) {
+  return fetch.mock.calls.map((c) => c as unknown as [string, RequestInit]).find(([r]) => r.endsWith(ruta))?.[1]
 }
 
 function abrir(grupo = 'adultos=1&ninos=0', entrada = ENTRADA) {
@@ -153,6 +160,26 @@ describe('Reservar', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Revisa tus fechas' })).toBeInTheDocument()
     expect(screen.getByText('Elige la llegada y la salida.')).toBeInTheDocument()
+  })
+
+  it('el límite de mascotas propio del apartamento reemplaza al del hotel (DEC-93)', async () => {
+    laApi({ apartamento: { ...SUITE, limiteMascotas: 1 } })
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    fireEvent.change(screen.getByLabelText('Mascotas'), { target: { value: '2' } })
+
+    expect(screen.getByLabelText('Mascotas')).toHaveValue(1)
+    expect(screen.getByText(/^Hasta 1;/)).toBeInTheDocument()
+  })
+
+  it('un apartamento que no recibe mascotas no las ofrece, aunque el hotel sí', async () => {
+    laApi({ apartamento: { ...SUITE, limiteMascotas: 0 } })
+    abrir()
+    await screen.findByLabelText('Nombres')
+
+    expect(screen.queryByLabelText('Mascotas')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Carros')).toBeInTheDocument()
   })
 
   it('el campo de mascotas no deja pasar del límite del hotel', async () => {
@@ -392,6 +419,43 @@ describe('Reservar', () => {
     expect(await screen.findByRole('heading', { level: 1, name: '¡Tu reserva está confirmada!' })).toHaveFocus()
     expect(screen.getByText('RES-2026-00042')).toBeInTheDocument()
     expect(cuerpoDe(fetch, '/pago')).toEqual({ tokenPago: 'tok_prueba' })
+    // DEC-93: paga con la clave que recibió al reservar, en una cabecera
+    expect(llamadaA(fetch, '/pago')?.headers).toMatchObject({ 'X-Reserva-Clave': 'clave-de-la-reserva' })
+  })
+
+  it('volver desde el pago suelta la reserva con su clave y deja lo escrito para continuar otra vez', async () => {
+    const fetch = laApi({ reservas: [respuesta(APARTADA, 201), respuesta(APARTADA, 201)] })
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    await userEvent.click(screen.getByRole('button', { name: '← Cambiar mis datos' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tus datos' })).toBeInTheDocument()
+    const liberacion = llamadaA(fetch, '/api/portal/reservas/RES-2026-00042/liberar')
+    expect(liberacion?.method).toBe('PUT')
+    expect(liberacion?.headers).toMatchObject({ 'X-Reserva-Clave': 'clave-de-la-reserva' })
+    expect(screen.getByLabelText('Nombres')).toHaveValue('Ana')
+    expect(screen.getByLabelText('Correo')).toHaveValue('ana@correo.co')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })).toBeInTheDocument()
+  })
+
+  it('si no puede soltar la reserva, se queda en el pago y lo dice', async () => {
+    laApi({ liberaciones: [respuesta({}, 500)] })
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    await userEvent.click(screen.getByRole('button', { name: '← Cambiar mis datos' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos soltar tu reserva para volver')
+    expect(screen.getByRole('heading', { level: 1, name: 'Paga para confirmar' })).toBeInTheDocument()
   })
 
   it('un pago rechazado se queda en el paso de pago, dice por qué y se puede reintentar', async () => {

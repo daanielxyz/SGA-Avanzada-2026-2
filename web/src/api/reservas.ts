@@ -43,6 +43,11 @@ export interface ReservaApartada {
   montoAPagar: number
   /** Hora de Colombia; si no se paga antes, la reserva vence. */
   pagarAntesDe: string
+  /**
+   * Solo llega al reservar y solo la tiene esta pestaña: con ella se paga o se libera la reserva sin cuenta. Vacía al
+   * retomar el pago desde «mis reservas», donde vale la sesión (DEC-93).
+   */
+  clave?: string
 }
 
 /** `PagoPortalResponse`. */
@@ -79,10 +84,23 @@ export function reservar(solicitud: SolicitudReserva) {
   return pedir<ReservaApartada>('/api/portal/reservas', { method: 'POST', cuerpo: solicitud })
 }
 
-export function pagar(codigo: string, tokenPago: string) {
+// DEC-93: la clave va en una cabecera, nunca en la dirección, para que no quede en el historial ni en registros
+const CABECERA_CLAVE = 'X-Reserva-Clave'
+
+/** Con la clave de la reserva recién hecha o, sin ella, con la sesión del huésped. */
+export function pagar(codigo: string, tokenPago: string, clave?: string) {
   return pedir<PagoAprobado>(`/api/portal/reservas/${encodeURIComponent(codigo)}/pago`, {
     method: 'POST',
     cuerpo: { tokenPago },
+    ...(clave ? { headers: { [CABECERA_CLAVE]: clave } } : { conSesion: true }),
+  })
+}
+
+/** Suelta una reserva sin pagar: sus noches quedan libres de inmediato y no se cobra nada (DEC-93). */
+export function liberar(codigo: string, clave: string) {
+  return pedir<void>(`/api/portal/reservas/${encodeURIComponent(codigo)}/liberar`, {
+    method: 'PUT',
+    headers: { [CABECERA_CLAVE]: clave },
   })
 }
 

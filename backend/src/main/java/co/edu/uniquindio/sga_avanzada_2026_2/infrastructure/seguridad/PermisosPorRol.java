@@ -39,9 +39,11 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.POST, "/api/auth/recuperar-contrasena", "/api/auth/restablecer-contrasena",
                         "/api/auth/activar").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated()
-                // La reserva del portal y su pago en línea: no hace falta cuenta para reservar (DEC-68 · DEC-69)
+                // La reserva del portal y su pago en línea: no hace falta cuenta para reservar (DEC-68 · DEC-69). Pagar
+                // y liberar piden la clave de la reserva o la sesión del huésped, que revisa el controlador (DEC-93)
                 .requestMatchers(HttpMethod.POST, "/api/portal/reservas", "/api/portal/reservas/{codigo}/pago")
                 .permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/portal/reservas/{codigo}/liberar").permitAll()
                 // Lo que falta por preparar es del personal (CU-41); va antes de la regla pública de {codigo}
                 .requestMatchers(HttpMethod.GET, "/api/apartamentos/pendientes-preparacion")
                 .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)

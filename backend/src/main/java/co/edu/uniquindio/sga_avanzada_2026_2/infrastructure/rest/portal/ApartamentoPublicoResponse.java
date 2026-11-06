@@ -17,11 +17,13 @@ import java.util.List;
  *                          ficha, lo que paga un adulto su próxima noche libre; vacío si no tiene ninguna
  * @param proximaNocheLibre en el listado y la ficha, la primera noche que se puede reservar desde hoy; en la búsqueda
  *                          por fechas va vacía, porque esas fechas ya están libres
+ * @param limiteMascotas    las mascotas que admite por reserva, si tiene un límite propio; vacío, rige el del
+ *                          alojamiento. Si el alojamiento no las acepta, ninguna (DEC-93)
  */
 public record ApartamentoPublicoResponse(String codigo, String nombre, String descripcion, int capacidad,
                                          int dormitorios, List<ImagenResponse> imagenes,
                                          List<String> caracteristicas, PrecioResponse precio,
-                                         LocalDate proximaNocheLibre) {
+                                         LocalDate proximaNocheLibre, Integer limiteMascotas) {
 
     /**
      * @param principal la foto que se muestra primero
@@ -48,6 +50,6 @@ public record ApartamentoPublicoResponse(String codigo, String nombre, String de
     static ApartamentoPublicoResponse de(ApartamentoResult r, CotizacionResult precio, LocalDate proximaNocheLibre) {
         return new ApartamentoPublicoResponse(r.codigo(), r.nombre(), r.descripcion(), r.capacidad(),
                 r.dormitorios(), r.imagenes().stream().map(i -> new ImagenResponse(i.url(), i.principal())).toList(),
-                r.caracteristicas(), PrecioResponse.de(precio), proximaNocheLibre);
+                r.caracteristicas(), PrecioResponse.de(precio), proximaNocheLibre, r.limiteMascotas());
     }
 }

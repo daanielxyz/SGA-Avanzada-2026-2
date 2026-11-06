@@ -20,6 +20,11 @@ public class UsuarioActual {
         return sesion().getName();
     }
 
+    /** Si la petición trae un token válido; en un endpoint público puede no traerlo. */
+    public boolean conSesion() {
+        return sesion() instanceof JwtAuthenticationToken;
+    }
+
     /**
      * Un huésped solo ve y gestiona las reservas de su titular, que es su propia cuenta; el personal interno, todas
      * (USU-04 · ROL-04 · DEC-68).
