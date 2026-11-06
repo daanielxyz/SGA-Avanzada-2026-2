@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.ClavesReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.PagoRechazadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.PasarelaPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
@@ -48,6 +49,19 @@ class PagoEnLineaTest {
     private EscenarioEstancia escenario;
     private final List<Dinero> cobrados = new ArrayList<>();
     private boolean aprueba = true;
+    private final List<String> conClave = new ArrayList<>();
+    private final ClavesReserva claves = new ClavesReserva() {
+        @Override
+        public String emitir(String codigoReserva) {
+            conClave.add(codigoReserva);
+            return "clave-de-" + codigoReserva;
+        }
+
+        @Override
+        public boolean corresponde(String codigoReserva, String clave) {
+            return ("clave-de-" + codigoReserva).equals(clave);
+        }
+    };
     private final PasarelaPago pasarela = (codigo, monto, token) -> {
         cobrados.add(monto);
         return aprueba ? new PasarelaPago.CobroEnLinea(true, "REF-1", null)
@@ -70,7 +84,7 @@ class PagoEnLineaTest {
 
     private ReservaPortalResult reservarDesdePortal() {
         return new ReservarDesdePortalUseCase(crearReserva(AL_CREAR), escenario.cargador,
-                new PagoEnLineaDomainService(),
+                new PagoEnLineaDomainService(), claves,
                 AL_CREAR).ejecutar(new ReservarDesdePortalCommand("APT-101", ENTRADA, ENTRADA.plusDays(3),
                 new TitularCommand("Ana Ríos", "CC", "1094", "ana@correo.co", "300 123 4567"),
                 List.of(new OcupanteCommand("Ana Ríos", LocalDate.of(1990, 5, 1), "CC", "1094", "Colombiana"),
@@ -111,6 +125,45 @@ class PagoEnLineaTest {
         assertEquals("PORTAL", portal.reserva().canalOrigen());
         assertEquals(0, new BigDecimal("180000").compareTo(portal.montoAPagar()));
         assertEquals(LocalDate.of(2026, 10, 1).atTime(10, 30), portal.pagarAntesDe());
+    }
+
+    @Test
+    @Tag("DEC-93")
+    void laReservaDelPortalRecibeSuClave() {
+        ReservaPortalResult portal = reservarDesdePortal();
+
+        assertEquals("clave-de-" + portal.reserva().codigo(), portal.clave());
+        assertEquals(List.of(portal.reserva().codigo()), conClave);
+    }
+
+    @Test
+    @Tag("DEC-93")
+    @Tag("RN-12")
+    void liberarCancelaSinPenalidadYDejaLasNochesLibresSinEsperarElPlazo() {
+        String codigo = reservarDesdePortal().reserva().codigo();
+
+        new LiberarReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios,
+                new CancelacionDomainService(), minutosDespues(5)).ejecutar(codigo);
+
+        assertEquals(EstadoReserva.CANCELADA,
+                escenario.reservas.buscarPorCodigo(new ReservaId(codigo)).orElseThrow().estado());
+        assertEquals(Dinero.CERO, folio(codigo).totalPagado());
+        assertTrue(folio(codigo).saldo().alDia());
+        // Las noches quedan libres: se puede volver a reservar lo mismo
+        assertEquals("PENDIENTE", reservarDesdePortal().reserva().estado());
+    }
+
+    @Test
+    @Tag("DEC-93")
+    void unaReservaYaPagadaNoSeLibera() {
+        String codigo = reservarDesdePortal().reserva().codigo();
+        pagarEnLinea(minutosDespues(5)).ejecutar(new PagarEnLineaCommand(codigo, "tok_visa"));
+
+        assertThrows(ReglaDominioException.class, () -> new LiberarReservaUseCase(escenario.cargador,
+                escenario.reservas, escenario.folios, new CancelacionDomainService(), minutosDespues(6))
+                .ejecutar(codigo));
+        assertEquals(EstadoReserva.CONFIRMADA,
+                escenario.reservas.buscarPorCodigo(new ReservaId(codigo)).orElseThrow().estado());
     }
 
     @Test

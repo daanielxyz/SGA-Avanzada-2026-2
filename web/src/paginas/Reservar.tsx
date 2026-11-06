@@ -10,7 +10,7 @@ import {
   type Precio,
 } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
-import { SIN_EXTRAS, type Extras, type PagoAprobado, type ReservaApartada } from '../api/reservas'
+import { liberar, SIN_EXTRAS, type Extras, type PagoAprobado, type ReservaApartada } from '../api/reservas'
 import { problemaDeEstadia } from '../busqueda/estadia'
 import Confirmacion from '../reservar/Confirmacion'
 import Pasos from '../reservar/Pasos'
@@ -29,6 +29,13 @@ type Paso =
   | { numero: 3; apartada: ReservaApartada; pago: PagoAprobado }
 
 const TITULOS = { 1: 'Tus datos', 2: 'Paga para confirmar', 3: '¡Tu reserva está confirmada!' }
+
+/** DEC-93: el hotel decide si acepta mascotas; si las acepta, rige el límite del apartamento o, sin él, el suyo. */
+function limiteMascotasDe(apartamento: ApartamentoPublico, alojamiento: Alojamiento | null) {
+  const parametros = alojamiento?.parametros
+  if (!parametros?.aceptaMascotas) return 0
+  return apartamento.limiteMascotas ?? parametros.limiteMascotas ?? 0
+}
 
 /**
  * Reservar desde el portal (CU-10 · DEC-69): datos, pago y confirmación, con un resumen siempre a la vista. Abre con
@@ -51,6 +58,8 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
   const [paso, setPaso] = useState<Paso>({ numero: 1 })
   const [precioVigente, setPrecioVigente] = useState<Precio | null>(null)
   const [extrasVigentes, setExtrasVigentes] = useState<Extras>(SIN_EXTRAS)
+  const [soltando, setSoltando] = useState(false)
+  const [problemaAlVolver, setProblemaAlVolver] = useState<string | null>(null)
   const titulo = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -88,6 +97,24 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
     }
   }, [paso.numero])
 
+  // DEC-93: volver desde el pago suelta la reserva apartada, para que sus noches no queden tomadas hasta que venza; lo
+  // escrito sigue ahí y al continuar se aparta otra. Si ya no estaba pendiente (venció), igual se vuelve
+  async function volverADatos(apartada: ReservaApartada) {
+    setProblemaAlVolver(null)
+    setSoltando(true)
+    try {
+      if (apartada.clave) await liberar(apartada.reserva.codigo, apartada.clave)
+    } catch (error) {
+      if (!(error instanceof ErrorApi && error.estado === 409)) {
+        setProblemaAlVolver('No pudimos soltar tu reserva para volver. Intenta de nuevo.')
+        setSoltando(false)
+        return
+      }
+    }
+    setSoltando(false)
+    setPaso({ numero: 1 })
+  }
+
   const volver = `/apartamentos/${encodeURIComponent(codigo)}?${consulta}`
   if (carga.estado === 'cargando') {
     return <main className="ficha"><p className="suave">Cargando tu reserva…</p></main>
@@ -105,15 +132,24 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
   return (
     <main className="ficha">
       {paso.numero === 1 && <Link to={volver} className="volver">← Volver al apartamento</Link>}
+      {paso.numero === 2 && (
+        <button type="button" className="volver secundario" disabled={soltando}
+          onClick={() => volverADatos(paso.apartada)}>
+          {soltando ? 'Soltando tu reserva…' : '← Cambiar mis datos'}
+        </button>
+      )}
       <div className="reservar-columnas">
         <div className="reservar-principal">
           <Pasos actual={paso.numero} />
           <h1 ref={titulo} tabIndex={-1}>{TITULOS[paso.numero]}</h1>
-          {paso.numero === 1 && (
+          {problemaAlVolver && <p role="alert" className="aviso">{problemaAlVolver}</p>}
+          {/* Sigue montado durante el pago, oculto: al volver, lo escrito sigue ahí */}
+          <div hidden={paso.numero !== 1}>
             <PasoDatos codigo={codigo} estadia={estadia} grupo={grupo} alojamiento={alojamiento}
+              limiteMascotas={limiteMascotasDe(carga.apartamento, alojamiento)}
               precioBuscado={carga.precio} alCambiarPrecio={setPrecioVigente} alCambiarExtras={setExtrasVigentes}
               alReservar={(apartada) => setPaso({ numero: 2, apartada })} />
-          )}
+          </div>
           {paso.numero === 2 && (
             <PasoPago apartada={paso.apartada}
               alPagar={(pago) => setPaso({ numero: 3, apartada: paso.apartada, pago })} />

@@ -82,6 +82,26 @@ public class CancelacionDomainService {
         folio.anularExtras(reserva.extras(), "vencimiento", ahora.toLocalDate());
     }
 
+    /**
+     * Libera una reserva PENDIENTE sin pagos porque quien la hizo volvió desde el pago (DEC-93): como el vencimiento
+     * (RN-21), anula su alojamiento y sus extras en el folio sin penalidad, pero sin esperar el plazo. Con algún pago
+     * ya no es arrepentirse antes de pagar: se cancela con la política (RN-13).
+     *
+     * @param ahora fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si el folio es de otra reserva (FOL-02), ya tiene pagos o la reserva no está
+     *                               PENDIENTE
+     */
+    public void procesarLiberacion(Reserva reserva, Folio folio, LocalDateTime ahora) {
+        validarFolio(reserva, folio);
+        if (folio.totalPagado().esPositivo()) {
+            throw new ReglaDominioException("La reserva " + reserva.codigo().valor()
+                    + " ya tiene pagos: se cancela con su política de cancelación");
+        }
+        reserva.liberar();
+        folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "liberación", ahora.toLocalDate());
+        folio.anularExtras(reserva.extras(), "liberación", ahora.toLocalDate());
+    }
+
     // RN-13 · FOL-02: la retención sale de la política que el huésped aceptó, nunca de la vigente
     static void validarCorrespondencia(Reserva reserva, Folio folio, PoliticaCancelacion politica) {
         if (!politica.id().equals(reserva.politicaVersionId())) {

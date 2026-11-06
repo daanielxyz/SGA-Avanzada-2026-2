@@ -11,6 +11,8 @@ interface Props {
   estadia: Estadia
   grupo: Grupo
   alojamiento: Alojamiento | null
+  /** Las que admite este apartamento: el hotel decide si las acepta y el apartamento puede tener su límite (DEC-93). */
+  limiteMascotas: number
   /** Lo que se le mostró al buscar, con los adultos y niños que dijo. */
   precioBuscado: Precio
   alCambiarPrecio: (precio: Precio) => void
@@ -39,8 +41,8 @@ const nombreCompleto = ({ nombres, apellidos }: Persona) => `${nombres.trim()} $
  * Paso 1: quién viaja. El titular es la primera persona del grupo (TIT-01). Con todas las fechas de nacimiento, el
  * total se recalcula con la regla real (RN-06): si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
  */
-export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioBuscado, alCambiarPrecio,
-  alCambiarExtras, alReservar }: Props) {
+export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteMascotas, precioBuscado,
+  alCambiarPrecio, alCambiarExtras, alReservar }: Props) {
   const hoy = fechaDesdeHoy()
   const [personas, setPersonas] = useState<Persona[]>(() =>
     Array.from({ length: grupo.adultos + grupo.ninos }, () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
@@ -63,7 +65,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
   const porNoche = parametros?.cobroParqueadero !== 'POR_ESTADIA'
   // Solo para mostrarlo mientras escribe: lo que se cobra lo calcula el backend al crear la reserva (DEC-89)
   const porParqueadero = (carros * cargoCarro + motos * cargoMoto) * (porNoche ? noches(entrada, salida) : 1)
-  const porMascotas = Math.min(mascotas, parametros?.limiteMascotas ?? 0) * cargoMascota
+  const porMascotas = Math.min(mascotas, limiteMascotas) * cargoMascota
   const totalExtras = porParqueadero + porMascotas
   const fechas = personas.map((p) => p.fechaNacimiento)
   const fechasListas = fechas.every((f) => f !== '' && f <= hoy)
@@ -112,6 +114,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
         motos,
         mascotas,
       }))
+      setEnviando(false) // al volver desde el pago, el formulario se puede enviar otra vez
     } catch (error) {
       setProblema(error instanceof ErrorApi
         ? { mensaje: error.message, detalles: error.detalles }
@@ -122,7 +125,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
 
   const cambio = precioReal && precioReal.total !== precioBuscado.total ? precioReal : null
   const pagan = cambio?.desglose[0]?.ocupantesFacturables
-  const hayExtras = (parametros?.cupoParqueadero ?? 0) > 0 || parametros?.aceptaMascotas
+  const hayExtras = (parametros?.cupoParqueadero ?? 0) > 0 || limiteMascotas > 0
   const horaEntrada = parametros?.horaEntrada
   const horaSalida = parametros?.horaSalida
   const hayHorarios = horaEntrada && horaSalida
@@ -187,10 +190,10 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, precioB
                     ayuda={ayudaParqueadero(cargoMoto, porNoche)} />
                 </>
               )}
-              {parametros?.aceptaMascotas && (
+              {limiteMascotas > 0 && (
                 <CampoCantidad nombre="Mascotas" valor={mascotas} alCambiar={setMascotas}
-                  maximo={parametros.limiteMascotas}
-                  ayuda={`Hasta ${parametros.limiteMascotas}${cargoMascota > 0
+                  maximo={limiteMascotas}
+                  ayuda={`Hasta ${limiteMascotas}${cargoMascota > 0
                     ? `; cada una suma ${enPesos(cargoMascota)} a tu total, una sola vez` : ''}`} />
               )}
             </div>

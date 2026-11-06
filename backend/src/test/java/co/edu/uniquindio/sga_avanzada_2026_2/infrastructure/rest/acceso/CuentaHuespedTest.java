@@ -184,7 +184,8 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
 
         // RN-09: sin hora de llegada, pagar no la podría confirmar; no se ofrece ni se cobra
         cliente.perform(con(token, get(consultar))).andExpect(status().isConflict());
-        pedir(post("/api/portal/reservas/" + deAna + "/pago"), "{\"tokenPago\": \"tok_visa\"}")
+        cliente.perform(con(token, post("/api/portal/reservas/" + deAna + "/pago")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tokenPago\": \"tok_visa\"}")))
                 .andExpect(status().isConflict());
         cliente.perform(con(token, get("/api/reservas/" + deAna + "/folio")))
                 .andExpect(jsonPath("$.totalPagado").value(0));
@@ -196,8 +197,16 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
                 .andReturn().getResponse().getContentAsString();
         cliente.perform(con(token, get("/api/reservas/" + deEva + "/pago-en-linea"))).andExpect(status().isForbidden());
 
-        // Lo que anuncia es lo que se cobra
+        // DEC-93: sin la clave de la reserva, paga con su sesión y solo las suyas
         pedir(post("/api/portal/reservas/" + deAna + "/pago"), "{\"tokenPago\": \"tok_visa\"}")
+                .andExpect(status().isForbidden());
+        cliente.perform(con(token, post("/api/portal/reservas/" + deEva + "/pago")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tokenPago\": \"tok_visa\"}")))
+                .andExpect(status().isForbidden());
+
+        // Lo que anuncia es lo que se cobra
+        cliente.perform(con(token, post("/api/portal/reservas/" + deAna + "/pago")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tokenPago\": \"tok_visa\"}")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("CONFIRMADA"));
         cliente.perform(con(token, get("/api/reservas/" + deAna + "/folio")))

@@ -11,10 +11,14 @@ import java.time.LocalDateTime;
  *
  * @param montoAPagar  lo que se cobra en línea
  * @param pagarAntesDe hora de Colombia; si no se paga antes, la reserva vence
+ * @param clave        va en {@code X-Reserva-Clave} para pagar o liberar la reserva sin cuenta. Solo llega aquí:
+ *                     quien la pierde paga desde «mis reservas», con su PIN (DEC-93)
  */
-public record ReservaPortalResponse(ReservaResponse reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe) {
+public record ReservaPortalResponse(ReservaResponse reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe,
+                                    String clave) {
 
     static ReservaPortalResponse de(ReservaPortalResult r) {
-        return new ReservaPortalResponse(ReservaResponse.de(r.reserva()), r.montoAPagar(), r.pagarAntesDe());
+        return new ReservaPortalResponse(ReservaResponse.de(r.reserva()), r.montoAPagar(), r.pagarAntesDe(),
+                r.clave());
     }
 }

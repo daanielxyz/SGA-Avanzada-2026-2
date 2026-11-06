@@ -81,6 +81,7 @@ Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confi
 - **web**
   - [x] Reservar desde el portal, pago en línea (pasarela simulada) y pantalla de confirmación (`feature/web/reservar`, DEC-88).
   - [x] Ingreso del huésped con PIN, «mi cuenta» y «mis reservas» (`feature/web/cuenta-huesped`, DEC-90).
+  - [x] Volver desde el pago con la clave de la reserva, pago en línea que ya no se hace con solo el código, y límite de mascotas por apartamento (`feature/nucleo/volver-y-mascotas`, DEC-93).
 - **pms**
   - [x] Tablero de ocupación por apartamento y fechas (`GET /api/ocupacion`, DEC-86; `feature/pms/tablero-ocupacion`).
   - [x] Confirmar, cancelar y declarar no-show, con registrar pago y el bloque Pago en el detalle (`feature/pms/acciones-reserva`).

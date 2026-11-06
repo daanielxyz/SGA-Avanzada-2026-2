@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Raíz del agregado Apartamento: única unidad reservable; sus dormitorios y áreas no se venden por separado
@@ -30,12 +31,26 @@ public class Apartamento {
     private List<Caracteristica> caracteristicas; // ≥1
     private final List<Bloqueo> bloqueos;
     private boolean activo;
+    private Integer limiteMascotas;              // vacío: el del alojamiento (RP-03)
 
     // IMG-01 · IMG-02 · CARAC-01
     public Apartamento(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre, String descripcion,
                        Capacidad capacidad, Dormitorio dormitorios, EstadoOperativo estadoOperativo,
                        List<Imagen> imagenes, List<Caracteristica> caracteristicas, List<Bloqueo> bloqueos,
                        boolean activo) {
+        this(codigo, alojamientoId, nombre, descripcion, capacidad, dormitorios, estadoOperativo, imagenes,
+                caracteristicas, bloqueos, activo, null);
+    }
+
+    /**
+     * Reconstrucción con su propio límite de mascotas (RP-03).
+     *
+     * @param limiteMascotas las que admite este apartamento por reserva; vacío, las del alojamiento
+     */
+    public Apartamento(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre, String descripcion,
+                       Capacidad capacidad, Dormitorio dormitorios, EstadoOperativo estadoOperativo,
+                       List<Imagen> imagenes, List<Caracteristica> caracteristicas, List<Bloqueo> bloqueos,
+                       boolean activo, Integer limiteMascotas) {
         if (codigo == null || alojamientoId == null || capacidad == null || dormitorios == null
                 || estadoOperativo == null || imagenes == null || caracteristicas == null || bloqueos == null) {
             throw new ReglaDominioException("Faltan datos obligatorios del apartamento");
@@ -63,6 +78,8 @@ public class Apartamento {
         this.caracteristicas = List.copyOf(caracteristicas);
         this.bloqueos = new ArrayList<>(bloqueos);
         this.activo = activo;
+        exigirLimiteValido(limiteMascotas);
+        this.limiteMascotas = limiteMascotas;
     }
 
     /**
@@ -144,6 +161,24 @@ public class Apartamento {
         descripcion = nuevaDescripcion;
         dormitorios = nuevosDormitorios;
         caracteristicas = List.copyOf(nuevasCaracteristicas);
+    }
+
+    /**
+     * Fija cuántas mascotas admite este apartamento por reserva, por ejemplo 0 si no las recibe aunque el alojamiento
+     * sí. Que el alojamiento las acepte y lo que cobra siguen siendo del alojamiento (RP-03 · DEC-93).
+     *
+     * @param limite vacío para volver al límite del alojamiento
+     * @throws ReglaDominioException si el límite es negativo
+     */
+    public void fijarLimiteMascotas(Integer limite) {
+        exigirLimiteValido(limite);
+        limiteMascotas = limite;
+    }
+
+    private static void exigirLimiteValido(Integer limite) {
+        if (limite != null && limite < 0) {
+            throw new ReglaDominioException("El límite de mascotas del apartamento no puede ser negativo");
+        }
     }
 
     /**
@@ -327,6 +362,11 @@ public class Apartamento {
 
     public Capacidad capacidad() {
         return capacidad;
+    }
+
+    /** Las mascotas que admite por reserva, si tiene un límite propio; si no, rige el del alojamiento (RP-03). */
+    public Optional<Integer> limiteMascotas() {
+        return Optional.ofNullable(limiteMascotas);
     }
 
     public Dormitorio dormitorios() {

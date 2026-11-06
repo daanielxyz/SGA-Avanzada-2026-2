@@ -14,6 +14,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -36,6 +39,7 @@ class PortalControllerTest extends PruebaRestDeReservas {
     private WebApplicationContext contexto;
 
     private MockMvc visitante;
+    private final Map<String, String> claves = new HashMap<>();
 
     @BeforeEach
     void prepararPortal() throws Exception {
@@ -56,11 +60,30 @@ class PortalControllerTest extends PruebaRestDeReservas {
     private String reservar() throws Exception {
         String respuesta = pedir(post("/api/portal/reservas"), reservaDelPortal()).andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        return JsonPath.read(respuesta, "$.reserva.codigo");
+        String codigo = JsonPath.read(respuesta, "$.reserva.codigo");
+        claves.put(codigo, JsonPath.read(respuesta, "$.clave"));
+        return codigo;
     }
 
+    /** Con la clave que recibió quien reservó (DEC-93). */
     private ResultActions pagar(String codigo, String token) throws Exception {
-        return pedir(post("/api/portal/reservas/" + codigo + "/pago"), "{\"tokenPago\": \"" + token + "\"}");
+        return pagarConClave(codigo, claves.get(codigo), token);
+    }
+
+    private ResultActions pagarConClave(String codigo, String clave, String token) throws Exception {
+        MockHttpServletRequestBuilder peticion = post("/api/portal/reservas/" + codigo + "/pago");
+        if (clave != null) {
+            peticion.header(PortalController.CABECERA_CLAVE, clave);
+        }
+        return pedir(peticion, "{\"tokenPago\": \"" + token + "\"}");
+    }
+
+    private ResultActions liberar(String codigo, String clave) throws Exception {
+        MockHttpServletRequestBuilder peticion = put("/api/portal/reservas/" + codigo + "/liberar");
+        if (clave != null) {
+            peticion.header(PortalController.CABECERA_CLAVE, clave);
+        }
+        return visitante.perform(peticion);
     }
 
     @Test
@@ -108,6 +131,74 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.ocupantes").doesNotExist())
                 .andExpect(jsonPath("$.titularId").doesNotExist())
                 .andExpect(jsonPath("$.titularNombre").doesNotExist());
+    }
+
+    @Test
+    @Tag("DEC-93")
+    void sinLaClaveDeLaReservaNadieLaPagaAunqueTengaElCodigo() throws Exception {
+        String codigo = reservar();
+        String otra = reservarOtra();
+
+        pagarConClave(codigo, null, "tok_visa")
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("SIN_PERMISO"));
+        pagarConClave(codigo, "adivinada", "tok_visa").andExpect(status().isForbidden());
+        pagarConClave(codigo, claves.get(otra), "tok_visa").andExpect(status().isForbidden());
+        // Una clave equivocada responde igual exista o no la reserva
+        pagarConClave("RES-2026-99999", "adivinada", "tok_visa").andExpect(status().isForbidden());
+
+        mvc.perform(get("/api/reservas/" + codigo + "/folio")).andExpect(jsonPath("$.pagos").isEmpty());
+        pagar(codigo, "tok_visa").andExpect(status().isOk()).andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+    }
+
+    @Test
+    @Tag("DEC-93")
+    void laClaveSoloLlegaAlReservarYNoSeGuardaEnClaro() throws Exception {
+        String codigo = reservar();
+
+        org.junit.jupiter.api.Assertions.assertTrue(claves.get(codigo).length() >= 43);
+        mvc.perform(get("/api/reservas/" + codigo)).andExpect(jsonPath("$.clave").doesNotExist());
+    }
+
+    @Test
+    @Tag("DEC-93")
+    @Tag("RN-12")
+    void volverDesdeElPagoLiberaLaReservaYSusNoches() throws Exception {
+        String codigo = reservar();
+
+        liberar(codigo, null).andExpect(status().isForbidden());
+        liberar(codigo, "adivinada").andExpect(status().isForbidden());
+        liberar(codigo, claves.get(codigo)).andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/reservas/" + codigo)).andExpect(jsonPath("$.estado").value("CANCELADA"));
+        mvc.perform(get("/api/reservas/" + codigo + "/folio")).andExpect(jsonPath("$.saldo").value(0));
+        // Las mismas noches se pueden reservar otra vez, sin esperar a que venza
+        reservar();
+        // Ya liberada, no se paga ni se vuelve a liberar
+        pagar(codigo, "tok_visa").andExpect(status().isConflict());
+        liberar(codigo, claves.get(codigo)).andExpect(status().isConflict());
+    }
+
+    @Test
+    @Tag("DEC-93")
+    void unaReservaPagadaNoSeLiberaConLaClave() throws Exception {
+        String codigo = reservar();
+        pagar(codigo, "tok_visa").andExpect(status().isOk());
+
+        liberar(codigo, claves.get(codigo))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        mvc.perform(get("/api/reservas/" + codigo)).andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+    }
+
+    /** Otra reserva del portal en otras fechas, con su propia clave. */
+    private String reservarOtra() throws Exception {
+        String respuesta = pedir(post("/api/portal/reservas"), reservaJson("APT-101", HOY.plusDays(20),
+                HOY.plusDays(22)).replace("  \"canalOrigen\": \"DIRECTO\",\n", ""))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String codigo = JsonPath.read(respuesta, "$.reserva.codigo");
+        claves.put(codigo, JsonPath.read(respuesta, "$.clave"));
+        return codigo;
     }
 
     @Test
@@ -168,6 +259,36 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.extras.parqueadero").value(69000)) // ahora son 3 noches
                 .andExpect(jsonPath("$.extras.mascotas").value(30000));
+    }
+
+    @Test
+    @Tag("DEC-93")
+    @Tag("RP-03")
+    void elLimiteDeMascotasDelApartamentoReemplazaAlDelHotel() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "aceptaMascotas": true, "limiteMascotas": 2, "cargoMascota": 30000
+                }
+                """)).andExpect(status().isOk());
+        mvc.perform(put("/api/apartamentos/APT-101/limite-mascotas").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"limiteMascotas\": 0}")).andExpect(status().isOk());
+        visitante.perform(get("/api/portal/apartamentos/APT-101")).andExpect(jsonPath("$.limiteMascotas").value(0));
+        String conMascota = reservaDelPortal().replaceFirst("\\{", "{\n  \"mascotas\": 1,");
+
+        pedir(post("/api/portal/reservas"), conMascota)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.mensaje").value("El apartamento APT-101 admite máximo 0 mascotas por reserva"));
+
+        // Sin límite propio vuelve al del hotel, y el cargo sigue siendo el del hotel
+        mvc.perform(put("/api/apartamentos/APT-101/limite-mascotas").contentType(MediaType.APPLICATION_JSON)
+                .content("{}")).andExpect(status().isOk());
+        pedir(post("/api/portal/reservas"), conMascota)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reserva.extras.mascotas").value(30000));
     }
 
     @Test
@@ -256,7 +377,7 @@ class PortalControllerTest extends PruebaRestDeReservas {
         pedir(post("/api/portal/reservas"), sinTelefono)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("titular.telefono: es obligatorio")));
-        pagar("RES-2026-99999", "tok_visa").andExpect(status().isNotFound());
+        pagar("RES-2026-99999", "tok_visa").andExpect(status().isForbidden());
         pedir(post("/api/portal/reservas/RES-2026-99999/pago"), "{}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("tokenPago: es obligatorio")));

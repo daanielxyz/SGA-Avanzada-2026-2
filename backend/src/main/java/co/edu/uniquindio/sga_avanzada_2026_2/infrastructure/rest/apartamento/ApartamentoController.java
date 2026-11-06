@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.apartamento;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.DeclararFueraDeServicioUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.FijarLimiteMascotasUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.MarcarPendientePreparacionUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.MarcarPreparadoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.IniciarPreparacionUseCase;
@@ -64,6 +65,7 @@ public class ApartamentoController {
     private final DeclararFueraDeServicioUseCase declararFueraDeServicio;
     private final RegistrarBloqueoUseCase registrarBloqueo;
     private final LevantarBloqueoUseCase levantarBloqueo;
+    private final FijarLimiteMascotasUseCase fijarLimiteMascotas;
 
     public ApartamentoController(ActualizarApartamentoUseCase actualizarApartamento,
                                  ListarPendientesPreparacionUseCase listarPendientes,
@@ -78,7 +80,8 @@ public class ApartamentoController {
                                  MarcarPreparadoUseCase marcarPreparado,
                                  MarcarPendientePreparacionUseCase marcarPendientePreparacion,
                                  DeclararFueraDeServicioUseCase declararFueraDeServicio,
-                                 RegistrarBloqueoUseCase registrarBloqueo, LevantarBloqueoUseCase levantarBloqueo) {
+                                 RegistrarBloqueoUseCase registrarBloqueo, LevantarBloqueoUseCase levantarBloqueo,
+                                 FijarLimiteMascotasUseCase fijarLimiteMascotas) {
         this.alojamiento = alojamiento;
         this.usuario = usuario;
         this.actualizarApartamento = actualizarApartamento;
@@ -95,6 +98,7 @@ public class ApartamentoController {
         this.declararFueraDeServicio = declararFueraDeServicio;
         this.registrarBloqueo = registrarBloqueo;
         this.levantarBloqueo = levantarBloqueo;
+        this.fijarLimiteMascotas = fijarLimiteMascotas;
     }
 
     @PostMapping
@@ -144,6 +148,13 @@ public class ApartamentoController {
     public CambioCapacidadResponse cambiarCapacidad(@PathVariable String codigo,
                                                     @Valid @RequestBody CambiarCapacidadRequest solicitud) {
         return CambioCapacidadResponse.de(cambiarCapacidad.ejecutar(solicitud.aCommand(codigo)));
+    }
+
+    /** Sin valor, el apartamento vuelve al límite de mascotas del alojamiento (DEC-93). */
+    @PutMapping("/{codigo}/limite-mascotas")
+    public ApartamentoResponse fijarLimiteMascotas(@PathVariable String codigo,
+                                                   @Valid @RequestBody LimiteMascotasRequest solicitud) {
+        return ApartamentoResponse.de(fijarLimiteMascotas.ejecutar(solicitud.aCommand(codigo)));
     }
 
     /**

@@ -30,6 +30,8 @@ export interface ApartamentoPublico {
   precio: Precio | null
   /** En el listado y la ficha, la primera noche que se puede reservar desde hoy; vacía en la búsqueda por fechas. */
   proximaNocheLibre: string | null
+  /** Las mascotas que admite por reserva, si tiene un límite propio; vacío, rige el del hotel (DEC-93). */
+  limiteMascotas?: number | null
 }
 
 /** `EstanciaPortalResponse`: si unas fechas y un grupo caben en un apartamento y cuánto costaría. */

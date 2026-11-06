@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
@@ -114,14 +115,35 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
      * @throws ReglaDominioException si la cantidad es negativa, no se aceptan o supera el límite
      */
     public void exigirMascotas(int mascotas) {
+        exigirMascotas(mascotas, limiteMascotas, "El alojamiento");
+    }
+
+    /**
+     * RP-03 · DEC-93: como {@link #exigirMascotas(int)}, con el límite del apartamento si tiene uno propio.
+     *
+     * @throws ReglaDominioException si la cantidad es negativa, el alojamiento no las acepta o supera el límite
+     */
+    public void exigirMascotas(int mascotas, Apartamento apartamento) {
+        exigirMascotas(mascotas, limiteMascotasPara(apartamento), "El apartamento " + apartamento.codigo().valor());
+    }
+
+    /**
+     * RP-03 · DEC-93: las mascotas que admite una reserva de ese apartamento: ninguna si el alojamiento no las acepta;
+     * si las acepta, el límite propio del apartamento o, si no tiene, el del alojamiento.
+     */
+    public int limiteMascotasPara(Apartamento apartamento) {
+        return aceptaMascotas ? apartamento.limiteMascotas().orElse(limiteMascotas) : 0;
+    }
+
+    private void exigirMascotas(int mascotas, int limite, String quien) {
         if (mascotas < 0) {
             throw new ReglaDominioException("Las mascotas de la reserva no pueden ser negativas");
         }
         if (mascotas > 0 && !aceptaMascotas) {
             throw new ReglaDominioException("El alojamiento no acepta mascotas");
         }
-        if (mascotas > limiteMascotas && aceptaMascotas) {
-            throw new ReglaDominioException("El alojamiento admite máximo " + limiteMascotas + " mascotas por reserva");
+        if (mascotas > limite) {
+            throw new ReglaDominioException(quien + " admite máximo " + limite + " mascotas por reserva");
         }
     }
 

@@ -93,6 +93,26 @@ class GestionApartamentosControllerTest {
     }
 
     @Test
+    @org.junit.jupiter.api.Tag("DEC-93")
+    void deberiaFijarYQuitarElLimiteDeMascotasDelApartamento() throws Exception {
+        mvc.perform(get(APT)).andExpect(jsonPath("$.limiteMascotas").doesNotExist());
+
+        enviar(put(APT + "/limite-mascotas"), "{\"limiteMascotas\": 0}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.limiteMascotas").value(0));
+        mvc.perform(get(APT)).andExpect(jsonPath("$.limiteMascotas").value(0));
+
+        enviar(put(APT + "/limite-mascotas"), "{\"limiteMascotas\": -1}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("limiteMascotas: no puede ser negativo")));
+        enviar(put(APT + "/limite-mascotas"), "{}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.limiteMascotas").doesNotExist());
+        enviar(put("/api/apartamentos/APT-999/limite-mascotas"), "{\"limiteMascotas\": 1}")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void deberiaListarLosApartamentosDelAlojamientoPorPaginas() throws Exception {
         crearApartamento("APT-102");
 

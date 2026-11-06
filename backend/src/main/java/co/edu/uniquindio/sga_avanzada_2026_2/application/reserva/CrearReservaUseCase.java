@@ -106,7 +106,7 @@ public class CrearReservaUseCase {
                 comando.horaEstimadaLlegada(), cotizacion, politica.id(), apartamento.capacidad(),
                 calendario.estanciaMinimaPara(estancia), parametros.umbralEdadFacturable(), ahora);
         // RP-03 · RP-02
-        parametros.exigirMascotas(comando.mascotas());
+        parametros.exigirMascotas(comando.mascotas(), apartamento);
         cupoParqueadero.exigirCupo(estancia, comando.carros() + comando.motos(), reservas.buscarActivasConVehiculos(), null,
                 parametros.cupoParqueadero());
         reserva.declararExtras(comando.carros(), comando.motos(), comando.mascotas(), parametros.calcularExtras(

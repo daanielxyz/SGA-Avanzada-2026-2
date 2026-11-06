@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
  *
  * @param montoAPagar  lo que se cobra en línea (el anticipo o el total, con los extras, según el alojamiento)
  * @param pagarAntesDe si no se paga antes, la reserva vence y libera sus noches
+ * @param clave        para pagarla o liberarla sin cuenta; se entrega solo esta vez (DEC-93)
  */
-public record ReservaPortalResult(ReservaResult reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe) {
+public record ReservaPortalResult(ReservaResult reserva, BigDecimal montoAPagar, LocalDateTime pagarAntesDe,
+                                  String clave) {
 }

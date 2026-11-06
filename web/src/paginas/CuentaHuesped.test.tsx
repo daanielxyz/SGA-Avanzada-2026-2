@@ -382,6 +382,9 @@ describe('Detalle de una reserva', () => {
     expect(await screen.findByText('Confirmada')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Paga para confirmar' })).not.toBeInTheDocument()
     expect(llamadasA(fetch, '/api/portal/reservas/RES-2026-00042/pago')).toHaveLength(1)
+    // DEC-93: desde «mis reservas» no hay clave de la reserva: paga con la sesión del huésped
+    expect(llamadasA(fetch, '/api/portal/reservas/RES-2026-00042/pago')[0].headers)
+      .toMatchObject({ Authorization: 'Bearer token-de-prueba' })
   })
 
   it('después de pagar y cancelar, solo queda el aviso de la cancelación', async () => {
