@@ -106,21 +106,47 @@ Lo resuelto al comparar los mockups con el contrato (paso 3) y en su crítica:
 - **Crear reserva**: elegir un apartamento avanza de una vez y, si las personas ya están listas, llega al paso 4. Los pasos van en `?paso=`, para que «Atrás» del navegador no borre el formulario, y se pregunta antes de recargar o seguir un enlace. Los datos personales no se guardan en el navegador. Un rechazo al crear muestra el mensaje de la API con tres salidas: otro apartamento, cambiar fechas o revisar personas. Vehículos solo aparece si `cupoParqueadero` es mayor que 0, y mascotas si `aceptaMascotas` está activo. El cargo por mascota se cobra una vez por estancia y va en una línea aparte del total. Edad del titular según `umbralEdadFacturable`.
 - **Tablero**: el campo es «Última noche» y a la API se le envía un día más, porque `hasta` es exclusiva; el rango va en la dirección. La barra lleva código y `titularId`. Primera columna de 200 px y al menos 52 px por noche, para que quepan las 14 a 1280 px. Debajo de 640 px de contenido se muestra la lista por apartamento, con el código y el `titularId`.
 
-## Para hablar con el equipo (backend)
-Los mockups del sprint 2 son borradores: mientras se termina el frontend, **se adaptan al backend que existe y el backend no se cambia por ellos**. Esto se discute con todo el equipo cuando el frontend esté listo; nada de esta lista está aprobado.
+## Cambios de backend: decisiones de la reunión del 6 nov
+Mientras se hacía el frontend del sprint 2, los mockups se adaptaron al backend que había, y lo que hacía falta se anotó aquí para decidirlo con todo el equipo. Todos son del núcleo: cada uno va en su rama `feature/nucleo/…`, que revisa y aprueba el equipo web (DEC-77).
 
-| # | Posible cambio | Por qué serviría | Qué hace el frontend mientras tanto |
+| # | Cambio | Decisión | Qué hace el PMS hoy |
 |---|---|---|---|
-| 1 | Consultar cuánto se retendrá antes de cancelar o declarar no-show | Recepción conocería el costo antes de decidir | El valor retenido se muestra solo después, con `CancelacionResponse` |
-| 2 | `titularNombre` en las reservas de `OcupacionResponse` | Recepción identificaría más rápido cada reserva en el tablero | La barra muestra el código y el `titularId` |
-| 3 | Un `motivo` en los errores 409 de `REGLA_NEGOCIO` | Cada error podría salir junto a su causa, sin comparar textos | Se muestra el `mensaje` de la API en un aviso general, con las acciones para corregir |
-| 4 | Indicar qué noche se vendió | Se podría marcar en el desglose, como en el mockup | El aviso se refiere a las fechas de la reserva |
-| 5 | Cupos libres del parqueadero por fechas | Se avisaría antes de enviar la reserva | Se muestra el error de la API al crear |
-| 6 | Monto del anticipo exigido en la respuesta | La pantalla no repetiría ese cálculo | La pantalla lo calcula con `anticipoPct`; el backend decide al confirmar |
-| 7 | Nombre legible de la política para recepción | Hoy recepción solo puede ver el id | Se muestra `politicaId` |
-| 8 | Mensajes de los 409 pensados para recepción | Hoy algunos son técnicos: «Transición de reserva no permitida: CANCELADA → CANCELADA», «desde 2029-07-12T22:00» | Se muestran tal cual; los botones ya evitan la mayoría de esos casos |
-| 9 | Reservar para otra persona: un titular que no se aloja | Hoy el backend exige que el titular sea un ocupante que paga (TIT-01), así que la casilla «El titular también se aloja» casi no tiene uso | Sin marcarla, hay que escribir su documento en otro ocupante; si no, se avisa antes de enviar |
-| 10 | Nombre de la temporada en el desglose | Hoy llega su id (`TEM-1`), no «Alta» o «Baja» | Se muestra lo que llega |
+| 1 | Saber cuánto se retendrá **antes** de cancelar | **Hecho** por el equipo web: `GET /api/reservas/{codigo}/cancelacion` (DEC-91) | Falta usarlo: ver «Ajustes del PMS» |
+| 1b | Lo mismo para el **no-show**: DEC-91 solo cubre cancelar | **Sí** | Avisa que puede haber retención y la muestra al terminar |
+| 2 | `titularNombre` en las reservas de `OcupacionResponse` | **Sí** | La barra del tablero muestra el `titularId` |
+| 3 | Un `motivo` en los errores 409 de `REGLA_NEGOCIO` (campo nuevo, sin quitar nada) | **Sí, prioritario** | Muestra el `mensaje` en un aviso general, con las salidas posibles |
+| 4 | Decir qué noche se vendió | **No**: con el `motivo` del #3 basta | El aviso habla de las fechas de la reserva |
+| 5 | Cupos libres del parqueadero por fechas | **Se pospone** | Muestra el error de la API al crear |
+| 6 | Monto del anticipo exigido en la respuesta | **Sí, urgente**: desde DEC-89 el anticipo incluye los extras | Lo calcula con `anticipoPct` sobre la estancia sola (mal si hay extras cobrados) |
+| 7 | Nombre legible de la política para recepción | **Sí**: permitir a recepción `GET /api/politicas/{id}` en `PermisosPorRol` | Muestra `politicaId` |
+| 8 | Mensajes de los 409 pensados para recepción | **Baja prioridad**: el #3 resuelve la mayoría | Los muestra tal cual |
+| 9 | Reservar a nombre de alguien que no se aloja | **Sí, cambia la regla TIT-01**: el titular puede no alojarse (una madre reserva para sus hijos y sigue siendo la titular). Al crear, el titular ya no tiene que estar entre los ocupantes ni ser facturable. Además, en el registro de llegada recepción puede cambiar el titular si quien reservó no debe serlo. Es del núcleo (dominio, `CrearReservaUseCase`, reservas del portal y de canales, pruebas de TIT-01 y `docs/MODELO.md`); en el PMS se quita la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` y la casilla «El titular también se aloja» queda solo para llenar el primer ocupante | Hay que escribir el documento del titular en uno de los ocupantes |
+| 10 | Nombre de la temporada en el desglose | **Sí** | Muestra el id (`TEM-1`) |
+| 11 | Tarifa de la Temporada Media | **No es un pendiente**: cada alojamiento define sus temporadas y sus tarifas al configurar el PMS (sprint 4). Hay que quitar el pendiente de `CLAUDE.md` y el `TODO(equipo)` de `Tarifa.java` | — |
+
+## Ajustes del PMS por DEC-89, DEC-91 y DEC-93
+El equipo web cambió el núcleo después del sprint 2 del PMS. No hay nada que decidir: hay que hacerlo, y va primero en el sprint 3.
+- **Anticipo con extras** (DEC-89): la confirmación exige el anticipo sobre la estancia más los extras (`valor.total + extras.total`). `pms/src/reserva/pago.ts` lo calcula solo sobre la estancia: con parqueadero o mascotas cobrados, el PMS muestra un anticipo menor y el backend rechaza la confirmación. Si se hace el #6, se usa el valor que mande la API.
+- **Nueva reserva** (DEC-89): enviar `carros` y `motos` en vez de `vehiculos` (obsoleto: cuenta como carros), con el cobro de parqueadero de `cobroParqueadero`, `cargoCarro` y `cargoMoto`. Quitar «van aparte en el pago»: los extras ahora suman en el anticipo.
+- **Límite de mascotas por apartamento** (DEC-93): usar el del apartamento (`limiteMascotas`, vacío = el del hotel) en vez del del hotel. El backend ya lo exige.
+- **Cancelar** (DEC-91): mostrar «Se retendrá $ X» antes de confirmar, con sus estados (calculando, valor, nada que retener, error con «Reintentar» y el botón deshabilitado). Ya están en los mockups del sprint 2 (`S2DialogoCancelar`).
+- **Detalle**: mostrar `carros`, `motos` y los `extras` (parqueadero y mascotas) de la reserva.
+
+## Acuerdos del equipo pms
+Se anotan aquí para que cualquier clon los tenga:
+- **Proxy en local**: `pms/` llama a `/api` por el proxy de Vite, sin CORS. `SGA_API_URL` (dirección del backend para el proxy) y `VITE_API_URL` (vacía en desarrollo) no se unifican: si se unifican, el navegador se salta el proxy (`pms/README.md`).
+- **Decisiones**: antes de pedir el PR de una rama que toca `docs/DECISIONES.md`, comparar con `origin/develop` que no se borró ninguna decisión ajena. Si otro equipo usó el mismo número, se conservan las dos y la nuestra toma el siguiente libre.
+- **Mockups y backend**: los mockups son borradores. Se adaptan al backend que existe; lo que pida un cambio de backend se anota para decidirlo con el equipo, no se cambia por un mockup.
+- **Estilos al final**: los cambios visuales (colores, como la dominancia del azul, y detalles de estilo) se hacen cuando todo funcione, sin tocar funcionalidades. Para eso los tamaños, espacios y colores están en variables de `src/index.css`.
+- **Commits y PR**: los hace la persona; Claude no hace commits. Nunca se trabaja en `main` ni en `develop`.
+
+## Próxima sesión: sprint 3 (9 – 13 nov)
+En este orden:
+1. **Entrevista a la recepcionista**: el equipo pasa sus notas. Se decide qué se toma, se anota en `docs/BACKLOG.md` con origen «Entrevista» y se revisa si cambia el sprint 3 o las pantallas ya hechas.
+2. **Ajustes del PMS** de la sección anterior: el del anticipo primero, porque hoy da un valor equivocado si hay extras cobrados.
+3. **Cambios de backend aprobados** (#1b, #2, #3, #6, #7, #10 y #11; #8 si queda tiempo). El #9 cambia una regla del dominio: va en su propia rama del núcleo, antes del registro de llegada, en ramas `feature/nucleo/…`, con pruebas y el `openapi.yaml` regenerado.
+4. **Pantallas del sprint 3**: registro de llegada (y su corrección, con el cambio de titular del #9) y folio (cargos, pagos, devoluciones, reversos, cierre y salida). Mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio.
+5. **Probar en un celular real** las pantallas del sprint 2, incluidos los márgenes de la muesca con el celular en horizontal.
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
@@ -132,4 +158,7 @@ Los mockups del sprint 2 son borradores: mientras se termina el frontend, **se a
 - [x] Base visual en `src/index.css` y pantallas 1, 2 y 5 en código (`feature/pms/diseno-base`).
 - [x] Fuentes Satoshi e Inter en `public/fuentes/` (Satoshi fuera de git).
 - [x] Pantallas 3 y 4 en código, con el nombre del titular (`feature/pms/listado-reservas`).
+- [x] Tamaños de letra, interlineados y espacios en variables de `src/index.css` (`feature/pms/variables-y-traspaso`): ningún componente escribe píxeles de letra; quedan escritos a mano solo espacios propios de un componente (por ejemplo, el hueco del botón «Ver» en la contraseña). Las capturas de las pantallas salen idénticas antes y después.
+- [ ] Dominancia del azul: se ve con el cliente en la fase de estilos, al final.
+- [ ] Probar en un celular real, con los márgenes de la muesca: sprint 3.
 - [x] Auditoría de las cinco pantallas con las skills elegidas (paso 5). Quedó pendiente: márgenes laterales para la muesca con el celular en horizontal (hay que probarlo en un teléfono), pasar a variables los tamaños de letra y los espacios fijos (20 % libre del sprint siguiente) y la dominancia del azul (se muestra al cliente en el cierre).

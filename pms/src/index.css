@@ -89,6 +89,32 @@
   --letra-interfaz: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --letra-codigo: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+/* Tamaños de letra e interlineados: los componentes no escriben píxeles, para cambiar la escala en un solo lugar */
+  --tamano-mini: 11px;
+  --tamano-rotulo: 12px;
+  --tamano-pista: 13px;
+  --tamano-chico: 14px;
+  --tamano-control: 15px;
+  --tamano-base: 16px;
+  --tamano-medio: 18px;
+  --tamano-subtitulo: 20px;
+  --tamano-destacado: 22px;
+  --tamano-titulo: 26px;
+  --tamano-lema: 30px;
+  --tamano-titulo-grande: 32px;
+  --interlinea-mini: 14px;
+  --interlinea-rotulo: 16px;
+  --interlinea-pista: 18px;
+  --interlinea-chica: 20px;
+  --interlinea-control: 22px;
+  --interlinea-base: 24px;
+  --interlinea-media: 26px;
+  --interlinea-subtitulo: 28px;
+  --interlinea-destacada: 30px;
+  --interlinea-titulo: 34px;
+  --interlinea-lema: 38px;
+  --interlinea-titulo-grande: 40px;
+
   /* Espacios, radios y sombras */
   --espacio-1: 4px;
   --espacio-2: 8px;
@@ -98,6 +124,14 @@
   --espacio-6: 24px;
   --espacio-7: 28px;
   --espacio-8: 40px;
+  /* Intermedios de la escala, para lo que necesita un poco menos o un poco más */
+  --espacio-minimo: 2px;
+  --espacio-1-medio: 6px;
+  --espacio-2-medio: 10px;
+  --espacio-3-medio: 14px;
+  --espacio-4-medio: 18px;
+  --espacio-5-medio: 22px;
+  --alto-rotulo: 26px;
   --radio: 10px;
   --radio-chico: 6px;
   --sombra-menu: 8px 0 24px rgb(3 13 20 / 45%);
@@ -132,15 +166,15 @@ h3 {
 }
 
 h1 {
-  font-size: 26px;
-  line-height: 34px;
+  font-size: var(--tamano-titulo);
+  line-height: var(--interlinea-titulo);
   font-weight: 600;
   text-wrap: balance;
 }
 
 h2 {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: var(--tamano-subtitulo);
+  line-height: var(--interlinea-subtitulo);
   font-weight: 500;
 }
 
@@ -194,7 +228,7 @@ button {
   background: var(--acento);
   color: var(--sobre-acento);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--tamano-control);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -223,13 +257,13 @@ button {
 
 .boton-grande {
   min-height: 48px;
-  font-size: 16px;
+  font-size: var(--tamano-base);
 }
 
 .boton-chico {
   min-height: 36px;
-  padding: 0 14px;
-  font-size: 14px;
+  padding: 0 var(--espacio-3-medio);
+  font-size: var(--tamano-chico);
 }
 
 .boton-icono {
@@ -242,22 +276,22 @@ button {
 /* Campos. Letra de 16px para que el celular no acerque la página al tocar un campo. */
 .campo-rotulo {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  line-height: 20px;
+  margin-bottom: var(--espacio-1-medio);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
   font-weight: 500;
 }
 
 .campo-control {
   width: 100%;
   height: 44px;
-  padding: 0 14px;
+  padding: 0 var(--espacio-3-medio);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-chico);
   background: var(--fondo-pagina);
   color: var(--texto);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--tamano-base);
 }
 
 .campo-control-grande {
@@ -277,9 +311,9 @@ button {
 }
 
 .campo-mensaje {
-  margin: 6px 0 0;
-  font-size: 13px;
-  line-height: 18px;
+  margin: var(--espacio-1-medio) 0 0;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
   font-weight: 500;
   color: var(--error-campo);
 }
@@ -294,15 +328,15 @@ button {
 
 .ver-clave {
   position: absolute;
-  top: 2px;
-  right: 4px;
+  top: var(--espacio-minimo);
+  right: var(--espacio-1);
   min-width: 80px;
   height: 44px;
   border: 0;
   background: none;
   color: var(--acento);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
@@ -312,14 +346,14 @@ button {
 .etiqueta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 2px 10px;
+  gap: var(--espacio-1-medio);
+  padding: var(--espacio-minimo) var(--espacio-2-medio);
   border: 1px solid var(--borde-fuerte);
   border-radius: 999px;
   background: var(--superficie-2);
   color: var(--texto);
-  font-size: 13px;
-  line-height: 20px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-chica);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -335,16 +369,16 @@ button {
   display: flex;
   align-items: flex-start;
   gap: var(--espacio-3);
-  padding: var(--espacio-3) 14px;
+  padding: var(--espacio-3) var(--espacio-3-medio);
   border: 1px solid;
   border-radius: var(--radio-chico);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
 }
 
 .aviso ul {
   margin: var(--espacio-1) 0 0;
-  padding-left: 18px;
+  padding-left: var(--espacio-4-medio);
 }
 
 .aviso-sello {
@@ -356,7 +390,7 @@ button {
   height: 22px;
   border-radius: 50%;
   color: var(--marca-medianoche);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
   font-weight: 700;
 }
 
@@ -401,8 +435,8 @@ button {
   border-bottom: 1px solid var(--borde);
   background: var(--superficie-2);
   color: var(--texto-suave);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-align: left;
@@ -413,8 +447,8 @@ button {
 .tabla td {
   padding: 13px var(--espacio-3);
   border-bottom: 1px solid var(--borde);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
 }
 
 .tabla .derecha {
@@ -429,7 +463,7 @@ button {
   justify-content: space-between;
   gap: var(--espacio-3);
   color: var(--texto-suave);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
 }
 
 .paginador-botones {
@@ -476,8 +510,8 @@ button {
 }
 
 .entrada-titulo p {
-  margin-top: 6px;
-  font-size: 15px;
+  margin-top: var(--espacio-1-medio);
+  font-size: var(--tamano-control);
 }
 
 /* Logo de Meridian */
@@ -485,7 +519,7 @@ button {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
   text-decoration: none;
 }
 
@@ -543,7 +577,7 @@ button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
   padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
   border-bottom: 1px solid var(--borde);
   background: var(--fondo-marco);
@@ -573,8 +607,8 @@ button {
 .quien-nombre {
   display: block;
   overflow: hidden;
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
   font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -583,8 +617,8 @@ button {
 .quien-rol {
   display: block;
   color: var(--texto-suave);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
 }
 
 .alojamiento {
@@ -594,8 +628,8 @@ button {
   overflow: hidden;
   padding: 0 var(--espacio-1);
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -610,7 +644,7 @@ button {
   border-radius: 50%;
   background: var(--acento);
   color: var(--sobre-acento);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   font-weight: 600;
 }
 
@@ -656,7 +690,7 @@ button {
 .menu-cabecera {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
   padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
   border-bottom: 1px solid var(--borde);
 }
@@ -674,23 +708,23 @@ button {
 }
 
 .menu-persona-nombre {
-  font-size: 15px;
-  line-height: 20px;
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-chica);
   font-weight: 500;
 }
 
 .menu-persona-dato {
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .menu h2 {
   padding: var(--espacio-5) var(--espacio-4) var(--espacio-2);
   color: var(--texto-suave);
   font-family: var(--letra-interfaz);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -710,7 +744,7 @@ button {
   padding: 0 var(--espacio-4);
   border-left: 3px solid transparent;
   color: var(--texto);
-  font-size: 16px;
+  font-size: var(--tamano-base);
   text-decoration: none;
 }
 
@@ -772,9 +806,9 @@ button {
 .acceso {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--espacio-3-medio);
   min-height: 76px;
-  padding: 14px var(--espacio-4);
+  padding: var(--espacio-3-medio) var(--espacio-4);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   background: var(--superficie);
@@ -791,16 +825,16 @@ button {
 
 .acceso-titulo {
   display: block;
-  font-size: 16px;
+  font-size: var(--tamano-base);
   font-weight: 600;
 }
 
 .acceso-texto {
   display: block;
-  margin-top: 2px;
+  margin-top: var(--espacio-minimo);
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 /* Páginas de estado: una sola plantilla */
@@ -834,12 +868,12 @@ button {
 }
 
 .pagina-estado h1 {
-  font-size: 22px;
-  line-height: 30px;
+  font-size: var(--tamano-destacado);
+  line-height: var(--interlinea-destacada);
 }
 
 .pagina-estado p {
-  font-size: 15px;
+  font-size: var(--tamano-control);
 }
 
 /* Formas de la etiqueta de estado */
@@ -932,7 +966,7 @@ button {
   background: none;
   color: var(--acento);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -958,14 +992,14 @@ button {
 }
 
 .bloque-vacio h1 {
-  font-size: 20px;
-  line-height: 28px;
+  font-size: var(--tamano-subtitulo);
+  line-height: var(--interlinea-subtitulo);
   font-weight: 500;
 }
 
 .bloque-vacio p {
   max-width: 360px;
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   overflow-wrap: anywhere;
 }
 
@@ -988,7 +1022,7 @@ button {
 
 .carga-texto {
   padding: var(--espacio-3) var(--espacio-4);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 /* Listado de reservas */
@@ -1023,13 +1057,13 @@ button {
 }
 
 .ir-a-reserva .boton {
-  margin-top: 26px;
+  margin-top: var(--alto-rotulo);
 }
 
 .filtros {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
 }
 
 .boton-filtros {
@@ -1061,7 +1095,7 @@ button {
 .filtros-cuerpo {
   display: none;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--espacio-3-medio);
   padding: var(--espacio-4);
 }
 
@@ -1124,7 +1158,7 @@ button {
 }
 
 .tabla-reservas .codigo {
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 .enlace-codigo {
@@ -1149,8 +1183,8 @@ button {
   overflow: hidden;
   color: var(--texto-suave);
   text-overflow: ellipsis;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
 }
 
 .reservas-tarjetas {
@@ -1165,7 +1199,7 @@ button {
 .reserva-tarjeta {
   display: block;
   height: 100%;
-  padding: 14px var(--espacio-4);
+  padding: var(--espacio-3-medio) var(--espacio-4);
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   background: var(--superficie);
@@ -1185,25 +1219,25 @@ button {
 .reserva-tarjeta-codigo {
   white-space: nowrap;
   color: var(--acento);
-  font-size: 15px;
+  font-size: var(--tamano-control);
   font-weight: 600;
 }
 
 .reserva-tarjeta-linea {
   display: block;
   margin-top: var(--espacio-1);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   overflow-wrap: anywhere;
 }
 
 .reserva-tarjeta-pie {
   align-items: baseline;
-  margin-top: 10px;
-  font-size: 13px;
+  margin-top: var(--espacio-2-medio);
+  font-size: var(--tamano-pista);
 }
 
 .reserva-tarjeta-pie .importe {
-  font-size: 16px;
+  font-size: var(--tamano-base);
 }
 
 @container (min-width: 640px) {
@@ -1245,7 +1279,7 @@ button {
   align-items: center;
   gap: var(--espacio-1);
   min-height: 44px;
-  font-size: 14px;
+  font-size: var(--tamano-chico);
 }
 
 .detalle-titulo {
@@ -1259,13 +1293,13 @@ button {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--espacio-2) 14px;
+  gap: var(--espacio-2) var(--espacio-3-medio);
 }
 
 .detalle-codigo h1 {
   font-family: var(--letra-codigo);
-  font-size: 20px;
-  line-height: 28px;
+  font-size: var(--tamano-subtitulo);
+  line-height: var(--interlinea-subtitulo);
 }
 
 .detalle-seccion {
@@ -1283,9 +1317,9 @@ button {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--espacio-4);
-  padding: var(--espacio-3) 14px;
+  padding: var(--espacio-3) var(--espacio-3-medio);
   border-bottom: 1px solid var(--borde);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
 }
 
 .dato:last-child {
@@ -1322,7 +1356,7 @@ button {
 }
 
 .tabla-ocupantes tr {
-  padding: 14px var(--espacio-4);
+  padding: var(--espacio-3-medio) var(--espacio-4);
   border-bottom: 1px solid var(--borde);
 }
 
@@ -1347,7 +1381,7 @@ button {
 
 .tabla-ocupantes .ocupante-nombre {
   margin-bottom: var(--espacio-1);
-  font-size: 15px;
+  font-size: var(--tamano-control);
   font-weight: 500;
 }
 
@@ -1366,7 +1400,7 @@ button {
 .desglose-detalle {
   display: block;
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 .tabla-desglose td {
@@ -1384,7 +1418,7 @@ button {
 
 .desglose-total-rotulo {
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1392,8 +1426,8 @@ button {
 
 .desglose-total-valor {
   color: var(--acento);
-  font-size: 22px;
-  line-height: 28px;
+  font-size: var(--tamano-destacado);
+  line-height: var(--interlinea-subtitulo);
   font-weight: 600;
 }
 
@@ -1417,8 +1451,8 @@ button {
 
 @media (min-width: 800px) {
   h1 {
-    font-size: 32px;
-    line-height: 40px;
+    font-size: var(--tamano-titulo-grande);
+    line-height: var(--interlinea-titulo-grande);
   }
 
   .entrada-arte {
@@ -1448,13 +1482,13 @@ button {
 
   .entrada-lema-titulo {
     font-family: var(--letra-titulo);
-    font-size: 30px;
-    line-height: 38px;
+    font-size: var(--tamano-lema);
+    line-height: var(--interlinea-lema);
     font-weight: 500;
   }
 
   .entrada-lema-texto {
-    margin-top: 6px;
+    margin-top: var(--espacio-1-medio);
   }
 
   .entrada-formulario {
@@ -1467,12 +1501,12 @@ button {
   }
 
   .entrada-titulo h1 {
-    font-size: 30px;
-    line-height: 38px;
+    font-size: var(--tamano-lema);
+    line-height: var(--interlinea-lema);
   }
 
   .entrada-titulo p {
-    font-size: 16px;
+    font-size: var(--tamano-base);
   }
 
   .logo-apilado .logo-simbolo {
@@ -1527,7 +1561,7 @@ button {
     padding: 0;
     color: var(--texto);
     font-family: var(--letra-titulo);
-    font-size: 16px;
+    font-size: var(--tamano-base);
     font-weight: 500;
   }
 
@@ -1545,13 +1579,13 @@ button {
   }
 
   .quien-nombre {
-    font-size: 14px;
-    line-height: 20px;
+    font-size: var(--tamano-chico);
+    line-height: var(--interlinea-chica);
   }
 
   .quien-rol {
-    font-size: 13px;
-    line-height: 18px;
+    font-size: var(--tamano-pista);
+    line-height: var(--interlinea-pista);
   }
 
   .cabecera-salir {
@@ -1583,7 +1617,7 @@ button {
     min-height: 44px;
     padding: 0 var(--espacio-3);
     border-radius: var(--radio-chico);
-    font-size: 15px;
+    font-size: var(--tamano-control);
   }
 
   .menu li a .icono {
@@ -1618,14 +1652,14 @@ button {
 
   .acceso-titulo {
     font-family: var(--letra-titulo);
-    font-size: 18px;
+    font-size: var(--tamano-medio);
     font-weight: 500;
   }
 
   .acceso-texto {
     margin-top: 0;
-    font-size: 14px;
-    line-height: 20px;
+    font-size: var(--tamano-chico);
+    line-height: var(--interlinea-chica);
   }
 
   .reservas {
@@ -1681,8 +1715,8 @@ button {
   .paginador-botones .boton {
     flex: none;
     min-height: 36px;
-    padding: 0 14px;
-    font-size: 14px;
+    padding: 0 var(--espacio-3-medio);
+    font-size: var(--tamano-chico);
   }
 
   .detalle-titulo {
@@ -1697,14 +1731,14 @@ button {
   }
 
   .detalle-codigo h1 {
-    font-size: 32px;
-    line-height: 40px;
+    font-size: var(--tamano-titulo-grande);
+    line-height: var(--interlinea-titulo-grande);
   }
 
   .datos {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 22px var(--espacio-6);
+    gap: var(--espacio-5-medio) var(--espacio-6);
     padding: var(--espacio-6);
   }
 
@@ -1712,15 +1746,15 @@ button {
     display: block;
     padding: 0;
     border-bottom: 0;
-    font-size: 15px;
-    line-height: 22px;
+    font-size: var(--tamano-control);
+    line-height: var(--interlinea-control);
   }
 
   .dato dt {
     max-width: none;
     margin-bottom: var(--espacio-1);
-    font-size: 12px;
-    line-height: 16px;
+    font-size: var(--tamano-rotulo);
+    line-height: var(--interlinea-rotulo);
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1766,7 +1800,7 @@ button {
 
   .tabla-ocupantes .ocupante-nombre {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--tamano-chico);
   }
 
   .tabla-ocupantes .ocupante-nacimiento {
@@ -1804,15 +1838,15 @@ button {
 }
 
 .campo-pista {
-  margin-top: 6px;
+  margin-top: var(--espacio-1-medio);
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .campo-rotulo-nota {
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
   font-weight: 400;
 }
 
@@ -1899,8 +1933,8 @@ button {
 
 .dialogo-subtitulo {
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .dialogo-contenido {
@@ -1914,7 +1948,7 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--espacio-3-medio);
   padding: var(--espacio-4);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1930,20 +1964,20 @@ button {
 }
 
 .dialogo-texto {
-  font-size: 15px;
+  font-size: var(--tamano-control);
 }
 
 .resumen-dialogo {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 18px;
+  gap: var(--espacio-1-medio) var(--espacio-4-medio);
   margin: 0;
-  padding: var(--espacio-3) 14px;
+  padding: var(--espacio-3) var(--espacio-3-medio);
   border: 1px solid var(--borde);
   border-radius: var(--radio-chico);
   background: var(--fondo-pagina);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
 }
 
 .resumen-dialogo dt {
@@ -2056,7 +2090,7 @@ button {
 
 .pasos {
   display: flex;
-  gap: 6px;
+  gap: var(--espacio-1-medio);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2081,7 +2115,7 @@ button {
 
 .pasos-texto {
   margin-top: var(--espacio-2);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   color: var(--texto-suave);
 }
 
@@ -2113,8 +2147,8 @@ button {
 
 .paso-contexto {
   padding: var(--espacio-3) var(--espacio-4);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
   color: var(--texto-suave);
 }
 
@@ -2174,13 +2208,13 @@ button {
 
 .paso-total strong {
   color: var(--acento);
-  font-size: 20px;
-  line-height: 26px;
+  font-size: var(--tamano-subtitulo);
+  line-height: var(--interlinea-media);
 }
 
 .paso-total-rotulo {
   color: var(--texto-suave);
-  font-size: 12px;
+  font-size: var(--tamano-rotulo);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2189,16 +2223,16 @@ button {
 .paso-total-extra {
   max-width: 320px;
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .casilla {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
   min-height: 44px;
-  font-size: 15px;
+  font-size: var(--tamano-control);
   cursor: pointer;
 }
 
@@ -2247,7 +2281,7 @@ button {
   border-bottom: 1px solid var(--borde);
   background: var(--superficie-2);
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 .apartamento-fantasma {
@@ -2276,8 +2310,8 @@ button {
 
 .apartamento-encabezado h3 {
   min-width: 0;
-  font-size: 16px;
-  line-height: 22px;
+  font-size: var(--tamano-base);
+  line-height: var(--interlinea-control);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
@@ -2285,17 +2319,17 @@ button {
 .apartamento-encabezado .codigo {
   flex: none;
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 .apartamento-datos {
-  font-size: 14px;
+  font-size: var(--tamano-chico);
 }
 
 .apartamento-caracteristicas {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--espacio-1-medio);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -2306,8 +2340,8 @@ button {
   border: 1px solid var(--borde);
   border-radius: 999px;
   background: var(--superficie-2);
-  font-size: 12px;
-  line-height: 18px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-pista);
 }
 
 .apartamento-valor {
@@ -2318,14 +2352,14 @@ button {
 
 .apartamento-valor span {
   color: var(--texto-suave);
-  font-size: 12px;
+  font-size: var(--tamano-rotulo);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .apartamento-valor strong {
-  font-size: 16px;
+  font-size: var(--tamano-base);
 }
 
 .ocupante {
@@ -2336,7 +2370,7 @@ button {
 
 .ocupante legend {
   padding: 0 var(--espacio-2);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
   font-weight: 600;
 }
 
@@ -2360,11 +2394,11 @@ button {
   .pasos-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--espacio-2-medio);
     height: auto;
     background: none;
     color: var(--texto-suave);
-    font-size: 14px;
+    font-size: var(--tamano-chico);
   }
 
   .pasos-item:not(:last-child)::after {
@@ -2387,7 +2421,7 @@ button {
     height: 30px;
     border: 1.5px solid var(--borde-fuerte);
     border-radius: 50%;
-    font-size: 13px;
+    font-size: var(--tamano-pista);
     font-weight: 600;
   }
 
@@ -2517,14 +2551,14 @@ button {
   margin: 0;
   padding: 0;
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
   list-style: none;
 }
 
 .ocupacion-leyenda li {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--espacio-1-medio);
 }
 
 .ocupacion-muestra {
@@ -2587,27 +2621,27 @@ button {
 
 .ocupacion-lista-codigo {
   color: var(--texto-suave);
-  font-size: 13px;
+  font-size: var(--tamano-pista);
 }
 
 .ocupacion-lista-vacia {
   margin-top: var(--espacio-2);
-  font-size: 14px;
+  font-size: var(--tamano-chico);
 }
 
 .ocupacion-estado {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--espacio-1-medio);
   color: var(--texto-suave);
-  font-size: 13px;
-  line-height: 18px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .ocupacion-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--espacio-2-medio);
   min-height: 56px;
   margin-top: var(--espacio-2);
   padding: var(--espacio-2) var(--espacio-3);
@@ -2615,8 +2649,8 @@ button {
   border-style: solid;
   border-radius: var(--radio-chico);
   color: var(--texto);
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
   text-decoration: none;
 }
 
@@ -2678,7 +2712,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: var(--espacio-minimo);
   min-width: 0;
   padding: var(--espacio-2) var(--espacio-3);
   border-right: 1px solid var(--borde-fuerte);
@@ -2687,14 +2721,14 @@ button {
 
 .ocupacion-celda-apartamento .codigo {
   color: var(--texto-suave);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
 }
 
 .ocupacion-celda-apartamento strong {
   overflow: hidden;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
   font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -2703,7 +2737,7 @@ button {
 .ocupacion-cabecera .ocupacion-celda-apartamento {
   background: var(--superficie-2);
   color: var(--texto-suave);
-  font-size: 12px;
+  font-size: var(--tamano-rotulo);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2719,11 +2753,11 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 0;
+  padding: var(--espacio-1-medio) 0;
   border-left: 1px solid var(--borde);
   color: var(--texto-suave);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
 }
 
 .ocupacion-dia:first-child,
@@ -2733,14 +2767,14 @@ button {
 
 .ocupacion-dia b {
   color: var(--texto);
-  font-size: 15px;
-  line-height: 20px;
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-chica);
   font-weight: 600;
 }
 
 .ocupacion-mes {
-  font-size: 11px;
-  line-height: 14px;
+  font-size: var(--tamano-mini);
+  line-height: var(--interlinea-mini);
 }
 
 .ocupacion-dia-hoy {
@@ -2770,14 +2804,14 @@ button {
   align-items: center;
   gap: var(--espacio-1);
   min-width: 0;
-  margin: var(--espacio-2) 2px;
-  padding: 2px 6px;
+  margin: var(--espacio-2) var(--espacio-minimo);
+  padding: var(--espacio-minimo) var(--espacio-1-medio);
   border-width: 1px;
   border-style: solid;
   border-radius: var(--radio-chico);
   color: var(--texto);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
   text-decoration: none;
   overflow: hidden;
 }
@@ -2827,7 +2861,7 @@ button {
 .barra-ir {
   flex: none;
   color: var(--texto-suave);
-  font-size: 16px;
+  font-size: var(--tamano-base);
 }
 
 /* La cuadrícula se elige por el ancho que hay, igual que la tabla del listado */
@@ -2866,7 +2900,7 @@ button {
 
   .ocupacion-mover {
     grid-column: auto;
-    margin-top: 26px;
+    margin-top: var(--alto-rotulo);
   }
 }
 
