@@ -96,13 +96,15 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
-  - [ ] Entrevista a la recepcionista: anotar en `docs/BACKLOG.md` lo que se toma y revisar si cambia este sprint.
+  - [~] Entrevista a la recepcionista: anotada en `docs/BACKLOG.md` (BL-07 a BL-23). Entran a este sprint BL-07 a BL-12, BL-22 y BL-23; para hacerles espacio, el nombre de la temporada y los mensajes de los 409 pasan al sprint 4 (`feature/pms/entrevista`).
   - [ ] Ajustes del PMS por DEC-89, DEC-91 y DEC-93: anticipo con extras, carros y motos, límite de mascotas por apartamento, retención antes de cancelar y extras en el detalle (`pms/DISENO.md`).
-  - [ ] Núcleo, acordado el 6 nov: retención antes del no-show, `titularNombre` en el tablero, `motivo` en los 409, anticipo exigido en la respuesta, política legible para recepción, nombre de la temporada, el titular que no se aloja (cambia TIT-01) y quitar el pendiente de la tarifa de Temporada Media, que configura cada alojamiento (`pms/DISENO.md`, «Cambios de backend»).
-  - [ ] Registro de llegada y corrección del registro, con el cambio de titular si quien reservó no es quien llega (decisión del 6 nov).
-  - [ ] Folio: cargos, pagos, devoluciones y reversos; cierre del folio y salida.
+  - [ ] Núcleo, acordado el 6 nov: retención antes del no-show, `titularNombre` en el tablero, `motivo` en los 409, anticipo exigido en la respuesta, política legible para recepción, el titular que no se aloja (cambia TIT-01) y quitar el pendiente de la tarifa de Temporada Media, que configura cada alojamiento (`pms/DISENO.md`, «Cambios de backend»).
+  - [ ] Núcleo, de la entrevista: datos del TRA en cada ocupante (BL-07), notas de la reserva (BL-08), saldo de cada reserva en el tablero (BL-09) y la estancia cobrada en la llegada, salvo autorización (BL-22).
+  - [ ] Registro de llegada y corrección del registro, con el cambio de titular si quien reservó no es quien llega (decisión del 6 nov), los datos del TRA (BL-07), el desglose y el cobro de la estancia antes de entregar (BL-10, BL-22), quitar o agregar vehículos y mascotas antes de llegar (BL-23) y la reserva de mostrador (BL-11).
+  - [ ] Folio: cargos (con cantidad, BL-12), pagos, devoluciones y reversos; cierre del folio y salida, bloqueada si faltan datos del TRA (BL-07).
+  - [ ] Tablero coloreado por la cuenta (BL-09) y notas en el detalle (BL-08).
   - [ ] Probar en un celular real las pantallas del sprint 2.
-- **Cierre 3 (vie 13 nov)**.
+- **Cierre 3 (vie 13 nov)**: preguntar al cliente por el IVA según el documento del huésped y las retenciones de empresa (BL-13).
 
 ## Sprint 4 · 17 – 20 nov (lunes festivo) · «Configurar el hotel»
 Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
@@ -111,6 +113,7 @@ Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
   - [ ] Prueba con un huésped real de punta a punta (buscar, reservar, pagar, ver su cuenta) y ajustes de lo que salga.
 - **pms**
   - [ ] Apartamentos, temporadas y tarifas, política de cancelación, parámetros y medios de pago.
+  - [ ] Núcleo, pasado del sprint 3: nombre de la temporada en el desglose y mensajes de los 409 pensados para recepción (`pms/DISENO.md`, #8 y #10).
   - [ ] Usuarios del personal, novedades de mantenimiento y pantallas de canales (conflictos y bitácora, con la API del equipo web).
 - **Cierre 4 (vie 20 nov)**: decidir con el cliente qué parte de Channex es imprescindible para la entrega.
 
@@ -120,7 +123,7 @@ Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el h
   - [ ] B4c Channex: cuenta sandbox, mapeo de apartamentos y tarifas (decisión con el cliente) y entrada de reservas desde Channex.
   - [ ] B4c Channex: publicar disponibilidad y tarifas, reintentos y bitácora; prueba de punta a punta en el sandbox. Si no alcanza, el cierre 4 decide si pasa al MVP2.
 - **pms**
-  - [ ] B5 TRA: datos del ocupante en la llegada, titular validado y envío del reporte.
+  - [ ] B5 TRA: titular validado y envío del reporte (los datos del ocupante se piden en la llegada desde el sprint 3, BL-07); SIRE para extranjeros y adjuntos si hay capacidad (BL-18, BL-19).
   - [ ] B4d IA no bloqueante, si queda capacidad (decidir el uso con el cliente).
 - **Cierre final (vie 27 nov)**: entrega del MVP1.
 

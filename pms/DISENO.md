@@ -119,9 +119,9 @@ Mientras se hacía el frontend del sprint 2, los mockups se adaptaron al backend
 | 5 | Cupos libres del parqueadero por fechas | **Se pospone** | Muestra el error de la API al crear |
 | 6 | Monto del anticipo exigido en la respuesta | **Sí, urgente**: desde DEC-89 el anticipo incluye los extras | Lo calcula con `anticipoPct` sobre la estancia sola (mal si hay extras cobrados) |
 | 7 | Nombre legible de la política para recepción | **Sí**: permitir a recepción `GET /api/politicas/{id}` en `PermisosPorRol` | Muestra `politicaId` |
-| 8 | Mensajes de los 409 pensados para recepción | **Baja prioridad**: el #3 resuelve la mayoría | Los muestra tal cual |
+| 8 | Mensajes de los 409 pensados para recepción | **Baja prioridad**: el #3 resuelve la mayoría. Pasa al sprint 4 (entrevista) | Los muestra tal cual |
 | 9 | Reservar a nombre de alguien que no se aloja | **Sí, cambia la regla TIT-01**: el titular puede no alojarse (una madre reserva para sus hijos y sigue siendo la titular). Al crear, el titular ya no tiene que estar entre los ocupantes ni ser facturable. Además, en el registro de llegada recepción puede cambiar el titular si quien reservó no debe serlo. Es del núcleo (dominio, `CrearReservaUseCase`, reservas del portal y de canales, pruebas de TIT-01 y `docs/MODELO.md`); en el PMS se quita la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` y la casilla «El titular también se aloja» queda solo para llenar el primer ocupante | Hay que escribir el documento del titular en uno de los ocupantes |
-| 10 | Nombre de la temporada en el desglose | **Sí** | Muestra el id (`TEM-1`) |
+| 10 | Nombre de la temporada en el desglose | **Sí**, en el sprint 4: le cede el lugar a la entrevista | Muestra el id (`TEM-1`) |
 | 11 | Tarifa de la Temporada Media | **No es un pendiente**: cada alojamiento define sus temporadas y sus tarifas al configurar el PMS (sprint 4). Hay que quitar el pendiente de `CLAUDE.md` y el `TODO(equipo)` de `Tarifa.java` | — |
 
 ## Ajustes del PMS por DEC-89, DEC-91 y DEC-93
@@ -140,12 +140,22 @@ Se anotan aquí para que cualquier clon los tenga:
 - **Estilos al final**: los cambios visuales (colores, como la dominancia del azul, y detalles de estilo) se hacen cuando todo funcione, sin tocar funcionalidades. Para eso los tamaños, espacios y colores están en variables de `src/index.css`.
 - **Commits y PR**: los hace la persona; Claude no hace commits. Nunca se trabaja en `main` ni en `develop`.
 
+## Entrevista a la recepcionista (6 nov)
+Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migración y una planilla de Excel). El material trae datos personales de huéspedes: no va a git ni a los mockups. Lo que cambia para el PMS:
+- **Llegada**: pide por cada huésped los datos del TRA (BL-07). Se puede registrar con datos incompletos, pero la **salida queda bloqueada**: el botón deshabilitado, con la lista de lo que falta, y 409 en el backend. Recepción solo pregunta de dónde viene el huésped; con eso se proponen residencia y destino, que se pueden cambiar. El motivo del viaje es una lista: turismo y vacaciones; eventos; estudios; tratamiento médico; asuntos jurídicos; negocios; tránsito; compras; religión; visita a familiares o amigos. Antes de entregar el apartamento se revisa el desglose por noche y se registra el pago (BL-10).
+- **Cobro** (BL-22): la estancia, con su parqueadero y sus mascotas, se paga en la llegada; sin eso el botón de registrar queda deshabilitado, salvo que recepción registre una autorización con motivo (por ejemplo, cuenta por cobrar a una empresa). Los consumos se pagan en cualquier momento hasta la salida. Si el huésped llega sin la mascota o con otro vehículo, recepción modifica la reserva antes de registrar y la diferencia entra al folio como ajuste (BL-23).
+- **Notas** de la reserva para el siguiente turno, en el detalle y en la llegada (BL-08).
+- **Tablero**: la barra se colorea por la cuenta (ya salió, al día, con saldo, debe todo; BL-09), además del estado. Los colores salen de la base y se revisan con `impeccable audit`; no se copian los del otro sistema.
+- **Reserva de mostrador**: si la reserva directa entra hoy, al crearla se sigue con el pago, la confirmación y la llegada (BL-11).
+- **Folio**: los consumos se cargan con cantidad (BL-12).
+- **IVA** según el documento: se pregunta al cliente en el cierre 3 (BL-13).
+
 ## Próxima sesión: sprint 3 (9 – 13 nov)
 En este orden:
-1. **Entrevista a la recepcionista**: el equipo pasa sus notas. Se decide qué se toma, se anota en `docs/BACKLOG.md` con origen «Entrevista» y se revisa si cambia el sprint 3 o las pantallas ya hechas.
+1. **Entrevista a la recepcionista**: hecha (ver «Entrevista a la recepcionista» abajo y `docs/BACKLOG.md`, BL-07 a BL-21).
 2. **Ajustes del PMS** de la sección anterior: el del anticipo primero, porque hoy da un valor equivocado si hay extras cobrados.
-3. **Cambios de backend aprobados** (#1b, #2, #3, #6, #7, #10 y #11; #8 si queda tiempo). El #9 cambia una regla del dominio: va en su propia rama del núcleo, antes del registro de llegada, en ramas `feature/nucleo/…`, con pruebas y el `openapi.yaml` regenerado.
-4. **Pantallas del sprint 3**: registro de llegada (y su corrección, con el cambio de titular del #9) y folio (cargos, pagos, devoluciones, reversos, cierre y salida). Mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio.
+3. **Cambios de backend aprobados** (#1b, #2, #3, #6, #7 y #11; el #8 y el #10 pasan al sprint 4) y los de la entrevista: datos del TRA en el ocupante (BL-07), notas de la reserva (BL-08) y saldo en el tablero (BL-09), este junto con el #2. El #9 y el BL-07 cambian reglas del dominio: cada uno en su propia rama del núcleo, antes del registro de llegada, en ramas `feature/nucleo/…`, con pruebas y el `openapi.yaml` regenerado.
+4. **Pantallas del sprint 3**: registro de llegada (y su corrección, con el cambio de titular del #9, los datos del TRA, el desglose con «Registrar pago» y la reserva de mostrador) y folio (cargos con cantidad, pagos, devoluciones, reversos, cierre y salida, bloqueada si faltan datos del TRA). En el tablero, el color por la cuenta; en el detalle, las notas. Mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio.
 5. **Probar en un celular real** las pantallas del sprint 2, incluidos los márgenes de la muesca con el celular en horizontal.
 
 ## Estado
