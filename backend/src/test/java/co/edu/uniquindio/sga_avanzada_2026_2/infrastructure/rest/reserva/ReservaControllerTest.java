@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -40,6 +41,7 @@ class ReservaControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.ocupantes[0].id").value("OCU-1"))
                 .andExpect(jsonPath("$.valor.desglose", hasSize(2)))
                 .andExpect(jsonPath("$.valor.total").value(400000))
+                .andExpect(jsonPath("$.anticipoExigido").value(nullValue()))
                 .andExpect(jsonPath("$.politicaId").value(AlojamientoDePrueba.POLITICA));
     }
 
@@ -51,6 +53,7 @@ class ReservaControllerTest extends PruebaRestDeReservas {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.codigo").value(codigo))
                 .andExpect(jsonPath("$.titularNombre").value("Ana Ríos"))
+                .andExpect(jsonPath("$.anticipoExigido").value(120000))
                 .andExpect(jsonPath("$.ocupantes[1].nombre").value("Luis Ríos"));
         mvc.perform(get("/api/reservas/RES-2026-99999"))
                 .andExpect(status().isNotFound())

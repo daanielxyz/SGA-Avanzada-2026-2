@@ -166,6 +166,11 @@ public class Reserva {
         return valorTotal.sumar(extras.total());
     }
 
+    /** Lo que debe estar pagado para confirmar: ese porcentaje de la estancia y sus extras (RES-15 · DEC-89). */
+    public Dinero anticipoExigido(Porcentaje anticipo) {
+        return valorConExtras().porcentaje(anticipo);
+    }
+
     /**
      * La parte de lo pagado que corresponde a la estancia, repartida en proporción a su valor: la retención por
      * cancelación o no-show no alcanza a los extras (DEC-89).
@@ -284,7 +289,7 @@ public class Reserva {
             throw new ReglaDominioException(MotivoRechazo.FALTA_HORA_LLEGADA,
                     "La reserva necesita hora estimada de llegada para confirmarse");
         }
-        Dinero exigido = valorConExtras().porcentaje(anticipo); // DEC-89
+        Dinero exigido = anticipoExigido(anticipo);
         if (pagado.esMenorQue(exigido)) {
             throw new ReglaDominioException(MotivoRechazo.ANTICIPO_INSUFICIENTE,
                     "El pago (" + pagado.monto() + ") no cubre el anticipo exigido ("

@@ -3316,6 +3316,8 @@ components:
           format: int32
         extras:
           "$ref": "#/components/schemas/ExtrasResponse"
+        anticipoExigido:
+          type: number
         vehiculos:
           type: integer
           format: int32
