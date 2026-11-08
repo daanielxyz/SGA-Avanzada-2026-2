@@ -111,7 +111,8 @@ public class ManejadorErrores {
 
     @ExceptionHandler(ReglaDominioException.class)
     ResponseEntity<ErrorResponse> reglaDeNegocio(ReglaDominioException e) {
-        return responder(HttpStatus.CONFLICT, "REGLA_NEGOCIO", e.getMessage(), List.of());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse(HttpStatus.CONFLICT.value(),
+                "REGLA_NEGOCIO", e.getMessage(), List.of(), e.motivo().map(Enum::name).orElse(null)));
     }
 
     /** Otro usuario guardó el mismo agregado primero: no se sobrescribe su cambio (DEC-17 · DEC-64). */

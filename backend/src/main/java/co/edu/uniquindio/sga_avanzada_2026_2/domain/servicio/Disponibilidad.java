@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 
 /**
@@ -36,7 +37,7 @@ public record Disponibilidad(ApartamentoId apartamentoId, Estancia estancia, boo
      */
     public void exigir() {
         if (!disponible) {
-            throw new ReglaDominioException(motivo);
+            throw new ReglaDominioException(MotivoRechazo.NO_DISPONIBLE, motivo);
         }
     }
 }

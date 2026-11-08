@@ -32,7 +32,7 @@ public class DocumentacionApiConfig {
                         .title("SGA · API de Puerta al Sol")
                         .version("MVP1")
                         .description("Backend de la web de reservas (web/) y del PMS (pms/). Los errores llegan "
-                                + "siempre como ErrorResponse (estado, codigo, mensaje, detalles)."))
+                                + "siempre como ErrorResponse (estado, codigo, mensaje, detalles, motivo)."))
                 .components(new Components()
                         .addSecuritySchemes(TOKEN, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)

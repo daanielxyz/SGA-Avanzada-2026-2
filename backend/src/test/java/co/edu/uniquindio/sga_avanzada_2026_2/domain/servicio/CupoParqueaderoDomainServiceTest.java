@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -52,7 +54,7 @@ class CupoParqueaderoDomainServiceTest {
     void deberiaRechazarSiEnAlgunaNocheSuperaElCupo() {
         Reserva otra = conVehiculos("RES-2026-00001", ENTRADA.plusDays(1), ENTRADA.plusDays(2), 3);
 
-        assertThrows(ReglaDominioException.class, () -> servicio.exigirCupo(new Estancia(ENTRADA, ENTRADA.plusDays(2)),
+        exigeMotivo(MotivoRechazo.SIN_CUPO_PARQUEADERO, () -> servicio.exigirCupo(new Estancia(ENTRADA, ENTRADA.plusDays(2)),
                 1, List.of(otra), null, 3));
     }
 

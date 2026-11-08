@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Bloqueo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.BloqueoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
@@ -57,6 +58,7 @@ class DisponibilidadDomainServiceTest {
         assertFalse(disponibilidad.disponible());
         ReglaDominioException error = assertThrows(ReglaDominioException.class, disponibilidad::exigir);
         assertTrue(error.getMessage().contains("RES-2026-00001"));
+        assertEquals(MotivoRechazo.NO_DISPONIBLE, error.motivo().orElseThrow());
     }
 
     @Test

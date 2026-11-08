@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,7 +31,7 @@ class EstanciaTest {
     @Tag("RN-03")
     void deberiaRechazarEstanciaConSalidaNoPosteriorAEntrada() {
         assertThrows(ReglaDominioException.class, () -> estancia(10, 10));
-        assertThrows(ReglaDominioException.class, () -> estancia(12, 10));
+        exigeMotivo(MotivoRechazo.FECHAS_INVALIDAS, () -> estancia(12, 10));
     }
 
     @Test

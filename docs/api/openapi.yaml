@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
   title: "SGA · API de Puerta al Sol"
-  description: "Contrato de la API del SGA. Sale de los controladores con springdoc (DEC-79) y se publica aquí; si un endpoint cambia, este archivo se regenera en el mismo commit desde /v3/api-docs. Los errores llegan siempre como ErrorResponse (estado, codigo, mensaje, detalles)."
+  description: "Contrato de la API del SGA. Sale de los controladores con springdoc (DEC-79) y se publica aquí; si un endpoint cambia, este archivo se regenera en el mismo commit desde /v3/api-docs. Los errores llegan siempre como ErrorResponse (estado, codigo, mensaje, detalles, motivo)."
   version: MVP1
 servers:
   - url: "http://localhost:8080"
@@ -5204,6 +5204,8 @@ components:
           type: array
           items:
             type: string
+        motivo:
+          type: string
   securitySchemes:
     token:
       type: http

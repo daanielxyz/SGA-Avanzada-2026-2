@@ -83,7 +83,8 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.detalles").value(hasItem("monto: debe ser mayor que cero")));
         enviar(post(folio(codigo) + "/pagos"), pagoJson("CRIPTO", 100_000, HOY))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"))
+                .andExpect(jsonPath("$.motivo").value(nullValue()));
         enviar(post(folio(codigo) + "/pagos"), pagoJson("EFECTIVO", 100_000, HOY.plusDays(1)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
@@ -105,7 +106,8 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.totalPagado").value(0));
         mvc.perform(post(folio(codigo) + "/pagos/PAG-1/revertir"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"))
+                .andExpect(jsonPath("$.motivo").value("YA_REVERTIDO"));
     }
 
     @Test

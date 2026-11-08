@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 
@@ -140,10 +141,11 @@ public record ParametrosAlojamiento(int umbralEdadFacturable, LocalTime horaEntr
             throw new ReglaDominioException("Las mascotas de la reserva no pueden ser negativas");
         }
         if (mascotas > 0 && !aceptaMascotas) {
-            throw new ReglaDominioException("El alojamiento no acepta mascotas");
+            throw new ReglaDominioException(MotivoRechazo.MASCOTAS_NO_ADMITIDAS, "El alojamiento no acepta mascotas");
         }
         if (mascotas > limite) {
-            throw new ReglaDominioException(quien + " admite máximo " + limite + " mascotas por reserva");
+            throw new ReglaDominioException(MotivoRechazo.MASCOTAS_NO_ADMITIDAS,
+                    quien + " admite máximo " + limite + " mascotas por reserva");
         }
     }
 

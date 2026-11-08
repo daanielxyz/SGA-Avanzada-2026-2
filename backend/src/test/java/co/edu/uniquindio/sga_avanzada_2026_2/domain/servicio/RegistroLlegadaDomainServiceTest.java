@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.apartamentoEn;
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.confirmada;
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.dia;
@@ -50,7 +52,7 @@ class RegistroLlegadaDomainServiceTest {
         Reserva reserva = confirmada("RES-2026-00001", 10, 12);
         Apartamento apartamento = apartamentoEn(EstadoOperativo.EN_PREPARACION);
 
-        assertThrows(ReglaDominioException.class,
+        exigeMotivo(MotivoRechazo.APARTAMENTO_NO_PREPARADO,
                 () -> servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
         assertEquals(EstadoOperativo.EN_PREPARACION, apartamento.estadoOperativo());
