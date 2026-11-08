@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 
@@ -144,7 +145,8 @@ public class Folio {
             throw new ReglaDominioException("Un reverso no se revierte; registre un nuevo abono");
         }
         if (pagos.stream().anyMatch(p -> pagoId.equals(p.reversaDe()))) {
-            throw new ReglaDominioException("El pago " + pagoId.valor() + " ya fue revertido");
+            throw new ReglaDominioException(MotivoRechazo.YA_REVERTIDO,
+                    "El pago " + pagoId.valor() + " ya fue revertido");
         }
         validarNoSuperaLoAbonado(original.monto());
         return agregarPago(original.medio(), original.monto(), TipoPago.REVERSO, fecha, pagoId);
@@ -167,7 +169,8 @@ public class Folio {
             throw new ReglaDominioException("Una corrección no se revierte; registre un cargo nuevo");
         }
         if (cargos.stream().anyMatch(c -> cargoId.equals(c.corrigeA()))) {
-            throw new ReglaDominioException("El cargo " + cargoId.valor() + " ya fue corregido");
+            throw new ReglaDominioException(MotivoRechazo.YA_REVERTIDO,
+                    "El cargo " + cargoId.valor() + " ya fue corregido");
         }
         SentidoAjuste contrario = original.aumentaSaldo() ? SentidoAjuste.DISMINUYE : SentidoAjuste.AUMENTA;
         return agregar(TipoCargo.AJUSTE, "Corrección de " + cargoId.valor() + ": " + motivo, original.valor(),
@@ -262,7 +265,8 @@ public class Folio {
         validarAbierto();
         Saldo saldo = saldo();
         if (!saldo.alDia()) {
-            throw new ReglaDominioException("El folio tiene saldo " + saldo.situacion() + " de " + saldo.monto().monto()
+            throw new ReglaDominioException(MotivoRechazo.SALDO_PENDIENTE,
+                    "El folio tiene saldo " + saldo.situacion() + " de " + saldo.monto().monto()
                     + ": solo se cierra con autorización del administrador");
         }
         cerrado = true;
@@ -303,7 +307,8 @@ public class Folio {
     // FOL-06 · CAR-07
     private void validarAbierto() {
         if (cerrado) {
-            throw new ReglaDominioException("El folio " + id.valor() + " está cerrado: no admite movimientos");
+            throw new ReglaDominioException(MotivoRechazo.FOLIO_CERRADO,
+                    "El folio " + id.valor() + " está cerrado: no admite movimientos");
         }
     }
 

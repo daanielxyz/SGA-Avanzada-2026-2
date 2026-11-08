@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Caracteristica;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Dormitorio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import org.junit.jupiter.api.Tag;
@@ -17,6 +18,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,12 +39,12 @@ class MascotasTest {
 
     @Test
     void deberiaRechazarMasMascotasQueElLimite() {
-        assertThrows(ReglaDominioException.class, () -> parametros(true, 2, 30_000).exigirMascotas(3));
+        exigeMotivo(MotivoRechazo.MASCOTAS_NO_ADMITIDAS, () -> parametros(true, 2, 30_000).exigirMascotas(3));
     }
 
     @Test
     void deberiaRechazarMascotasSiNoSeAceptan() {
-        assertThrows(ReglaDominioException.class, () -> parametros(false, 0, 0).exigirMascotas(1));
+        exigeMotivo(MotivoRechazo.MASCOTAS_NO_ADMITIDAS, () -> parametros(false, 0, 0).exigirMascotas(1));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import java.time.LocalDate;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
@@ -92,7 +93,8 @@ public class TarificacionDomainService {
         Tarifa tarifa = tarifas.stream()
                 .filter(t -> t.aplicaA(apartamentoId, temporada.id()))
                 .max(Comparator.comparingInt(Tarifa::version))
-                .orElseThrow(() -> new ReglaDominioException("El apartamento " + apartamentoId.valor()
+                .orElseThrow(() -> new ReglaDominioException(MotivoRechazo.SIN_TARIFA,
+                        "El apartamento " + apartamentoId.valor()
                         + " no tiene tarifa en la temporada " + temporada.nombre()));
         Dinero valor = tarifa.valorPorOcupante();
         return new LineaCotizacion(noche, temporada.id(), valor, facturables, valor.multiplicar(facturables));

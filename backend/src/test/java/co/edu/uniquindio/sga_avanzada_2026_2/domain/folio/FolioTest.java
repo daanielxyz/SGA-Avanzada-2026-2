@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -134,7 +136,7 @@ class FolioTest {
         assertEquals(abono, registrado.reversaDe());
         assertEquals(TARJETA, registrado.medio());
         assertEquals(Dinero.CERO, folio.totalPagado());
-        assertThrows(ReglaDominioException.class, () -> folio.revertirPago(abono, HOY, HOY));
+        exigeMotivo(MotivoRechazo.YA_REVERTIDO, () -> folio.revertirPago(abono, HOY, HOY));
         assertThrows(ReglaDominioException.class, () -> folio.revertirPago(reverso, HOY, HOY));
     }
 
@@ -221,7 +223,7 @@ class FolioTest {
     void siFolioCerrarYSaldoFinalDiferenteCeroSinAutorizacionRechazar() {
         Folio folio = folio();
 
-        assertThrows(ReglaDominioException.class, folio::cerrar);
+        exigeMotivo(MotivoRechazo.SALDO_PENDIENTE, folio::cerrar);
         assertFalse(folio.cerrado());
     }
 
@@ -232,7 +234,7 @@ class FolioTest {
         Folio folio = folio();
         folio.cerrar(AUTORIZACION);
 
-        assertThrows(ReglaDominioException.class,
+        exigeMotivo(MotivoRechazo.FOLIO_CERRADO,
                 () -> folio.registrarPago(EFECTIVO, Dinero.de(1_000), HOY, HOY, HABILITADOS));
         assertThrows(ReglaDominioException.class,
                 () -> folio.agregarServicioAdicional("Desayuno", Dinero.de(25_000), HOY));

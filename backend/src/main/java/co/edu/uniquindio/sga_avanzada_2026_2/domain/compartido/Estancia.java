@@ -17,7 +17,8 @@ public record Estancia(LocalDate entrada, LocalDate salida) {
             throw new ReglaDominioException("Entrada y salida son obligatorias");
         }
         if (!salida.isAfter(entrada)) {
-            throw new ReglaDominioException("La salida debe ser posterior a la entrada");
+            throw new ReglaDominioException(MotivoRechazo.FECHAS_INVALIDAS,
+                    "La salida debe ser posterior a la entrada");
         }
     }
 

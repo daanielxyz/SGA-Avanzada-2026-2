@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.List;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -145,7 +147,7 @@ class TarificacionDomainServiceTest {
         List<Tarifa> deOtro = List.of(new Tarifa(new TarifaId("X"), new ApartamentoId("APT-102"), BASE,
                 Dinero.de(90_000), 1, DESDE));
 
-        assertThrows(ReglaDominioException.class, () -> servicio.calcularValorEstancia(APT, estancia,
+        exigeMotivo(MotivoRechazo.SIN_TARIFA, () -> servicio.calcularValorEstancia(APT, estancia,
                 List.of(ocupante("A", 30, estancia.entrada())), UMBRAL, CALENDARIO, deOtro));
     }
 

@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 
@@ -28,7 +29,8 @@ public class CupoParqueaderoDomainService {
                     .mapToInt(Reserva::vehiculos)
                     .sum();
             if (ocupados + vehiculos > cupo) {
-                throw new ReglaDominioException("El parqueadero no tiene cupo para " + vehiculos + " vehículo(s) la "
+                throw new ReglaDominioException(MotivoRechazo.SIN_CUPO_PARQUEADERO,
+                        "El parqueadero no tiene cupo para " + vehiculos + " vehículo(s) la "
                         + "noche del " + noche.fecha() + ": admite " + cupo + " y ya hay " + ocupados);
             }
         });

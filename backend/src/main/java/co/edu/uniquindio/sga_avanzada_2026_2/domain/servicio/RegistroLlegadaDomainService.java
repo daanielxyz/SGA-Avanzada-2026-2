@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
@@ -29,7 +30,8 @@ public class RegistroLlegadaDomainService {
                                 UsuarioId autor) {
         validarApartamento(reserva, apartamento);
         if (!apartamento.estadoOperativo().permiteRegistro()) {
-            throw new ReglaDominioException("El apartamento " + apartamento.codigo().valor() + " está "
+            throw new ReglaDominioException(MotivoRechazo.APARTAMENTO_NO_PREPARADO,
+                    "El apartamento " + apartamento.codigo().valor() + " está "
                     + apartamento.estadoOperativo() + ": solo se entrega PREPARADO");
         }
         reserva.registrarLlegada(registroId, ahora, autor);

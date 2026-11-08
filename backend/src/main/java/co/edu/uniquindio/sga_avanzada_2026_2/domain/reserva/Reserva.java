@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
@@ -235,7 +236,8 @@ public class Reserva {
                           Cotizacion cotizacion, Capacidad capacidad, int estanciaMinimaNoches, Titular titular,
                           int umbralEdadFacturable, LocalDate hoy) {
         if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
-            throw new ReglaDominioException("Solo se modifica una reserva PENDIENTE o CONFIRMADA; está " + estado);
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Solo se modifica una reserva PENDIENTE o CONFIRMADA; está " + estado);
         }
         Objects.requireNonNull(nuevoApartamentoId, "nuevoApartamentoId");
         Objects.requireNonNull(hoy, "hoy");
@@ -279,11 +281,13 @@ public class Reserva {
         Objects.requireNonNull(pagado, "pagado");
         validarTransicion(EstadoReserva.CONFIRMADA);
         if (horaEstimadaLlegada == null) {
-            throw new ReglaDominioException("La reserva necesita hora estimada de llegada para confirmarse");
+            throw new ReglaDominioException(MotivoRechazo.FALTA_HORA_LLEGADA,
+                    "La reserva necesita hora estimada de llegada para confirmarse");
         }
         Dinero exigido = valorConExtras().porcentaje(anticipo); // DEC-89
         if (pagado.esMenorQue(exigido)) {
-            throw new ReglaDominioException("El pago (" + pagado.monto() + ") no cubre el anticipo exigido ("
+            throw new ReglaDominioException(MotivoRechazo.ANTICIPO_INSUFICIENTE,
+                    "El pago (" + pagado.monto() + ") no cubre el anticipo exigido ("
                     + exigido.monto() + ")");
         }
         estado = EstadoReserva.CONFIRMADA;
@@ -336,7 +340,8 @@ public class Reserva {
         validarTransicion(EstadoReserva.NO_SHOW);
         LocalDateTime limite = estancia.entrada().atTime(horaLimite);
         if (ahora.isBefore(limite)) {
-            throw new ReglaDominioException("El no-show solo puede declararse desde " + limite);
+            throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
+                    "El no-show solo puede declararse desde " + limite);
         }
         estado = EstadoReserva.NO_SHOW;
     }
@@ -389,10 +394,12 @@ public class Reserva {
     public void registrarLlegada(RegistroId id, LocalDateTime ahora, UsuarioId autor) {
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.CONFIRMADA) {
-            throw new ReglaDominioException("Solo se registra la llegada de una reserva CONFIRMADA; está " + estado);
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Solo se registra la llegada de una reserva CONFIRMADA; está " + estado);
         }
         if (ahora.toLocalDate().isBefore(estancia.entrada())) {
-            throw new ReglaDominioException("No se puede registrar la llegada antes de la fecha de entrada "
+            throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
+                    "No se puede registrar la llegada antes de la fecha de entrada "
                     + estancia.entrada());
         }
         registros.add(new Registro(id, ahora, autor, false, null));
@@ -414,7 +421,8 @@ public class Reserva {
         Objects.requireNonNull(fechaHoraCorrecta, "fechaHoraCorrecta");
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.EN_CURSO) {
-            throw new ReglaDominioException("Solo se corrige el registro de una reserva EN_CURSO; está " + estado);
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Solo se corrige el registro de una reserva EN_CURSO; está " + estado);
         }
         if (motivo == null || motivo.isBlank()) {
             throw new ReglaDominioException("La corrección del registro requiere un motivo");
@@ -457,7 +465,8 @@ public class Reserva {
     public void validarSalida(LocalDateTime ahora) {
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.EN_CURSO) {
-            throw new ReglaDominioException("Solo se registra la salida de una reserva EN_CURSO; está " + estado);
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Solo se registra la salida de una reserva EN_CURSO; está " + estado);
         }
         if (ahora.isBefore(registro().fechaHora())) {
             throw new ReglaDominioException("La salida no puede ser anterior al registro de llegada");
@@ -481,7 +490,8 @@ public class Reserva {
 
     private void validarTransicion(EstadoReserva destino) {
         if (!estado.puedePasarA(destino)) {
-            throw new ReglaDominioException("Transición de reserva no permitida: " + estado + " → " + destino);
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Transición de reserva no permitida: " + estado + " → " + destino);
         }
     }
 
@@ -492,11 +502,12 @@ public class Reserva {
         Objects.requireNonNull(cotizacion, "cotizacion");
         Objects.requireNonNull(capacidad, "capacidad");
         if (estancia.entrada().isBefore(hoy)) {
-            throw new ReglaDominioException("La fecha de entrada no puede ser anterior a hoy (" + hoy + ")");
+            throw new ReglaDominioException(MotivoRechazo.FECHAS_INVALIDAS,
+                    "La fecha de entrada no puede ser anterior a hoy (" + hoy + ")");
         }
         validarGrupo(ocupantes);
         if (!capacidad.admite(ocupantes.size())) {
-            throw new ReglaDominioException("El grupo de " + ocupantes.size()
+            throw new ReglaDominioException(MotivoRechazo.CAPACIDAD_EXCEDIDA, "El grupo de " + ocupantes.size()
                     + " ocupantes excede la capacidad del apartamento (" + capacidad.valor() + ")");
         }
         ocupantes.stream()
@@ -506,7 +517,8 @@ public class Reserva {
                     throw new ReglaDominioException("La fecha de nacimiento de " + o.nombre() + " es futura");
                 });
         if (estancia.cantidadNoches() < estanciaMinimaNoches) {
-            throw new ReglaDominioException("La estancia debe ser de al menos " + estanciaMinimaNoches
+            throw new ReglaDominioException(MotivoRechazo.ESTANCIA_MINIMA,
+                    "La estancia debe ser de al menos " + estanciaMinimaNoches
                     + " noches en esta temporada");
         }
         if (!cotizacion.desglose().stream().map(LineaCotizacion::noche).toList().equals(estancia.noches())) {
@@ -520,7 +532,7 @@ public class Reserva {
                 .anyMatch(o -> titular.documento().equals(o.documento())
                         && o.esFacturableA(estancia.entrada(), umbral));
         if (!esOcupanteFacturable) {
-            throw new ReglaDominioException("El titular " + titular.nombre()
+            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO, "El titular " + titular.nombre()
                     + " debe ser uno de los ocupantes facturables, identificado por su documento");
         }
     }

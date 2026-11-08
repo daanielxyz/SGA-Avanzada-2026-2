@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -104,7 +106,7 @@ class ReservaTest {
     void deberiaRechazarReservaConFechaDeEntradaAnteriorAHoy() {
         Estancia ayer = new Estancia(HOY.minusDays(1), HOY.plusDays(1));
 
-        assertThrows(ReglaDominioException.class, () -> crear(ayer, List.of(ANA), null, 0));
+        exigeMotivo(MotivoRechazo.FECHAS_INVALIDAS, () -> crear(ayer, List.of(ANA), null, 0));
     }
 
     @Test
@@ -147,7 +149,7 @@ class ReservaTest {
         List<Ocupante> cinco = List.of(ANA, LUIS, ocupante("OCU-3", "Eva"), ocupante("OCU-4", "Tom"),
                 ocupante("OCU-5", "Leo"));
 
-        assertThrows(ReglaDominioException.class, () -> crear(ESTANCIA, cinco, null, 0));
+        exigeMotivo(MotivoRechazo.CAPACIDAD_EXCEDIDA, () -> crear(ESTANCIA, cinco, null, 0));
     }
 
     @Test
@@ -190,7 +192,7 @@ class ReservaTest {
     @Test
     @Tag("RP-01")
     void deberiaRechazarEstanciaMasCortaQueElMinimoDeLaTemporada() {
-        assertThrows(ReglaDominioException.class, () -> crear(ESTANCIA, List.of(ANA), null, 3));
+        exigeMotivo(MotivoRechazo.ESTANCIA_MINIMA, () -> crear(ESTANCIA, List.of(ANA), null, 3));
     }
 
     @Test
@@ -219,7 +221,7 @@ class ReservaTest {
                 new Documento(TipoDocumento.TI, "777"), null);
         Titular titularMenor = new Titular(new TitularId("TIT-2"), ALO, "Tomás", nino.documento(), null, "3001234567");
 
-        assertThrows(ReglaDominioException.class, () -> crear(ESTANCIA, List.of(LUIS), null, 0));
+        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO, () -> crear(ESTANCIA, List.of(LUIS), null, 0));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
                 titularMenor, ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA, nino), null,
                 cotizacion(ESTANCIA, 2), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
@@ -256,7 +258,7 @@ class ReservaTest {
     void deberiaRechazarConfirmarSinHoraEstimadaDeLlegada() {
         Reserva reserva = crear(ESTANCIA, List.of(ANA), null, 0);
 
-        assertThrows(ReglaDominioException.class, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
+        exigeMotivo(MotivoRechazo.FALTA_HORA_LLEGADA, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
 
         reserva.indicarHoraEstimadaLlegada(LocalTime.of(18, 0));
         reserva.confirmar(new Porcentaje(0), Dinero.CERO);
@@ -268,7 +270,7 @@ class ReservaTest {
     void deberiaRechazarConfirmarSiElAnticipoEsMenorAlPorcentaje() {
         Reserva reserva = pendiente(); // 400.000 → 30 % = 120.000
 
-        assertThrows(ReglaDominioException.class, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(119_999)));
+        exigeMotivo(MotivoRechazo.ANTICIPO_INSUFICIENTE, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(119_999)));
         assertEquals(EstadoReserva.PENDIENTE, reserva.estado());
     }
 
@@ -302,7 +304,7 @@ class ReservaTest {
         Reserva reserva = pendiente();
         reserva.cancelar();
 
-        assertThrows(ReglaDominioException.class, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
+        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
         assertThrows(ReglaDominioException.class, reserva::cancelar);
         assertThrows(ReglaDominioException.class, () -> reserva.indicarHoraEstimadaLlegada(LocalTime.NOON));
         assertEquals(EstadoReserva.CANCELADA, reserva.estado());
@@ -355,7 +357,7 @@ class ReservaTest {
         Reserva reserva = confirmada();
         LocalDateTime antes = ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW).minusMinutes(1);
 
-        assertThrows(ReglaDominioException.class, () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW));
+        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO, () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW));
         assertThrows(ReglaDominioException.class, () -> pendiente()
                 .declararNoShow(ESTANCIA.entrada().atTime(23, 0), HORA_LIMITE_NO_SHOW));
     }
@@ -411,7 +413,7 @@ class ReservaTest {
         Reserva reserva = confirmada();
         LocalDateTime laVispera = ESTANCIA.entrada().minusDays(1).atTime(23, 59);
 
-        assertThrows(ReglaDominioException.class,
+        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO,
                 () -> reserva.registrarLlegada(new RegistroId("REG-1"), laVispera, RECEPCION));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
     }
