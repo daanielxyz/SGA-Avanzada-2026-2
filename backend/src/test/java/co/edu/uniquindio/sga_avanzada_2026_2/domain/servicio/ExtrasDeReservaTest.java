@@ -100,6 +100,16 @@ class ExtrasDeReservaTest {
     @Test
     @Tag("RES-15")
     @Tag("DEC-89")
+    void elAnticipoExigidoEsElMismoQueSeCobraAlConfirmar() {
+        Reserva reserva = conExtras(reserva("RES-2026-00001", APT, 10, 12, EstadoReserva.PENDIENTE));
+
+        assertEquals(Dinero.de(75_000), reserva.anticipoExigido(new Porcentaje(30)));
+        assertEquals(Dinero.CERO, reserva.anticipoExigido(new Porcentaje(0)));
+    }
+
+    @Test
+    @Tag("RES-15")
+    @Tag("DEC-89")
     void elAnticipoParaConfirmarSeCalculaConLosExtras() {
         Reserva reserva = conExtras(reserva("RES-2026-00001", APT, 10, 12, EstadoReserva.PENDIENTE));
         reserva.indicarHoraEstimadaLlegada(LocalTime.of(15, 0));

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Caso de uso: ver el detalle de una reserva con el nombre de su titular (CU-49).
+ * Caso de uso: ver el detalle de una reserva con el nombre de su titular y el anticipo exigido (CU-49 · RES-15).
  */
 @Service
 public class ConsultarReservaConTitularUseCase {
@@ -27,6 +27,7 @@ public class ConsultarReservaConTitularUseCase {
     public ReservaConTitularResult ejecutar(String codigo) {
         Reserva reserva = cargador.reserva(codigo);
         return new ReservaConTitularResult(ReservaResult.de(reserva),
-                titulares.buscarPorId(reserva.titularId()).map(Titular::nombre).orElse(null));
+                titulares.buscarPorId(reserva.titularId()).map(Titular::nombre).orElse(null),
+                reserva.anticipoExigido(cargador.alojamientoDe(reserva).parametros().anticipo()).monto());
     }
 }

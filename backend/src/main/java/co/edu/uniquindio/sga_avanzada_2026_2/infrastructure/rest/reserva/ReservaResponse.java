@@ -18,13 +18,15 @@ import java.util.List;
  * @param vehiculos  carros y motos, que ocupan el mismo cupo (RP-02)
  * @param extras     lo que suman parqueadero y mascotas, aparte de {@code valor} (DEC-89)
  * @param titularNombre solo en el listado de recepción y en el detalle; en las demás respuestas, nulo
+ * @param anticipoExigido lo que debe estar pagado para confirmarla, con los extras (RES-15 · DEC-89); solo en el
+ *                        detalle, nulo en las demás respuestas
  */
 public record ReservaResponse(String codigo, String apartamento, String titularId, LocalDate entrada,
                               LocalDate salida, String estado, String canalOrigen,
                               List<OcupanteResponse> ocupantes, LocalTime horaEstimadaLlegada,
                               CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
                               String avisoCuenta, int vehiculos, int mascotas, String titularNombre, int carros,
-                              int motos, ExtrasResponse extras) {
+                              int motos, ExtrasResponse extras, BigDecimal anticipoExigido) {
 
     public record ExtrasResponse(BigDecimal parqueadero, BigDecimal mascotas, BigDecimal total) {
     }
@@ -34,14 +36,14 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
     }
 
     public static ReservaResponse de(ReservaResult r) {
-        return de(r, null);
+        return de(r, null, null);
     }
 
     public static ReservaResponse de(ReservaConTitularResult r) {
-        return de(r.reserva(), r.titularNombre());
+        return de(r.reserva(), r.titularNombre(), r.anticipoExigido());
     }
 
-    private static ReservaResponse de(ReservaResult r, String titularNombre) {
+    private static ReservaResponse de(ReservaResult r, String titularNombre, BigDecimal anticipoExigido) {
         return new ReservaResponse(r.codigo(), r.apartamento(), r.titularId(), r.entrada(), r.salida(), r.estado(),
                 r.canalOrigen(),
                 r.ocupantes().stream()
@@ -50,6 +52,6 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                         .toList(),
                 r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
                 r.avisoCuenta(), r.vehiculos(), r.mascotas(), titularNombre, r.carros(), r.motos(),
-                new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()));
+                new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()), anticipoExigido);
     }
 }
