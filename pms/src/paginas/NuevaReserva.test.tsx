@@ -12,6 +12,7 @@ const ALOJAMIENTO = {
   parametros: {
     anticipoPct: 30, horaLimiteNoShow: '22:00:00', umbralEdadFacturable: 12,
     aceptaMascotas: true, limiteMascotas: 2, cargoMascota: 30000, cupoParqueadero: 8,
+    cobroParqueadero: 'POR_NOCHE', cargoCarro: 10000, cargoMoto: 5000,
   },
   mediosPago: ['EFECTIVO'],
 }
@@ -35,6 +36,7 @@ function apiDePrueba(cambios: Parameters<typeof laApiRespondePorRuta>[0] = {}) {
     '/api/reservas/RES-2026-00099': [200, reservaDePrueba({ codigo: 'RES-2026-00099', estado: 'PENDIENTE' })],
     '/api/apartamentos/disponibles': [200, paginaDe([APARTAMENTO, OTRO])],
     '/api/cotizaciones': [200, COTIZACION],
+    '/api/apartamentos/APT-101': [200, { codigo: 'APT-101', nombre: 'Penthouse Mirador', limiteMascotas: null }],
     ...cambios,
   })
 }
@@ -48,6 +50,12 @@ function abrir(direccion = '/reservas/nueva') {
       </ProveedorSesion>
     </MemoryRouter>,
   )
+}
+
+async function escribirCantidad(usuario: UserEvent, etiqueta: string, valor: string) {
+  const campo = screen.getByLabelText(etiqueta)
+  await usuario.clear(campo)
+  await usuario.type(campo, valor)
 }
 
 function escribirFecha(etiqueta: string | RegExp, valor: string, dentro: HTMLElement = document.body) {
@@ -307,10 +315,12 @@ describe('paso 4: resumen', () => {
       salida: '2099-03-12',
       titular: { nombre: 'Ana Ríos', numeroDocumento: '52481' },
       ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481' }],
-      vehiculos: 0,
+      carros: 0,
+      motos: 0,
       mascotas: 0,
     })
     expect(JSON.parse(String(llamada?.[1]?.body))).not.toHaveProperty('horaEstimadaLlegada')
+    expect(JSON.parse(String(llamada?.[1]?.body))).not.toHaveProperty('vehiculos')
   })
 
   it('muestra el aviso de cuenta si el titular ya tenía otra', async () => {
@@ -327,18 +337,154 @@ describe('paso 4: resumen', () => {
     expect(await screen.findByText('Ya tenía una cuenta con otro correo.')).toBeInTheDocument()
   })
 
-  it('muestra aparte el cargo por mascotas, que no entra en el total (RP-03)', async () => {
-    apiDePrueba()
+  it('suma el parqueadero y las mascotas al total y los envía (RP-02 · RP-03 · DEC-89)', async () => {
+    const fetch = apiDePrueba()
     abrir()
     const usuario = userEvent.setup()
     await llegarAlPaso4(usuario)
     await screen.findByRole('table', { name: 'Desglose por noche' })
 
-    const mascotas = screen.getByLabelText('Número de mascotas')
-    await usuario.clear(mascotas)
-    await usuario.type(mascotas, '2')
+    await escribirCantidad(usuario, 'Carros', '1')
+    await escribirCantidad(usuario, 'Motos', '1')
+    await escribirCantidad(usuario, 'Número de mascotas', '2')
 
-    expect(screen.getByText(/por mascotas, que van aparte en el pago/)).toHaveTextContent('$ 60.000')
+    // Dos noches: (10.000 + 5.000) × 2 de parqueadero y 2 × 30.000 por las mascotas, sobre 400.000 de estancia
+    expect(screen.getByText('$ 490.000')).toBeInTheDocument()
+    expect(screen.getByText(/El anticipo incluye el parqueadero y las mascotas\./)).toHaveTextContent(
+      'Estancia $ 400.000 + parqueadero $ 30.000 + mascotas $ 60.000',
+    )
+    // El total cambia mientras se escribe: el lector de pantalla lo anuncia
+    expect(screen.getByText('$ 490.000').closest('[aria-live="polite"]')).not.toBeNull()
+    expect(screen.queryByText(/van aparte/)).not.toBeInTheDocument()
+
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+    await screen.findByText('Reserva creada · RES-2026-00099')
+    const llamada = fetch.mock.calls.find(([url, opciones]) => url === '/api/reservas' && opciones?.method === 'POST')
+    expect(JSON.parse(String(llamada?.[1]?.body))).toMatchObject({ carros: 1, motos: 1, mascotas: 2 })
+  })
+
+  it('el parqueadero por estancia se cobra una sola vez (DEC-89)', async () => {
+    apiDePrueba({
+      '/api/alojamiento': [200, { ...ALOJAMIENTO, parametros: { ...ALOJAMIENTO.parametros, cobroParqueadero: 'POR_ESTADIA' } }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    await escribirCantidad(usuario, 'Carros', '1')
+
+    expect(screen.getByLabelText('Carros')).toHaveAccessibleDescription('$ 10.000 por carro por estancia.')
+    expect(screen.getByText('$ 410.000')).toBeInTheDocument()
+  })
+
+  it('más carros y motos que cupos se marca y no se envía (RP-02)', async () => {
+    const fetch = apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    await escribirCantidad(usuario, 'Carros', '5')
+    await escribirCantidad(usuario, 'Motos', '4')
+
+    // Un solo error para los dos campos, en el grupo, y los dos marcados
+    expect(screen.getByRole('group', { name: 'Parqueadero' })).toHaveAccessibleDescription(
+      'El parqueadero tiene 8 cupos en total, entre carros y motos.',
+    )
+    expect(screen.getByLabelText('Carros')).toBeInvalid()
+    expect(screen.getByLabelText('Motos')).toBeInvalid()
+
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+    expect(screen.getByLabelText('Carros')).toHaveFocus()
+    expect(fetch.mock.calls.some(([url, o]) => url === '/api/reservas' && o?.method === 'POST')).toBe(false)
+  })
+
+  it('usa el límite de mascotas del apartamento, no el del hotel (DEC-93)', async () => {
+    const fetch = apiDePrueba({
+      '/api/apartamentos/APT-101': [200, { codigo: 'APT-101', nombre: 'Penthouse Mirador', limiteMascotas: 1 }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    expect(await screen.findByText(/Este apartamento acepta hasta 1 mascota,/)).toBeInTheDocument()
+    await escribirCantidad(usuario, 'Número de mascotas', '2')
+
+    // Se marca mientras se escribe, sin esperar a enviar
+    expect(screen.getByLabelText('Número de mascotas')).toBeInvalid()
+    expect(screen.getByLabelText('Número de mascotas')).toHaveAccessibleDescription('Este apartamento acepta hasta 1 mascota.')
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+    expect(screen.getByLabelText('Número de mascotas')).toHaveFocus()
+    expect(fetch.mock.calls.some(([url, o]) => url === '/api/reservas' && o?.method === 'POST')).toBe(false)
+  })
+
+  it('un apartamento con límite 0 no recibe mascotas aunque el hotel sí (DEC-93)', async () => {
+    apiDePrueba({
+      '/api/apartamentos/APT-101': [200, { codigo: 'APT-101', nombre: 'Penthouse Mirador', limiteMascotas: 0 }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+
+    expect(await screen.findByText('Este apartamento no recibe mascotas.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Número de mascotas')).not.toBeInTheDocument()
+  })
+
+  it('un apartamento sin límite propio usa el del hotel (DEC-93)', async () => {
+    const fetch = apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+    await waitFor(() => expect(fetch.mock.calls.some(([url]) => url === '/api/apartamentos/APT-101')).toBe(true))
+
+    expect(screen.getByLabelText('Número de mascotas')).toHaveAccessibleDescription(/acepta hasta 2 mascotas,/)
+    await escribirCantidad(usuario, 'Número de mascotas', '2')
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+
+    await screen.findByText('Reserva creada · RES-2026-00099')
+    const llamada = fetch.mock.calls.find(([url, opciones]) => url === '/api/reservas' && opciones?.method === 'POST')
+    expect(JSON.parse(String(llamada?.[1]?.body))).toMatchObject({ mascotas: 2 })
+  })
+
+  it('las mascotas escritas para otro apartamento se avisan y no se envían si este no las recibe (DEC-93)', async () => {
+    let vendida = true
+    const fetch = apiDePrueba({
+      '/api/reservas': () => (vendida
+        ? [409, { estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'El apartamento APT-101 ya está reservado en esas fechas', detalles: [] }]
+        : [201, reservaDePrueba({ codigo: 'RES-2026-00099', estado: 'PENDIENTE', avisoCuenta: null })]),
+      '/api/apartamentos/APT-102': [200, { codigo: 'APT-102', nombre: 'Casa Jardín', limiteMascotas: 0 }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+    await escribirCantidad(usuario, 'Número de mascotas', '2')
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Elegir otro apartamento' }))
+
+    vendida = false
+    await usuario.click(await screen.findByRole('button', { name: 'Elegir Casa Jardín' }))
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    expect(await screen.findByText(/Este apartamento no recibe mascotas: la reserva se creará sin las 2 que escribiste\./))
+      .toBeInTheDocument()
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+    await screen.findByText('Reserva creada · RES-2026-00099')
+    const creada = fetch.mock.calls.filter(([url, o]) => url === '/api/reservas' && o?.method === 'POST').at(-1)
+    expect(JSON.parse(String(creada?.[1]?.body))).toMatchObject({ apartamento: 'APT-102', mascotas: 0 })
+  })
+
+  it('si no se puede consultar el apartamento, rige el límite del hotel (DEC-93)', async () => {
+    apiDePrueba({ '/api/apartamentos/APT-101': [500, { estado: 500, codigo: 'ERROR_INTERNO', mensaje: 'Falló', detalles: [] }] })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    expect(screen.getByLabelText('Número de mascotas')).toHaveAccessibleDescription(/acepta hasta 2 mascotas,/)
   })
 
   it('más mascotas que el límite se marca y no se envía (RP-03)', async () => {
@@ -376,16 +522,21 @@ describe('paso 4: resumen', () => {
     const usuario = userEvent.setup()
     await llegarAlPaso4(usuario)
 
-    expect(screen.queryByLabelText('Número de vehículos')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Carros')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Motos')).not.toBeInTheDocument()
   })
 
-  it('con cupo de parqueadero pide los vehículos y dice cuántos cupos hay (RP-02)', async () => {
+  it('con cupo de parqueadero pide carros y motos, con su precio y los cupos (RP-02 · DEC-89)', async () => {
     apiDePrueba()
     abrir()
     const usuario = userEvent.setup()
     await llegarAlPaso4(usuario)
 
-    expect(screen.getByLabelText('Número de vehículos')).toHaveAccessibleDescription(/8 cupos en total/)
+    expect(screen.getByLabelText('Carros')).toHaveAccessibleDescription('$ 10.000 por carro cada noche.')
+    expect(screen.getByLabelText('Motos')).toHaveAccessibleDescription('$ 5.000 por moto cada noche.')
+    expect(screen.getByRole('group', { name: 'Parqueadero' })).toHaveAccessibleDescription(
+      'Carros y motos comparten 8 cupos con las demás reservas.',
+    )
   })
 
   it('una noche ya vendida no pierde datos: se elige otro apartamento y vuelve al resumen (RN-01)', async () => {

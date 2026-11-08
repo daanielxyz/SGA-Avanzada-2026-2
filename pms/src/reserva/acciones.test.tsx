@@ -167,9 +167,50 @@ describe('bloque Pago (RN-15 · RES-15)', () => {
     expect((await screen.findByText('Saldo a favor')).nextSibling).toHaveTextContent('$ 5.000')
   })
 
-  it('muestra aparte los cargos que el total no incluye, como las mascotas (RP-03)', async () => {
+  it('el anticipo incluye el parqueadero y las mascotas, pero no los consumos (DEC-89)', async () => {
     apiCon({
-      reserva: PENDIENTE,
+      reserva: { ...PENDIENTE, extras: { parqueadero: 60000, mascotas: 30000, total: 90000 } },
+      folio: folioDePrueba({
+        saldo: TOTAL + 90000 + 8000,
+        cargos: [
+          { id: 'C-1', tipo: 'HOSPEDAJE', concepto: 'Alojamiento', valor: TOTAL, sentido: null, fecha: '2026-11-01' },
+          { id: 'C-2', tipo: 'SERVICIO_ADICIONAL', concepto: 'Parqueadero', valor: 60000, sentido: null, fecha: '2026-11-01' },
+          { id: 'C-3', tipo: 'SERVICIO_ADICIONAL', concepto: 'Mascotas', valor: 30000, sentido: null, fecha: '2026-11-01' },
+          { id: 'C-4', tipo: 'SERVICIO_ADICIONAL', concepto: 'Agua', valor: 8000, sentido: null, fecha: '2026-11-02' },
+        ],
+      }),
+    })
+    abrir()
+
+    // 30 % de 1.250.000 + 90.000
+    expect((await screen.findByText('Anticipo exigido')).nextSibling).toHaveTextContent('$ 402.000')
+    expect(screen.getByText(/Falta para el anticipo/)).toHaveTextContent('$ 402.000')
+    expect(screen.getByText('Estancia').nextSibling).toHaveTextContent('$ 1.250.000')
+    expect(screen.getByText('Parqueadero').nextSibling).toHaveTextContent('$ 60.000')
+    expect(screen.getByText('Cargo por mascotas').nextSibling).toHaveTextContent('$ 30.000')
+    expect(screen.getByText('Consumos').nextSibling).toHaveTextContent('$ 8.000')
+  })
+
+  it('en una reserva cancelada los extras salen como anulados (DEC-89)', async () => {
+    apiCon({
+      reserva: { estado: 'CANCELADA', extras: { parqueadero: 60000, mascotas: 0, total: 60000 } },
+      folio: folioDePrueba({ saldo: 0, totalPagado: 0, situacionSaldo: 'AL_DIA' }),
+    })
+    abrir()
+
+    expect((await screen.findByText('Parqueadero')).nextSibling).toHaveTextContent('$ 60.000 · anulado')
+  })
+
+  it('en una reserva vigente los extras no dicen anulado', async () => {
+    apiCon({ reserva: { ...PENDIENTE, extras: { parqueadero: 60000, mascotas: 0, total: 60000 } } })
+    abrir()
+
+    expect((await screen.findByText('Parqueadero')).nextSibling).toHaveTextContent(/^\$ 60\.000$/)
+  })
+
+  it('las mascotas cobradas antes de DEC-89 no se cuentan como consumos', async () => {
+    apiCon({
+      reserva: { ...PENDIENTE, extras: { parqueadero: 0, mascotas: 30000, total: 30000 } },
       folio: folioDePrueba({
         saldo: TOTAL + 30000,
         cargos: [
@@ -180,7 +221,8 @@ describe('bloque Pago (RN-15 · RES-15)', () => {
     })
     abrir()
 
-    expect((await screen.findByText('Otros cargos')).nextSibling).toHaveTextContent('$ 30.000')
+    expect((await screen.findByText('Cargo por mascotas')).nextSibling).toHaveTextContent('$ 30.000')
+    expect(screen.queryByText('Consumos')).not.toBeInTheDocument()
   })
 
   it('una reserva terminada con saldo a favor no recibe pagos y muestra lo retenido', async () => {

@@ -1,6 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent } from 'react'
 import type { Alojamiento } from '../../api/alojamiento'
-import type { ApartamentoEncontrado } from '../../api/apartamentos'
+import { consultarApartamento, type ApartamentoEncontrado } from '../../api/apartamentos'
 import { ErrorApi } from '../../api/cliente'
 import { cotizarEstancia, crearReserva, type Cotizacion, type Reserva } from '../../api/reservas'
 import Aviso from '../../componentes/Aviso'
@@ -8,13 +8,23 @@ import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
 import { cantidad, dinero, fechaCorta, noches } from '../../formato'
 import Campo from './Campo'
-import type { DatosEstancia, DatosOcupante, DatosTitular, Errores } from './formulario'
+import { estimarExtras, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
 
 export interface DatosLlegada {
   hora: string
-  vehiculos: string
+  carros: string
+  motos: string
   mascotas: string
 }
+
+/** «El anticipo incluye el parqueadero y las mascotas.», según lo que tenga la reserva (DEC-89). */
+function textoAnticipo(extras: { parqueadero: number; mascotas: number }): string {
+  const incluye = [extras.parqueadero > 0 && 'el parqueadero', extras.mascotas > 0 && 'las mascotas'].filter(Boolean)
+  return `El anticipo incluye ${incluye.join(' y ')}.`
+}
+
+/** Solo dígitos, hasta tres, para los campos de cantidad. */
+const soloCantidad = (texto: string) => texto.replace(/\D/g, '').slice(0, 3)
 
 type Falla = { mensaje: string; detalles: string[]; regla: boolean }
 
@@ -42,12 +52,15 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
   alRevisarPersonas: () => void
   alVolver: () => void
 }) {
-  const { aceptaMascotas, limiteMascotas, cargoMascota, cupoParqueadero } = alojamiento.parametros
+  const { aceptaMascotas, limiteMascotas, cargoMascota, cupoParqueadero, cobroParqueadero, cargoCarro, cargoMoto } = alojamiento.parametros
   const [intento, setIntento] = useState(0)
+  // El límite propio del apartamento (DEC-93). Mientras llega, el campo de mascotas espera; si no se pudo consultar,
+  // rige el del hotel y el backend lo vuelve a revisar al crear
+  const [limitePropio, setLimitePropio] = useState<{ codigo: string; limite: number | null } | null>(null)
+  const idParqueadero = useId()
   const [cotizacion, setCotizacion] = useState<{ intento: number; valor: Cotizacion } | { intento: number; falla: Falla } | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [falla, setFalla] = useState<Falla | null>(null)
-  const [errores, setErrores] = useState<Errores>({})
 
   useEffect(() => {
     let vigente = true
@@ -68,21 +81,55 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
     }
   }, [apartamento.codigo, estancia, grupo, intento])
 
+  useEffect(() => {
+    let vigente = true
+    consultarApartamento(apartamento.codigo)
+      .then((datos) => {
+        if (vigente) setLimitePropio({ codigo: datos.codigo, limite: datos.limiteMascotas })
+      })
+      .catch(() => {
+        // Sin el límite propio se usa el del hotel: el backend lo exige igual al crear
+        if (vigente) setLimitePropio({ codigo: apartamento.codigo, limite: null })
+      })
+    return () => {
+      vigente = false
+    }
+  }, [apartamento.codigo])
+
   const actual = cotizacion?.intento === intento ? cotizacion : null
   const valor = actual && 'valor' in actual ? actual.valor : null
   const fallaCotizar = actual && 'falla' in actual ? actual.falla : null
-  const mascotas = Number(llegada.mascotas || 0)
-  const cargoMascotas = aceptaMascotas ? mascotas * cargoMascota : 0
+
+  const limiteListo = !aceptaMascotas || limitePropio?.codigo === apartamento.codigo
+  const propio = limitePropio?.codigo === apartamento.codigo ? limitePropio.limite : null
+  const limite = aceptaMascotas ? (propio ?? limiteMascotas) : 0
+  const hayParqueadero = cupoParqueadero > 0
+  const carros = hayParqueadero ? Number(llegada.carros || 0) : 0
+  const motos = hayParqueadero ? Number(llegada.motos || 0) : 0
+  const escritas = Number(llegada.mascotas || 0)
+  const mascotas = limite > 0 ? escritas : 0
+  // Escritas para otro apartamento que este no recibe: no se envían, y se avisa
+  const descartadas = limiteListo && aceptaMascotas && limite === 0 ? escritas : 0
+  // Los topes se revisan mientras se escribe: así el error aparece en el campo que lo causa, no solo al enviar
+  const errorCupo = hayParqueadero && carros + motos > cupoParqueadero
+    ? `El parqueadero tiene ${cantidad(cupoParqueadero, 'cupo', 'cupos')} en total, entre carros y motos.`
+    : undefined
+  const errorMascotas = limite > 0 && escritas > limite
+    ? `Este apartamento acepta hasta ${cantidad(limite, 'mascota', 'mascotas')}.`
+    : undefined
+  const extras = estimarExtras(
+    { cobroParqueadero, cargoCarro, cargoMoto, cargoMascota },
+    { carros, motos, mascotas },
+    noches(estancia.entrada, estancia.salida),
+  )
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault()
-    const encontrados: Errores = {}
-    if (aceptaMascotas && mascotas > limiteMascotas) {
-      encontrados.mascotas = `Este hotel acepta hasta ${cantidad(limiteMascotas, 'mascota', 'mascotas')}.`
-    }
-    setErrores(encontrados)
     setFalla(null)
-    if (Object.keys(encontrados).length > 0) return
+    if (errorCupo || errorMascotas) {
+      evento.currentTarget.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+      return
+    }
 
     setEnviando(true)
     try {
@@ -99,8 +146,9 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
           ...(ocupante.nacionalidad.trim() ? { nacionalidad: ocupante.nacionalidad.trim() } : {}),
         })),
         ...(llegada.hora ? { horaEstimadaLlegada: llegada.hora } : {}),
-        vehiculos: cupoParqueadero > 0 ? Number(llegada.vehiculos || 0) : 0,
-        mascotas: aceptaMascotas ? mascotas : 0,
+        carros,
+        motos,
+        mascotas,
       }))
     } catch (causa) {
       setFalla(fallaDe(causa))
@@ -178,7 +226,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
 
       <section className="tarjeta paso-tarjeta" aria-labelledby="titulo-llegada">
         <h3 id="titulo-llegada">Llegada, vehículos y mascotas</h3>
-        <div className="paso-campos-3">
+        <div className="paso-campos-2">
           <Campo
             etiqueta="Hora estimada de llegada"
             nota="opcional"
@@ -187,33 +235,61 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
             disabled={enviando}
             onChange={(evento) => alCambiarLlegada({ ...llegada, hora: evento.target.value })}
           />
-          {cupoParqueadero > 0 && (
-            <Campo
-              etiqueta="Número de vehículos"
-              inputMode="numeric"
-              autoComplete="off"
-              value={llegada.vehiculos}
-              disabled={enviando}
-              pista={`El parqueadero tiene ${cantidad(cupoParqueadero, 'cupo', 'cupos')} en total, compartidos entre las reservas.`}
-              onChange={(evento) => alCambiarLlegada({ ...llegada, vehiculos: evento.target.value.replace(/\D/g, '').slice(0, 3) })}
-            />
-          )}
-          {aceptaMascotas && (
+          {aceptaMascotas && (!limiteListo || limite > 0) && (
             <Campo
               etiqueta="Número de mascotas"
               inputMode="numeric"
               autoComplete="off"
               value={llegada.mascotas}
-              disabled={enviando}
-              error={errores.mascotas}
-              pista={`Este hotel acepta hasta ${cantidad(limiteMascotas, 'mascota', 'mascotas')}, con un cargo de ${dinero(cargoMascota)} por mascota, una vez por estancia.`}
-              onChange={(evento) => {
-                setErrores({})
-                alCambiarLlegada({ ...llegada, mascotas: evento.target.value.replace(/\D/g, '').slice(0, 3) })
-              }}
+              disabled={enviando || !limiteListo}
+              error={errorMascotas}
+              pista={limiteListo
+                ? `Este apartamento acepta hasta ${cantidad(limite, 'mascota', 'mascotas')}, con un cargo de ${dinero(cargoMascota)} por mascota, una vez por estancia.`
+                : 'Consultando cuántas mascotas admite este apartamento…'}
+              onChange={(evento) => alCambiarLlegada({ ...llegada, mascotas: soloCantidad(evento.target.value) })}
             />
           )}
         </div>
+        {aceptaMascotas && limiteListo && limite === 0 && (
+          <p className="suave">
+            Este apartamento no recibe mascotas
+            {descartadas > 0 && `: la reserva se creará sin ${descartadas === 1 ? 'la que escribiste' : `las ${descartadas} que escribiste`}`}.
+          </p>
+        )}
+        {hayParqueadero && (
+          <fieldset className="paso-grupo" aria-describedby={`${idParqueadero}-${errorCupo ? 'error' : 'pista'}`}>
+            <legend>Parqueadero</legend>
+            {errorCupo ? (
+              <p className="campo-mensaje" id={`${idParqueadero}-error`}>{errorCupo}</p>
+            ) : (
+              <p className="campo-pista" id={`${idParqueadero}-pista`}>
+                Carros y motos comparten {cantidad(cupoParqueadero, 'cupo', 'cupos')} con las demás reservas.
+              </p>
+            )}
+            <div className="paso-campos-2">
+              <Campo
+                etiqueta="Carros"
+                inputMode="numeric"
+                autoComplete="off"
+                value={llegada.carros}
+                disabled={enviando}
+                invalido={Boolean(errorCupo)}
+                pista={textoCobroVehiculo(cargoCarro, 'carro', cobroParqueadero)}
+                onChange={(evento) => alCambiarLlegada({ ...llegada, carros: soloCantidad(evento.target.value) })}
+              />
+              <Campo
+                etiqueta="Motos"
+                inputMode="numeric"
+                autoComplete="off"
+                value={llegada.motos}
+                disabled={enviando}
+                invalido={Boolean(errorCupo)}
+                pista={textoCobroVehiculo(cargoMoto, 'moto', cobroParqueadero)}
+                onChange={(evento) => alCambiarLlegada({ ...llegada, motos: soloCantidad(evento.target.value) })}
+              />
+            </div>
+          </fieldset>
+        )}
         {!llegada.hora && (
           <Aviso tipo="info" asunto="Hora de llegada" mensaje="Puedes crear la reserva sin ella, pero la necesitarás para confirmarla." />
         )}
@@ -226,17 +302,20 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
         </button>
         <div className="paso-total">
           {valor && (
-            <p>
+            <p aria-live="polite" aria-atomic="true">
               <span className="paso-total-rotulo">Total</span>
-              <strong className="codigo">{dinero(valor.total)}</strong>
-              {cargoMascotas > 0 && (
+              <strong className="codigo">{dinero(valor.total + extras.total)}</strong>
+              {extras.total > 0 && (
                 <span className="paso-total-extra">
-                  Más <span className="codigo">{dinero(cargoMascotas)}</span> por mascotas, que van aparte en el pago.
+                  Estancia <span className="codigo">{dinero(valor.total)}</span>
+                  {extras.parqueadero > 0 && <> + parqueadero <span className="codigo">{dinero(extras.parqueadero)}</span></>}
+                  {extras.mascotas > 0 && <> + mascotas <span className="codigo">{dinero(extras.mascotas)}</span></>}.{' '}
+                  {textoAnticipo(extras)}
                 </span>
               )}
             </p>
           )}
-          <button type="submit" className="boton" disabled={enviando || !valor}>
+          <button type="submit" className="boton" disabled={enviando || !valor || !limiteListo}>
             {enviando ? 'Creando reserva…' : 'Crear reserva'}
           </button>
         </div>

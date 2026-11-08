@@ -46,7 +46,7 @@ export default function NuevaReserva() {
   const [grupo, setGrupo] = useState<DatosOcupante[]>([OCUPANTE_VACIO])
   const [titularSeAloja, setTitularSeAloja] = useState(true)
   const [personasListas, setPersonasListas] = useState(false)
-  const [llegada, setLlegada] = useState<DatosLlegada>({ hora: '', vehiculos: '0', mascotas: '0' })
+  const [llegada, setLlegada] = useState<DatosLlegada>({ hora: '', carros: '0', motos: '0', mascotas: '0' })
   const [otroApartamento, setOtroApartamento] = useState(false)
   const [creada, setCreada] = useState(false)
   // Llegar directo a un paso avanzado solo pasa al recargar o con un enlace viejo: lo escrito ya no está

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   ajustarGrupo,
+  estimarExtras,
   mensajeDeCreada,
   OCUPANTE_VACIO,
+  textoCobroVehiculo,
   validarEstancia,
   validarPersonas,
   type DatosOcupante,
@@ -101,5 +103,30 @@ describe('mensajeDeCreada (RN-09 · RES-15)', () => {
     expect(mensajeDeCreada(true, true)).toContain('necesitas cubrir el anticipo')
     expect(mensajeDeCreada(false, false)).toContain('necesitas la hora de llegada')
     expect(mensajeDeCreada(true, false)).toBe('Queda pendiente y ya se puede confirmar.')
+  })
+})
+
+describe('estimarExtras (DEC-89)', () => {
+  const PARAMETROS = { cobroParqueadero: 'POR_NOCHE' as const, cargoCarro: 10000, cargoMoto: 5000, cargoMascota: 30000 }
+
+  it('por noche, cada vehículo paga todas las noches; cada mascota, una vez', () => {
+    expect(estimarExtras(PARAMETROS, { carros: 2, motos: 1, mascotas: 1 }, 3)).toEqual({
+      parqueadero: 75000, mascotas: 30000, total: 105000,
+    })
+  })
+
+  it('por estancia, cada vehículo paga una sola vez', () => {
+    expect(estimarExtras({ ...PARAMETROS, cobroParqueadero: 'POR_ESTADIA' }, { carros: 2, motos: 1, mascotas: 0 }, 3))
+      .toEqual({ parqueadero: 25000, mascotas: 0, total: 25000 })
+  })
+
+  it('sin vehículos ni mascotas no suma nada', () => {
+    expect(estimarExtras(PARAMETROS, { carros: 0, motos: 0, mascotas: 0 }, 5).total).toBe(0)
+  })
+
+  it('dice cómo se cobra cada vehículo, o que no tiene costo', () => {
+    expect(textoCobroVehiculo(10000, 'carro', 'POR_NOCHE')).toBe('$ 10.000 por carro cada noche.')
+    expect(textoCobroVehiculo(5000, 'moto', 'POR_ESTADIA')).toBe('$ 5.000 por moto por estancia.')
+    expect(textoCobroVehiculo(0, 'moto', 'POR_NOCHE')).toBe('Sin costo.')
   })
 })

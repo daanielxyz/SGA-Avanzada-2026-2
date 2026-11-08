@@ -22,7 +22,7 @@ function abrir(direccion = '/reservas/RES-2026-00042', rol: Parameters<typeof en
 
 describe('detalle de una reserva (CU-49)', () => {
   it('muestra los datos de la reserva y el titular con su nombre', async () => {
-    laApiRespondePorRuta({ [RUTA]: [200, reservaDePrueba({ vehiculos: 1, mascotas: 2 })] })
+    laApiRespondePorRuta({ [RUTA]: [200, reservaDePrueba({ vehiculos: 3, carros: 2, motos: 1, mascotas: 2 })] })
     abrir()
 
     expect(await screen.findByRole('heading', { level: 1, name: 'RES-2026-00042' })).toBeInTheDocument()
@@ -30,7 +30,8 @@ describe('detalle de una reserva (CU-49)', () => {
     expect(screen.getByText('Titular').nextSibling).toHaveTextContent('Ana Ríos')
     expect(screen.getByText('Titular').nextSibling).toHaveTextContent('TIT-7')
     expect(screen.getByText('POL-3')).toBeInTheDocument()
-    expect(screen.getByText('Vehículos').nextSibling).toHaveTextContent('1')
+    expect(screen.getByText('Carros').nextSibling).toHaveTextContent('2')
+    expect(screen.getByText('Motos').nextSibling).toHaveTextContent('1')
     expect(screen.getByText('Mascotas').nextSibling).toHaveTextContent('2')
     expect(screen.getByText('Noches').nextSibling).toHaveTextContent('3')
   })

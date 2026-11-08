@@ -10,14 +10,19 @@ export function estaTerminada(estado: EstadoReserva): boolean {
   return TERMINALES.includes(estado)
 }
 
-/** El anticipo se calcula sobre el valor congelado, sin las mascotas ni otros cargos, y se redondea al peso (RES-15). */
-export function anticipoExigido(total: number, pct: number): number {
-  return Math.round((total * pct) / 100)
+/** La estancia más sus extras (parqueadero y mascotas), congelados al crear: la base del anticipo (DEC-89). */
+export function valorConExtras(reserva: Reserva): number {
+  return reserva.valor.total + reserva.extras.total
+}
+
+/** El anticipo se calcula sobre la estancia y sus extras, sin los consumos, y se redondea al peso (RES-15 · DEC-89). */
+export function anticipoExigido(reserva: Reserva, pct: number): number {
+  return Math.round((valorConExtras(reserva) * pct) / 100)
 }
 
 /** Lo que falta pagar para cubrir el anticipo; cero si ya está cubierto o no se exige. */
 export function faltaParaAnticipo(reserva: Reserva, folio: Folio, alojamiento: Alojamiento): number {
-  const exigido = anticipoExigido(reserva.valor.total, alojamiento.parametros.anticipoPct)
+  const exigido = anticipoExigido(reserva, alojamiento.parametros.anticipoPct)
   return Math.max(0, exigido - folio.totalPagado)
 }
 
@@ -30,9 +35,17 @@ export function valorRetenido(folio: Folio): number {
   return sumaDe(folio.cargos, 'PENALIDAD_CANCELACION')
 }
 
-/** Lo que el saldo cobra aparte del alojamiento, como las mascotas (RP-03). */
+// El backend carga los extras de la reserva al folio como servicios con estos conceptos (`Folio.cargarExtras`); las
+// reservas anteriores a DEC-89 traen «Mascotas (n)». La reserva ya dice cuánto suman, así que aquí se dejan fuera.
+function esExtraDeLaReserva(cargo: Cargo): boolean {
+  return cargo.concepto === 'Parqueadero' || cargo.concepto === 'Mascotas' || cargo.concepto.startsWith('Mascotas (')
+}
+
+/** Los consumos cargados al folio (minibar, lavandería…), sin los extras de la reserva. */
 export function otrosCargos(folio: Folio): number {
-  return sumaDe(folio.cargos, 'SERVICIO_ADICIONAL')
+  return folio.cargos
+    .filter((cargo) => cargo.tipo === 'SERVICIO_ADICIONAL' && !esExtraDeLaReserva(cargo))
+    .reduce((suma, cargo) => suma + cargo.valor, 0)
 }
 
 /** Una reserva terminada solo recibe pagos si todavía debe algo; lo que tenga a favor se devuelve (PAG-06). */
