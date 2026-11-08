@@ -1980,6 +1980,29 @@ button {
   line-height: var(--interlinea-chica);
 }
 
+/* Lo que se retendría al cancelar, antes de decidir (DEC-91) */
+.retencion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-3-medio);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-pagina);
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-control);
+}
+
+.retencion-valor {
+  font-size: var(--tamano-medio);
+}
+
+.retencion-fantasma {
+  width: 120px;
+  height: 18px;
+}
+
 .resumen-dialogo dt {
   color: var(--texto-suave);
 }

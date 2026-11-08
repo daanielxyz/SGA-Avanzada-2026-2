@@ -125,6 +125,23 @@ export function confirmarReserva(codigo: string): Promise<Reserva> {
   return accion(codigo, 'confirmar')
 }
 
+/** `SimulacionCancelacionResponse`: lo que pasaría al cancelar en este momento, sin cancelar (DEC-91). */
+export interface SimulacionCancelacion {
+  retenido: number
+  saldo: number
+  situacionSaldo: SituacionSaldo
+}
+
+/**
+ * `GET /api/reservas/{codigo}/cancelacion` (RN-13 · DEC-91). El valor es el de este momento: si se cancela más tarde
+ * puede caer en otro tramo de la política.
+ *
+ * @throws ErrorApi 409 si la reserva ya no se puede cancelar
+ */
+export function simularCancelacion(codigo: string): Promise<SimulacionCancelacion> {
+  return pedir<SimulacionCancelacion>(`/api/reservas/${encodeURIComponent(codigo)}/cancelacion`)
+}
+
 /**
  * `PUT /api/reservas/{codigo}/cancelar` (RN-08 · RN-13).
  *
