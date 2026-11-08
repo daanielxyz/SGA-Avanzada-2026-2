@@ -46,11 +46,15 @@ function abrir() {
 }
 
 /** API simulada que recuerda lo que cambia, como la de verdad. */
-function apiCon({ reserva, folio = folioDePrueba(), anticipoPct = 30, rechazar = {} }: {
+const PREVIA = { retenido: 125000, saldo: 250000, situacionSaldo: 'A_FAVOR' }
+
+function apiCon({ reserva, folio = folioDePrueba(), anticipoPct = 30, rechazar = {}, previa = () => [200, PREVIA] }: {
   reserva: Partial<Reserva>
   folio?: Folio
   anticipoPct?: number
   rechazar?: Record<string, string>
+  /** Lo que responde `GET …/cancelacion` (DEC-91). */
+  previa?: () => [number, unknown]
 }) {
   const estado = { reserva: reservaDePrueba(reserva), folio }
   const rechazo = (mensaje: string): [number, unknown] => [
@@ -78,6 +82,7 @@ function apiCon({ reserva, folio = folioDePrueba(), anticipoPct = 30, rechazar =
       estado.reserva = { ...estado.reserva, estado: 'CONFIRMADA' }
       return estado.reserva
     }),
+    [`${RUTA}/cancelacion`]: previa,
     [`${RUTA}/cancelar`]: accion('cancelar', liquidar('CANCELADA')),
     [`${RUTA}/no-show`]: accion('no-show', liquidar('NO_SHOW')),
     [`${RUTA}/folio/pagos`]: accion('pagos', () => {
@@ -434,8 +439,10 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
 
     await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
-    expect(within(dialogo).getByText(/Esto no se puede deshacer/)).toBeInTheDocument()
+    expect(within(dialogo).getByText(/No se puede deshacer/)).toBeInTheDocument()
     expect(within(dialogo).getByText(/del 14 nov 2026 al 16 nov 2026/)).toBeInTheDocument()
+    // Antes de decidir, cuánto se retendría (DEC-91)
+    expect((await within(dialogo).findByText('Se retendrá')).nextSibling).toHaveTextContent('$ 125.000')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Cancelar reserva' }))
 
     const resultado = await screen.findByRole('dialog', { name: 'Reserva cancelada' })
@@ -449,6 +456,54 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
     expect(screen.getByText(/Se retuvo \$ 125\.000/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
+  })
+
+  it('sin la retención no deja cancelar: avisa y deja reintentar (DEC-91)', async () => {
+    let responder = false
+    apiCon({ reserva: PENDIENTE, previa: () => (responder ? [200, PREVIA] : [503, { estado: 503, codigo: 'ERROR_INTERNO', mensaje: 'Falló', detalles: [] }]) })
+    abrir()
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
+    // Si falla, avisa y deja reintentar; sin el valor no se cancela, con él sí
+    const error = await within(dialogo).findByRole('alert')
+    expect(error).toHaveTextContent('No pudimos calcular la retención')
+    expect(error).toHaveTextContent('Sin ese valor no se puede continuar.')
+    expect(within(dialogo).getByRole('button', { name: 'Cancelar reserva' })).toBeDisabled()
+    responder = true
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Reintentar' }))
+
+    expect((await within(dialogo).findByText('Se retendrá')).nextSibling).toHaveTextContent('$ 125.000')
+    expect(within(dialogo).getByRole('button', { name: 'Cancelar reserva' })).toBeEnabled()
+  })
+
+  it('si no hay retención lo dice (DEC-91)', async () => {
+    apiCon({ reserva: PENDIENTE, previa: () => [200, { retenido: 0, saldo: 0, situacionSaldo: 'AL_DIA' }] })
+    abrir()
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
+
+    expect(await within(dialogo).findByText('No se retiene nada')).toBeInTheDocument()
+    expect(within(dialogo).queryByText('Se retendrá')).not.toBeInTheDocument()
+  })
+
+  it('si la reserva ya no se puede cancelar, muestra el motivo sin «Reintentar» (409)', async () => {
+    apiCon({
+      reserva: PENDIENTE,
+      previa: () => [409, { estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'La reserva ya está EN_CURSO y no se puede cancelar', detalles: [] }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
+
+    expect(await within(dialogo).findByRole('alert')).toHaveTextContent('ya está EN_CURSO')
+    expect(within(dialogo).queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
+    expect(within(dialogo).getByRole('button', { name: 'Cancelar reserva' })).toBeDisabled()
   })
 
   it('«Volver» no cancela', async () => {
@@ -465,7 +520,7 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
   })
 
   it('declara el no-show y el detalle queda sin acciones', async () => {
-    apiCon({ reserva: CONFIRMADA_VENCIDA })
+    const fetch = apiCon({ reserva: CONFIRMADA_VENCIDA })
     abrir()
     const usuario = userEvent.setup()
 
@@ -477,6 +532,8 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
 
     await screen.findByRole('dialog', { name: 'No-show declarado' })
     expect(screen.getAllByText('No se presentó').length).toBeGreaterThan(0)
+    // El no-show todavía no tiene su cálculo previo en la API (#1b): no se consulta el de cancelar
+    expect(llamadasA(fetch, '/cancelacion')).toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument()
   })
 
