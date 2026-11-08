@@ -37,6 +37,7 @@ export function reservaDePrueba(cambios: Partial<Reserva> = {}): Reserva {
     motos: 0,
     mascotas: 0,
     extras: { parqueadero: 0, mascotas: 0, total: 0 },
+    anticipoExigido: null,
     ...cambios,
   }
 }

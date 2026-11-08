@@ -268,7 +268,7 @@ export default function DetalleReserva() {
           <FormularioPago
             codigo={reserva.codigo}
             medios={mediosDeRecepcion(pago.datos.alojamiento)}
-            montoInicial={montoSugerido(reserva, pago.datos.folio, pago.datos.alojamiento)}
+            montoInicial={montoSugerido(reserva, pago.datos.folio)}
             textoVolver="Volver"
             alVolver={() => setDialogo(null)}
             alEnviar={setEnviandoPago}

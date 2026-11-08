@@ -179,3 +179,23 @@ export function textoCobroVehiculo(cargo: number, tipo: 'carro' | 'moto', cobro:
   if (cargo <= 0) return 'Sin costo.'
   return `${dinero(cargo)} por ${tipo} ${cobro === 'POR_NOCHE' ? 'cada noche' : 'por estancia'}.`
 }
+
+export type SalidaDelRechazo = 'apartamento' | 'fechas' | 'personas'
+
+const TODAS_LAS_SALIDAS: readonly SalidaDelRechazo[] = ['apartamento', 'fechas', 'personas']
+
+const SALIDAS_POR_MOTIVO: Record<string, readonly SalidaDelRechazo[]> = {
+  NO_DISPONIBLE: ['apartamento', 'fechas'],
+  CAPACIDAD_EXCEDIDA: ['apartamento', 'personas'],
+  ESTANCIA_MINIMA: ['fechas'],
+  FECHAS_INVALIDAS: ['fechas'],
+  TITULAR_INVALIDO: ['personas'],
+  SIN_CUPO_PARQUEADERO: ['fechas'],
+  MASCOTAS_NO_ADMITIDAS: ['apartamento'],
+  SIN_TARIFA: ['apartamento', 'fechas'],
+}
+
+/** Qué puede cambiar recepción para resolver un rechazo al crear, según su motivo (DEC-94); sin motivo, todas. */
+export function salidasDelRechazo(motivo: string | null): readonly SalidaDelRechazo[] {
+  return (motivo && SALIDAS_POR_MOTIVO[motivo]) || TODAS_LAS_SALIDAS
+}

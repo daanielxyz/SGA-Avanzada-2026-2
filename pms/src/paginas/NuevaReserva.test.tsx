@@ -477,6 +477,25 @@ describe('paso 4: resumen', () => {
     expect(JSON.parse(String(creada?.[1]?.body))).toMatchObject({ apartamento: 'APT-102', mascotas: 0 })
   })
 
+  it('un rechazo con motivo ofrece solo las salidas que lo resuelven (DEC-94)', async () => {
+    apiDePrueba({
+      '/api/reservas': [409, {
+        estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'La estancia debe ser de al menos 3 noches en esta temporada',
+        detalles: [], motivo: 'ESTANCIA_MINIMA',
+      }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    await usuario.click(screen.getByRole('button', { name: 'Crear reserva' }))
+
+    expect(await screen.findByRole('button', { name: 'Cambiar fechas' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Elegir otro apartamento' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Revisar personas' })).not.toBeInTheDocument()
+  })
+
   it('si no se puede consultar el apartamento, rige el límite del hotel (DEC-93)', async () => {
     apiDePrueba({ '/api/apartamentos/APT-101': [500, { estado: 500, codigo: 'ERROR_INTERNO', mensaje: 'Falló', detalles: [] }] })
     abrir()

@@ -12,6 +12,7 @@ import {
 import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
 import { dinero, fechaCorta, noches, sumarDias } from '../formato'
+import { mensajeDeRechazo } from './mensajes'
 import ResumenDialogo from './ResumenDialogo'
 
 export type TipoLiquidacion = 'cancelar' | 'noShow'
@@ -71,7 +72,7 @@ function usePreviaCancelacion(codigo: string, activa: boolean) {
           intento,
           previa: {
             estado: 'error',
-            mensaje: regla ? (causa as ErrorApi).message : 'Sin ese valor no se puede continuar.',
+            mensaje: regla ? mensajeDeRechazo(causa as ErrorApi) : 'Sin ese valor no se puede continuar.',
             reintentable: !regla,
           },
         })
@@ -117,7 +118,7 @@ export default function DialogoLiquidar({ tipo, reserva, alCerrar, alTerminar, a
       setLiquidacion(respuesta)
       await alTerminar(respuesta)
     } catch (causa) {
-      setError(causa instanceof ErrorApi ? causa.message : 'Inténtalo de nuevo en un momento.')
+      setError(causa instanceof ErrorApi ? mensajeDeRechazo(causa) : 'Inténtalo de nuevo en un momento.')
       alFallar()
     } finally {
       setEnviando(false)

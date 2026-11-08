@@ -6,6 +6,7 @@ import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
 import { dinero } from '../formato'
 import FormularioPago from './FormularioPago'
+import { mensajeDeRechazo } from './mensajes'
 import { faltaParaAnticipo, mediosDeRecepcion } from './pago'
 import ResumenDialogo from './ResumenDialogo'
 import type { DatosDePago } from './useDatosDePago'
@@ -32,7 +33,7 @@ export default function DialogoConfirmar({ reserva, datos, alCerrar, alConfirmar
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<{ mensaje: string; detalles: string[] } | null>(null)
 
-  const falta = datos ? faltaParaAnticipo(reserva, datos.folio, datos.alojamiento) : 0
+  const falta = datos ? faltaParaAnticipo(reserva, datos.folio) : 0
   const exigeAnticipo = Boolean(datos && datos.alojamiento.parametros.anticipoPct > 0)
 
   if (enPago && datos) {
@@ -70,7 +71,7 @@ export default function DialogoConfirmar({ reserva, datos, alCerrar, alConfirmar
       await alConfirmar()
     } catch (causa) {
       setError(causa instanceof ErrorApi
-        ? { mensaje: causa.message, detalles: causa.detalles }
+        ? { mensaje: mensajeDeRechazo(causa), detalles: causa.detalles }
         : { mensaje: 'Inténtalo de nuevo en un momento.', detalles: [] })
       alFallar()
     } finally {
