@@ -120,7 +120,7 @@ Mientras se hacía el frontend del sprint 2, los mockups se adaptaron al backend
 | 6 | Monto del anticipo exigido en la respuesta | **Sí, urgente**: desde DEC-89 el anticipo incluye los extras | Lo calcula con `anticipoPct` sobre la estancia sola (mal si hay extras cobrados) |
 | 7 | Nombre legible de la política para recepción | **Sí**: permitir a recepción `GET /api/politicas/{id}` en `PermisosPorRol` | Muestra `politicaId` |
 | 8 | Mensajes de los 409 pensados para recepción | **Baja prioridad**: el #3 resuelve la mayoría. Pasa al sprint 4 (entrevista) | Los muestra tal cual |
-| 9 | Reservar a nombre de alguien que no se aloja | **Sí, cambia la regla TIT-01**: el titular puede no alojarse (una madre reserva para sus hijos y sigue siendo la titular). Al crear, el titular ya no tiene que estar entre los ocupantes ni ser facturable. Además, en el registro de llegada recepción puede cambiar el titular si quien reservó no debe serlo. Es del núcleo (dominio, `CrearReservaUseCase`, reservas del portal y de canales, pruebas de TIT-01 y `docs/MODELO.md`); en el PMS se quita la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` y la casilla «El titular también se aloja» queda solo para llenar el primer ocupante | Hay que escribir el documento del titular en uno de los ocupantes |
+| 9 | Reservar a nombre de alguien que no se aloja | **Lo hace el equipo web** (decisión del 8 nov). **Sí, cambia la regla TIT-01**: el titular puede no alojarse (una madre reserva para sus hijos y sigue siendo la titular). Al crear, el titular ya no tiene que estar entre los ocupantes ni ser facturable. Además, en el registro de llegada recepción puede cambiar el titular si quien reservó no debe serlo. Es del núcleo (dominio, `CrearReservaUseCase`, reservas del portal y de canales, pruebas de TIT-01 y `docs/MODELO.md`); en el PMS se quita la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` y la casilla «El titular también se aloja» queda solo para llenar el primer ocupante | Hay que escribir el documento del titular en uno de los ocupantes |
 | 10 | Nombre de la temporada en el desglose | **Sí**, en el sprint 4: le cede el lugar a la entrevista | Muestra el id (`TEM-1`) |
 | 11 | Tarifa de la Temporada Media | **No es un pendiente**: cada alojamiento define sus temporadas y sus tarifas al configurar el PMS (sprint 4). Hay que quitar el pendiente de `CLAUDE.md` y el `TODO(equipo)` de `Tarifa.java` | — |
 | 12 | Quién revierte un cargo o un pago y quién registra una devolución (decisión del equipo pms, 7 nov) | **Sí**, en el paso 3 del sprint 3: el reverso de un cargo, el de un pago y la devolución guardan su autor, que sale de `UsuarioActual` y nunca del Request; `CargoResponse` y `PagoResponse` lo agregan (campo nuevo, no rompe a la web). Rama `feature/nucleo/autor-reversos`, con su migración y su DEC | El reverso guarda el motivo y la fecha, pero no quién lo hizo |
@@ -142,6 +142,9 @@ Se anotan aquí para que cualquier clon los tenga:
 - **Decisiones**: antes de pedir el PR de una rama que toca `docs/DECISIONES.md`, comparar con `origin/develop` que no se borró ninguna decisión ajena. Si otro equipo usó el mismo número, se conservan las dos y la nuestra toma el siguiente libre.
 - **Mockups y backend**: los mockups son borradores. Se adaptan al backend que existe; lo que pida un cambio de backend se anota para decidirlo con el equipo, no se cambia por un mockup.
 - **Estilos al final**: los cambios visuales (colores, como la dominancia del azul, y detalles de estilo) se hacen cuando todo funcione, sin tocar funcionalidades. Para eso los tamaños, espacios y colores están en variables de `src/index.css`.
+- **Antes de decir que algo funciona**: comprobar que el backend corre con el código actual de la rama. Al terminar cada tarea, decir qué cambió en los Request y los Response. Nada de secretos ni valores del `.env`.
+- **Documentación sin choques** (pedido del equipo web, 8 nov): antes de tocar `docs/SPRINTS.md`, `docs/DECISIONES.md`, `docs/BACKLOG.md` o `docs/api/openapi.yaml`, revisar los PR abiertos y lo último de `develop`, y ajustar lo que haga falta. Cuando un cambio deba acordarse con el equipo web, avisarle a la persona antes de programarlo.
+- **Trabajar entre dos sin pasarse el chat**: ninguna decisión se queda solo en el chat; va a este archivo o a `docs/SPRINTS.md`. Cada tarea va en su rama, y se marca `[~]` con quién la tiene antes de empezar. Al terminar una sesión, se actualiza «Próxima sesión» con lo hecho, la rama y lo que sigue.
 - **Commits y PR**: los hace la persona; Claude no hace commits. Nunca se trabaja en `main` ni en `develop`.
 
 ## Entrevista a la recepcionista (6 nov)
@@ -155,12 +158,25 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 - **IVA** según el documento: se pregunta al cliente en el cierre 3 (BL-13).
 
 ## Próxima sesión: sprint 3 (9 – 13 nov)
-En este orden:
-1. **Entrevista a la recepcionista**: hecha (ver «Entrevista a la recepcionista» abajo y `docs/BACKLOG.md`, BL-07 a BL-21).
-2. **Ajustes del PMS** de la sección anterior: el del anticipo primero, porque hoy da un valor equivocado si hay extras cobrados.
-3. **Cambios de backend aprobados** (#1b, #2, #3, #6, #7 y #11; el #8 y el #10 pasan al sprint 4) y los de la entrevista: datos del TRA en el ocupante (BL-07), notas de la reserva (BL-08) saldo en el tablero (BL-09), este junto con el #2, y el autor de los reversos y las devoluciones (#12). El #9 y el BL-07 cambian reglas del dominio: cada uno en su propia rama del núcleo, antes del registro de llegada, en ramas `feature/nucleo/…`, con pruebas y el `openapi.yaml` regenerado.
-4. **Pantallas del sprint 3**: registro de llegada (y su corrección, con el cambio de titular del #9, los datos del TRA, el desglose con «Registrar pago» y la reserva de mostrador) y folio (cargos con cantidad, pagos, devoluciones, reversos, cierre y salida, bloqueada si faltan datos del TRA). En el tablero, el color por la cuenta; en el detalle, las notas. Mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio.
-5. **Probar en un celular real** las pantallas del sprint 2, incluidos los márgenes de la muesca con el celular en horizontal.
+**Para retomar**, una sesión nueva de Claude lee `CLAUDE.md`, `CLAUDE.local.md`, la sección pms del sprint actual en `docs/SPRINTS.md` y esta sección. Lo que falta para trabajar y no va a git: `CLAUDE.local.md`, `backend/.env` (cada quien con sus valores), `pms/diseno/` y la fuente Satoshi en `pms/public/fuentes/`.
+
+**Ya hecho** (8 nov): entrevista (BL-07 a BL-23), ajustes del PMS por DEC-89, DEC-91 y DEC-93, `motivo` en los 409 (DEC-94) y anticipo en la respuesta (DEC-95). `feature/pms/motivo-y-anticipo` (PR #43) los usa en el PMS y está por integrar.
+
+**Reparto** (8 nov, se puede cambiar). Si una tarea depende de otra que no ha entrado, se avanza contra el contrato acordado o se toma la siguiente.
+
+| Quién | Tarea, en orden | Depende de |
+|---|---|---|
+| Daniel (pantallas) | 1. **Folio**, en `feature/pms/folio`: cargos con cantidad (BL-12), pagos, devoluciones, revertir y corregir, cierre y salida. Los endpoints ya existen | Nada, salvo el bloqueo de la salida por el TRA, que espera el BL-07 |
+| Daniel (pantallas) | 2. **Registro de llegada**: layout y mockups desde ya; el código, cuando entren sus reglas. Datos del TRA, desglose, cobro de la estancia con autorización, cambio de titular y reserva de mostrador (BL-10, BL-11, BL-23) | BL-07 y #9 (equipo web), BL-22 (Reyes) |
+| Daniel (pantallas) | 3. **Tablero por la cuenta y notas** (BL-09, BL-08) | #2 con BL-09 y BL-08 (Reyes) |
+| Daniel (pantallas) | 4. **Preparación de apartamentos** para el personal de servicio, pensada para el celular; no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS. Probar en un celular real las pantallas del sprint 2 | Nada |
+| Reyes (núcleo) | En ramas `feature/nucleo/…`, cada una con su PR: BL-22, #12 (autor de reversos y devoluciones), #2 con BL-09, #1b, #7, BL-08 y #11 | Nada |
+| Reyes (núcleo) | Acordar con el equipo web el BL-07 y el #9 | Equipo web |
+| Equipo web | #9 y BL-07 | Acordar antes los puntos de abajo |
+
+**Por acordar con el equipo web** antes de que programen el #9 y el BL-07: los nombres de los campos del TRA en el Request y el Response de la llegada; quién hace el bloqueo de la salida si faltan datos (propuesta: entra en su BL-07); que estén integrados a más tardar el miércoles 11 (`docs/SPRINTS.md`); y que pms quite la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` cuando entre el #9.
+
+**Cómo se hace cada pantalla**: mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio. Los consumos se suman netos de sus reversos y cualquier cargo se puede revertir o corregir (ver «Corregir cargos en el folio»).
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
