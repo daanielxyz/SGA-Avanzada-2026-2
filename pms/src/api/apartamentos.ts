@@ -18,8 +18,16 @@ export async function listarCodigosDeApartamentos(): Promise<string[]> {
   return codigos
 }
 
-/** `GET /api/apartamentos/{codigo}` (público): su nombre, que la reserva no trae. */
-export function consultarApartamento(codigo: string): Promise<{ codigo: string; nombre: string }> {
+/** Lo que usa el PMS de `ApartamentoResponse`. */
+export interface Apartamento {
+  codigo: string
+  nombre: string
+  /** Mascotas por reserva; `null` = las del alojamiento (DEC-93). */
+  limiteMascotas: number | null
+}
+
+/** `GET /api/apartamentos/{codigo}` (público): su nombre, que la reserva no trae, y su límite de mascotas. */
+export function consultarApartamento(codigo: string): Promise<Apartamento> {
   return pedir(`/api/apartamentos/${encodeURIComponent(codigo)}`)
 }
 

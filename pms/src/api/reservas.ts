@@ -53,8 +53,13 @@ export interface Reserva {
   valor: { desglose: Noche[]; total: number }
   politicaId: string
   creadaEn: string
+  /** Carros más motos (obsoleto: se usan `carros` y `motos`). */
   vehiculos: number
+  carros: number
+  motos: number
   mascotas: number
+  /** Lo que suman parqueadero y mascotas, congelado al crear y aparte de `valor` (DEC-89). */
+  extras: { parqueadero: number; mascotas: number; total: number }
   /** Solo llega al crear: el titular ya tenía una cuenta con otro correo. */
   avisoCuenta?: string | null
 }
@@ -172,7 +177,8 @@ export interface NuevaReserva {
     nacionalidad?: string
   }[]
   horaEstimadaLlegada?: string
-  vehiculos: number
+  carros: number
+  motos: number
   mascotas: number
 }
 
@@ -180,7 +186,7 @@ export interface NuevaReserva {
  * `POST /api/reservas` (CU-11).
  *
  * @throws ErrorApi 400 si un campo no tiene el formato esperado; 409 si el apartamento ya no está disponible o se
- *                  viola una regla de creación (RN-01 · RN-02 · RN-03 · RP-01 · RP-03 · TIT-01)
+ *                  viola una regla de creación (RN-01 · RN-02 · RN-03 · RP-01 · RP-02 · RP-03 · TIT-01)
  */
 export function crearReserva(datos: NuevaReserva): Promise<Reserva> {
   return pedir<Reserva>('/api/reservas', { method: 'POST', cuerpo: datos })

@@ -17,6 +17,11 @@ export interface Alojamiento {
     cargoMascota: number
     /** Vehículos que admite el parqueadero cada noche; 0 = no hay (RP-02). */
     cupoParqueadero: number
+    /** Si el parqueadero se cobra por cada noche o una vez por estancia (DEC-89). */
+    cobroParqueadero: 'POR_NOCHE' | 'POR_ESTADIA'
+    /** Por carro y por moto; 0 = no se cobra. */
+    cargoCarro: number
+    cargoMoto: number
   }
   mediosPago: string[]
 }

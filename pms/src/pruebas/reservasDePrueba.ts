@@ -33,7 +33,10 @@ export function reservaDePrueba(cambios: Partial<Reserva> = {}): Reserva {
     politicaId: 'POL-3',
     creadaEn: '2026-10-18T09:15:00',
     vehiculos: 0,
+    carros: 0,
+    motos: 0,
     mascotas: 0,
+    extras: { parqueadero: 0, mascotas: 0, total: 0 },
     ...cambios,
   }
 }

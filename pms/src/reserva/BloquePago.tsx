@@ -19,7 +19,10 @@ const SALDO: Record<SituacionSaldo, { titulo: string; situacion: string; clase: 
   AL_DIA: { titulo: 'Saldo', situacion: 'Al día', clase: 'confirmada', forma: <path d="M2 6.5 4.8 9.5 10 3" /> },
 }
 
-/** Valor, anticipo, lo pagado y el saldo de la reserva (RN-15 · RES-15). Los movimientos son del sprint 3. */
+/**
+ * Valor, extras, anticipo, lo pagado y el saldo de la reserva (RN-15 · RES-15 · DEC-89). Los movimientos son del
+ * sprint 3.
+ */
 export default function BloquePago({ reserva, pago, alRegistrarPago }: {
   reserva: Reserva
   pago: ReturnType<typeof useDatosDePago>
@@ -67,6 +70,14 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
   const otros = otrosCargos(folio)
   const retenido = valorRetenido(folio)
   const saldo = SALDO[folio.situacionSaldo]
+  // Al cancelar o con el no-show, el backend anula los extras en el folio y lo pagado por ellos queda a favor (DEC-89)
+  const extrasAnulados = reserva.estado === 'CANCELADA' || reserva.estado === 'NO_SHOW'
+  const extra = (valor: number) => (
+    <>
+      {dinero(valor)}
+      {extrasAnulados && <span className="suave"> · anulado</span>}
+    </>
+  )
 
   return (
     <>
@@ -79,17 +90,27 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
         )}
       </div>
       <dl className="tarjeta datos datos-pago">
-        <Dato nombre="Valor total" codigo>
+        <Dato nombre="Estancia" codigo>
           {dinero(reserva.valor.total)}
         </Dato>
+        {reserva.extras.parqueadero > 0 && (
+          <Dato nombre="Parqueadero" codigo>
+            {extra(reserva.extras.parqueadero)}
+          </Dato>
+        )}
+        {reserva.extras.mascotas > 0 && (
+          <Dato nombre="Cargo por mascotas" codigo>
+            {extra(reserva.extras.mascotas)}
+          </Dato>
+        )}
         {otros > 0 && (
-          <Dato nombre="Otros cargos" codigo>
+          <Dato nombre="Consumos" codigo>
             {dinero(otros)}
           </Dato>
         )}
         {anticipoVigente && (
           <Dato nombre="Anticipo exigido" codigo>
-            {dinero(anticipoExigido(reserva.valor.total, pct))}
+            {dinero(anticipoExigido(reserva, pct))}
           </Dato>
         )}
         {estaTerminada(reserva.estado) && retenido > 0 && (

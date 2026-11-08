@@ -1,17 +1,19 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
 
 /** Un campo con su etiqueta, su pista y su error, conectados para los lectores de pantalla. */
-export default function Campo({ etiqueta, nota, pista, error, opciones, ...control }: {
+export default function Campo({ etiqueta, nota, pista, error, invalido = false, opciones, ...control }: {
   etiqueta: string
   nota?: string
   pista?: ReactNode
   error?: string
+  /** Inválido por un error que se muestra en otro lado, por ejemplo el de su grupo. */
+  invalido?: boolean
   /** Con opciones se dibuja una lista: `[valor, texto]`. */
   opciones?: readonly (readonly [string, string])[]
 } & ComponentProps<'input'>) {
   const id = useId()
   const descripcion = error ? `${id}-error` : pista ? `${id}-pista` : undefined
-  const comunes = { id, 'aria-invalid': Boolean(error), 'aria-describedby': descripcion, className: 'campo-control' }
+  const comunes = { id, 'aria-invalid': Boolean(error) || invalido, 'aria-describedby': descripcion, className: 'campo-control' }
   return (
     <div className="campo">
       <label className="campo-rotulo" htmlFor={id}>

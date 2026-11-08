@@ -2171,6 +2171,29 @@ button {
   opacity: 0.75;
 }
 
+/* Campos que comparten una regla, como carros y motos con el cupo del parqueadero: un rótulo y un mensaje para todos */
+.paso-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.paso-grupo legend {
+  padding: 0;
+  margin-bottom: var(--espacio-1-medio);
+  font-size: var(--tamano-chico);
+  font-weight: 600;
+}
+
+.paso-grupo > .campo-pista,
+.paso-grupo > .campo-mensaje {
+  margin: 0;
+}
+
 .paso-pie {
   display: flex;
   flex-direction: column-reverse;

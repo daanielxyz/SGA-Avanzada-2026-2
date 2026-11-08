@@ -199,7 +199,8 @@ export default function DetalleReserva() {
           <Dato nombre="Política aplicada" codigo>
             {reserva.politicaId}
           </Dato>
-          <Dato nombre="Vehículos">{reserva.vehiculos}</Dato>
+          <Dato nombre="Carros">{reserva.carros}</Dato>
+          <Dato nombre="Motos">{reserva.motos}</Dato>
           <Dato nombre="Mascotas">{reserva.mascotas}</Dato>
         </dl>
       </section>

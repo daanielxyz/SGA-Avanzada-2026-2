@@ -1,6 +1,7 @@
 // Lo que se escribe al crear una reserva y sus validaciones de formato. Sirven para corregir antes de enviar: quien
 // decide es el backend, que sigue devolviendo sus 400 y 409.
-import { edadEn, fechaCorta, fechaHoy } from '../../formato'
+import type { Alojamiento } from '../../api/alojamiento'
+import { dinero, edadEn, fechaCorta, fechaHoy } from '../../formato'
 
 export const TIPOS_DE_DOCUMENTO = ['CC', 'CE', 'PASAPORTE', 'TI'] as const
 
@@ -150,4 +151,31 @@ export function mensajeDeCreada(tieneHora: boolean, exigeAnticipo: boolean): str
   ]
   if (falta.length === 0) return 'Queda pendiente y ya se puede confirmar.'
   return `Queda pendiente. Para confirmarla necesitas ${falta.join(' y ')}.`
+}
+
+type ParametrosExtras = Pick<
+  Alojamiento['parametros'],
+  'cobroParqueadero' | 'cargoCarro' | 'cargoMoto' | 'cargoMascota'
+>
+
+/**
+ * Lo que sumarán el parqueadero y las mascotas, con la misma cuenta del backend (`ParametrosAlojamiento.calcularExtras`,
+ * DEC-89): cada vehículo paga por noche o una vez por estancia, y cada mascota una vez. Es solo para mostrarlo: el
+ * valor que se cobra lo congela el backend al crear.
+ */
+export function estimarExtras(
+  parametros: ParametrosExtras,
+  vehiculos: { carros: number; motos: number; mascotas: number },
+  noches: number,
+): { parqueadero: number; mascotas: number; total: number } {
+  const veces = parametros.cobroParqueadero === 'POR_NOCHE' ? noches : 1
+  const parqueadero = (vehiculos.carros * parametros.cargoCarro + vehiculos.motos * parametros.cargoMoto) * veces
+  const mascotas = vehiculos.mascotas * parametros.cargoMascota
+  return { parqueadero, mascotas, total: parqueadero + mascotas }
+}
+
+/** Cómo se cobra un vehículo, para la pista del campo: «$ 10.000 por carro cada noche» o «sin costo». */
+export function textoCobroVehiculo(cargo: number, tipo: 'carro' | 'moto', cobro: ParametrosExtras['cobroParqueadero']): string {
+  if (cargo <= 0) return 'Sin costo.'
+  return `${dinero(cargo)} por ${tipo} ${cobro === 'POR_NOCHE' ? 'cada noche' : 'por estancia'}.`
 }
