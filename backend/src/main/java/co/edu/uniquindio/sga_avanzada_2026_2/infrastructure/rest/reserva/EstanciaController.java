@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
@@ -27,13 +28,26 @@ public class EstanciaController {
     private final RegistrarLlegadaUseCase registrarLlegada;
     private final CorregirRegistroUseCase corregirRegistro;
     private final RegistrarSalidaUseCase registrarSalida;
+    private final CompletarDatosOcupanteUseCase completarDatosOcupante;
 
     public EstanciaController(UsuarioActual usuario, RegistrarLlegadaUseCase registrarLlegada,
-                              CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida) {
+                              CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida,
+                              CompletarDatosOcupanteUseCase completarDatosOcupante) {
         this.usuario = usuario;
         this.registrarLlegada = registrarLlegada;
         this.corregirRegistro = corregirRegistro;
         this.registrarSalida = registrarSalida;
+        this.completarDatosOcupante = completarDatosOcupante;
+    }
+
+    /**
+     * Los datos del TRA de un ocupante, en la llegada o después (BL-07). Lo que no llega se conserva; mientras a
+     * alguien le falte algo, la salida responde 409 {@code DATOS_TRA_INCOMPLETOS}.
+     */
+    @PutMapping("/ocupantes/{ocupanteId}/datos-tra")
+    public ReservaResponse completarDatosOcupante(@PathVariable String codigo, @PathVariable String ocupanteId,
+                                                  @Valid @RequestBody DatosOcupanteRequest solicitud) {
+        return ReservaResponse.de(completarDatosOcupante.ejecutar(solicitud.aCommand(codigo, ocupanteId)));
     }
 
     @PutMapping("/registrar-llegada")

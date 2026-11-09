@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.AutorizacionCierre;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosTraDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
@@ -43,6 +44,7 @@ class SalidaOperativaDomainServiceTest {
     private static Reserva enCurso() {
         Reserva reserva = confirmada("RES-2026-00001", 10, 12);
         reserva.registrarLlegada(new RegistroId("REG-1"), dia(10).atTime(15, 30), RECEPCION);
+        DatosTraDePrueba.completar(reserva);
         return reserva;
     }
 

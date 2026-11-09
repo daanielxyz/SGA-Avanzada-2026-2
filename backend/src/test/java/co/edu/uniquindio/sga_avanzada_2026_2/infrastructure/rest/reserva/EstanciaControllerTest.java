@@ -12,7 +12,9 @@ import java.time.temporal.ChronoUnit;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -144,5 +146,61 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
         mvc.perform(put(reserva(codigo) + "/registrar-salida"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("BL-07")
+    void laSalidaEsperaLosDatosDelTraQueRecepcionCompletaPorPartes() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        mvc.perform(put(reserva(codigo) + "/registrar-llegada")).andExpect(status().isOk());
+        pagar(codigo, 280_000);
+        mvc.perform(get(reserva(codigo)))
+                .andExpect(jsonPath("$.ocupantes[0].nombre").value("Ana Ríos"))
+                .andExpect(jsonPath("$.ocupantes[1].datosTraFaltantes[0]").value("DOCUMENTO"))
+                .andExpect(jsonPath("$.ocupantes[1].datosTraFaltantes.length()").value(9));
+
+        mvc.perform(put(reserva(codigo) + "/registrar-salida"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("DATOS_TRA_INCOMPLETOS"));
+
+        completarDatosTra(codigo, "OCU-1", "{\"genero\": \"NINGUNO\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles[0]").value(startsWith("genero")));
+        completarDatosTra(codigo, "OCU-1", "{\"tipoDocumento\": \"CC\"}").andExpect(status().isBadRequest());
+        completarDatosTra(codigo, "OCU-9", "{\"primerApellido\": \"Ríos\"}").andExpect(status().isConflict());
+        completarDatosTra(codigo, "OCU-1", datosTra("Ana", "FEMENINO", null))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ocupantes[0].nombres").value("Ana"))
+                .andExpect(jsonPath("$.ocupantes[0].primerApellido").value("Ríos"))
+                .andExpect(jsonPath("$.ocupantes[0].motivoViaje").value("TURISMO_VACACIONES"))
+                .andExpect(jsonPath("$.ocupantes[0].datosTraFaltantes.length()").value(0));
+        completarDatosTra(codigo, "OCU-2", "{\"tipoDocumento\": \"CC\", \"numeroDocumento\": \"1095\"}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ocupantes[1].datosTraFaltantes[0]").value("PRIMER_APELLIDO"));
+        mvc.perform(put(reserva(codigo) + "/registrar-salida")).andExpect(status().isConflict());
+
+        completarDatosTra(codigo, "OCU-2", datosTra("Luis", "MASCULINO", null)).andExpect(status().isOk());
+        mvc.perform(put(reserva(codigo) + "/registrar-salida"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("FINALIZADA"));
+        completarDatosTra(codigo, "OCU-2", DATOS_ULTIMO).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("ESTADO_NO_PERMITIDO"));
+    }
+
+    private static final String DATOS_ULTIMO = "{\"ciudadDestino\": \"Armenia\"}";
+
+    @Test
+    @Tag("BL-07")
+    void unaReservaAceptaLosApellidosAparteDesdeQueSeCrea() throws Exception {
+        String json = reservaJson("APT-101", HOY, HOY.plusDays(2)).replace(
+                "{\"nombre\": \"Luis Ríos\", \"fechaNacimiento\": \"1988-03-02\"}",
+                "{\"nombres\": \"Luis\", \"primerApellido\": \"Ríos\", \"segundoApellido\": \"Gil\", "
+                        + "\"fechaNacimiento\": \"1988-03-02\"}");
+        enviar(post("/api/reservas"), json)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ocupantes[1].nombre").value("Luis Ríos Gil"))
+                .andExpect(jsonPath("$.ocupantes[1].segundoApellido").value("Gil"));
+        enviar(post("/api/reservas"), json.replace("\"nombres\": \"Luis\", ", ""))
+                .andExpect(status().isBadRequest());
     }
 }

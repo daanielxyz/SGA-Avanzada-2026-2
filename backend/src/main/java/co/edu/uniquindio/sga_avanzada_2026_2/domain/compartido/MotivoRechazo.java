@@ -36,5 +36,7 @@ public enum MotivoRechazo {
     /** CAR-07: el folio está cerrado y no admite movimientos. */
     FOLIO_CERRADO,
     /** RN-16: ese cargo o ese pago ya fue revertido; pudo hacerlo otro turno. */
-    YA_REVERTIDO
+    YA_REVERTIDO,
+    /** BL-07: a algún ocupante le faltan datos del TRA; la salida espera a que se completen. */
+    DATOS_TRA_INCOMPLETOS
 }

@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Capacidad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
@@ -25,6 +26,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Raíz del agregado Reserva. Nace PENDIENTE; valor, desglose y política se congelan al crear y solo una modificación
@@ -253,7 +255,7 @@ public class Reserva {
         validarCondiciones(nuevaEstancia, nuevosOcupantes, cotizacion, capacidad, estanciaMinimaNoches, hoy);
         validarTitular(titular, nuevosOcupantes, nuevaEstancia, umbralEdadFacturable);
         estancia = nuevaEstancia;
-        ocupantes = List.copyOf(nuevosOcupantes);
+        ocupantes = nuevosOcupantes.stream().map(this::conservandoDatosTra).toList();
         apartamentoId = nuevoApartamentoId;
         valorTotal = cotizacion.total();
         desglose = cotizacion.desglose();
@@ -447,6 +449,41 @@ public class Reserva {
         registros.add(corregido);
     }
 
+    // BL-07: la misma persona que ya estaba en el grupo conserva los datos del TRA que se le habían tomado
+    private Ocupante conservandoDatosTra(Ocupante nuevo) {
+        return ocupantes.stream()
+                .filter(nuevo::esDuplicadoDe)
+                .findFirst()
+                .map(nuevo::conservandoDatosDe)
+                .orElse(nuevo);
+    }
+
+    /**
+     * Completa los datos del TRA de un ocupante, en la llegada o en cualquier momento antes de la salida (BL-07). El
+     * dato que no llega se conserva, y la llegada se puede registrar aunque falten: la salida es la que los exige.
+     *
+     * @throws ReglaDominioException si la reserva ya terminó, el ocupante no es de esta reserva, llega un documento
+     *                               distinto del registrado o el ocupante queda repetido en el grupo (OCU-05)
+     */
+    public void completarDatosOcupante(OcupanteId ocupanteId, String nombres, String primerApellido,
+                                       String segundoApellido, Documento documento, String nacionalidad,
+                                       DatosViaje viaje) {
+        Objects.requireNonNull(ocupanteId, "ocupanteId");
+        if (!estaActiva()) {
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Los datos de los ocupantes solo se completan en una reserva activa; está " + estado);
+        }
+        Ocupante actual = ocupantes.stream()
+                .filter(o -> o.id().equals(ocupanteId))
+                .findFirst()
+                .orElseThrow(() -> new ReglaDominioException(
+                        "El ocupante " + ocupanteId.valor() + " no es de la reserva " + codigo.valor()));
+        Ocupante completo = actual.completar(nombres, primerApellido, segundoApellido, documento, nacionalidad, viaje);
+        List<Ocupante> grupo = ocupantes.stream().map(o -> o.equals(actual) ? completo : o).toList();
+        validarGrupo(grupo);
+        ocupantes = grupo;
+    }
+
     /**
      * Registra la salida (check-out) y pasa a FINALIZADA, liberando las noches restantes (RN-08 · RN-12 · SAL-06).
      * Una salida anticipada no es cancelación (SAL-04). El folio cerrado (SAL-02) y el apartamento a
@@ -465,7 +502,8 @@ public class Reserva {
      * Verifica, sin cambiar nada, que la salida se puede registrar en este momento. Permite a
      * {@code SalidaOperativaDomainService} rechazar antes de cerrar el folio (D-02).
      *
-     * @throws ReglaDominioException si no está EN_CURSO (SAL-01) o la hora es anterior a la del registro (SAL-05)
+     * @throws ReglaDominioException si no está EN_CURSO (SAL-01), la hora es anterior a la del registro (SAL-05) o
+     *                               a algún ocupante le faltan datos del TRA (BL-07)
      */
     public void validarSalida(LocalDateTime ahora) {
         Objects.requireNonNull(ahora, "ahora");
@@ -475,6 +513,20 @@ public class Reserva {
         }
         if (ahora.isBefore(registro().fechaHora())) {
             throw new ReglaDominioException("La salida no puede ser anterior al registro de llegada");
+        }
+        exigirDatosTra();
+    }
+
+    // BL-07: el TRA se reporta con los datos de cada ocupante, así que la estancia no termina sin ellos
+    private void exigirDatosTra() {
+        String faltantes = ocupantes.stream()
+                .filter(o -> !o.datosTraFaltantes().isEmpty())
+                .map(o -> o.nombre() + " (" + o.datosTraFaltantes().stream().map(DatoTra::texto)
+                        .collect(Collectors.joining(", ")) + ")")
+                .collect(Collectors.joining("; "));
+        if (!faltantes.isEmpty()) {
+            throw new ReglaDominioException(MotivoRechazo.DATOS_TRA_INCOMPLETOS,
+                    "Antes de la salida faltan datos del TRA: " + faltantes);
         }
     }
 

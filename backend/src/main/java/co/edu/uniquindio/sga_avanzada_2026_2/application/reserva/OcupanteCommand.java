@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosViaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 
@@ -11,12 +12,20 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
- * Un ocupante del grupo. El documento es opcional, salvo para el titular, que se reconoce por él (TIT-01).
+ * Un ocupante del grupo. El documento es opcional, salvo para el titular, que se reconoce por él (TIT-01). Los
+ * apellidos pueden llegar aparte o venir dentro de {@code nombres}; el TRA los pide aparte antes de la salida (BL-07).
  *
  * @param tipoDocumento nombre de {@link TipoDocumento}; {@code null} si no trae documento
  */
-public record OcupanteCommand(String nombre, LocalDate fechaNacimiento, String tipoDocumento,
-                              String numeroDocumento, String nacionalidad) {
+public record OcupanteCommand(String nombres, String primerApellido, String segundoApellido,
+                              LocalDate fechaNacimiento, String tipoDocumento, String numeroDocumento,
+                              String nacionalidad) {
+
+    /** Con el nombre en un solo texto, como lo envían los canales externos. */
+    public OcupanteCommand(String nombre, LocalDate fechaNacimiento, String tipoDocumento, String numeroDocumento,
+                           String nacionalidad) {
+        this(nombre, null, null, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad);
+    }
 
     /**
      * Convierte el grupo completo. Los ids los numera la propia reserva en orden ({@code OCU-1}, {@code OCU-2}…),
@@ -29,9 +38,13 @@ public record OcupanteCommand(String nombre, LocalDate fechaNacimiento, String t
     }
 
     private Ocupante aDominio(OcupanteId id) {
-        Documento documento = Optional.ofNullable(tipoDocumento)
+        return new Ocupante(id, nombres, primerApellido, segundoApellido, fechaNacimiento,
+                documento(tipoDocumento, numeroDocumento), nacionalidad, DatosViaje.VACIOS);
+    }
+
+    static Documento documento(String tipoDocumento, String numeroDocumento) {
+        return Optional.ofNullable(tipoDocumento)
                 .map(tipo -> new Documento(TipoDocumento.valueOf(tipo), numeroDocumento))
                 .orElse(null);
-        return new Ocupante(id, nombre, fechaNacimiento, documento, nacionalidad);
     }
 }

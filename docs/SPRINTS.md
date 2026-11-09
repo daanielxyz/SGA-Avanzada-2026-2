@@ -91,6 +91,7 @@ Hipótesis: un huésped reserva y paga solo, sin llamar; recepción crea y confi
 ## Sprint 3 · 9 – 13 nov · «Operar la estancia»
 Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped resuelve solo lo de su cuenta desde el celular.
 - **web**
+  - [x] Núcleo para pms: datos del TRA de cada ocupante y salida bloqueada sin ellos (BL-07, `feature/nucleo/datos-tra`, DEC-96).
   - [ ] Cambio de correo con verificación y edición de los datos de la cuenta (los endpoints ya existen).
   - [ ] Pulir la web: diseño adaptable al celular, textos y mensajes de error.
   - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
