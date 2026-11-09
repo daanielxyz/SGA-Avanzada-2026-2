@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.MarcarPreparadoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.apartamento.IniciarPreparacionUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.AgregarServicioAdicionalUseCase;
@@ -141,6 +143,9 @@ class EstanciaCompletaTest {
     private RegistrarLlegadaUseCase registrarLlegada;
 
     @Autowired
+    private CompletarDatosOcupanteUseCase completarDatos;
+
+    @Autowired
     private CorregirRegistroUseCase corregirRegistro;
 
     @Autowired
@@ -223,6 +228,8 @@ class EstanciaCompletaTest {
         confirmarReserva.ejecutar(codigo);
 
         registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION));
+        completarDatos.ejecutar(new CompletarDatosOcupanteCommand(codigo, "OCU-1", "Ana", "Ríos", null, null, null,
+                "Colombiana", "FEMENINO", "Colombia", "Pereira", "Pereira", "Salento", "TURISMO_VACACIONES"));
         assertEquals("EN_CURSO", consultarReserva.ejecutar(codigo).estado());
         assertEquals("OCUPADO", consultarApartamento.ejecutar(APT).estadoOperativo());
 

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosTraDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoCommand;
@@ -128,7 +129,15 @@ public final class EscenarioEstancia {
     public String reservaEnCurso() {
         String codigo = reservaConfirmada();
         registrarLlegada(AL_LLEGAR).ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION));
+        completarDatosTra(codigo);
         return codigo;
+    }
+
+    /** El TRA de Ana y Luis, que la salida exige (BL-07). */
+    public void completarDatosTra(String codigo) {
+        Reserva reserva = cargador.reserva(codigo);
+        DatosTraDePrueba.completar(reserva);
+        reservas.guardar(reserva);
     }
 
     public RegistrarLlegadaUseCase registrarLlegada(Clock reloj) {

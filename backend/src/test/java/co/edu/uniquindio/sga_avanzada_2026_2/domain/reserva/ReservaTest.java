@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Rechazos.exigeMotivo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -88,6 +89,7 @@ class ReservaTest {
     private static Reserva enCurso() {
         Reserva reserva = confirmada();
         reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION);
+        DatosTraDePrueba.completar(reserva);
         return reserva;
     }
 
@@ -575,5 +577,124 @@ class ReservaTest {
 
     private static Ocupante ocupante(String id, String nombre) {
         return new Ocupante(new OcupanteId(id), nombre, LocalDate.of(2000, 1, 1), null, null);
+    }
+
+    // --- Datos del TRA (BL-07) ---
+
+    private static Reserva enCursoSinDatosTra() {
+        Reserva reserva = confirmada();
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION);
+        return reserva;
+    }
+
+    private static Ocupante ocupante(Reserva reserva, String id) {
+        return reserva.ocupantes().stream().filter(o -> o.id().valor().equals(id)).findFirst().orElseThrow();
+    }
+
+    @Test
+    @Tag("BL-07")
+    void unOcupanteRecienCreadoTieneTodoElTraPendiente() {
+        assertEquals(List.of(DatoTra.DOCUMENTO, DatoTra.PRIMER_APELLIDO, DatoTra.NACIONALIDAD, DatoTra.GENERO,
+                DatoTra.PAIS_RESIDENCIA, DatoTra.CIUDAD_RESIDENCIA, DatoTra.CIUDAD_PROCEDENCIA, DatoTra.CIUDAD_DESTINO,
+                DatoTra.MOTIVO_VIAJE), LUIS.datosTraFaltantes());
+        assertFalse(ANA.datosTraFaltantes().contains(DatoTra.DOCUMENTO));
+    }
+
+    @Test
+    @Tag("BL-07")
+    void losDatosDelTraSeCompletanPorPartesYLoQueNoLlegaSeConserva() {
+        Reserva reserva = enCursoSinDatosTra();
+
+        reserva.completarDatosOcupante(new OcupanteId("OCU-2"), null, "Ríos", null, null, "Colombiana",
+                new DatosViaje(Genero.MASCULINO, "Colombia", null, null, null, null));
+        reserva.completarDatosOcupante(new OcupanteId("OCU-2"), null, null, "  ", null, null,
+                new DatosViaje(null, null, "Pereira", "Pereira", "Salento", MotivoViaje.NEGOCIOS));
+
+        Ocupante luis = ocupante(reserva, "OCU-2");
+        assertEquals("Luis Ríos", luis.nombre());
+        assertEquals("Colombiana", luis.nacionalidad());
+        assertEquals(new DatosViaje(Genero.MASCULINO, "Colombia", "Pereira", "Pereira", "Salento",
+                MotivoViaje.NEGOCIOS), luis.viaje());
+        assertNull(luis.segundoApellido());
+        assertEquals(List.of(DatoTra.DOCUMENTO), luis.datosTraFaltantes());
+    }
+
+    @Test
+    @Tag("BL-07")
+    void laSalidaEsperaAQueCadaOcupanteTengaSuTra() {
+        Reserva reserva = enCursoSinDatosTra();
+        LocalDateTime salida = ESTANCIA.salida().atTime(10, 0);
+
+        ReglaDominioException rechazo = assertThrows(ReglaDominioException.class,
+                () -> reserva.registrarSalida(new SalidaId("SAL-1"), salida, RECEPCION));
+        assertEquals(Optional.of(MotivoRechazo.DATOS_TRA_INCOMPLETOS), rechazo.motivo());
+        assertTrue(rechazo.getMessage().contains("Luis (documento, primer apellido"), rechazo.getMessage());
+        assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
+
+        DatosTraDePrueba.completar(reserva);
+        reserva.registrarSalida(new SalidaId("SAL-1"), salida, RECEPCION);
+        assertEquals(EstadoReserva.FINALIZADA, reserva.estado());
+    }
+
+    @Test
+    @Tag("BL-07")
+    void laLlegadaSeRegistraAunqueFalteElTra() {
+        Reserva reserva = enCursoSinDatosTra();
+
+        assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
+        assertFalse(ocupante(reserva, "OCU-1").datosTraFaltantes().isEmpty());
+    }
+
+    @Test
+    @Tag("BL-07")
+    void unDocumentoYaRegistradoNoSeCambiaAlCompletarElTra() {
+        Reserva reserva = enCursoSinDatosTra();
+        Documento otro = new Documento(TipoDocumento.CC, "9999");
+
+        assertThrows(ReglaDominioException.class, () -> reserva.completarDatosOcupante(new OcupanteId("OCU-1"),
+                null, null, null, otro, null, null));
+        assertDoesNotThrow(() -> reserva.completarDatosOcupante(new OcupanteId("OCU-1"), null, null, null,
+                ANA.documento(), null, null));
+    }
+
+    @Test
+    @Tag("BL-07")
+    @Tag("OCU-05")
+    void completarElTraNoPuedeRepetirAUnOcupante() {
+        Reserva reserva = enCursoSinDatosTra();
+
+        assertThrows(ReglaDominioException.class, () -> reserva.completarDatosOcupante(new OcupanteId("OCU-2"),
+                null, null, null, ANA.documento(), null, null));
+        assertNull(ocupante(reserva, "OCU-2").documento());
+    }
+
+    @Test
+    @Tag("BL-07")
+    void elTraSoloSeCompletaEnUnaReservaActivaYDeSusOcupantes() {
+        Reserva cancelada = confirmada();
+        cancelada.cancelar();
+
+        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> cancelada.completarDatosOcupante(
+                new OcupanteId("OCU-1"), null, "Ríos", null, null, null, null));
+        assertThrows(ReglaDominioException.class, () -> pendiente().completarDatosOcupante(new OcupanteId("OCU-9"),
+                null, "Ríos", null, null, null, null));
+        assertDoesNotThrow(() -> pendiente().completarDatosOcupante(new OcupanteId("OCU-1"), null, "Ríos", null,
+                null, null, null));
+    }
+
+    @Test
+    @Tag("BL-07")
+    @Tag("RN-14")
+    void modificarLaReservaConservaElTraDeQuienSigueEnElGrupo() {
+        Reserva reserva = confirmada();
+        reserva.completarDatosOcupante(new OcupanteId("OCU-1"), null, "Ríos", null, null, "Colombiana",
+                DatosTraDePrueba.VIAJE);
+
+        reserva.modificar(ESTANCIA, List.of(ANA), APT, cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, HOY);
+
+        Ocupante ana = ocupante(reserva, "OCU-1");
+        assertEquals("Ríos", ana.primerApellido());
+        assertEquals(DatosTraDePrueba.VIAJE, ana.viaje());
+        assertTrue(ana.datosTraFaltantes().isEmpty());
     }
 }

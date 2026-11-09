@@ -1,7 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.OcupanteCommand;
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -14,7 +15,6 @@ import java.util.List;
  * reconoce por él (TIT-01).
  */
 public record OcupanteRequest(
-        @NotBlank(message = "es obligatorio")
         @Size(max = 120, message = "admite máximo 120 caracteres")
         String nombre,
 
@@ -28,10 +28,34 @@ public record OcupanteRequest(
         String numeroDocumento,
 
         @Size(max = 60, message = "admite máximo 60 caracteres")
-        String nacionalidad) {
+        String nacionalidad,
+
+        @Size(max = 120, message = "admite máximo 120 caracteres")
+        String nombres,
+
+        @Size(max = 60, message = "admite máximo 60 caracteres")
+        String primerApellido,
+
+        @Size(max = 60, message = "admite máximo 60 caracteres")
+        String segundoApellido) {
+
+    /** Con los campos de antes de BL-07: el nombre completo en un solo texto. */
+    public OcupanteRequest(String nombre, LocalDate fechaNacimiento, String tipoDocumento, String numeroDocumento,
+                           String nacionalidad) {
+        this(nombre, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad, null, null, null);
+    }
+
+    /** BL-07: los nombres llegan aparte de los apellidos o, como antes, todo junto en {@code nombre}. */
+    @JsonIgnore
+    @AssertTrue(message = "hace falta nombres o nombre")
+    public boolean isNombreRecibido() {
+        return (nombres != null && !nombres.isBlank()) || (nombre != null && !nombre.isBlank());
+    }
 
     OcupanteCommand aCommand() {
-        return new OcupanteCommand(nombre, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad);
+        boolean separado = nombres != null && !nombres.isBlank();
+        return new OcupanteCommand(separado ? nombres : nombre, separado ? primerApellido : null,
+                separado ? segundoApellido : null, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad);
     }
 
     public static List<OcupanteCommand> aCommands(List<OcupanteRequest> ocupantes) {

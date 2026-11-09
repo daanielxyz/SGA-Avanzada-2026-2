@@ -401,6 +401,41 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/ocupantes/{ocupanteId}/datos-tra":
+    put:
+      tags:
+        - estancia-controller
+      operationId: completarDatosOcupante
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ocupanteId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/DatosOcupanteRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/corregir-registro":
     put:
       tags:
@@ -3230,9 +3265,20 @@ components:
           type: string
           maxLength: 60
           minLength: 0
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
       required:
         - fechaNacimiento
-        - nombre
     CotizacionResponse:
       type: object
       properties:
@@ -3273,6 +3319,28 @@ components:
           type: string
         nacionalidad:
           type: string
+        nombres:
+          type: string
+        primerApellido:
+          type: string
+        segundoApellido:
+          type: string
+        genero:
+          type: string
+        paisResidencia:
+          type: string
+        ciudadResidencia:
+          type: string
+        ciudadProcedencia:
+          type: string
+        ciudadDestino:
+          type: string
+        motivoViaje:
+          type: string
+        datosTraFaltantes:
+          type: array
+          items:
+            type: string
     ReservaResponse:
       type: object
       properties:
@@ -3410,6 +3478,54 @@ components:
           format: date
         reversaDe:
           type: string
+    DatosOcupanteRequest:
+      type: object
+      properties:
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        tipoDocumento:
+          type: string
+          pattern: "CC|CE|PASAPORTE|TI"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        nacionalidad:
+          type: string
+          maxLength: 60
+          minLength: 0
+        genero:
+          type: string
+          pattern: "FEMENINO|MASCULINO|OTRO"
+        paisResidencia:
+          type: string
+          maxLength: 60
+          minLength: 0
+        ciudadResidencia:
+          type: string
+          maxLength: 80
+          minLength: 0
+        ciudadProcedencia:
+          type: string
+          maxLength: 80
+          minLength: 0
+        ciudadDestino:
+          type: string
+          maxLength: 80
+          minLength: 0
+        motivoViaje:
+          type: string
+          pattern: "TURISMO_VACACIONES|EVENTOS|ESTUDIOS|TRATAMIENTO_MEDICO|ASUNTOS_JURIDICOS|NEGOCIOS|TRANSITO|COMPRAS|RELIGION|VISITA_FAMILIARES_AMIGOS"
     CorregirRegistroRequest:
       type: object
       properties:

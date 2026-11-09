@@ -104,7 +104,24 @@ public abstract class PruebaRestDeReservas {
     protected String reservaEnCurso() throws Exception {
         String codigo = reservaConfirmada(HOY);
         mvc.perform(put("/api/reservas/" + codigo + "/registrar-llegada")).andExpect(status().isOk());
+        completarDatosTra(codigo, "OCU-1", datosTra("Ana", "FEMENINO", null)).andExpect(status().isOk());
+        completarDatosTra(codigo, "OCU-2", datosTra("Luis", "MASCULINO", "1095")).andExpect(status().isOk());
         return codigo;
+    }
+
+    /** Lo que el TRA pide de un ocupante (BL-07); el documento, solo si no llegó al reservar. */
+    protected static String datosTra(String nombres, String genero, String cedula) {
+        String documento = cedula == null ? ""
+                : "\"tipoDocumento\": \"CC\", \"numeroDocumento\": \"%s\", ".formatted(cedula);
+        return """
+                {%s"nombres": "%s", "primerApellido": "Ríos", "genero": "%s", "nacionalidad": "Colombiana",
+                 "paisResidencia": "Colombia", "ciudadResidencia": "Pereira", "ciudadProcedencia": "Pereira",
+                 "ciudadDestino": "Salento", "motivoViaje": "TURISMO_VACACIONES"}"""
+                .formatted(documento, nombres, genero);
+    }
+
+    protected ResultActions completarDatosTra(String codigo, String ocupante, String json) throws Exception {
+        return enviar(put("/api/reservas/" + codigo + "/ocupantes/" + ocupante + "/datos-tra"), json);
     }
 
     protected void pagar(String codigo, long monto) throws Exception {

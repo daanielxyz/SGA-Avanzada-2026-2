@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosViaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
@@ -92,9 +93,12 @@ final class ReservaMapper {
         jpa.setSalidaFechaHora(salida == null ? null : salida.fechaHora());
         jpa.setSalidaAutor(salida == null ? null : salida.autor().valor());
         jpa.getOcupantes().clear();
-        reserva.ocupantes().forEach(o -> jpa.getOcupantes().add(new OcupanteJpa(o.id().valor(), o.nombre(),
-                o.fechaNacimiento(), o.documento() == null ? null : o.documento().tipo(),
-                o.documento() == null ? null : o.documento().numero(), o.nacionalidad())));
+        reserva.ocupantes().forEach(o -> jpa.getOcupantes().add(new OcupanteJpa(o.id().valor(), o.nombres(),
+                o.primerApellido(), o.segundoApellido(), o.fechaNacimiento(),
+                o.documento() == null ? null : o.documento().tipo(),
+                o.documento() == null ? null : o.documento().numero(), o.nacionalidad(), o.viaje().genero(),
+                o.viaje().paisResidencia(), o.viaje().ciudadResidencia(), o.viaje().ciudadProcedencia(),
+                o.viaje().ciudadDestino(), o.viaje().motivoViaje())));
         jpa.getDesglose().clear();
         reserva.desglose().forEach(l -> jpa.getDesglose().add(new NocheReservaJpa(l.noche().fecha(),
                 l.temporadaId().valor(), l.tarifa().monto(), l.ocupantesFacturables(), l.subtotal().monto())));
@@ -103,7 +107,9 @@ final class ReservaMapper {
     private static Ocupante ocupante(OcupanteJpa jpa) {
         Documento documento = jpa.getTipoDocumento() == null ? null
                 : new Documento(jpa.getTipoDocumento(), jpa.getNumeroDocumento());
-        return new Ocupante(new OcupanteId(jpa.getId()), jpa.getNombre(), jpa.getFechaNacimiento(), documento,
-                jpa.getNacionalidad());
+        return new Ocupante(new OcupanteId(jpa.getId()), jpa.getNombres(), jpa.getPrimerApellido(),
+                jpa.getSegundoApellido(), jpa.getFechaNacimiento(), documento, jpa.getNacionalidad(),
+                new DatosViaje(jpa.getGenero(), jpa.getPaisResidencia(), jpa.getCiudadResidencia(),
+                        jpa.getCiudadProcedencia(), jpa.getCiudadDestino(), jpa.getMotivoViaje()));
     }
 }
