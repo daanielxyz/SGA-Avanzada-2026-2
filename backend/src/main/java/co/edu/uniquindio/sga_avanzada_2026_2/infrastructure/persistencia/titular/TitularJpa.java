@@ -11,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 /**
  * Tabla del agregado Titular. El documento es único: un titular conserva su identidad entre reservas (TIT-05).
  */
@@ -25,7 +27,9 @@ public class TitularJpa {
     private String id;
 
     private String alojamientoId;
-    private String nombre;
+    private String nombres;
+    private String primerApellido;
+    private String segundoApellido;
 
     @Enumerated(EnumType.STRING)
     private TipoDocumento tipoDocumento;
@@ -33,6 +37,8 @@ public class TitularJpa {
     private String numeroDocumento;
     private String correo;
     private String telefono;
+    private String validadoPor;        // DEC-98: null si recepción no la ha validado
+    private LocalDateTime validadoEn;
 
     @Version
     private Long version;

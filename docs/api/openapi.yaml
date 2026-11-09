@@ -181,6 +181,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/titulares/{id}/validar":
+    put:
+      tags:
+        - titular-controller
+      operationId: validar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/TitularResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/temporadas/{id}/fechas":
     put:
       tags:
@@ -3139,8 +3163,18 @@ components:
           type: string
           maxLength: 30
           minLength: 0
-      required:
-        - nombre
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
     TitularResponse:
       type: object
       properties:
@@ -3155,6 +3189,19 @@ components:
         correo:
           type: string
         telefono:
+          type: string
+        nombres:
+          type: string
+        primerApellido:
+          type: string
+        segundoApellido:
+          type: string
+        validado:
+          type: boolean
+        validadoEn:
+          type: string
+          format: date-time
+        validadoPor:
           type: string
     CambiarFechasTemporadaRequest:
       type: object
@@ -3640,8 +3687,19 @@ components:
           type: string
           maxLength: 30
           minLength: 0
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
       required:
-        - nombre
         - telefono
     CuentaResponse:
       type: object
@@ -3658,6 +3716,14 @@ components:
           type: string
         telefono:
           type: string
+        nombres:
+          type: string
+        primerApellido:
+          type: string
+        segundoApellido:
+          type: string
+        validado:
+          type: boolean
     ResolverConflictoRequest:
       type: object
       properties:
@@ -4315,8 +4381,19 @@ components:
           type: string
           maxLength: 30
           minLength: 0
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
       required:
-        - nombre
         - numeroDocumento
         - tipoDocumento
     AgregarTemporadaRequest:
@@ -4440,9 +4517,20 @@ components:
           type: string
           maxLength: 30
           minLength: 0
+        nombres:
+          type: string
+          maxLength: 120
+          minLength: 0
+        primerApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
+        segundoApellido:
+          type: string
+          maxLength: 60
+          minLength: 0
       required:
         - correo
-        - nombre
         - numeroDocumento
         - telefono
         - tipoDocumento

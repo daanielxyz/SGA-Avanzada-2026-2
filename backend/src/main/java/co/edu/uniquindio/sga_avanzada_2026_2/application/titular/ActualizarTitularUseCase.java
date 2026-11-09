@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Caso de uso: actualizar el nombre y el contacto de un titular. Su documento no cambia (TIT-01 · DEC-49).
+ * Caso de uso: recepción o el administrador actualizan el nombre y el contacto de un titular, también si su identidad
+ * está validada, porque es el hotel (DEC-98). Su documento no cambia (TIT-05 · DEC-49).
  */
 @Service
 public class ActualizarTitularUseCase {
@@ -30,7 +31,8 @@ public class ActualizarTitularUseCase {
         Titular titular = titulares.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el titular", id.valor()));
 
-        titular.actualizarDatos(comando.nombre(), RegistrarTitularUseCase.correo(comando.correo()), comando.telefono());
+        titular.actualizarDatos(comando.nombres(), comando.primerApellido(), comando.segundoApellido(),
+                RegistrarTitularUseCase.correo(comando.correo()), comando.telefono());
 
         titulares.guardar(titular);
         return TitularResult.de(titular);

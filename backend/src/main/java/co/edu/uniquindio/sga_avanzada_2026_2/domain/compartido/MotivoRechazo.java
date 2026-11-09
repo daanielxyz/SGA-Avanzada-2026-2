@@ -40,5 +40,7 @@ public enum MotivoRechazo {
     /** BL-07: a algún ocupante le faltan datos del TRA; la salida espera a que se completen. */
     DATOS_TRA_INCOMPLETOS,
     /** DEC-97: falta el huésped principal, hay más de uno o no es mayor de edad. */
-    HUESPED_PRINCIPAL_INVALIDO
+    HUESPED_PRINCIPAL_INVALIDO,
+    /** DEC-98: recepción ya validó la identidad del titular; su nombre solo lo cambia el hotel. */
+    IDENTIDAD_VALIDADA
 }

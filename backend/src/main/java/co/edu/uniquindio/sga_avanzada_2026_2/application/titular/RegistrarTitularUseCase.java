@@ -54,7 +54,8 @@ public class RegistrarTitularUseCase {
         });
 
         Titular titular = new Titular(new TitularId(codigos.siguiente(SerieCodigo.TITULAR)), alojamientoId,
-                comando.nombre(), documento, correo(comando.correo()), comando.telefono());
+                comando.nombres(), comando.primerApellido(), comando.segundoApellido(), documento,
+                correo(comando.correo()), comando.telefono(), null);
 
         titulares.guardar(titular);
         return TitularResult.de(titular);

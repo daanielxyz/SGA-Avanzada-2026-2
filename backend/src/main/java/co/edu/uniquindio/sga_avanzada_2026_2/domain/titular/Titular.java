@@ -3,42 +3,105 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Raíz del agregado Titular: responsable de la reserva y del pago de su folio (TIT-02) y lo es de varias reservas
  * (TIT-05). Con correo, el titular es además la cuenta del huésped (DEC-68), que vive fuera del dominio; sin correo
- * (p. ej. un canal externo que no lo envía) no tiene cuenta (TIT-03). Los datos del TRA son de cada ocupante.
+ * (p. ej. un canal externo que no lo envía) no tiene cuenta (TIT-03). Los datos del TRA son de cada ocupante. Cuando
+ * recepción valida su identidad en persona, su nombre ya solo lo cambia el hotel (DEC-98).
  */
 public class Titular {
 
     private final TitularId id;
     private final AlojamientoId alojamientoId; // DEC-26
-    private String nombre;
+    private String nombres;
+    private String primerApellido;     // opcional: los titulares de antes lo traen dentro de nombres (DEC-98)
+    private String segundoApellido;    // opcional: no todos tienen
     private final Documento documento; // lo reconoce entre sus reservas (TIT-05); no cambia
     private Correo correo;             // opcional si hay teléfono; con él, el titular tiene cuenta (DEC-68)
     private String telefono;           // opcional si hay correo
+    private ValidacionIdentidad validacion; // null hasta que recepción la valida en persona (DEC-98)
 
-    // TIT-01 · DEC-49
+    // DEC-49: con el nombre completo en un solo texto
     public Titular(TitularId id, AlojamientoId alojamientoId, String nombre, Documento documento, Correo correo,
                    String telefono) {
+        this(id, alojamientoId, nombre, null, null, documento, correo, telefono, null);
+    }
+
+    // DEC-49 · DEC-98
+    public Titular(TitularId id, AlojamientoId alojamientoId, String nombres, String primerApellido,
+                   String segundoApellido, Documento documento, Correo correo, String telefono,
+                   ValidacionIdentidad validacion) {
         if (id == null || alojamientoId == null || documento == null) {
             throw new ReglaDominioException("El titular requiere id, alojamiento y documento");
         }
         this.id = id;
         this.alojamientoId = alojamientoId;
         this.documento = documento;
-        asignarDatos(nombre, correo, telefono);
+        this.validacion = validacion;
+        asignarDatos(nombres, primerApellido, segundoApellido, correo, telefono);
     }
 
     /**
-     * Actualiza nombre y datos de contacto. El documento no cambia: es lo que lo reconoce entre los ocupantes de sus
-     * reservas (TIT-01 · TIT-05).
+     * Recepción o el administrador corrigen nombre y contacto, también de un titular validado: es el hotel. El
+     * documento no cambia: es lo que lo reconoce entre sus reservas (TIT-05).
      *
      * @throws ReglaDominioException si falta el nombre, no queda ningún contacto o el teléfono es inválido (DEC-49)
      */
+    public void actualizarDatos(String nuevosNombres, String nuevoPrimerApellido, String nuevoSegundoApellido,
+                                Correo nuevoCorreo, String nuevoTelefono) {
+        asignarDatos(nuevosNombres, nuevoPrimerApellido, nuevoSegundoApellido, nuevoCorreo, nuevoTelefono);
+    }
+
+    /** Como {@link #actualizarDatos(String, String, String, Correo, String)}, con el nombre en un solo texto. */
     public void actualizarDatos(String nuevoNombre, Correo nuevoCorreo, String nuevoTelefono) {
-        asignarDatos(nuevoNombre, nuevoCorreo, nuevoTelefono);
+        actualizarDatos(nuevoNombre, null, null, nuevoCorreo, nuevoTelefono);
+    }
+
+    /**
+     * El huésped cambia su nombre y su teléfono desde su cuenta (DEC-68). Con la identidad validada, el nombre ya no
+     * lo cambia él sino recepción; el teléfono sí (DEC-98).
+     *
+     * @throws ReglaDominioException si la identidad está validada y el nombre cambia, falta el nombre o el teléfono es
+     *                               inválido (DEC-49)
+     */
+    public void actualizarDesdeCuenta(String nuevosNombres, String nuevoPrimerApellido, String nuevoSegundoApellido,
+                                      String nuevoTelefono) {
+        boolean cambiaNombre = !nombreCompleto(nuevosNombres, nuevoPrimerApellido, nuevoSegundoApellido)
+                .equalsIgnoreCase(nombre());
+        if (estaValidado() && cambiaNombre) {
+            throw new ReglaDominioException(MotivoRechazo.IDENTIDAD_VALIDADA, "El hotel ya validó tu identidad: "
+                    + "para cambiar tu nombre, pídelo en recepción");
+        }
+        if (!cambiaNombre) {
+            asignarDatos(nombres, primerApellido, segundoApellido, correo, nuevoTelefono);
+            return;
+        }
+        asignarDatos(nuevosNombres, nuevoPrimerApellido, nuevoSegundoApellido, correo, nuevoTelefono);
+    }
+
+    /**
+     * Recepción confirma en persona, con el documento, que el titular es quien dice ser (DEC-98). Desde entonces su
+     * nombre solo lo cambia el hotel. No se deshace.
+     *
+     * @param autor quien validó, del usuario de la sesión
+     * @param ahora fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si ya estaba validada
+     */
+    public void validarIdentidad(UsuarioId autor, LocalDateTime ahora) {
+        if (estaValidado()) {
+            throw new ReglaDominioException(MotivoRechazo.IDENTIDAD_VALIDADA,
+                    "La identidad de " + nombre() + " ya está validada desde " + validacion.fechaHora());
+        }
+        validacion = new ValidacionIdentidad(autor, ahora);
     }
 
     /**
@@ -48,12 +111,13 @@ public class Titular {
      * @throws ReglaDominioException si el teléfono que completa es inválido
      */
     public void completarContacto(Correo correoRecibido, String telefonoRecibido) {
-        asignarDatos(nombre, correo == null ? correoRecibido : correo, telefono == null ? telefonoRecibido : telefono);
+        asignarDatos(nombres, primerApellido, segundoApellido, correo == null ? correoRecibido : correo,
+                telefono == null ? telefonoRecibido : telefono);
     }
 
     /**
      * Cambia el correo, que es también el de su cuenta. Solo se llama después de verificar el PIN del cambio de
-     * correo o desde recepción (DEC-68 · DEC-69).
+     * correo o desde recepción (DEC-68 · DEC-69). Vale también con la identidad validada (DEC-98).
      *
      * @throws ReglaDominioException si el correo nuevo falta
      */
@@ -61,24 +125,38 @@ public class Titular {
         if (nuevoCorreo == null) {
             throw new ReglaDominioException("El correo nuevo es obligatorio");
         }
-        asignarDatos(nombre, nuevoCorreo, telefono);
+        asignarDatos(nombres, primerApellido, segundoApellido, nuevoCorreo, telefono);
     }
 
     // DEC-49: nombre y documento obligatorios, y al menos un contacto (correo o teléfono)
-    private void asignarDatos(String nuevoNombre, Correo nuevoCorreo, String nuevoTelefono) {
-        if (nuevoNombre == null || nuevoNombre.isBlank()) {
+    private void asignarDatos(String nuevosNombres, String nuevoPrimerApellido, String nuevoSegundoApellido,
+                              Correo nuevoCorreo, String nuevoTelefono) {
+        if (limpio(nuevosNombres) == null) {
             throw new ReglaDominioException("El nombre del titular es obligatorio");
         }
-        String telefonoLimpio = nuevoTelefono == null || nuevoTelefono.isBlank() ? null : nuevoTelefono.trim();
+        String telefonoLimpio = limpio(nuevoTelefono);
         if (nuevoCorreo == null && telefonoLimpio == null) {
             throw new ReglaDominioException("El titular necesita al menos un contacto: correo o teléfono");
         }
         if (telefonoLimpio != null && !esTelefonoValido(telefonoLimpio)) {
             throw new ReglaDominioException("Teléfono inválido: " + telefonoLimpio);
         }
-        nombre = nuevoNombre.trim();
+        nombres = limpio(nuevosNombres);
+        primerApellido = limpio(nuevoPrimerApellido);
+        segundoApellido = limpio(nuevoSegundoApellido);
         correo = nuevoCorreo;
         telefono = telefonoLimpio;
+    }
+
+    private static String limpio(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
+    }
+
+    private static String nombreCompleto(String nombres, String primerApellido, String segundoApellido) {
+        return Stream.of(nombres, primerApellido, segundoApellido)
+                .map(Titular::limpio)
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
     }
 
     // Dígitos con separadores comunes y un «+» inicial opcional; entre 7 y 15 dígitos (largo de un número E.164)
@@ -89,6 +167,10 @@ public class Titular {
         return caracteresValidos && telefono.lastIndexOf('+') <= 0 && digitos >= 7 && digitos <= 15;
     }
 
+    public boolean estaValidado() {
+        return validacion != null;
+    }
+
     public TitularId id() {
         return id;
     }
@@ -97,8 +179,21 @@ public class Titular {
         return alojamientoId;
     }
 
+    /** Nombres y apellidos juntos, como se muestran. */
     public String nombre() {
-        return nombre;
+        return nombreCompleto(nombres, primerApellido, segundoApellido);
+    }
+
+    public String nombres() {
+        return nombres;
+    }
+
+    public String primerApellido() {
+        return primerApellido;
+    }
+
+    public String segundoApellido() {
+        return segundoApellido;
     }
 
     public Documento documento() {
@@ -111,6 +206,11 @@ public class Titular {
 
     public String telefono() {
         return telefono;
+    }
+
+    /** {@code null} si recepción no la ha validado. */
+    public ValidacionIdentidad validacion() {
+        return validacion;
     }
 
     @Override

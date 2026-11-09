@@ -88,8 +88,38 @@ class TitularControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
         enviar(put("/api/titulares/" + id), "{\"telefono\": \"300 123 4567\"}")
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detalles").value(hasItem("nombre: es obligatorio")));
+                .andExpect(jsonPath("$.detalles").value(hasItem("nombreRecibido: hace falta nombres o nombre")));
         enviar(put("/api/titulares/TIT-99999"), "{\"nombre\": \"Ana\", \"telefono\": \"300 123 4567\"}")
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Tag("DEC-98")
+    void recepcionValidaLaIdentidadYSigueCorrigiendoElNombre() throws Exception {
+        String id = JsonPath.read(enviar(post("/api/titulares"), """
+                {"nombres": "Ana María", "primerApellido": "Gómez", "tipoDocumento": "CC",
+                 "numeroDocumento": "2020", "correo": "ana.gomez@correo.co"}""")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nombre").value("Ana María Gómez"))
+                .andExpect(jsonPath("$.primerApellido").value("Gómez"))
+                .andExpect(jsonPath("$.validado").value(false))
+                .andReturn().getResponse().getContentAsString(), "$.id");
+
+        mvc.perform(put("/api/titulares/" + id + "/validar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validado").value(true))
+                .andExpect(jsonPath("$.validadoEn").isNotEmpty())
+                .andExpect(jsonPath("$.validadoPor").isNotEmpty());
+        mvc.perform(put("/api/titulares/" + id + "/validar"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("IDENTIDAD_VALIDADA"));
+        mvc.perform(put("/api/titulares/TIT-99999/validar")).andExpect(status().isNotFound());
+
+        enviar(put("/api/titulares/" + id), """
+                {"nombres": "Ana María", "primerApellido": "Gómez", "segundoApellido": "Ríos",
+                 "correo": "ana.gomez@correo.co"}""")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Ana María Gómez Ríos"))
+                .andExpect(jsonPath("$.validado").value(true));
     }
 }
