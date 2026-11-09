@@ -178,13 +178,12 @@ class CanalesExternosTest {
     }
 
     @Test
-    @Tag("TIT-01")
+    @Tag("OCU-05")
     @Tag("DEC-62")
     void unRechazoPorOtraReglaNoGuardaNadaNiRegistraConflicto() {
-        List<OcupanteCommand> sinTitular = List.of(
-                new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null));
+        OcupanteCommand luis = new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null);
 
-        assertThrows(ReglaDominioException.class, () -> recibir().ejecutar(pedido("BK-4", 0, 2, sinTitular)));
+        assertThrows(ReglaDominioException.class, () -> recibir().ejecutar(pedido("BK-4", 0, 2, List.of(luis, luis))));
 
         assertTrue(escenario.reservas.guardadas.isEmpty());
         assertTrue(escenario.folios.guardados.isEmpty());

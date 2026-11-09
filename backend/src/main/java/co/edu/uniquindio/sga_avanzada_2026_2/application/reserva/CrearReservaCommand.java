@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @param salida              exclusiva: esa noche no se ocupa (EST-01)
  * @param canalOrigen         PORTAL o DIRECTO
- * @param ocupantes           el grupo completo, incluido el titular con su documento (TIT-01)
+ * @param ocupantes           quienes se alojan; el titular puede no estar entre ellos (TIT-01 · DEC-97)
  * @param horaEstimadaLlegada opcional al crear; necesaria para confirmar (RN-09)
  * @param carros              los que ocupan parqueadero (RP-02)
  * @param motos               las que ocupan parqueadero (RP-02)

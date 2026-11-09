@@ -234,10 +234,11 @@ class CicloReservaTest {
 
     @Test
     @Tag("TIT-01")
-    void elTitularDebeSerUnoDeLosOcupantes() {
-        assertThrows(ReglaDominioException.class,
-                () -> crearReserva().ejecutar(comando("APT-101", 3, List.of(adulto()))));
-        assertTrue(reservas.guardadas.isEmpty());
+    void elTitularPuedeReservarParaOtrosSinAlojarse() {
+        ReservaResult reserva = crearReserva().ejecutar(comando("APT-101", 3, List.of(adulto())));
+
+        assertEquals(1, reserva.ocupantes().size());
+        assertEquals(1, reservas.guardadas.size());
     }
 
     @Test

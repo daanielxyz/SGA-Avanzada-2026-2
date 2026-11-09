@@ -38,5 +38,7 @@ public enum MotivoRechazo {
     /** RN-16: ese cargo o ese pago ya fue revertido; pudo hacerlo otro turno. */
     YA_REVERTIDO,
     /** BL-07: a algún ocupante le faltan datos del TRA; la salida espera a que se completen. */
-    DATOS_TRA_INCOMPLETOS
+    DATOS_TRA_INCOMPLETOS,
+    /** DEC-97: falta el huésped principal, hay más de uno o no es mayor de edad. */
+    HUESPED_PRINCIPAL_INVALIDO
 }

@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -202,5 +203,74 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.ocupantes[1].segundoApellido").value("Gil"));
         enviar(post("/api/reservas"), json.replace("\"nombres\": \"Luis\", ", ""))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Tag("TIT-01")
+    void recepcionCambiaElTitularPorAlguienQueNoSeAloja() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        String marta = """
+                {"nombre": "Marta Ríos", "tipoDocumento": "CC", "numeroDocumento": "3030",
+                 "correo": "marta@correo.co", "telefono": "300 765 4321"}""";
+
+        String nuevo = JsonPath.read(enviar(put(reserva(codigo) + "/cambiar-titular"), marta)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ocupantes.length()").value(2))
+                .andReturn().getResponse().getContentAsString(), "$.titularId");
+        mvc.perform(get(reserva(codigo)))
+                .andExpect(jsonPath("$.titularId").value(nuevo))
+                .andExpect(jsonPath("$.titularNombre").value("Marta Ríos"));
+
+        enviar(put(reserva(codigo) + "/cambiar-titular"), marta)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("TITULAR_INVALIDO"));
+        enviar(put(reserva(codigo) + "/cambiar-titular"), "{\"nombre\": \"Sin documento\"}")
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void recepcionDesignaOtroHuespedPrincipal() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        mvc.perform(get(reserva(codigo)))
+                .andExpect(jsonPath("$.ocupantes[0].principal").value(true))
+                .andExpect(jsonPath("$.ocupantes[1].principal").value(false));
+
+        mvc.perform(put(reserva(codigo) + "/ocupantes/OCU-2/principal"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ocupantes[0].principal").value(false))
+                .andExpect(jsonPath("$.ocupantes[1].principal").value(true));
+        mvc.perform(get(reserva(codigo))).andExpect(jsonPath("$.ocupantes[1].principal").value(true));
+
+        mvc.perform(put(reserva(codigo) + "/ocupantes/OCU-2/principal"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("HUESPED_PRINCIPAL_INVALIDO"));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void alReservarSeMarcaAlHuespedPrincipalYDebeSerMayorDeEdad() throws Exception {
+        String json = reservaJson("APT-101", HOY, HOY.plusDays(2));
+        enviar(post("/api/reservas"), json.replace("\"1988-03-02\"}", "\"1988-03-02\", \"principal\": true}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ocupantes[0].principal").value(false))
+                .andExpect(jsonPath("$.ocupantes[1].principal").value(true));
+        String otraFecha = reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(7));
+        enviar(post("/api/reservas"), otraFecha.replace("1988-03-02\"}", "2015-03-02\", \"principal\": true}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("HUESPED_PRINCIPAL_INVALIDO"));
+    }
+
+    @Test
+    @Tag("TIT-01")
+    void unaReservaSePuedeHacerParaOtrosSinQueElTitularSeAloje() throws Exception {
+        String json = reservaJson("APT-101", HOY, HOY.plusDays(2)).replace("""
+                    {"nombre": "Ana Ríos", "fechaNacimiento": "1990-05-01", "tipoDocumento": "CC",
+                     "numeroDocumento": "1094", "nacionalidad": "Colombiana"},
+                """, "");
+        enviar(post("/api/reservas"), json)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ocupantes.length()").value(1))
+                .andExpect(jsonPath("$.ocupantes[0].nombre").value("Luis Ríos"));
     }
 }

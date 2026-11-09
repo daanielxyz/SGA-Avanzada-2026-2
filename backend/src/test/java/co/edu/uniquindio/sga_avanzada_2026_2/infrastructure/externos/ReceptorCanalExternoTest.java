@@ -103,11 +103,11 @@ class ReceptorCanalExternoTest {
     @Tag("BIT-03")
     @Tag("DEC-62")
     void unRechazoQuedaEnLaBitacoraYElCanalRecibeElMismoError() {
-        List<OcupanteCommand> sinElTitular = List.of(
-                new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null));
+        OcupanteCommand luis = new OcupanteCommand("Luis Ríos", LocalDate.of(1988, 3, 2), null, null, null);
+        List<OcupanteCommand> repetido = List.of(luis, luis); // OCU-05
 
         ReglaDominioException rechazo = assertThrows(ReglaDominioException.class,
-                () -> receptor.recibir(CLAVE, pedido(canal, "BK-2", sinElTitular)));
+                () -> receptor.recibir(CLAVE, pedido(canal, "BK-2", repetido)));
 
         EventoCanal evento = escenario.eventos.registrados.getFirst();
         assertEquals(1, escenario.eventos.registrados.size());

@@ -31,12 +31,13 @@ public record ReservaResult(String codigo, String apartamento, String titularId,
     /**
      * @param nombre            nombres y apellidos juntos
      * @param datosTraFaltantes nombres de {@code DatoTra} que le faltan antes de la salida (BL-07)
+     * @param principal         si es el huésped principal del TRA (DEC-97)
      */
     public record OcupanteResult(String id, String nombre, LocalDate fechaNacimiento, String tipoDocumento,
                                  String numeroDocumento, String nacionalidad, String nombres, String primerApellido,
                                  String segundoApellido, String genero, String paisResidencia,
                                  String ciudadResidencia, String ciudadProcedencia, String ciudadDestino,
-                                 String motivoViaje, List<String> datosTraFaltantes) {
+                                 String motivoViaje, List<String> datosTraFaltantes, boolean principal) {
 
         static OcupanteResult de(Ocupante o) {
             DatosViaje v = o.viaje();
@@ -47,7 +48,7 @@ public record ReservaResult(String codigo, String apartamento, String titularId,
                     Optional.ofNullable(v.genero()).map(Enum::name).orElse(null), v.paisResidencia(),
                     v.ciudadResidencia(), v.ciudadProcedencia(), v.ciudadDestino(),
                     Optional.ofNullable(v.motivoViaje()).map(Enum::name).orElse(null),
-                    o.datosTraFaltantes().stream().map(Enum::name).toList());
+                    o.datosTraFaltantes().stream().map(Enum::name).toList(), o.principal());
         }
     }
 

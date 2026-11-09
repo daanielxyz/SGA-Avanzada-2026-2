@@ -37,7 +37,7 @@ public class Reserva {
 
     private final ReservaId codigo;
     private ApartamentoId apartamentoId;
-    private final TitularId titularId;
+    private TitularId titularId;          // cambia solo con cambiarTitular (TIT-01 · DEC-97)
     private Estancia estancia;
     private EstadoReserva estado;
     private final CanalOrigen canalOrigen;
@@ -199,13 +199,13 @@ public class Reserva {
      *
      * @param cotizacion           de {@code TarificacionDomainService} para esta estancia y estos ocupantes
      * @param capacidad            capacidad actual del apartamento (RN-02)
-     * @param titular              responsable de la reserva; debe ser uno de los ocupantes facturables (TIT-01)
+     * @param titular              responsable de la reserva; puede no alojarse (TIT-01 · DEC-97)
      * @param estanciaMinimaNoches de {@code CalendarioTemporadas.estanciaMinimaPara} (RP-01)
-     * @param umbralEdadFacturable {@code ParametrosAlojamiento.umbralEdadFacturable} (OCU-11)
      * @param ahora                fecha y hora actuales en Colombia, inyectadas (EST-06)
      * @throws ReglaDominioException si la entrada es anterior a hoy (RN-04), el grupo excede la capacidad (RN-02),
-     *                               no hay ocupantes (OCU-02), el titular no es un ocupante facturable (TIT-01),
-     *                               hay uno repetido (OCU-05) o nacido en el futuro (OCU-12), no se cumple la
+     *                               no hay ocupantes (OCU-02), hay uno repetido (OCU-05) o nacido en el futuro
+     *                               (OCU-12), el huésped principal sobra, falta o es menor de edad (DEC-97), no se
+     *                               cumple la
      *                               estancia mínima (RP-01), el canal externo no trae su referencia (CORI-03) o la
      *                               cotización no corresponde a la estancia
      */
@@ -213,13 +213,13 @@ public class Reserva {
                                 Estancia estancia, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
                                 List<Ocupante> ocupantes, LocalTime horaEstimadaLlegada, Cotizacion cotizacion,
                                 PoliticaId politicaVersionId, Capacidad capacidad, int estanciaMinimaNoches,
-                                int umbralEdadFacturable, LocalDateTime ahora) {
+                                LocalDateTime ahora) {
         Objects.requireNonNull(ahora, "ahora");
         Objects.requireNonNull(titular, "titular");
         validarCondiciones(estancia, ocupantes, cotizacion, capacidad, estanciaMinimaNoches, ahora.toLocalDate());
-        validarTitular(titular, ocupantes, estancia, umbralEdadFacturable);
+        List<Ocupante> grupo = conHuespedPrincipal(ocupantes, estancia.entrada());
         return new Reserva(codigo, apartamentoId, titular.id(), estancia, EstadoReserva.PENDIENTE, canalOrigen,
-                canalId, idExterno, ocupantes, List.of(), null, horaEstimadaLlegada, cotizacion.total(),
+                canalId, idExterno, grupo, List.of(), null, horaEstimadaLlegada, cotizacion.total(),
                 cotizacion.desglose(), politicaVersionId, ahora);
     }
 
@@ -232,16 +232,15 @@ public class Reserva {
      * @param cotizacion           con las tarifas vigentes al momento de la modificación
      * @param capacidad            capacidad actual del apartamento destino (RN-02)
      * @param estanciaMinimaNoches de {@code CalendarioTemporadas.estanciaMinimaPara} para la nueva estancia (RP-01)
-     * @param titular              el titular de esta reserva; debe seguir entre los ocupantes facturables (TIT-01)
-     * @param umbralEdadFacturable {@code ParametrosAlojamiento.umbralEdadFacturable} (OCU-11)
+     * @param titular              el titular de esta reserva; puede no estar entre los ocupantes (DEC-97)
      * @param hoy                  fecha actual en Colombia, inyectada
      * @throws ReglaDominioException si la reserva no está PENDIENTE ni CONFIRMADA, el titular no es el de la reserva,
      *                               o los nuevos datos violan alguna condición de creación (RN-04 · RN-02 · OCU-02 ·
-     *                               OCU-05 · OCU-12 · RP-01 · TIT-01)
+     *                               OCU-05 · OCU-12 · RP-01)
      */
     public void modificar(Estancia nuevaEstancia, List<Ocupante> nuevosOcupantes, ApartamentoId nuevoApartamentoId,
                           Cotizacion cotizacion, Capacidad capacidad, int estanciaMinimaNoches, Titular titular,
-                          int umbralEdadFacturable, LocalDate hoy) {
+                          LocalDate hoy) {
         if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
                     "Solo se modifica una reserva PENDIENTE o CONFIRMADA; está " + estado);
@@ -253,9 +252,9 @@ public class Reserva {
             throw new ReglaDominioException("El titular " + titular.id().valor() + " no es el de la reserva");
         }
         validarCondiciones(nuevaEstancia, nuevosOcupantes, cotizacion, capacidad, estanciaMinimaNoches, hoy);
-        validarTitular(titular, nuevosOcupantes, nuevaEstancia, umbralEdadFacturable);
+        List<Ocupante> grupo = conHuespedPrincipal(nuevosOcupantes, nuevaEstancia.entrada());
         estancia = nuevaEstancia;
-        ocupantes = nuevosOcupantes.stream().map(this::conservandoDatosTra).toList();
+        ocupantes = grupo.stream().map(this::conservandoDatosTra).toList();
         apartamentoId = nuevoApartamentoId;
         valorTotal = cotizacion.total();
         desglose = cotizacion.desglose();
@@ -459,6 +458,47 @@ public class Reserva {
     }
 
     /**
+     * Cambia el titular cuando quien reservó no debe serlo, por ejemplo en el registro de llegada (TIT-01 · DEC-97).
+     * El titular responde por la reserva y su folio; no tiene que alojarse.
+     *
+     * @throws ReglaDominioException si la reserva ya terminó o el nuevo titular ya es el de la reserva
+     */
+    public void cambiarTitular(Titular nuevo) {
+        Objects.requireNonNull(nuevo, "nuevo");
+        if (!estaActiva()) {
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "El titular solo se cambia en una reserva activa; está " + estado);
+        }
+        if (nuevo.id().equals(titularId)) {
+            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO,
+                    nuevo.nombre() + " ya es el titular de la reserva " + codigo.valor());
+        }
+        titularId = nuevo.id();
+    }
+
+    /**
+     * Designa otro ocupante como huésped principal del TRA, por ejemplo en el registro de llegada (DEC-97). El anterior
+     * pasa a ser acompañante.
+     *
+     * @throws ReglaDominioException si la reserva ya terminó, el ocupante no es de esta reserva, ya es el principal o
+     *                               no es mayor de edad a la fecha de entrada
+     */
+    public void designarHuespedPrincipal(OcupanteId ocupanteId) {
+        Objects.requireNonNull(ocupanteId, "ocupanteId");
+        if (!estaActiva()) {
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "El huésped principal solo se cambia en una reserva activa; está " + estado);
+        }
+        Ocupante nuevo = ocupante(ocupanteId);
+        if (nuevo.principal()) {
+            throw new ReglaDominioException(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO,
+                    nuevo.nombre() + " ya es el huésped principal de la reserva " + codigo.valor());
+        }
+        exigirMayorDeEdad(nuevo, estancia.entrada());
+        ocupantes = ocupantes.stream().map(o -> o.comoPrincipal(o.equals(nuevo))).toList();
+    }
+
+    /**
      * Completa los datos del TRA de un ocupante, en la llegada o en cualquier momento antes de la salida (BL-07). El
      * dato que no llega se conserva, y la llegada se puede registrar aunque falten: la salida es la que los exige.
      *
@@ -473,11 +513,7 @@ public class Reserva {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
                     "Los datos de los ocupantes solo se completan en una reserva activa; está " + estado);
         }
-        Ocupante actual = ocupantes.stream()
-                .filter(o -> o.id().equals(ocupanteId))
-                .findFirst()
-                .orElseThrow(() -> new ReglaDominioException(
-                        "El ocupante " + ocupanteId.valor() + " no es de la reserva " + codigo.valor()));
+        Ocupante actual = ocupante(ocupanteId);
         Ocupante completo = actual.completar(nombres, primerApellido, segundoApellido, documento, nacionalidad, viaje);
         List<Ocupante> grupo = ocupantes.stream().map(o -> o.equals(actual) ? completo : o).toList();
         validarGrupo(grupo);
@@ -583,14 +619,35 @@ public class Reserva {
         }
     }
 
-    // TIT-01 · OCU-02: el titular se reconoce entre los ocupantes por su documento y debe ser facturable
-    private static void validarTitular(Titular titular, List<Ocupante> ocupantes, Estancia estancia, int umbral) {
-        boolean esOcupanteFacturable = ocupantes.stream()
-                .anyMatch(o -> titular.documento().equals(o.documento())
-                        && o.esFacturableA(estancia.entrada(), umbral));
-        if (!esOcupanteFacturable) {
-            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO, "El titular " + titular.nombre()
-                    + " debe ser uno de los ocupantes facturables, identificado por su documento");
+    private Ocupante ocupante(OcupanteId ocupanteId) {
+        return ocupantes.stream()
+                .filter(o -> o.id().equals(ocupanteId))
+                .findFirst()
+                .orElseThrow(() -> new ReglaDominioException(
+                        "El ocupante " + ocupanteId.valor() + " no es de la reserva " + codigo.valor()));
+    }
+
+    // DEC-97 · Resolución 700 de 2021: un solo huésped principal, que se aloja y es mayor de edad. Si nadie viene
+    // marcado, lo es el primer mayor de edad del grupo
+    private static List<Ocupante> conHuespedPrincipal(List<Ocupante> grupo, LocalDate entrada) {
+        List<Ocupante> marcados = grupo.stream().filter(Ocupante::principal).toList();
+        if (marcados.size() > 1) {
+            throw new ReglaDominioException(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO,
+                    "Solo un ocupante puede ser el huésped principal");
+        }
+        Ocupante principal = marcados.isEmpty()
+                ? grupo.stream().filter(o -> o.esMayorDeEdadA(entrada)).findFirst()
+                        .orElseThrow(() -> new ReglaDominioException(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO,
+                                "El grupo debe traer un mayor de edad que sea el huésped principal"))
+                : marcados.getFirst();
+        exigirMayorDeEdad(principal, entrada);
+        return grupo.stream().map(o -> o.comoPrincipal(o.equals(principal))).toList();
+    }
+
+    private static void exigirMayorDeEdad(Ocupante principal, LocalDate entrada) {
+        if (!principal.esMayorDeEdadA(entrada)) {
+            throw new ReglaDominioException(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO, "El huésped principal, "
+                    + principal.nombre() + ", debe ser mayor de edad (" + Ocupante.MAYORIA_DE_EDAD + " años)");
         }
     }
 

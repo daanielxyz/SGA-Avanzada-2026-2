@@ -168,10 +168,9 @@ class CanalesControllerTest extends PruebaRestDeReservas {
     @Tag("CAN-05")
     void unPedidoRechazadoEs409DeReglaYUnoMalFormado400() throws Exception {
         String canal = canalExterno();
-        String sinElTitular = pedido("BK-3", 0, 2).replace("\"tipoDocumento\": \"CC\",\n", "\n")
-                .replace("\"numeroDocumento\": \"2077\"}\n", "\"nacionalidad\": \"Colombiana\"}\n");
+        String nacidaEnElFuturo = pedido("BK-3", 0, 2).replace("1985-07-09", "2099-01-01"); // OCU-12
 
-        enviar(conClave(post(reservasDe(canal))), sinElTitular)
+        enviar(conClave(post(reservasDe(canal))), nacidaEnElFuturo)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
         enviar(conClave(post(reservasDe(canal))), "{\"apartamento\": \"APT-101\", \"ocupantes\": []}")

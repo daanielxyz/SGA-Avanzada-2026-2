@@ -44,4 +44,6 @@ public class OcupanteJpa {
 
     @Enumerated(EnumType.STRING)
     private MotivoViaje motivoViaje;
+
+    private boolean principal; // DEC-97
 }
