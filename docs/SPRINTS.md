@@ -96,14 +96,15 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
-  - [~] Entrevista a la recepcionista: anotada en `docs/BACKLOG.md` (BL-07 a BL-23). Entran a este sprint BL-07 a BL-12, BL-22 y BL-23; para hacerles espacio, el nombre de la temporada y los mensajes de los 409 pasan al sprint 4 (`feature/pms/entrevista`).
+  - [x] Entrevista a la recepcionista: anotada en `docs/BACKLOG.md` (BL-07 a BL-23). Entran a este sprint BL-07 a BL-12, BL-22 y BL-23; para hacerles espacio, el nombre de la temporada y los mensajes de los 409 pasan al sprint 4 (`feature/pms/entrevista`).
   - [x] Ajustes del PMS por DEC-89, DEC-91 y DEC-93: anticipo con extras, carros y motos, límite de mascotas por apartamento y extras en el detalle (`feature/pms/ajustes-extras`), y la retención antes de cancelar (`feature/pms/previa-cancelacion`) (`pms/DISENO.md`).
-  - [ ] Núcleo, acordado el 6 nov: retención antes del no-show, `titularNombre` en el tablero, `motivo` en los 409, anticipo exigido en la respuesta, política legible para recepción, el titular que no se aloja (cambia TIT-01) y quitar el pendiente de la tarifa de Temporada Media, que configura cada alojamiento (`pms/DISENO.md`, «Cambios de backend»).
-  - [ ] Núcleo, de la entrevista: datos del TRA en cada ocupante (BL-07), notas de la reserva (BL-08), saldo de cada reserva en el tablero (BL-09) y la estancia cobrada en la llegada, salvo autorización (BL-22). Además, quién revierte un cargo o un pago y quién registra una devolución (decisión del 7 nov, `pms/DISENO.md` #12).
-  - [ ] Registro de llegada y corrección del registro, con el cambio de titular si quien reservó no es quien llega (decisión del 6 nov), los datos del TRA (BL-07), el desglose y el cobro de la estancia antes de entregar (BL-10, BL-22), quitar o agregar vehículos y mascotas antes de llegar (BL-23) y la reserva de mostrador (BL-11).
-  - [ ] Folio: cargos (con cantidad, BL-12), pagos, devoluciones y reversos; cierre del folio y salida, bloqueada si faltan datos del TRA (BL-07).
-  - [ ] Tablero coloreado por la cuenta (BL-09) y notas en el detalle (BL-08).
-  - [ ] Probar en un celular real las pantallas del sprint 2.
+  - [~] Núcleo, acordado el 6 nov (Reyes): hechos el `motivo` en los 409 (DEC-94) y el anticipo en la respuesta (DEC-95). Faltan la retención antes del no-show, `titularNombre` en el tablero, la política legible para recepción y quitar el pendiente de la tarifa de Temporada Media, que configura cada alojamiento (`pms/DISENO.md`, «Cambios de backend»). El titular que no se aloja (TIT-01) lo hace el equipo web.
+  - [ ] Núcleo, de la entrevista (Reyes): notas de la reserva (BL-08), saldo de cada reserva en el tablero (BL-09), la estancia cobrada en la llegada, salvo autorización (BL-22), y quién revierte un cargo o un pago y quién registra una devolución (`pms/DISENO.md` #12). Los datos del TRA en cada ocupante (BL-07) los hace el equipo web.
+  - [ ] Registro de llegada y corrección del registro (Daniel), con el cambio de titular si quien reservó no es quien llega (decisión del 6 nov), los datos del TRA (BL-07), el desglose y el cobro de la estancia antes de entregar (BL-10, BL-22), quitar o agregar vehículos y mascotas antes de llegar (BL-23) y la reserva de mostrador (BL-11). Depende del BL-07 y el #9 del equipo web.
+  - [ ] Folio (Daniel): cargos (con cantidad, BL-12), pagos, devoluciones y reversos; cierre del folio y salida, bloqueada si faltan datos del TRA (BL-07).
+  - [ ] Tablero coloreado por la cuenta (BL-09) y notas en el detalle (BL-08) (Daniel).
+  - [ ] Preparación de apartamentos para el personal de servicio (Daniel): no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS.
+  - [ ] Probar en un celular real las pantallas del sprint 2 (Daniel).
 - **Cierre 3 (vie 13 nov)**: preguntar al cliente por el IVA según el documento del huésped y las retenciones de empresa (BL-13).
 
 ## Sprint 4 · 17 – 20 nov (lunes festivo) · «Configurar el hotel»
