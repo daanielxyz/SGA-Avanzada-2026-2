@@ -120,7 +120,8 @@ public class CargadorReserva {
                 })
                 .orElseGet(() -> {
                     Titular nuevo = new Titular(new TitularId(codigos.siguiente(SerieCodigo.TITULAR)), alojamientoId,
-                            datos.nombre(), documento, correo, datos.telefono());
+                            datos.nombres(), datos.primerApellido(), datos.segundoApellido(), documento, correo,
+                            datos.telefono(), null);
                     return new TitularParaReserva(nuevo, correo != null, false);
                 });
     }

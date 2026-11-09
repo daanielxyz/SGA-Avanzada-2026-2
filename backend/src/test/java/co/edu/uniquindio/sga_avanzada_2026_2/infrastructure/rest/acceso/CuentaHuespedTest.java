@@ -393,6 +393,30 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-98")
+    void conLaIdentidadValidadaElHuespedYaNoCambiaSuNombre() throws Exception {
+        reservaPendiente(HOY.plusDays(5));
+        String token = entrarComoHuesped(ANA, "1094");
+        String id = JsonPath.read(cliente.perform(con(token, get("/api/mi-cuenta")))
+                .andExpect(jsonPath("$.validado").value(false))
+                .andReturn().getResponse().getContentAsString(), "$.id");
+
+        mvc.perform(put("/api/titulares/" + id + "/validar")).andExpect(status().isOk());
+
+        cliente.perform(con(token, get("/api/mi-cuenta"))).andExpect(jsonPath("$.validado").value(true));
+        cliente.perform(con(token, put("/api/mi-cuenta")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"Ana Ríos\", \"telefono\": \"311 222 3333\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.telefono").value("311 222 3333"));
+        cliente.perform(con(token, put("/api/mi-cuenta")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombres\": \"Ana\", \"primerApellido\": \"Pérez\", "
+                                + "\"telefono\": \"311 222 3333\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("IDENTIDAD_VALIDADA"));
+        cliente.perform(con(token, put("/api/titulares/" + id + "/validar"))).andExpect(status().isForbidden());
+    }
+
+    @Test
     @Tag("DEC-68")
     void recepcionDebeDarCorreoYTelefonoDelTitular() throws Exception {
         String sinContacto = reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(7))
