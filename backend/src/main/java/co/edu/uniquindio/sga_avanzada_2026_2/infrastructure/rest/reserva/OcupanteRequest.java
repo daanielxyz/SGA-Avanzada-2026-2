@@ -11,8 +11,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Un ocupante del grupo en el cuerpo de una reserva. El documento es opcional, salvo para el titular, que se
- * reconoce por él (TIT-01).
+ * Un ocupante del grupo en el cuerpo de una reserva. El documento es opcional al reservar; el TRA lo pide antes de
+ * la salida (BL-07). {@code principal} marca al huésped principal; si nadie lo trae, lo es el primer mayor de edad
+ * (DEC-97).
  */
 public record OcupanteRequest(
         @Size(max = 120, message = "admite máximo 120 caracteres")
@@ -37,12 +38,14 @@ public record OcupanteRequest(
         String primerApellido,
 
         @Size(max = 60, message = "admite máximo 60 caracteres")
-        String segundoApellido) {
+        String segundoApellido,
+
+        Boolean principal) {
 
     /** Con los campos de antes de BL-07: el nombre completo en un solo texto. */
     public OcupanteRequest(String nombre, LocalDate fechaNacimiento, String tipoDocumento, String numeroDocumento,
                            String nacionalidad) {
-        this(nombre, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad, null, null, null);
+        this(nombre, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad, null, null, null, null);
     }
 
     /** BL-07: los nombres llegan aparte de los apellidos o, como antes, todo junto en {@code nombre}. */
@@ -55,7 +58,8 @@ public record OcupanteRequest(
     OcupanteCommand aCommand() {
         boolean separado = nombres != null && !nombres.isBlank();
         return new OcupanteCommand(separado ? nombres : nombre, separado ? primerApellido : null,
-                separado ? segundoApellido : null, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad);
+                separado ? segundoApellido : null, fechaNacimiento, tipoDocumento, numeroDocumento, nacionalidad,
+                Boolean.TRUE.equals(principal));
     }
 
     public static List<OcupanteCommand> aCommands(List<OcupanteRequest> ocupantes) {

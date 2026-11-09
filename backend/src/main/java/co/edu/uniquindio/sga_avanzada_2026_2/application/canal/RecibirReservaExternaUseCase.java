@@ -107,7 +107,7 @@ public class RecibirReservaExternaUseCase {
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si el canal no es
      *                                      externo o está inactivo (CAN-05), falta una tarifa (RN-05) o la reserva
      *                                      viola una regla de creación que no es de disponibilidad (RN-03 · RN-04 ·
-     *                                      OCU-02 · OCU-05 · OCU-12 · RP-01 · TIT-01)
+     *                                      OCU-02 · OCU-05 · OCU-12 · RP-01)
      */
     @Transactional
     public IntegracionExternaResult ejecutar(RecibirReservaExternaCommand comando) {
@@ -136,7 +136,7 @@ public class RecibirReservaExternaUseCase {
                     return Reserva.crear(new ReservaId(codigos.siguiente(SerieCodigo.RESERVA)), apartamento.codigo(),
                             titular, estancia, CanalOrigen.EXTERNO, canal.id(), comando.idExterno(), ocupantes, null,
                             cotizacion, politica.id(), apartamento.capacidad(),
-                            calendario.estanciaMinimaPara(estancia), parametros.umbralEdadFacturable(), ahora);
+                            calendario.estanciaMinimaPara(estancia), ahora);
                 }, new ConflictoId(codigos.siguiente(SerieCodigo.CONFLICTO)), ahora);
 
         integracion.reservaCreada().ifPresent(reserva -> {

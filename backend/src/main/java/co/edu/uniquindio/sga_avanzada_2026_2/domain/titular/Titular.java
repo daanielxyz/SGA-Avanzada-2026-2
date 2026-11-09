@@ -15,7 +15,7 @@ public class Titular {
     private final TitularId id;
     private final AlojamientoId alojamientoId; // DEC-26
     private String nombre;
-    private final Documento documento; // lo identifica entre los ocupantes (TIT-01); no cambia
+    private final Documento documento; // lo reconoce entre sus reservas (TIT-05); no cambia
     private Correo correo;             // opcional si hay teléfono; con él, el titular tiene cuenta (DEC-68)
     private String telefono;           // opcional si hay correo
 

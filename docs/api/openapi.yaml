@@ -436,6 +436,65 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/cambiar-titular":
+    put:
+      tags:
+        - estancia-controller
+      operationId: cambiarTitular
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/TitularReservaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/ocupantes/{ocupanteId}/principal":
+    put:
+      tags:
+        - estancia-controller
+      operationId: designarHuespedPrincipal
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ocupanteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/corregir-registro":
     put:
       tags:
@@ -3277,6 +3336,8 @@ components:
           type: string
           maxLength: 60
           minLength: 0
+        principal:
+          type: boolean
       required:
         - fechaNacimiento
     CotizacionResponse:
@@ -3341,6 +3402,8 @@ components:
           type: array
           items:
             type: string
+        principal:
+          type: boolean
     ReservaResponse:
       type: object
       properties:

@@ -98,7 +98,7 @@ final class ReservaMapper {
                 o.documento() == null ? null : o.documento().tipo(),
                 o.documento() == null ? null : o.documento().numero(), o.nacionalidad(), o.viaje().genero(),
                 o.viaje().paisResidencia(), o.viaje().ciudadResidencia(), o.viaje().ciudadProcedencia(),
-                o.viaje().ciudadDestino(), o.viaje().motivoViaje())));
+                o.viaje().ciudadDestino(), o.viaje().motivoViaje(), o.principal())));
         jpa.getDesglose().clear();
         reserva.desglose().forEach(l -> jpa.getDesglose().add(new NocheReservaJpa(l.noche().fecha(),
                 l.temporadaId().valor(), l.tarifa().monto(), l.ocupantesFacturables(), l.subtotal().monto())));
@@ -110,6 +110,7 @@ final class ReservaMapper {
         return new Ocupante(new OcupanteId(jpa.getId()), jpa.getNombres(), jpa.getPrimerApellido(),
                 jpa.getSegundoApellido(), jpa.getFechaNacimiento(), documento, jpa.getNacionalidad(),
                 new DatosViaje(jpa.getGenero(), jpa.getPaisResidencia(), jpa.getCiudadResidencia(),
-                        jpa.getCiudadProcedencia(), jpa.getCiudadDestino(), jpa.getMotivoViaje()));
+                        jpa.getCiudadProcedencia(), jpa.getCiudadDestino(), jpa.getMotivoViaje()),
+                jpa.isPrincipal());
     }
 }

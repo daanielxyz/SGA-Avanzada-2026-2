@@ -73,7 +73,7 @@ class ReservaTest {
                                  int estanciaMinima) {
         return Reserva.crear(new ReservaId("RES-2026-00001"), APT, TITULAR, estancia,
                 CanalOrigen.PORTAL, null, null, ocupantes, horaEstimada, cotizacion(estancia, ocupantes.size()),
-                POLITICA, CAPACIDAD, estanciaMinima, UMBRAL, AHORA);
+                POLITICA, CAPACIDAD, estanciaMinima, AHORA);
     }
 
     private static Reserva pendiente() {
@@ -204,7 +204,7 @@ class ReservaTest {
         assertThrows(ReglaDominioException.class, () -> externa(null, null));
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
                 TITULAR, ESTANCIA, CanalOrigen.DIRECTO, new CanalId("CAN-1"), "BK-77", List.of(ANA),
-                null, cotizacion(ESTANCIA, 1), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
+                null, cotizacion(ESTANCIA, 1), POLITICA, CAPACIDAD, 0, AHORA));
     }
 
     @Test
@@ -213,34 +213,124 @@ class ReservaTest {
 
         assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
                 TITULAR, ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA), null,
-                cotizacion(otra, 1), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
+                cotizacion(otra, 1), POLITICA, CAPACIDAD, 0, AHORA));
     }
 
     @Test
     @Tag("TIT-01")
-    void deberiaExigirQueElTitularSeaUnOcupanteFacturable() {
-        Ocupante nino = new Ocupante(new OcupanteId("OCU-3"), "Tomás", LocalDate.of(2020, 6, 1),
-                new Documento(TipoDocumento.TI, "777"), null);
-        Titular titularMenor = new Titular(new TitularId("TIT-2"), ALO, "Tomás", nino.documento(), null, "3001234567");
+    void elTitularPuedeNoAlojarseNiPagarComoOcupante() {
+        Reserva paraOtro = crear(ESTANCIA, List.of(LUIS), null, 0);
 
-        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO, () -> crear(ESTANCIA, List.of(LUIS), null, 0));
-        assertThrows(ReglaDominioException.class, () -> Reserva.crear(new ReservaId("RES-2026-00001"), APT,
-                titularMenor, ESTANCIA, CanalOrigen.PORTAL, null, null, List.of(ANA, nino), null,
-                cotizacion(ESTANCIA, 2), POLITICA, CAPACIDAD, 0, UMBRAL, AHORA));
+        assertEquals(TITULAR.id(), paraOtro.titularId());
+        assertEquals(List.of(LUIS), paraOtro.ocupantes());
+        assertEquals(List.of(true), principales(paraOtro));
+    }
+
+    // --- Huésped principal (DEC-97) ---
+
+    private static final Ocupante NINO = new Ocupante(new OcupanteId("OCU-3"), "Tomás", LocalDate.of(2020, 6, 1),
+            new Documento(TipoDocumento.TI, "777"), null);
+
+    private static Ocupante comoPrincipal(Ocupante o) {
+        return new Ocupante(o.id(), o.nombres(), o.primerApellido(), o.segundoApellido(), o.fechaNacimiento(),
+                o.documento(), o.nacionalidad(), o.viaje(), true);
+    }
+
+    private static List<Boolean> principales(Reserva reserva) {
+        return reserva.ocupantes().stream().map(Ocupante::principal).toList();
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void siNadieVieneMarcadoElHuespedPrincipalEsElPrimerMayorDeEdad() {
+        assertEquals(List.of(false, true, false), principales(crear(ESTANCIA, List.of(NINO, ANA, LUIS), null, 0)));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void elHuespedPrincipalMarcadoQuedaComoUnicoPrincipal() {
+        assertEquals(List.of(false, true), principales(crear(ESTANCIA, List.of(ANA, comoPrincipal(LUIS)), null, 0)));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void elGrupoNecesitaUnSoloHuespedPrincipalYMayorDeEdad() {
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO, () -> crear(ESTANCIA, List.of(NINO), null, 0));
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO,
+                () -> crear(ESTANCIA, List.of(ANA, comoPrincipal(NINO)), null, 0));
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO,
+                () -> crear(ESTANCIA, List.of(comoPrincipal(ANA), comoPrincipal(LUIS)), null, 0));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void unaModificacionVuelveAElegirAlHuespedPrincipal() {
+        Reserva reserva = pendiente();
+
+        reserva.modificar(ESTANCIA, List.of(NINO, LUIS), APT, cotizacion(ESTANCIA, 2), CAPACIDAD, 0, TITULAR, HOY);
+
+        assertEquals(List.of(false, true), principales(reserva));
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO, () -> reserva.modificar(ESTANCIA, List.of(NINO), APT,
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, HOY));
+        assertEquals(List.of(false, true), principales(reserva));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void recepcionDesignaOtroHuespedPrincipalMayorDeEdad() {
+        Reserva reserva = enCurso();
+
+        reserva.designarHuespedPrincipal(LUIS.id());
+
+        assertEquals(List.of(false, true), principales(reserva));
+        assertTrue(reserva.ocupantes().stream().allMatch(o -> o.datosTraFaltantes().isEmpty()), "conserva el TRA");
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO, () -> reserva.designarHuespedPrincipal(LUIS.id()));
+        assertThrows(ReglaDominioException.class, () -> reserva.designarHuespedPrincipal(new OcupanteId("OCU-9")));
+    }
+
+    @Test
+    @Tag("DEC-97")
+    void noSeDesignaAUnMenorNiEnUnaReservaTerminada() {
+        Reserva conNino = crear(ESTANCIA, List.of(ANA, NINO), null, 0);
+        Reserva cancelada = confirmada();
+        cancelada.cancelar();
+
+        exigeMotivo(MotivoRechazo.HUESPED_PRINCIPAL_INVALIDO, () -> conNino.designarHuespedPrincipal(NINO.id()));
+        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> cancelada.designarHuespedPrincipal(LUIS.id()));
+        assertEquals(List.of(true, false), principales(conNino));
     }
 
     @Test
     @Tag("TIT-01")
-    void unaModificacionNoPuedeDejarAfueraAlTitularNiCambiarlo() {
+    void unaModificacionPuedeDejarAfueraAlTitularPeroNoCambiarlo() {
         Reserva reserva = pendiente();
         Titular otro = new Titular(new TitularId("TIT-9"), ALO, "Luis", new Documento(TipoDocumento.CC, "555"), null,
                 "3001234567");
 
-        assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(LUIS), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, HOY));
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, otro, UMBRAL, HOY));
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, otro, HOY));
         assertEquals(2, reserva.ocupantes().size());
+
+        reserva.modificar(ESTANCIA, List.of(LUIS), APT, cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, HOY);
+        assertEquals(List.of(LUIS), reserva.ocupantes());
+        assertEquals(TITULAR.id(), reserva.titularId());
+    }
+
+    @Test
+    @Tag("TIT-01")
+    void recepcionCambiaElTitularDeUnaReservaActiva() {
+        Reserva reserva = enCurso();
+        Titular luis = new Titular(new TitularId("TIT-9"), ALO, "Luis", new Documento(TipoDocumento.CC, "555"), null,
+                "3001234567");
+
+        reserva.cambiarTitular(luis);
+
+        assertEquals(luis.id(), reserva.titularId());
+        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO, () -> reserva.cambiarTitular(luis));
+        Reserva cancelada = confirmada();
+        cancelada.cancelar();
+        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> cancelada.cambiarTitular(luis));
+        assertEquals(TITULAR.id(), cancelada.titularId());
     }
 
     // --- Confirmar ---
@@ -523,7 +613,7 @@ class ReservaTest {
         Estancia masLarga = new Estancia(ESTANCIA.entrada(), ESTANCIA.salida().plusDays(1));
         ApartamentoId otro = new ApartamentoId("APT-102");
 
-        reserva.modificar(masLarga, List.of(ANA), otro, cotizacion(masLarga, 1), CAPACIDAD, 0, TITULAR, UMBRAL,
+        reserva.modificar(masLarga, List.of(ANA), otro, cotizacion(masLarga, 1), CAPACIDAD, 0, TITULAR, 
                 HOY);
 
         assertEquals(masLarga, reserva.estancia());
@@ -542,9 +632,9 @@ class ReservaTest {
                 ocupante("OCU-5", "Leo"));
 
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, cinco, APT,
-                cotizacion(ESTANCIA, 5), CAPACIDAD, 0, TITULAR, UMBRAL, HOY));
+                cotizacion(ESTANCIA, 5), CAPACIDAD, 0, TITULAR, HOY));
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 3, TITULAR, UMBRAL, HOY));
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 3, TITULAR, HOY));
         assertEquals(Dinero.de(400_000), reserva.valorTotal());
         assertEquals(2, reserva.ocupantes().size());
     }
@@ -555,7 +645,7 @@ class ReservaTest {
         Reserva reserva = enCurso();
 
         assertThrows(ReglaDominioException.class, () -> reserva.modificar(ESTANCIA, List.of(ANA), APT,
-                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, ESTANCIA.entrada()));
+                cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, ESTANCIA.entrada()));
     }
 
     // --- Reconstrucción ---
@@ -572,7 +662,7 @@ class ReservaTest {
     private static Reserva externa(CanalId canal, String idExterno) {
         return Reserva.crear(new ReservaId("RES-2026-00001"), APT, TITULAR, ESTANCIA,
                 CanalOrigen.EXTERNO, canal, idExterno, List.of(ANA), null, cotizacion(ESTANCIA, 1), POLITICA,
-                CAPACIDAD, 0, UMBRAL, AHORA);
+                CAPACIDAD, 0, AHORA);
     }
 
     private static Ocupante ocupante(String id, String nombre) {
@@ -690,7 +780,7 @@ class ReservaTest {
         reserva.completarDatosOcupante(new OcupanteId("OCU-1"), null, "Ríos", null, null, "Colombiana",
                 DatosTraDePrueba.VIAJE);
 
-        reserva.modificar(ESTANCIA, List.of(ANA), APT, cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, UMBRAL, HOY);
+        reserva.modificar(ESTANCIA, List.of(ANA), APT, cotizacion(ESTANCIA, 1), CAPACIDAD, 0, TITULAR, HOY);
 
         Ocupante ana = ocupante(reserva, "OCU-1");
         assertEquals("Ríos", ana.primerApellido());

@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @param idExterno identificador de la reserva en el canal; repetirlo no crea otra reserva (RN-19)
  * @param salida    exclusiva: esa noche no se ocupa (EST-01)
- * @param ocupantes el grupo completo, incluido el titular con su documento (TIT-01)
+ * @param ocupantes quienes se alojan; el titular puede no estar entre ellos (TIT-01 · DEC-97)
  */
 public record ReservaExternaRequest(
         @NotBlank(message = "es obligatorio")

@@ -1,6 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularCommand;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DesignarHuespedPrincipalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaCommand;
@@ -29,15 +32,37 @@ public class EstanciaController {
     private final CorregirRegistroUseCase corregirRegistro;
     private final RegistrarSalidaUseCase registrarSalida;
     private final CompletarDatosOcupanteUseCase completarDatosOcupante;
+    private final CambiarTitularUseCase cambiarTitular;
+    private final DesignarHuespedPrincipalUseCase designarHuespedPrincipal;
 
     public EstanciaController(UsuarioActual usuario, RegistrarLlegadaUseCase registrarLlegada,
                               CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida,
-                              CompletarDatosOcupanteUseCase completarDatosOcupante) {
+                              CompletarDatosOcupanteUseCase completarDatosOcupante,
+                              CambiarTitularUseCase cambiarTitular,
+                              DesignarHuespedPrincipalUseCase designarHuespedPrincipal) {
         this.usuario = usuario;
         this.registrarLlegada = registrarLlegada;
         this.corregirRegistro = corregirRegistro;
         this.registrarSalida = registrarSalida;
         this.completarDatosOcupante = completarDatosOcupante;
+        this.cambiarTitular = cambiarTitular;
+        this.designarHuespedPrincipal = designarHuespedPrincipal;
+    }
+
+    /** Otro ocupante pasa a ser el huésped principal del TRA; debe ser mayor de edad (DEC-97). */
+    @PutMapping("/ocupantes/{ocupanteId}/principal")
+    public ReservaResponse designarHuespedPrincipal(@PathVariable String codigo, @PathVariable String ocupanteId) {
+        return ReservaResponse.de(designarHuespedPrincipal.ejecutar(codigo, ocupanteId));
+    }
+
+    /**
+     * Quien reservó no debe ser el titular (TIT-01 · DEC-97): el titular nuevo responde por la reserva y su folio, y
+     * no tiene que alojarse. Con un documento que ya existe se usa ese titular.
+     */
+    @PutMapping("/cambiar-titular")
+    public ReservaResponse cambiarTitular(@PathVariable String codigo,
+                                          @Valid @RequestBody TitularReservaRequest solicitud) {
+        return ReservaResponse.de(cambiarTitular.ejecutar(new CambiarTitularCommand(codigo, solicitud.aCommand())));
     }
 
     /**

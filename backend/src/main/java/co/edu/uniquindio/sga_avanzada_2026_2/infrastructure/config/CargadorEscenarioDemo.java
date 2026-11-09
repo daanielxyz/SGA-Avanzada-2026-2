@@ -39,6 +39,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Cotizacion;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosViaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
@@ -299,8 +300,8 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
                             LocalDateTime creadaEn) {
         ApartamentoId codigo = new ApartamentoId(apartamento);
         Estancia estancia = new Estancia(entrada, salida);
-        List<Ocupante> ocupantes = List.of(new Ocupante(new OcupanteId("OCU-1"), titular.nombre(),
-                LocalDate.of(1990, 5, 1), titular.documento(), "CO"));
+        List<Ocupante> ocupantes = List.of(new Ocupante(new OcupanteId("OCU-1"), titular.nombre(), null, null,
+                LocalDate.of(1990, 5, 1), titular.documento(), "CO", DatosViaje.VACIOS, true));
         Cotizacion cotizacion = tarificacion.calcularValorEstancia(codigo, estancia, ocupantes,
                 c.alojamiento().parametros().umbralEdadFacturable(), c.calendario(),
                 tarifas.buscarVigentesPorApartamento(codigo, c.hoy()));

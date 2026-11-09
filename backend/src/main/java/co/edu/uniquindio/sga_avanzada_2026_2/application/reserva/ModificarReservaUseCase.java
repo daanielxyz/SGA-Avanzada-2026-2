@@ -59,7 +59,7 @@ public class ModificarReservaUseCase {
      *         existe la reserva, su folio, su titular o el apartamento destino
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la reserva ya
      *         inició o terminó, el destino no está disponible sin contar esta reserva (RN-14), falta una tarifa
-     *         (RN-05) o los nuevos datos violan una regla de creación (RN-02 · RN-04 · OCU-02 · RP-01 · TIT-01)
+     *         (RN-05) o los nuevos datos violan una regla de creación (RN-02 · RN-04 · OCU-02 · RP-01)
      */
     @Transactional
     public ReservaResult ejecutar(ModificarReservaCommand comando) {
@@ -80,8 +80,7 @@ public class ModificarReservaUseCase {
                 parametros.umbralEdadFacturable(), calendario,
                 tarifas.buscarVigentesPorApartamento(destino.codigo(), hoy));
         reserva.modificar(estancia, ocupantes, destino.codigo(), cotizacion, destino.capacidad(),
-                calendario.estanciaMinimaPara(estancia), cargador.titular(reserva.titularId()),
-                parametros.umbralEdadFacturable(), hoy);
+                calendario.estanciaMinimaPara(estancia), cargador.titular(reserva.titularId()), hoy);
         // RP-02: las nuevas fechas también deben caber en el parqueadero
         cupoParqueadero.exigirCupo(estancia, reserva.vehiculos(), reservas.buscarActivasConVehiculos(), reserva,
                 parametros.cupoParqueadero());

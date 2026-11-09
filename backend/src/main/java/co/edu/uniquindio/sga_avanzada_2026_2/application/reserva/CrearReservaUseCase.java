@@ -79,7 +79,7 @@ public class CrearReservaUseCase {
      *                                      vigente
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si el apartamento no
      *         está disponible (RN-01 · RN-07 · RN-20 · DISP-02), falta una tarifa (RN-05) o la reserva viola una
-     *         regla de creación (RN-02 · RN-03 · RN-04 · OCU-02 · OCU-05 · OCU-12 · RP-01 · TIT-01 · CORI-03)
+     *         regla de creación (RN-02 · RN-03 · RN-04 · OCU-02 · OCU-05 · OCU-12 · RP-01 · CORI-03)
      */
     @Transactional
     public ReservaResult ejecutar(CrearReservaCommand comando) {
@@ -104,7 +104,7 @@ public class CrearReservaUseCase {
         Reserva reserva = Reserva.crear(new ReservaId(codigos.siguiente(SerieCodigo.RESERVA)), apartamento.codigo(),
                 titular, estancia, CanalOrigen.valueOf(comando.canalOrigen()), null, null, ocupantes,
                 comando.horaEstimadaLlegada(), cotizacion, politica.id(), apartamento.capacidad(),
-                calendario.estanciaMinimaPara(estancia), parametros.umbralEdadFacturable(), ahora);
+                calendario.estanciaMinimaPara(estancia), ahora);
         // RP-03 · RP-02
         parametros.exigirMascotas(comando.mascotas(), apartamento);
         cupoParqueadero.exigirCupo(estancia, comando.carros() + comando.motos(), reservas.buscarActivasConVehiculos(), null,
