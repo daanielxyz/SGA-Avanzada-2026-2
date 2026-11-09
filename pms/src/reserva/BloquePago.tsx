@@ -5,7 +5,7 @@ import type { Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import Dato from '../componentes/Dato'
 import { dinero } from '../formato'
-import { anticipoExigido, estaTerminada, faltaParaAnticipo, otrosCargos, puedeRegistrarPago, valorRetenido } from './pago'
+import { estaTerminada, faltaParaAnticipo, otrosCargos, puedeRegistrarPago, valorRetenido } from './pago'
 import type { DatosDePago, useDatosDePago } from './useDatosDePago'
 
 const SALDO: Record<SituacionSaldo, { titulo: string; situacion: string; clase: string; forma: ReactNode }> = {
@@ -63,10 +63,10 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
   datos: DatosDePago
   alRegistrarPago: () => void
 }) {
-  const { folio, alojamiento } = datos
-  const pct = alojamiento.parametros.anticipoPct
-  const anticipoVigente = pct > 0 && (reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA')
-  const falta = faltaParaAnticipo(reserva, folio, alojamiento)
+  const { folio } = datos
+  const anticipo = reserva.anticipoExigido ?? 0
+  const anticipoVigente = anticipo > 0 && (reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA')
+  const falta = faltaParaAnticipo(reserva, folio)
   const otros = otrosCargos(folio)
   const retenido = valorRetenido(folio)
   const saldo = SALDO[folio.situacionSaldo]
@@ -110,7 +110,7 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
         )}
         {anticipoVigente && (
           <Dato nombre="Anticipo exigido" codigo>
-            {dinero(anticipoExigido(reserva, pct))}
+            {dinero(anticipo)}
           </Dato>
         )}
         {estaTerminada(reserva.estado) && retenido > 0 && (

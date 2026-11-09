@@ -56,7 +56,15 @@ function apiCon({ reserva, folio = folioDePrueba(), anticipoPct = 30, rechazar =
   /** Lo que responde `GET …/cancelacion` (DEC-91). */
   previa?: () => [number, unknown]
 }) {
-  const estado = { reserva: reservaDePrueba(reserva), folio }
+  // Como el backend: el detalle trae el porcentaje de la estancia más los extras (DEC-95)
+  const base = reservaDePrueba(reserva)
+  const estado = {
+    reserva: {
+      ...base,
+      anticipoExigido: reserva.anticipoExigido ?? Math.round(((base.valor.total + base.extras.total) * anticipoPct) / 100),
+    },
+    folio,
+  }
   const rechazo = (mensaje: string): [number, unknown] => [
     409, { estado: 409, codigo: 'REGLA_NEGOCIO', mensaje, detalles: [] },
   ]
@@ -147,6 +155,14 @@ describe('bloque Pago (RN-15 · RES-15)', () => {
     expect(await screen.findByText('Saldo pendiente')).toBeInTheDocument()
     expect(screen.getByText('Anticipo exigido').nextSibling).toHaveTextContent('$ 375.000')
     expect(screen.getByText(/Falta para el anticipo/)).toHaveTextContent('$ 375.000')
+  })
+
+  it('usa el anticipo que manda la API, sin calcularlo (DEC-95)', async () => {
+    apiCon({ reserva: { ...PENDIENTE, anticipoExigido: 999000 } })
+    abrir()
+
+    expect((await screen.findByText('Anticipo exigido')).nextSibling).toHaveTextContent('$ 999.000')
+    expect(screen.getByText(/Falta para el anticipo/)).toHaveTextContent('$ 999.000')
   })
 
   it('dice si el anticipo está cubierto', async () => {
@@ -504,6 +520,25 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
     expect(await within(dialogo).findByRole('alert')).toHaveTextContent('ya está EN_CURSO')
     expect(within(dialogo).queryByRole('button', { name: 'Reintentar' })).not.toBeInTheDocument()
     expect(within(dialogo).getByRole('button', { name: 'Cancelar reserva' })).toBeDisabled()
+  })
+
+  it('si otro turno ya cambió la reserva, lo dice en palabras de recepción (DEC-94)', async () => {
+    apiCon({
+      reserva: PENDIENTE,
+      previa: () => [409, {
+        estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'Transición de reserva no permitida: CANCELADA → CANCELADA',
+        detalles: [], motivo: 'ESTADO_NO_PERMITIDO',
+      }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
+
+    const aviso = await within(dialogo).findByRole('alert')
+    expect(aviso).toHaveTextContent('Esta reserva ya cambió de estado')
+    expect(aviso).not.toHaveTextContent('Transición')
   })
 
   it('«Volver» no cancela', async () => {

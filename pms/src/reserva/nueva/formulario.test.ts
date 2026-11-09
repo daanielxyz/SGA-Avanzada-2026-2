@@ -4,6 +4,7 @@ import {
   estimarExtras,
   mensajeDeCreada,
   OCUPANTE_VACIO,
+  salidasDelRechazo,
   textoCobroVehiculo,
   validarEstancia,
   validarPersonas,
@@ -128,5 +129,18 @@ describe('estimarExtras (DEC-89)', () => {
     expect(textoCobroVehiculo(10000, 'carro', 'POR_NOCHE')).toBe('$ 10.000 por carro cada noche.')
     expect(textoCobroVehiculo(5000, 'moto', 'POR_ESTADIA')).toBe('$ 5.000 por moto por estancia.')
     expect(textoCobroVehiculo(0, 'moto', 'POR_NOCHE')).toBe('Sin costo.')
+  })
+})
+
+describe('salidasDelRechazo (DEC-94)', () => {
+  it('ofrece solo lo que puede resolver cada rechazo', () => {
+    expect(salidasDelRechazo('NO_DISPONIBLE')).toEqual(['apartamento', 'fechas'])
+    expect(salidasDelRechazo('ESTANCIA_MINIMA')).toEqual(['fechas'])
+    expect(salidasDelRechazo('TITULAR_INVALIDO')).toEqual(['personas'])
+  })
+
+  it('sin motivo, o con uno que no conoce, ofrece todas', () => {
+    expect(salidasDelRechazo(null)).toEqual(['apartamento', 'fechas', 'personas'])
+    expect(salidasDelRechazo('OTRO_NUEVO')).toEqual(['apartamento', 'fechas', 'personas'])
   })
 })

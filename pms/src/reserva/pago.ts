@@ -1,5 +1,5 @@
-// Cuentas del bloque Pago. La API no trae el monto del anticipo ni separa los cargos en el saldo, así que se calculan
-// aquí para mostrarlos; quien decide al confirmar sigue siendo el backend (RES-15).
+// Cuentas del bloque Pago. El anticipo lo manda la API (DEC-95); lo que no separa son los cargos del saldo, así que esos
+// se calculan aquí para mostrarlos.
 import type { Alojamiento } from '../api/alojamiento'
 import type { Cargo, Folio } from '../api/folio'
 import type { EstadoReserva, Reserva } from '../api/reservas'
@@ -10,20 +10,9 @@ export function estaTerminada(estado: EstadoReserva): boolean {
   return TERMINALES.includes(estado)
 }
 
-/** La estancia más sus extras (parqueadero y mascotas), congelados al crear: la base del anticipo (DEC-89). */
-export function valorConExtras(reserva: Reserva): number {
-  return reserva.valor.total + reserva.extras.total
-}
-
-/** El anticipo se calcula sobre la estancia y sus extras, sin los consumos, y se redondea al peso (RES-15 · DEC-89). */
-export function anticipoExigido(reserva: Reserva, pct: number): number {
-  return Math.round((valorConExtras(reserva) * pct) / 100)
-}
-
-/** Lo que falta pagar para cubrir el anticipo; cero si ya está cubierto o no se exige. */
-export function faltaParaAnticipo(reserva: Reserva, folio: Folio, alojamiento: Alojamiento): number {
-  const exigido = anticipoExigido(reserva, alojamiento.parametros.anticipoPct)
-  return Math.max(0, exigido - folio.totalPagado)
+/** Lo que falta pagar para cubrir el anticipo que manda la API; cero si ya está cubierto o no se exige. */
+export function faltaParaAnticipo(reserva: Reserva, folio: Folio): number {
+  return Math.max(0, (reserva.anticipoExigido ?? 0) - folio.totalPagado)
 }
 
 function sumaDe(cargos: Cargo[], tipo: string): number {
@@ -60,8 +49,8 @@ export function mediosDeRecepcion(alojamiento: Alojamiento): string[] {
 }
 
 /** Cuánto se propone pagar: lo que falta del anticipo y, si ya está cubierto, lo que queda por pagar. */
-export function montoSugerido(reserva: Reserva, folio: Folio, alojamiento: Alojamiento): number {
-  const falta = faltaParaAnticipo(reserva, folio, alojamiento)
+export function montoSugerido(reserva: Reserva, folio: Folio): number {
+  const falta = faltaParaAnticipo(reserva, folio)
   if (falta > 0) return falta
   return folio.situacionSaldo === 'PENDIENTE' ? folio.saldo : 0
 }

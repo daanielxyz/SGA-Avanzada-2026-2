@@ -8,7 +8,7 @@ import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
 import { cantidad, dinero, fechaCorta, noches } from '../../formato'
 import Campo from './Campo'
-import { estimarExtras, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
+import { estimarExtras, salidasDelRechazo, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
 
 export interface DatosLlegada {
   hora: string
@@ -26,11 +26,11 @@ function textoAnticipo(extras: { parqueadero: number; mascotas: number }): strin
 /** Solo dígitos, hasta tres, para los campos de cantidad. */
 const soloCantidad = (texto: string) => texto.replace(/\D/g, '').slice(0, 3)
 
-type Falla = { mensaje: string; detalles: string[]; regla: boolean }
+type Falla = { mensaje: string; detalles: string[]; regla: boolean; motivo: string | null }
 
 function fallaDe(causa: unknown): Falla {
-  if (causa instanceof ErrorApi) return { mensaje: causa.message, detalles: causa.detalles, regla: causa.estado === 409 }
-  return { mensaje: 'Inténtalo de nuevo en un momento.', detalles: [], regla: false }
+  if (causa instanceof ErrorApi) return { mensaje: causa.message, detalles: causa.detalles, regla: causa.estado === 409, motivo: causa.motivo }
+  return { mensaje: 'Inténtalo de nuevo en un momento.', detalles: [], regla: false, motivo: null }
 }
 
 /**
@@ -157,13 +157,28 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
     }
   }
 
-  const salidas = (
-    <div className="paso-salidas">
-      <button type="button" className="boton" onClick={alElegirOtro}>Elegir otro apartamento</button>
-      <button type="button" className="boton boton-secundario" onClick={alCambiarFechas}>Cambiar fechas</button>
-      <button type="button" className="boton boton-secundario" onClick={alRevisarPersonas}>Revisar personas</button>
-    </div>
-  )
+  // Solo las salidas que pueden resolver el rechazo; la primera es la principal
+  const salidas = (motivo: string | null) => {
+    const textos = {
+      apartamento: { texto: 'Elegir otro apartamento', alPulsar: alElegirOtro },
+      fechas: { texto: 'Cambiar fechas', alPulsar: alCambiarFechas },
+      personas: { texto: 'Revisar personas', alPulsar: alRevisarPersonas },
+    }
+    return (
+      <div className="paso-salidas">
+        {salidasDelRechazo(motivo).map((salida, indice) => (
+          <button
+            key={salida}
+            type="button"
+            className={indice === 0 ? 'boton' : 'boton boton-secundario'}
+            onClick={textos[salida].alPulsar}
+          >
+            {textos[salida].texto}
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <form className="paso" onSubmit={enviar} noValidate>
@@ -175,7 +190,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
             mensaje={`${falla.mensaje.replace(/\.?$/, '.')} No se perdió ningún dato.`}
             detalles={falla.detalles}
           />
-          {falla.regla && salidas}
+          {falla.regla && salidas(falla.motivo)}
         </div>
       )}
 
@@ -218,7 +233,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
                 </button>
               }
             />
-            {fallaCotizar.regla && salidas}
+            {fallaCotizar.regla && salidas(fallaCotizar.motivo)}
           </div>
         )}
         {valor && <TablaDesglose idTitulo="titulo-desglose-nueva" desglose={valor.desglose} total={valor.total} />}

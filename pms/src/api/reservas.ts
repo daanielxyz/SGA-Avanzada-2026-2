@@ -60,6 +60,8 @@ export interface Reserva {
   mascotas: number
   /** Lo que suman parqueadero y mascotas, congelado al crear y aparte de `valor` (DEC-89). */
   extras: { parqueadero: number; mascotas: number; total: number }
+  /** Lo que debe estar pagado para confirmarla (RES-15 · DEC-95). Solo llega en el detalle; en el listado es `null`. */
+  anticipoExigido: number | null
   /** Solo llega al crear: el titular ya tenía una cuenta con otro correo. */
   avisoCuenta?: string | null
 }
