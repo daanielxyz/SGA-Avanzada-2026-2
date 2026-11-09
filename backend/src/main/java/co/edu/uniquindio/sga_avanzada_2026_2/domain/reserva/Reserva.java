@@ -394,11 +394,15 @@ public class Reserva {
      * {@code RegistroLlegadaDomainService} (RN-11 · REG-04 · D-02).
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
+     * @param pagado        lo pagado hasta ahora en el folio (BL-22)
+     * @param motivoSinPago por qué entra sin haber pagado la estancia y sus extras; se ignora si ya están pagados
      * @throws ReglaDominioException si no está CONFIRMADA (RN-10 · REG-01) o aún no es la fecha de entrada
      *                               (RN-10 · REG-02)
      */
-    public void registrarLlegada(RegistroId id, LocalDateTime ahora, UsuarioId autor) {
+    public void registrarLlegada(RegistroId id, LocalDateTime ahora, UsuarioId autor, Dinero pagado,
+                                 String motivoSinPago) {
         Objects.requireNonNull(ahora, "ahora");
+        Objects.requireNonNull(pagado, "pagado");
         if (estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
                     "Solo se registra la llegada de una reserva CONFIRMADA; está " + estado);
@@ -408,7 +412,13 @@ public class Reserva {
                     "No se puede registrar la llegada antes de la fecha de entrada "
                     + estancia.entrada());
         }
-        registros.add(new Registro(id, ahora, autor, false, null));
+        boolean pagada = !pagado.esMenorQue(valorConExtras());
+        if (!pagada && (motivoSinPago == null || motivoSinPago.isBlank())) { // BL-22
+            throw new ReglaDominioException(MotivoRechazo.ESTANCIA_SIN_PAGAR,
+                    "La estancia y sus extras valen " + valorConExtras().monto() + " y hay pagado " + pagado.monto()
+                    + ": cóbrela o registre por qué entra sin pagar");
+        }
+        registros.add(new Registro(id, ahora, autor, false, null, pagada ? null : motivoSinPago));
         estado = EstadoReserva.EN_CURSO;
     }
 
@@ -443,7 +453,8 @@ public class Reserva {
         if (fechaHoraCorrecta.isAfter(ahora)) {
             throw new ReglaDominioException("La llegada corregida no puede ser posterior a este momento");
         }
-        Registro corregido = new Registro(nuevoId, fechaHoraCorrecta, autor, false, motivo);
+        Registro corregido = new Registro(nuevoId, fechaHoraCorrecta, autor, false, motivo,
+                registro().motivoSinPago());
         registro().anular();
         registros.add(corregido);
     }

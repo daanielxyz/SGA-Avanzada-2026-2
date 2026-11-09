@@ -100,10 +100,13 @@ public abstract class PruebaRestDeReservas {
         return codigo;
     }
 
+    /** Cuerpo para registrar una llegada sin haber pagado toda la estancia (BL-22). */
+    protected static final String ENTRA_SIN_PAGAR = "{\"motivoSinPago\": \"Cuenta por cobrar\"}";
+
     /** Reserva EN_CURSO: entra hoy y ya se registró su llegada. */
     protected String reservaEnCurso() throws Exception {
         String codigo = reservaConfirmada(HOY);
-        mvc.perform(put("/api/reservas/" + codigo + "/registrar-llegada")).andExpect(status().isOk());
+        enviar(put("/api/reservas/" + codigo + "/registrar-llegada"), ENTRA_SIN_PAGAR).andExpect(status().isOk());
         completarDatosTra(codigo, "OCU-1", datosTra("Ana", "FEMENINO", null)).andExpect(status().isOk());
         completarDatosTra(codigo, "OCU-2", datosTra("Luis", "MASCULINO", "1095")).andExpect(status().isOk());
         return codigo;

@@ -37,8 +37,9 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
     void deberiaRegistrarLaLlegadaYOcuparElApartamento() throws Exception {
         String codigo = reservaConfirmada(HOY);
 
-        mvc.perform(put(reserva(codigo) + "/registrar-llegada"))
+        enviar(put(reserva(codigo) + "/registrar-llegada"), ENTRA_SIN_PAGAR)
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value("Cuenta por cobrar"))
                 .andExpect(jsonPath("$.estado").value("EN_CURSO"))
                 .andExpect(jsonPath("$.apartamento").value("APT-101"))
                 .andExpect(jsonPath("$.estadoOperativo").value("OCUPADO"))
@@ -150,10 +151,27 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("BL-22")
+    void laLlegadaExigeLaEstanciaPagadaOUnMotivo() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+
+        mvc.perform(put(reserva(codigo) + "/registrar-llegada"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("ESTANCIA_SIN_PAGAR"));
+        enviar(put(reserva(codigo) + "/registrar-llegada"), "{\"motivoSinPago\": \"" + "x".repeat(501) + "\"}")
+                .andExpect(status().isBadRequest());
+
+        pagar(codigo, 280_000);
+        mvc.perform(put(reserva(codigo) + "/registrar-llegada"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value(nullValue()));
+    }
+
+    @Test
     @Tag("BL-07")
     void laSalidaEsperaLosDatosDelTraQueRecepcionCompletaPorPartes() throws Exception {
         String codigo = reservaConfirmada(HOY);
-        mvc.perform(put(reserva(codigo) + "/registrar-llegada")).andExpect(status().isOk());
+        enviar(put(reserva(codigo) + "/registrar-llegada"), ENTRA_SIN_PAGAR).andExpect(status().isOk());
         pagar(codigo, 280_000);
         mvc.perform(get(reserva(codigo)))
                 .andExpect(jsonPath("$.ocupantes[0].nombre").value("Ana Ríos"))

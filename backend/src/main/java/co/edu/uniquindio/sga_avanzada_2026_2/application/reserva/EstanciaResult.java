@@ -26,13 +26,14 @@ public record EstanciaResult(String codigo, String estado, String apartamento, S
 
     /**
      * @param motivoCorreccion solo si este registro corrige a uno anulado
+     * @param motivoSinPago    solo si entró sin haber pagado la estancia y sus extras (BL-22)
      */
     public record RegistroResult(String id, LocalDateTime fechaHora, String autor, boolean anulado,
-                                 String motivoCorreccion) {
+                                 String motivoCorreccion, String motivoSinPago) {
 
         static RegistroResult de(Registro registro) {
             return new RegistroResult(registro.id().valor(), registro.fechaHora(), registro.autor().valor(),
-                    registro.anulado(), registro.motivoCorreccion());
+                    registro.anulado(), registro.motivoCorreccion(), registro.motivoSinPago());
         }
     }
 

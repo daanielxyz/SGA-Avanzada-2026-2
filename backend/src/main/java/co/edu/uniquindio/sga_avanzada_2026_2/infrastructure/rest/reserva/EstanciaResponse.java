@@ -20,7 +20,7 @@ public record EstanciaResponse(String codigo, String estado, String apartamento,
                                BigDecimal saldo, String situacionSaldo) {
 
     public record RegistroResponse(String id, LocalDateTime fechaHora, String autor, boolean anulado,
-                                   String motivoCorreccion) {
+                                   String motivoCorreccion, String motivoSinPago) {
     }
 
     public record SalidaResponse(String id, LocalDateTime fechaHora, String autor) {
@@ -30,7 +30,7 @@ public record EstanciaResponse(String codigo, String estado, String apartamento,
         return new EstanciaResponse(r.codigo(), r.estado(), r.apartamento(), r.estadoOperativo(),
                 r.registros().stream()
                         .map(g -> new RegistroResponse(g.id(), g.fechaHora(), g.autor(), g.anulado(),
-                                g.motivoCorreccion()))
+                                g.motivoCorreccion(), g.motivoSinPago()))
                         .toList(),
                 Optional.ofNullable(r.salida())
                         .map(s -> new SalidaResponse(s.id(), s.fechaHora(), s.autor()))

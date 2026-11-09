@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 
 /**
  * Caso de uso: recepción registra la llegada del grupo (CU-21). La reserva pasa a EN_CURSO y el apartamento a
- * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee para informar el saldo.
+ * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee: lo pagado (BL-22) y el saldo.
  */
 @Service
 public class RegistrarLlegadaUseCase {
@@ -40,19 +41,22 @@ public class RegistrarLlegadaUseCase {
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException si no
      *         existe la reserva, su apartamento o su folio
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si el apartamento no
-     *         está PREPARADO (RN-11), la reserva no está CONFIRMADA o aún no es la fecha de entrada (RN-10)
+     *         está PREPARADO (RN-11), la reserva no está CONFIRMADA, aún no es la fecha de entrada (RN-10) o la
+     *         estancia no está pagada y no se dio el motivo (BL-22)
      */
     @Transactional
     public EstanciaResult ejecutar(RegistrarLlegadaCommand comando) {
         Reserva reserva = cargador.reserva(comando.codigo());
         Apartamento apartamento = cargador.apartamento(reserva.apartamentoId());
 
+        Folio folio = cargador.folioDe(reserva);
+
         registroLlegada.procesarCheckIn(reserva, apartamento, siguienteRegistro(reserva), LocalDateTime.now(reloj),
-                new UsuarioId(comando.autor()));
+                new UsuarioId(comando.autor()), folio.totalPagado(), comando.motivoSinPago());
 
         reservas.guardar(reserva);
         apartamentos.guardar(apartamento);
-        return EstanciaResult.de(reserva, apartamento, cargador.folioDe(reserva));
+        return EstanciaResult.de(reserva, apartamento, folio);
     }
 
     /** Los registros solo deben ser únicos dentro de su reserva y nunca se borran: se numeran en orden (DEC-61). */

@@ -299,6 +299,11 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarLlegadaRequest"
       responses:
         "200":
           description: OK
@@ -3242,6 +3247,13 @@ components:
           format: int32
         activa:
           type: boolean
+    RegistrarLlegadaRequest:
+      type: object
+      properties:
+        motivoSinPago:
+          type: string
+          maxLength: 500
+          minLength: 0
     RegistrarSalidaRequest:
       type: object
       properties:
@@ -3285,6 +3297,8 @@ components:
         anulado:
           type: boolean
         motivoCorreccion:
+          type: string
+        motivoSinPago:
           type: string
     SalidaResponse:
       type: object

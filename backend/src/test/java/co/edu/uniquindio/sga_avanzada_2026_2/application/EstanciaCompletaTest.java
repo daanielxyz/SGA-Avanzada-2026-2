@@ -227,7 +227,7 @@ class EstanciaCompletaTest {
         pagar(codigo, 60_000); // el 30 % de 200.000
         confirmarReserva.ejecutar(codigo);
 
-        registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION));
+        registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION, "Cuenta por cobrar"));
         completarDatos.ejecutar(new CompletarDatosOcupanteCommand(codigo, "OCU-1", "Ana", "Ríos", null, null, null,
                 "Colombiana", "FEMENINO", "Colombia", "Pereira", "Pereira", "Salento", "TURISMO_VACACIONES"));
         assertEquals("EN_CURSO", consultarReserva.ejecutar(codigo).estado());

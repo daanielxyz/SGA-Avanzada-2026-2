@@ -44,7 +44,7 @@ final class ReservaMapper {
                 jpa.getOcupantes().stream().map(ReservaMapper::ocupante).toList(),
                 jpa.getRegistros().stream()
                         .map(r -> new Registro(new RegistroId(r.getId()), r.getFechaHora(), new UsuarioId(r.getAutor()),
-                                r.isAnulado(), r.getMotivoCorreccion()))
+                                r.isAnulado(), r.getMotivoCorreccion(), r.getMotivoSinPago()))
                         .toList(),
                 jpa.getSalidaId() == null ? null : new Salida(new SalidaId(jpa.getSalidaId()),
                         jpa.getSalidaFechaHora(), new UsuarioId(jpa.getSalidaAutor())),
@@ -87,7 +87,7 @@ final class ReservaMapper {
         jpa.setMascotas(reserva.mascotas());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
-                r.autor().valor(), r.anulado(), r.motivoCorreccion())));
+                r.autor().valor(), r.anulado(), r.motivoCorreccion(), r.motivoSinPago())));
         Salida salida = reserva.salida();
         jpa.setSalidaId(salida == null ? null : salida.id().valor());
         jpa.setSalidaFechaHora(salida == null ? null : salida.fechaHora());
