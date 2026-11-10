@@ -15,6 +15,7 @@ Tarifa      (una por versión)                                                  
 PoliticaCancelacion (una por versión) ─ TramoCancelacion, Porcentaje                           →Id: alojamiento
 Alojamiento ─ ServicioAdicional(E), Ubicacion, ParametrosAlojamiento, MedioPago(catálogo), MarcaAlojamiento
 Canal  ·  ConflictoCanal  ·  EventoCanal(bitácora, solo escritura)  ·  Novedad                →Id: canal, apartamento
+NotaReserva ─ AtencionNota                                                                     →Id: reserva
 Transversales: Dinero, Noche, Documento, Correo, ids tipados.   Calculados (no se guardan): Disponibilidad, Cotizacion.
 Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo único, contraseña cifrada o nula hasta
   activarse, rol interno, teléfono, documento, fecha de nacimiento, eliminado, versión de sesiones; DEC-71),
@@ -71,6 +72,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 - **R Canal**: id · alojamientoId · nombre · tipo: CanalOrigen · referenciaCredencial (solo EXTERNO; el secreto vive en la configuración externa — DEC-47) · activo. `desactivar()` · `exigirReservasExternas()`
 - **R ConflictoCanal**: id · canalId · idExterno · apartamentoId · estanciaSolicitada · detectadoEn · motivo · estado (PENDIENTE|RESUELTO) · resueltoPor? · resueltoEn? · decision?. `registrar(…)` · `resolver(autor, decision, ahora)`
 - **R EventoCanal** (bitácora): id · canalId · operacion: OperacionCanal · sentido (ENTRANTE|SALIENTE) · fechaHora · cargaUtil · resultado: ResultadoEvento (EXITOSO, DUPLICADO, CONFLICTO, RECHAZADO, ERROR) · detalle?. Solo se crea; nunca guarda credenciales.
+- **R NotaReserva** (BL-08 · DEC-105): id (NOT-n) · reservaId · texto (≤ 500) · autor: UsuarioId · escritaEn · atencion? (VO AtencionNota: autor, fechaHora). `escribir(id, reserva, texto, autor, ahora)` (solo con la reserva activa) · `atender(reserva, autor, ahora)` (una sola vez, `YA_ATENDIDA`; solo con la reserva activa) · `atendida()`. No se edita ni se borra.
 - **R Novedad**: id · apartamentoId · descripcion · gravedad (enum cerrado) · historial: CambioEstadoNovedad[] (estado, autor, fechaHora — DEC-50). `registrar(…)` · `avanzar(autor, ahora)` · `estado()` · `autor()` · `registradaEn()` (ABIERTA→EN_REVISION→CERRADA). No se elimina, se cierra.
 - **VO Dinero**(monto: BigDecimal COP sin decimales, ≥ 0 — DEC-20) `sumar` · `restar` · `multiplicar(n)` · `porcentaje(p)` · `esMenorQue(d)`
 - **VO Documento**(tipo, número, no vacío) · **VO Correo**(formato válido, normalizado) · ids tipados (`ReservaId`, `ApartamentoId`, `FolioId`, `TitularId`, `TemporadaId`, `TarifaId`, `PoliticaId`, `CanalId`, `ConflictoId`, `NovedadId`, `UsuarioId`…)

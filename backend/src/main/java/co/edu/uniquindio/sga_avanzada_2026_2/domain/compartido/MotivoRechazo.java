@@ -44,5 +44,7 @@ public enum MotivoRechazo {
     /** DEC-98: recepción ya validó la identidad del titular; su nombre solo lo cambia el hotel. */
     IDENTIDAD_VALIDADA,
     /** BL-22: la estancia y sus extras no están pagados y no se registró por qué entra sin pagar. */
-    ESTANCIA_SIN_PAGAR
+    ESTANCIA_SIN_PAGAR,
+    /** BL-08: la nota ya se marcó como atendida; pudo hacerlo otro turno. */
+    YA_ATENDIDA
 }
