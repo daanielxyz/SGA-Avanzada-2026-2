@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CargadorReserva
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -38,13 +39,13 @@ public class RegistrarDevolucionUseCase {
      *         abonado neto (TPAG-02)
      */
     @Transactional
-    public FolioResult ejecutar(RegistrarPagoCommand comando) {
+    public FolioResult ejecutar(RegistrarDevolucionCommand comando) {
         Reserva reserva = cargador.reserva(comando.codigoReserva());
         Folio folio = cargador.folioDe(reserva);
         Alojamiento alojamiento = cargador.alojamientoDe(reserva);
 
         folio.registrarDevolucion(new MedioPago(comando.medio()), new Dinero(comando.monto()), comando.fecha(),
-                LocalDate.now(reloj), alojamiento.mediosPago());
+                LocalDate.now(reloj), alojamiento.mediosPago(), new UsuarioId(comando.autor()));
 
         folios.guardar(folio);
         return FolioResult.de(folio);

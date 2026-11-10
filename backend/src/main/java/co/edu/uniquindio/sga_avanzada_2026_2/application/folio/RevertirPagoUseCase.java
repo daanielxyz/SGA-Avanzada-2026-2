@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CargadorReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.PagoId;
@@ -38,7 +39,7 @@ public class RevertirPagoUseCase {
         Folio folio = cargador.folioDe(cargador.reserva(comando.codigoReserva()));
         LocalDate hoy = LocalDate.now(reloj);
 
-        folio.revertirPago(new PagoId(comando.pagoId()), hoy, hoy);
+        folio.revertirPago(new PagoId(comando.pagoId()), hoy, hoy, new UsuarioId(comando.autor()));
 
         folios.guardar(folio);
         return FolioResult.de(folio);

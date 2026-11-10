@@ -81,14 +81,15 @@ public class FolioController {
     public ResponseEntity<FolioResponse> registrarDevolucion(@PathVariable String codigo,
                                              @Valid @RequestBody RegistrarPagoRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(registrarDevolucion.ejecutar(solicitud.aCommand(codigo))));
+                .body(FolioResponse.de(registrarDevolucion.ejecutar(
+                        solicitud.aDevolucionCommand(codigo, usuario.id()))));
     }
 
     @PostMapping("/pagos/{id}/revertir")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<FolioResponse> revertirPago(@PathVariable String codigo, @PathVariable String id) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id))));
+                .body(FolioResponse.de(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id, usuario.id()))));
     }
 
     @PostMapping("/cargos/{id}/revertir")
@@ -96,7 +97,7 @@ public class FolioController {
     public ResponseEntity<FolioResponse> revertirCargo(@PathVariable String codigo, @PathVariable String id,
                                        @Valid @RequestBody RevertirCargoRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(revertirCargo.ejecutar(solicitud.aCommand(codigo, id))));
+                .body(FolioResponse.de(revertirCargo.ejecutar(solicitud.aCommand(codigo, id, usuario.id()))));
     }
 
     @PostMapping("/servicios")

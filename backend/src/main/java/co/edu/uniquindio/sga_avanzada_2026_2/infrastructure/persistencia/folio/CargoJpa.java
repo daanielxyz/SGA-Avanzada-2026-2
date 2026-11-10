@@ -38,4 +38,6 @@ public class CargoJpa {
 
     @Column(name = "corrige_a") // la estrategia de nombres no separa una mayúscula final
     private String corrigeA;
+
+    private String autor; // solo en una corrección hecha por una persona (DEC-100)
 }

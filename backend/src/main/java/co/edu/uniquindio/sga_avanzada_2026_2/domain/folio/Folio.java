@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 
 import java.math.BigDecimal;
@@ -110,31 +111,34 @@ public class Folio {
     public PagoId registrarPago(MedioPago medio, Dinero monto, LocalDate fecha, LocalDate hoy,
                                 Collection<MedioPago> mediosHabilitados) {
         validarMovimientoDePago(medio, fecha, hoy, mediosHabilitados);
-        return agregarPago(medio, monto, TipoPago.ABONO, fecha, null);
+        return agregarPago(medio, monto, TipoPago.ABONO, fecha, null, null);
     }
 
     /**
      * Registra una devolución como REVERSO contra el folio; el desembolso ocurre fuera del sistema (PAG-06 ·
-     * TPAG-02). La registra recepción indicando el medio por el que devuelve (DEC-43).
+     * TPAG-02). La registra recepción indicando el medio por el que devuelve (DEC-43) y queda su autor (DEC-100).
      *
-     * @throws ReglaDominioException si el folio está cerrado (FOL-06), el medio no está habilitado (MPAG-02), la
-     *                               fecha es futura (PAG-07) o el monto supera lo abonado neto (TPAG-02)
+     * @throws ReglaDominioException si falta el autor, el folio está cerrado (FOL-06), el medio no está habilitado
+     *                               (MPAG-02), la fecha es futura (PAG-07) o el monto supera lo abonado neto (TPAG-02)
      */
     public PagoId registrarDevolucion(MedioPago medio, Dinero monto, LocalDate fecha, LocalDate hoy,
-                                      Collection<MedioPago> mediosHabilitados) {
+                                      Collection<MedioPago> mediosHabilitados, UsuarioId autor) {
+        validarAutor(autor);
         validarMovimientoDePago(medio, fecha, hoy, mediosHabilitados);
         validarNoSuperaLoAbonado(monto);
-        return agregarPago(medio, monto, TipoPago.REVERSO, fecha, null);
+        return agregarPago(medio, monto, TipoPago.REVERSO, fecha, null, autor);
     }
 
     /**
      * Corrige un abono mal registrado con un REVERSO del mismo medio y monto que lo referencia (RN-16 · PAG-03 ·
-     * TPAG-02). El abono original no se edita ni se borra.
+     * TPAG-02). El abono original no se edita ni se borra y queda quién lo revirtió (DEC-100).
      *
-     * @throws ReglaDominioException si el folio está cerrado (FOL-06), el pago no existe, no es un abono, ya fue
-     *                               revertido, la fecha es futura (PAG-07) o el monto supera lo abonado neto
+     * @throws ReglaDominioException si falta el autor, el folio está cerrado (FOL-06), el pago no existe, no es un
+     *                               abono, ya fue revertido, la fecha es futura (PAG-07) o el monto supera lo
+     *                               abonado neto
      */
-    public PagoId revertirPago(PagoId pagoId, LocalDate fecha, LocalDate hoy) {
+    public PagoId revertirPago(PagoId pagoId, LocalDate fecha, LocalDate hoy, UsuarioId autor) {
+        validarAutor(autor);
         validarAbierto();
         validarFechaNoFutura(fecha, hoy);
         Pago original = pagos.stream()
@@ -149,17 +153,18 @@ public class Folio {
                     "El pago " + pagoId.valor() + " ya fue revertido");
         }
         validarNoSuperaLoAbonado(original.monto());
-        return agregarPago(original.medio(), original.monto(), TipoPago.REVERSO, fecha, pagoId);
+        return agregarPago(original.medio(), original.monto(), TipoPago.REVERSO, fecha, pagoId, autor);
     }
 
     /**
      * Corrige un cargo mal registrado con un AJUSTE del mismo valor en sentido contrario que lo referencia (RN-16 ·
-     * CAR-03 · FOL-04). El cargo original no se edita ni se borra.
+     * CAR-03 · FOL-04). El cargo original no se edita ni se borra y queda quién lo corrigió (DEC-100).
      *
-     * @throws ReglaDominioException si el folio está cerrado (CAR-07), el cargo no existe, ya fue corregido o es él
-     *                               mismo una corrección
+     * @throws ReglaDominioException si falta el autor, el folio está cerrado (CAR-07), el cargo no existe, ya fue
+     *                               corregido o es él mismo una corrección
      */
-    public CargoId revertirCargo(CargoId cargoId, String motivo, LocalDate fecha) {
+    public CargoId revertirCargo(CargoId cargoId, String motivo, LocalDate fecha, UsuarioId autor) {
+        validarAutor(autor);
         validarAbierto();
         Cargo original = cargos.stream()
                 .filter(c -> c.id().equals(cargoId))
@@ -174,7 +179,7 @@ public class Folio {
         }
         SentidoAjuste contrario = original.aumentaSaldo() ? SentidoAjuste.DISMINUYE : SentidoAjuste.AUMENTA;
         return agregar(TipoCargo.AJUSTE, "Corrección de " + cargoId.valor() + ": " + motivo, original.valor(),
-                contrario, fecha, cargoId);
+                contrario, fecha, cargoId, autor);
     }
 
     /**
@@ -287,16 +292,29 @@ public class Folio {
 
     private CargoId agregar(TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
                             CargoId corrigeA) {
+        return agregar(tipo, concepto, valor, sentido, fecha, corrigeA, null);
+    }
+
+    private CargoId agregar(TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
+                            CargoId corrigeA, UsuarioId autor) {
         validarAbierto();
         CargoId nuevo = siguienteCargo();
-        cargos.add(new Cargo(nuevo, tipo, concepto, valor, sentido, fecha, corrigeA));
+        cargos.add(new Cargo(nuevo, tipo, concepto, valor, sentido, fecha, corrigeA, autor));
         return nuevo;
     }
 
-    private PagoId agregarPago(MedioPago medio, Dinero monto, TipoPago tipo, LocalDate fecha, PagoId reversaDe) {
+    private PagoId agregarPago(MedioPago medio, Dinero monto, TipoPago tipo, LocalDate fecha, PagoId reversaDe,
+                               UsuarioId autor) {
         PagoId nuevo = new PagoId("PAG-" + (pagos.size() + 1));
-        pagos.add(new Pago(nuevo, medio, monto, tipo, fecha, reversaDe));
+        pagos.add(new Pago(nuevo, medio, monto, tipo, fecha, reversaDe, autor));
         return nuevo;
+    }
+
+    // DEC-100
+    private static void validarAutor(UsuarioId autor) {
+        if (autor == null) {
+            throw new ReglaDominioException("Corregir un movimiento o registrar una devolución requiere autor");
+        }
     }
 
     // DEC-43: ids correlativos dentro del folio; los movimientos nunca se borran, así que no se repiten

@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 
 import java.time.LocalDate;
 
@@ -19,10 +20,16 @@ public class Cargo {
     private final SentidoAjuste sentido; // solo AJUSTE
     private final LocalDate fecha;
     private final CargoId corrigeA;      // opcional: el cargo que este AJUSTE revierte
+    private final UsuarioId autor;       // solo en una corrección hecha por una persona (DEC-100)
+
+    public Cargo(CargoId id, TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
+                 CargoId corrigeA) {
+        this(id, tipo, concepto, valor, sentido, fecha, corrigeA, null);
+    }
 
     // CAR-01 · CAR-06 · TCAR-02
     public Cargo(CargoId id, TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
-                 CargoId corrigeA) {
+                 CargoId corrigeA, UsuarioId autor) {
         if (id == null || tipo == null || valor == null || fecha == null) {
             throw new ReglaDominioException("El cargo requiere id, tipo, valor y fecha");
         }
@@ -46,6 +53,7 @@ public class Cargo {
         this.sentido = sentido;
         this.fecha = fecha;
         this.corrigeA = corrigeA;
+        this.autor = autor;
     }
 
     /**
@@ -85,6 +93,10 @@ public class Cargo {
 
     public CargoId corrigeA() {
         return corrigeA;
+    }
+
+    public UsuarioId autor() {
+        return autor;
     }
 
     @Override

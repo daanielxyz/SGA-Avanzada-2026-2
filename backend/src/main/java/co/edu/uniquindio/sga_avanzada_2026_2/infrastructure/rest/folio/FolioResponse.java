@@ -21,17 +21,19 @@ public record FolioResponse(String id, String reserva, List<CargoResponse> cargo
     /**
      * @param sentido  solo en un AJUSTE: AUMENTA o DISMINUYE
      * @param corrigeA el cargo que este AJUSTE revierte, si corrige alguno
+     * @param autor    quien hizo la corrección; vacío en los demás cargos (DEC-100)
      */
     public record CargoResponse(String id, String tipo, String concepto, BigDecimal valor, String sentido,
-                                LocalDate fecha, String corrigeA) {
+                                LocalDate fecha, String corrigeA, String autor) {
     }
 
     /**
      * @param tipo      ABONO o REVERSO
      * @param reversaDe el abono que este REVERSO corrige; vacío en una devolución
+     * @param autor     quien hizo el REVERSO o la devolución; vacío en un abono (DEC-100)
      */
     public record PagoResponse(String id, String medio, BigDecimal monto, String tipo, LocalDate fecha,
-                               String reversaDe) {
+                               String reversaDe, String autor) {
     }
 
     public record AutorizacionResponse(String autor, String motivo, LocalDateTime fechaHora) {
@@ -41,10 +43,11 @@ public record FolioResponse(String id, String reserva, List<CargoResponse> cargo
         return new FolioResponse(r.id(), r.reserva(),
                 r.cargos().stream()
                         .map(c -> new CargoResponse(c.id(), c.tipo(), c.concepto(), c.valor(), c.sentido(), c.fecha(),
-                                c.corrigeA()))
+                                c.corrigeA(), c.autor()))
                         .toList(),
                 r.pagos().stream()
-                        .map(p -> new PagoResponse(p.id(), p.medio(), p.monto(), p.tipo(), p.fecha(), p.reversaDe()))
+                        .map(p -> new PagoResponse(p.id(), p.medio(), p.monto(), p.tipo(), p.fecha(), p.reversaDe(),
+                                p.autor()))
                         .toList(),
                 r.totalPagado(), r.saldo(), r.situacionSaldo(), r.cerrado(),
                 Optional.ofNullable(r.autorizacion())

@@ -25,27 +25,31 @@ public record FolioResult(String id, String reserva, List<CargoResult> cargos, L
     /**
      * @param sentido  solo en un AJUSTE: AUMENTA o DISMINUYE
      * @param corrigeA el cargo que este AJUSTE revierte, si corrige alguno
+     * @param autor    quien hizo la corrección; vacío en los demás cargos (DEC-100)
      */
     public record CargoResult(String id, String tipo, String concepto, BigDecimal valor, String sentido,
-                              LocalDate fecha, String corrigeA) {
+                              LocalDate fecha, String corrigeA, String autor) {
 
         static CargoResult de(Cargo cargo) {
             return new CargoResult(cargo.id().valor(), cargo.tipo().name(), cargo.concepto(), cargo.valor().monto(),
                     Optional.ofNullable(cargo.sentido()).map(Enum::name).orElse(null), cargo.fecha(),
-                    Optional.ofNullable(cargo.corrigeA()).map(c -> c.valor()).orElse(null));
+                    Optional.ofNullable(cargo.corrigeA()).map(c -> c.valor()).orElse(null),
+                    Optional.ofNullable(cargo.autor()).map(a -> a.valor()).orElse(null));
         }
     }
 
     /**
      * @param tipo      ABONO o REVERSO
      * @param reversaDe el abono que este REVERSO corrige; vacío en una devolución
+     * @param autor     quien hizo el REVERSO o la devolución; vacío en un abono (DEC-100)
      */
     public record PagoResult(String id, String medio, BigDecimal monto, String tipo, LocalDate fecha,
-                             String reversaDe) {
+                             String reversaDe, String autor) {
 
         static PagoResult de(Pago pago) {
             return new PagoResult(pago.id().valor(), pago.medio().nombre(), pago.monto().monto(), pago.tipo().name(),
-                    pago.fecha(), Optional.ofNullable(pago.reversaDe()).map(p -> p.valor()).orElse(null));
+                    pago.fecha(), Optional.ofNullable(pago.reversaDe()).map(p -> p.valor()).orElse(null),
+                    Optional.ofNullable(pago.autor()).map(a -> a.valor()).orElse(null));
         }
     }
 
