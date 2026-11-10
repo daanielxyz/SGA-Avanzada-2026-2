@@ -75,9 +75,13 @@ public class EstanciaController {
         return ReservaResponse.de(completarDatosOcupante.ejecutar(solicitud.aCommand(codigo, ocupanteId)));
     }
 
+    /** Sin cuerpo exige la estancia pagada; con motivo, recepción la deja entrar sin pagar y queda registrado (BL-22). */
     @PutMapping("/registrar-llegada")
-    public EstanciaResponse registrarLlegada(@PathVariable String codigo) {
-        return EstanciaResponse.de(registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, usuario.id())));
+    public EstanciaResponse registrarLlegada(@PathVariable String codigo,
+                                             @Valid @RequestBody(required = false) RegistrarLlegadaRequest solicitud) {
+        String motivo = Optional.ofNullable(solicitud).map(RegistrarLlegadaRequest::motivoSinPago).orElse(null);
+        return EstanciaResponse.de(
+                registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, usuario.id(), motivo)));
     }
 
     @PutMapping("/corregir-registro")

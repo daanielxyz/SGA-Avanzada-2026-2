@@ -49,7 +49,7 @@ class CargoServicioDomainServiceTest {
 
     private static Reserva enCurso() {
         Reserva reserva = confirmada("RES-2026-00001", 10, 12);
-        reserva.registrarLlegada(new RegistroId("REG-1"), dia(10).atTime(15, 30), new UsuarioId("USR-1"));
+        reserva.registrarLlegada(new RegistroId("REG-1"), dia(10).atTime(15, 30), new UsuarioId("USR-1"), reserva.valorConExtras(), null);
         return reserva;
     }
 

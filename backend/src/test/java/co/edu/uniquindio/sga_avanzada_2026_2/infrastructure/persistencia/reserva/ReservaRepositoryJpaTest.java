@@ -146,11 +146,13 @@ class ReservaRepositoryJpaTest {
 
         Reserva reserva = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
         reserva.confirmar(new Porcentaje(0), Dinero.CERO);
-        reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION, Dinero.CERO,
+                "Cuenta por cobrar");
         repositorio.guardar(reserva);
         sincronizar();
 
         Reserva cargada = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
+        assertEquals("Cuenta por cobrar", cargada.registro().motivoSinPago()); // BL-22
         assertEquals(EstadoReserva.EN_CURSO, cargada.estado());
         assertEquals(new RegistroId("REG-1"), cargada.registro().id());
         assertNull(cargada.salida());
