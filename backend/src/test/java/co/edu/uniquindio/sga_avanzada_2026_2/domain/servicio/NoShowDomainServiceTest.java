@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Saldo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.SituacionSaldo;
@@ -33,6 +34,8 @@ class NoShowDomainServiceTest {
     private static final PoliticaCancelacion RETIENE_EL_ANTICIPO =
             politicaCongelada(porcentaje(BaseRetencion.ANTICIPO_EXIGIDO, 100));
 
+    private static final UsuarioId AUTOR = new UsuarioId("USR-1");
+
     private final NoShowDomainService servicio = new NoShowDomainService();
 
     @Test
@@ -44,11 +47,12 @@ class NoShowDomainServiceTest {
         pagar(folio, 60_000);
 
         Dinero retenido = servicio.declararNoShow(reserva, folio, RETIENE_EL_ANTICIPO, parametros(3),
-                dia(10).atTime(22, 0));
+                dia(10).atTime(22, 0), AUTOR);
 
         assertEquals(Dinero.de(60_000), retenido);
         assertEquals(EstadoReserva.NO_SHOW, reserva.estado());
         assertEquals(new Saldo(Dinero.CERO, SituacionSaldo.AL_DIA), folio.saldo());
+        assertEquals(AUTOR, reserva.declaracionNoShow().autor());
     }
 
     @Test
@@ -58,7 +62,7 @@ class NoShowDomainServiceTest {
         Folio folio = folioDe(reserva);
 
         assertThrows(ReglaDominioException.class, () -> servicio.declararNoShow(reserva, folio,
-                RETIENE_EL_ANTICIPO, parametros(3), dia(10).atTime(21, 59)));
+                RETIENE_EL_ANTICIPO, parametros(3), dia(10).atTime(21, 59), AUTOR));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
         assertEquals(1, folio.cargos().size());
     }
@@ -89,7 +93,7 @@ class NoShowDomainServiceTest {
 
         SimulacionCancelacion simulacion = simular(reserva, folio, 22);
         Dinero retenido = servicio.declararNoShow(reserva, folio, RETIENE_EL_ANTICIPO, parametros(3),
-                dia(10).atTime(22, 0));
+                dia(10).atTime(22, 0), AUTOR);
 
         assertEquals(retenido, simulacion.retenido());
         assertEquals(folio.saldo(), simulacion.saldo());

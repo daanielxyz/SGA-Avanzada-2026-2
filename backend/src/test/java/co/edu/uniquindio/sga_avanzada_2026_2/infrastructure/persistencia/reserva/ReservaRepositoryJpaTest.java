@@ -19,6 +19,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DeclaracionNoShow;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Salida;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.SalidaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.LineaCotizacion;
@@ -193,6 +195,31 @@ class ReservaRepositoryJpaTest {
                 .toList();
 
         assertEquals(List.of("RES-2026-00002"), enElRango); // la del 10 al 12 ya no ocupa la noche del 12
+    }
+
+    @Test
+    @Tag("BL-25")
+    void deberiaGuardarQuienDeclaroElNoShowYDejarVacioElDeLosAnteriores() {
+        LocalDateTime momento = LocalDateTime.of(2026, 12, 12, 23, 5);
+        repositorio.guardar(reservaNoShow("RES-2026-00001", new DeclaracionNoShow(RECEPCION, momento)));
+        repositorio.guardar(reservaNoShow("RES-2026-00002", null));
+        sincronizar();
+
+        assertEquals(new DeclaracionNoShow(RECEPCION, momento),
+                repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow().declaracionNoShow());
+        assertNull(repositorio.buscarPorCodigo(new ReservaId("RES-2026-00002")).orElseThrow().declaracionNoShow());
+    }
+
+    private static Reserva reservaNoShow(String codigo, DeclaracionNoShow declaracion) {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 12, 12), LocalDate.of(2026, 12, 13));
+        List<LineaCotizacion> desglose = estancia.noches().stream()
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .toList();
+        return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-301"), new TitularId("TIT-1"), estancia,
+                EstadoReserva.NO_SHOW, CanalOrigen.DIRECTO, null, null,
+                List.of(new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 1, 1), null, null)),
+                List.of(), null, null, Dinero.de(100_000), desglose, new PoliticaId("POL-1"),
+                LocalDateTime.of(2026, 12, 1, 9, 0), 0, 0, 0, Extras.NINGUNO, declaracion);
     }
 
     @Test

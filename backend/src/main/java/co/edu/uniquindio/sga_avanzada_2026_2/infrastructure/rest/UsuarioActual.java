@@ -38,6 +38,11 @@ public class UsuarioActual {
         }
     }
 
+    /** Para lo que, dentro de un endpoint que comparten varios roles, el huésped no debe ver (DEC-103). */
+    public boolean esHuesped() {
+        return tieneRol(Rol.HUESPED);
+    }
+
     /**
      * Para lo que, dentro de un endpoint que comparten varios roles, solo puede el administrador (DEC-22).
      *

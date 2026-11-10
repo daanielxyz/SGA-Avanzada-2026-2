@@ -84,7 +84,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 | TarificacionDomainService | `calcularValorEstancia(apartamentoId, estancia, ocupantes, umbral, calendario, tarifas)` → Cotizacion | RN-05, 06 | CalendarioTemporadas + Tarifa + Ocupantes |
 | CancelacionDomainService | `procesarCancelacion(reserva, folio, politica, parametros, ahora)` → retenido · `procesarVencimiento(reserva, folio, parametros, ahora)` (sin penalidad) | RN-08, 12, 13, 21 | Reserva + Folio + Política (DEC-44, DEC-57) |
 | PagoEnLineaDomainService | `montoACobrar(reserva, folio, alojamiento, ahora)` · `registrar(reserva, folio, alojamiento, monto, ahora)` · `exigirHabilitado(alojamiento)` | RN-08, 09, 21, RES-15, MPAG-02 | Reserva + Folio + Alojamiento (DEC-70) |
-| NoShowDomainService | `declararNoShow(reserva, folio, politica, parametros, ahora)` → retenido | RN-08, 12, 13, POL-06 | Reserva + Folio + Política (DEC-44) |
+| NoShowDomainService | `declararNoShow(reserva, folio, politica, parametros, ahora, autor)` → retenido | RN-08, 12, 13, POL-06 | Reserva + Folio + Política (DEC-44) |
 | RegistroLlegadaDomainService | `procesarCheckIn(reserva, apartamento, registroId, ahora, autor)` | RN-08, 10, 11, REG-04 | Reserva + Apartamento (D-02) |
 | SalidaOperativaDomainService | `procesarCheckOut(reserva, apartamento, folio, salidaId, ahora, autor[, autorizacion])` | RN-08, 17, SAL-02, 03 | Reserva + Apartamento + Folio (D-02, DEC-46) |
 | CargoServicioDomainService | `cargar(reserva, folio, alojamiento, servicioId, hoy)` → CargoId | CAR-05, SERV-02, SERV-04 | Reserva + Folio + Alojamiento; solo cambia el Folio (DEC-60) |

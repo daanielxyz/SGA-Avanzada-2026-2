@@ -47,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -416,12 +417,19 @@ class CicloReservaTest {
                 List.of(new MedioPago("EFECTIVO")));
         new ConfirmarReservaUseCase(cargador, reservas).ejecutar(codigo);
 
-        assertThrows(ReglaDominioException.class, () -> noShowEn(ENTRADA.atTime(21, 0)).ejecutar(codigo));
-        CancelacionResult resultado = noShowEn(ENTRADA.atTime(22, 30)).ejecutar(codigo);
+        DeclararNoShowCommand declarar = new DeclararNoShowCommand(codigo, "USR-1");
+        assertThrows(ReglaDominioException.class, () -> noShowEn(ENTRADA.atTime(21, 0)).ejecutar(declarar));
+        CancelacionResult resultado = noShowEn(ENTRADA.atTime(22, 30)).ejecutar(declarar);
 
         assertEquals("NO_SHOW", resultado.estado());
         assertEquals(0, BigDecimal.valueOf(600_000).compareTo(resultado.retenido()));
         assertEquals(0, BigDecimal.valueOf(420_000).compareTo(resultado.saldo()));
+
+        // BL-25: el detalle dice quién lo declaró, con su nombre
+        ConsultarReservaConTitularUseCase detalle = new ConsultarReservaConTitularUseCase(cargador, titulares,
+                id -> Optional.of("Laura Gómez"));
+        assertEquals(new ReservaConTitularResult.DeclaracionNoShowResult("USR-1", "Laura Gómez",
+                ENTRADA.atTime(22, 30)), detalle.ejecutar(codigo).noShow());
     }
 
     private DeclararNoShowUseCase noShowEn(LocalDateTime momento) {

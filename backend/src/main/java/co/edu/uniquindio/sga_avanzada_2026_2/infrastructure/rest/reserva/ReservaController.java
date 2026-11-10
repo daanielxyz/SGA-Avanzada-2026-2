@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReserv
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarPagoPendienteUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CrearReservaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShowCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DeclararNoShowUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.IndicarHoraLlegadaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasUseCase;
@@ -113,7 +114,7 @@ public class ReservaController {
     public ReservaResponse consultar(@PathVariable String codigo) {
         ReservaConTitularResult consulta = consultarConTitular.ejecutar(codigo);
         usuario.exigirAccesoA(consulta.reserva().titularId());
-        return ReservaResponse.de(consulta);
+        return ReservaResponse.de(usuario.esHuesped() ? consulta.sinDatosDelPersonal() : consulta);
     }
 
     @PutMapping("/{codigo}/modificar")
@@ -162,6 +163,6 @@ public class ReservaController {
 
     @PutMapping("/{codigo}/no-show")
     public CancelacionResponse declararNoShow(@PathVariable String codigo) {
-        return CancelacionResponse.de(declararNoShow.ejecutar(codigo));
+        return CancelacionResponse.de(declararNoShow.ejecutar(new DeclararNoShowCommand(codigo, usuario.id())));
     }
 }

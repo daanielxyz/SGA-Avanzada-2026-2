@@ -3541,6 +3541,18 @@ components:
           format: int32
         titularNombre:
           type: string
+        noShow:
+          "$ref": "#/components/schemas/DeclaracionNoShowResponse"
+    DeclaracionNoShowResponse:
+      type: object
+      properties:
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
     HoraLlegadaRequest:
       type: object
       properties:
@@ -3560,6 +3572,8 @@ components:
       type: object
       properties:
         autor:
+          type: string
+        autorNombre:
           type: string
         motivo:
           type: string
@@ -3585,6 +3599,8 @@ components:
         corrigeA:
           type: string
         autor:
+          type: string
+        autorNombre:
           type: string
     FolioResponse:
       type: object
@@ -3628,6 +3644,8 @@ components:
         reversaDe:
           type: string
         autor:
+          type: string
+        autorNombre:
           type: string
     DatosOcupanteRequest:
       type: object

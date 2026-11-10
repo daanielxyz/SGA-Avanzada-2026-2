@@ -1,5 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.acceso;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos.NotificadorLocal;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos.NotificadorLocal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos.NotificadorLocal.Mensaje;
@@ -17,6 +21,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +53,9 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
 
     @Autowired
     private NotificadorLocal notificador;
+
+    @Autowired
+    private ReservaRepository reservas;
 
     private MockMvc cliente;
 
@@ -135,6 +143,43 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.estado").value("CANCELADA"));
         cliente.perform(con(token, get("/api/canales"))).andExpect(status().isForbidden());
         cliente.perform(con(token, put("/api/reservas/" + deEva + "/confirmar"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Tag("DEC-103")
+    @Tag("USU-04")
+    void soloElPersonalVeQuienRevirtioUnPago() throws Exception {
+        String codigo = reservaPendiente(HOY.plusDays(5));
+        pagar(codigo, 50_000);
+        mvc.perform(post("/api/reservas/" + codigo + "/folio/pagos/PAG-1/revertir"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pagos[1].autor").value("USR-900"));
+
+        cliente.perform(con(entrarComoHuesped(ANA, "1094"), get("/api/reservas/" + codigo + "/folio")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pagos", hasSize(2)))
+                .andExpect(jsonPath("$.pagos[1].autor").value(nullValue()))
+                .andExpect(jsonPath("$.pagos[1].autorNombre").value(nullValue()));
+        mvc.perform(get("/api/reservas/" + codigo + "/folio"))
+                .andExpect(jsonPath("$.pagos[1].autor").value("USR-900"));
+    }
+
+    @Test
+    @Tag("BL-25")
+    @Tag("USU-04")
+    void soloElPersonalVeQuienDeclaroElNoShow() throws Exception {
+        String codigo = reservaConfirmada(HOY.plusDays(5));
+        Reserva reserva = reservas.buscarPorCodigo(new ReservaId(codigo)).orElseThrow();
+        reserva.declararNoShow(HOY.plusDays(5).atTime(23, 0), LocalTime.of(22, 0), new UsuarioId("USR-900"));
+        reservas.guardar(reserva);
+
+        cliente.perform(con(entrarComoHuesped(ANA, "1094"), get("/api/reservas/" + codigo)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("NO_SHOW"))
+                .andExpect(jsonPath("$.noShow").value(nullValue()));
+        mvc.perform(get("/api/reservas/" + codigo))
+                .andExpect(jsonPath("$.noShow.autor").value("USR-900"))
+                .andExpect(jsonPath("$.noShow.fechaHora").exists());
     }
 
     @Test

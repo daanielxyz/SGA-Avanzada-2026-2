@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.CobroParqueadero
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ModoPagoEnLinea;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -172,7 +173,7 @@ class ExtrasDeReservaTest {
         pagar(folio, 250_000);
 
         Dinero retenido = new NoShowDomainService().declararNoShow(reserva, folio, politicaCongelada(), parametros(3),
-                dia(10).atTime(23, 0));
+                dia(10).atTime(23, 0), new UsuarioId("USR-1"));
 
         assertEquals(Dinero.de(200_000), retenido); // el 100 % de la estancia
         assertEquals(new Saldo(Dinero.de(50_000), SituacionSaldo.A_FAVOR), folio.saldo());
