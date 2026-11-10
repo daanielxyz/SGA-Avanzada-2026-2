@@ -437,10 +437,35 @@ class ReservaTest {
     void deberiaDeclararNoShowDesdeLaHoraLimiteDelDiaDeEntrada() {
         Reserva reserva = confirmada();
 
-        reserva.declararNoShow(ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW), HORA_LIMITE_NO_SHOW);
+        reserva.declararNoShow(ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW), HORA_LIMITE_NO_SHOW, RECEPCION);
 
         assertEquals(EstadoReserva.NO_SHOW, reserva.estado());
         assertFalse(reserva.estaActiva());
+    }
+
+    @Test
+    @Tag("BL-25")
+    void elNoShowGuardaQuienLoDeclaroYElMomentoReal() {
+        Reserva reserva = confirmada();
+        LocalDateTime momento = ESTANCIA.entrada().plusDays(1).atTime(8, 15);
+
+        reserva.declararNoShow(momento, HORA_LIMITE_NO_SHOW, RECEPCION);
+
+        assertEquals(new DeclaracionNoShow(RECEPCION, momento), reserva.declaracionNoShow());
+    }
+
+    @Test
+    @Tag("BL-25")
+    void sinAutorElNoShowNoSeDeclaraYSiRechazaNoQuedaDeclaracion() {
+        Reserva reserva = confirmada();
+        LocalDateTime momento = ESTANCIA.entrada().atTime(23, 0);
+
+        assertThrows(ReglaDominioException.class, () -> reserva.declararNoShow(momento, HORA_LIMITE_NO_SHOW, null));
+        assertThrows(ReglaDominioException.class,
+                () -> reserva.declararNoShow(momento.minusHours(10), HORA_LIMITE_NO_SHOW, RECEPCION));
+
+        assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
+        assertNull(reserva.declaracionNoShow());
     }
 
     @Test
@@ -449,9 +474,10 @@ class ReservaTest {
         Reserva reserva = confirmada();
         LocalDateTime antes = ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW).minusMinutes(1);
 
-        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO, () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW));
+        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO,
+                () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW, RECEPCION));
         assertThrows(ReglaDominioException.class, () -> pendiente()
-                .declararNoShow(ESTANCIA.entrada().atTime(23, 0), HORA_LIMITE_NO_SHOW));
+                .declararNoShow(ESTANCIA.entrada().atTime(23, 0), HORA_LIMITE_NO_SHOW, RECEPCION));
     }
 
     @Test

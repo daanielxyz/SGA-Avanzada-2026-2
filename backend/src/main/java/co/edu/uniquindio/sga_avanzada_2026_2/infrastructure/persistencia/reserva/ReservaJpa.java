@@ -70,6 +70,9 @@ public class ReservaJpa {
     private LocalDateTime salidaFechaHora;
     private String salidaAutor;
 
+    private String noShowAutor;
+    private LocalDateTime noShowFechaHora;
+
     @Version
     private Long version;
 
