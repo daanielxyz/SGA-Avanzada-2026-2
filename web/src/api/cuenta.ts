@@ -20,11 +20,27 @@ export interface SesionIniciada {
 /** `CuentaResponse`: los datos del titular. */
 export interface Cuenta {
   id: string
+  /** Nombres y apellidos juntos. */
   nombre: string
+  /** En las cuentas de antes de DEC-98 trae el nombre completo y los apellidos llegan vacíos. */
+  nombres: string
+  primerApellido: string | null
+  segundoApellido: string | null
   tipoDocumento: TipoDocumento
   numeroDocumento: string
   correo: string | null
   telefono: string | null
+  /** El hotel ya validó su identidad en persona: el nombre solo lo cambia recepción (DEC-98). */
+  validado: boolean
+}
+
+/** `ActualizarCuentaRequest`: con la identidad validada, un nombre distinto responde 409 (DEC-98). */
+export interface CambioCuenta {
+  nombres: string
+  /** Los apellidos juntos, como los escribe en «Apellidos». */
+  primerApellido?: string
+  segundoApellido?: string
+  telefono: string
 }
 
 export type EstadoReserva = 'PENDIENTE' | 'CONFIRMADA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA' | 'NO_SHOW'
@@ -87,6 +103,31 @@ export function cerrarSesion() {
 
 export function consultarCuenta() {
   return pedir<Cuenta>('/api/mi-cuenta', { conSesion: true })
+}
+
+export function actualizarCuenta(cambio: CambioCuenta) {
+  return pedir<Cuenta>('/api/mi-cuenta', { method: 'PUT', cuerpo: cambio, conSesion: true })
+}
+
+type Documento = Pick<Cuenta, 'tipoDocumento' | 'numeroDocumento'>
+
+/**
+ * Paso 1 del cambio de correo (DEC-69): el PIN llega al teléfono y al correo actual, no al nuevo, para que quien
+ * tome el celular desbloqueado no se quede con la cuenta. La respuesta es la misma exista o no la cuenta.
+ */
+export function solicitarCambioCorreo({ tipoDocumento, numeroDocumento }: Documento, nuevoCorreo: string) {
+  return pedir<{ mensaje: string }>('/api/auth/huesped/cambio-correo', {
+    method: 'POST',
+    cuerpo: { tipoDocumento, numeroDocumento, nuevoCorreo },
+  })
+}
+
+/** Paso 2: con el PIN, el correo de la cuenta queda cambiado. */
+export function confirmarCambioCorreo({ tipoDocumento, numeroDocumento }: Documento, pin: string) {
+  return pedir<{ mensaje: string }>('/api/auth/huesped/cambio-correo', {
+    method: 'PUT',
+    cuerpo: { tipoDocumento, numeroDocumento, pin },
+  })
 }
 
 export function listarMisReservas(pagina = 0) {

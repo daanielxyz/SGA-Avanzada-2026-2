@@ -5,24 +5,30 @@ import { pedir } from './cliente'
 
 export type TipoDocumento = 'CC' | 'CE' | 'PASAPORTE' | 'TI'
 
+/** Nombres aparte de los apellidos (BL-07 · DEC-98). La web envía los apellidos juntos en `primerApellido`. */
+export interface NombreSeparado {
+  nombres: string
+  primerApellido: string
+  segundoApellido?: string
+}
+
 export interface SolicitudReserva {
   apartamento: string
   entrada: string
   salida: string
-  titular: {
-    nombre: string
+  /** Quien reserva y tiene la cuenta; puede no alojarse (DEC-97), pero la web lo pone de primero en el grupo. */
+  titular: NombreSeparado & {
     tipoDocumento: TipoDocumento
     numeroDocumento: string
     correo: string
     telefono: string
   }
-  /** El grupo completo, incluido el titular con su documento (TIT-01). */
-  ocupantes: {
-    nombre: string
+  /** Quienes se alojan; el backend toma como huésped principal al primer mayor de edad (DEC-97). */
+  ocupantes: (NombreSeparado & {
     fechaNacimiento: string
     tipoDocumento?: TipoDocumento
     numeroDocumento?: string
-  }[]
+  })[]
   carros: number
   motos: number
   mascotas: number
