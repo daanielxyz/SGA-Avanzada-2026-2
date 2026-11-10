@@ -19,6 +19,7 @@ public enum SerieCodigo {
     CONFLICTO("CON"),
     EVENTO("EVT"),
     NOVEDAD("NOV"),
+    NOTA("NOT"),
     USUARIO("USR"),
     RESERVA("RES") {
         @Override

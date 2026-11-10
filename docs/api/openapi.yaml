@@ -2620,6 +2620,94 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/notas:
+    get:
+      tags:
+        - nota-reserva-controller
+      operationId: listarNotas
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - nota-reserva-controller
+      operationId: escribirNota
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/EscribirNotaRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/notas/{id}/atender:
+    put:
+      tags:
+        - nota-reserva-controller
+      operationId: atenderNota
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/ocupacion:
     get:
       tags:
@@ -3567,6 +3655,43 @@ components:
           type: string
         noShow:
           "$ref": "#/components/schemas/DeclaracionNoShowResponse"
+    EscribirNotaRequest:
+      type: object
+      properties:
+        texto:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - texto
+    NotaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        texto:
+          type: string
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        escritaEn:
+          type: string
+          format: date-time
+        atendida:
+          type: boolean
+        atencion:
+          "$ref": "#/components/schemas/AtencionResponse"
+    AtencionResponse:
+      type: object
+      properties:
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
     DeclaracionNoShowResponse:
       type: object
       properties:
