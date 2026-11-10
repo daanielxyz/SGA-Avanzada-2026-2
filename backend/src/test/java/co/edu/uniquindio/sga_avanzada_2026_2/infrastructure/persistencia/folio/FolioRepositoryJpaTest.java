@@ -23,6 +23,7 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,6 +59,24 @@ class FolioRepositoryJpaTest {
     private void sincronizar() {
         entityManager.flush();
         entityManager.clear();
+    }
+
+    @Test
+    @Tag("BL-09")
+    void deberiaCargarVariosFoliosDeUnaVezConSusMovimientos() {
+        ReservaId otra = new ReservaId("RES-2026-00002");
+        Folio folio = folio("FOL-1", RESERVA);
+        folio.registrarPago(TARJETA, Dinero.de(100_000), HOY, HOY, Set.of(TARJETA));
+        repositorio.guardar(folio);
+        repositorio.guardar(folio("FOL-2", otra));
+        repositorio.guardar(folio("FOL-3", new ReservaId("RES-2026-00003")));
+        sincronizar();
+
+        List<Folio> cargados = repositorio.buscarPorReservas(List.of(RESERVA, otra));
+
+        assertEquals(2, cargados.size());
+        assertEquals(Dinero.de(100_000), cargados.stream().filter(f -> f.reservaId().equals(RESERVA)).findFirst()
+                .orElseThrow().totalPagado());
     }
 
     @Test

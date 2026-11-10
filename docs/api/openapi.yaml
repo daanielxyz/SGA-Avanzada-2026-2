@@ -5277,6 +5277,14 @@ components:
           type: string
         titularId:
           type: string
+        titularNombre:
+          type: string
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+        totalPagado:
+          type: number
     PaginaResponseConflictoResponse:
       type: object
       properties:

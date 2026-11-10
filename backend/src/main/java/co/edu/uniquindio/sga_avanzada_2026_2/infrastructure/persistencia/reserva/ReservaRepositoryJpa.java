@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.reserv
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
@@ -29,6 +30,10 @@ import java.util.Optional;
 public class ReservaRepositoryJpa implements ReservaRepository {
 
     // EDO-03: la lista sale del enum, no se repite aquí
+    // BL-09: el tablero también muestra a quien ya salió y a quien no se presentó
+    private static final List<EstadoReserva> DEL_TABLERO = List.of(EstadoReserva.PENDIENTE,
+            EstadoReserva.CONFIRMADA, EstadoReserva.EN_CURSO, EstadoReserva.FINALIZADA, EstadoReserva.NO_SHOW);
+
     private static final List<EstadoReserva> ACTIVOS = Arrays.stream(EstadoReserva.values())
             .filter(EstadoReserva::retieneDisponibilidad)
             .toList();
@@ -69,6 +74,14 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     @Transactional(readOnly = true)
     public List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId) {
         return filas.findByApartamentoCodigoAndEstadoIn(apartamentoId.valor(), ACTIVOS).stream()
+                .map(ReservaMapper::aDominio)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Reserva> buscarDelTablero(ApartamentoId apartamentoId, Estancia rango) {
+        return filas.buscarEnRango(apartamentoId.valor(), DEL_TABLERO, rango.entrada(), rango.salida()).stream()
                 .map(ReservaMapper::aDominio)
                 .toList();
     }
