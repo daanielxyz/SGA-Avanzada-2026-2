@@ -107,7 +107,7 @@ function abrir(grupo = 'adultos=1&ninos=0', entrada = ENTRADA) {
 
 function llenarTitular() {
   fireEvent.change(screen.getByLabelText('Nombres'), { target: { value: 'Ana' } })
-  fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: 'Ríos' } })
+  fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: ' Ríos Gómez ' } })
   fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
   fireEvent.change(screen.getByLabelText('Número de documento'), { target: { value: '1094' } })
   fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'ana@correo.co' } })
@@ -229,7 +229,7 @@ describe('Reservar', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('envía el titular como primer ocupante con su documento, el nombre unido, el prefijo y los extras', async () => {
+  it('envía el titular como primer ocupante con su documento, los apellidos juntos aparte del nombre, el prefijo y los extras', async () => {
     const fetch = laApi()
     abrir()
     await screen.findByLabelText('Nombres')
@@ -244,9 +244,10 @@ describe('Reservar', () => {
       apartamento: 'APT-101',
       entrada: ENTRADA,
       salida: SALIDA,
-      titular: { nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co',
-        telefono: '+573001234567' },
-      ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-05-01', tipoDocumento: 'CC', numeroDocumento: '1094' }],
+      titular: { nombres: 'Ana', primerApellido: 'Ríos Gómez', tipoDocumento: 'CC', numeroDocumento: '1094',
+        correo: 'ana@correo.co', telefono: '+573001234567' },
+      ocupantes: [{ nombres: 'Ana', primerApellido: 'Ríos Gómez', fechaNacimiento: '1990-05-01', tipoDocumento: 'CC',
+        numeroDocumento: '1094' }],
       carros: 1,
       motos: 0,
       mascotas: 1,
