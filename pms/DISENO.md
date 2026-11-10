@@ -55,7 +55,7 @@ El PMS lleva la marca del **producto**, Meridian, «software de gestión hoteler
 ## Mockups
 Están en `pms/diseno/mockups/`, solo en cada clon: la carpeta `pms/diseno/` está en `pms/.gitignore`, así que quien los necesite los pide al equipo. Trae las imágenes para verlos y los `.html` con `base.css` para leer los valores exactos (no se abren solos en el navegador). Los datos son de ejemplo. Lo que se resolvió al compararlos con el contrato (paso 3):
 - **Menú**: manda `src/navegacion.ts`. El mockup de Administración trae «Tarifas», «Temporadas» y «Políticas» y no trae «Canales de venta».
-- **Política en el detalle**: la reserva solo trae `politicaId` y `/api/politicas` queda para el administrador (`PermisosPorRol`), así que se muestra el id, no «Flexible · 48 h». Para mostrar el texto hace falta un cambio de backend.
+- **Política en el detalle**: la reserva trae `politicaId` y, con él, recepción pide `GET /api/politicas/{id}` (DEC-104) para mostrar los tramos y la penalización del no-show. El historial de versiones y publicar siguen siendo del administrador.
 - **Agregado al detalle**: `vehiculos` y `mascotas` (el mockup no los tiene).
 - **Corregido en el listado**: a 1280 px la tabla del mockup se salía y cortaba la columna Total, así que Entrada y Salida van en una sola columna, para dejarle espacio al nombre del titular. Cuando el contenido mide menos de 960 px (ventanas medianas o con zoom) se muestran las tarjetas del celular, en dos columnas desde 640 px; las fechas son campos de fecha; el filtro de apartamento trae su lista de `GET /api/apartamentos`; en el celular, los filtros activos con ✕ miden 44 px.
 
@@ -118,7 +118,7 @@ Mientras se hacía el frontend del sprint 2, los mockups se adaptaron al backend
 | 4 | Decir qué noche se vendió | **No**: con el `motivo` del #3 basta | El aviso habla de las fechas de la reserva |
 | 5 | Cupos libres del parqueadero por fechas | **Se pospone** | Muestra el error de la API al crear |
 | 6 | Monto del anticipo exigido en la respuesta | **Hecho** (DEC-95) | Usa `anticipoExigido` de la API, sin calcularlo |
-| 7 | Nombre legible de la política para recepción | **Sí**: permitir a recepción `GET /api/politicas/{id}` en `PermisosPorRol` | Muestra `politicaId` |
+| 7 | Nombre legible de la política para recepción | **Hecho** (DEC-104): `GET /api/politicas/{id}` para recepción | Pide la versión con `politicaId` |
 | 8 | Mensajes de los 409 pensados para recepción | **Baja prioridad**: el #3 resuelve la mayoría. Pasa al sprint 4 (entrevista) | Los muestra tal cual |
 | 9 | Reservar a nombre de alguien que no se aloja | **Lo hace el equipo web** (decisión del 8 nov). **Sí, cambia la regla TIT-01**: el titular puede no alojarse (una madre reserva para sus hijos y sigue siendo la titular). Al crear, el titular ya no tiene que estar entre los ocupantes ni ser facturable. Además, en el registro de llegada recepción puede cambiar el titular si quien reservó no debe serlo. Es del núcleo (dominio, `CrearReservaUseCase`, reservas del portal y de canales, pruebas de TIT-01 y `docs/MODELO.md`); en el PMS se quita la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` y la casilla «El titular también se aloja» queda solo para llenar el primer ocupante | Hay que escribir el documento del titular en uno de los ocupantes |
 | 10 | Nombre de la temporada en el desglose | **Sí**, en el sprint 4: le cede el lugar a la entrevista | Muestra el id (`TEM-1`) |
