@@ -34,4 +34,22 @@ public class NoShowDomainService {
         return CancelacionDomainService.liquidar(reserva, folio, politica.penalizacionNoShow(), parametros,
                 "no-show", ahora);
     }
+
+    /**
+     * Calcula lo que dejaría {@link #declararNoShow} en este momento, sin cambiar nada, para que recepción lo sepa
+     * antes de declararlo (DEC-102).
+     *
+     * @param politica   la versión congelada en la reserva
+     * @param parametros hora límite de no-show y porcentaje de anticipo del alojamiento
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si la política no es la congelada (RN-13), el folio es de otra reserva (FOL-02) o
+     *                               está cerrado (CAR-07), la reserva no está CONFIRMADA (RN-08) o aún no llega la
+     *                               hora límite (RES-16)
+     */
+    public SimulacionCancelacion simularNoShow(Reserva reserva, Folio folio, PoliticaCancelacion politica,
+                                               ParametrosAlojamiento parametros, LocalDateTime ahora) {
+        CancelacionDomainService.validarCorrespondencia(reserva, folio, politica);
+        reserva.exigirNoShowDeclarable(ahora, parametros.horaLimiteNoShow());
+        return CancelacionDomainService.simular(reserva, folio, politica.penalizacionNoShow(), parametros);
+    }
 }

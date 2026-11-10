@@ -52,8 +52,7 @@ public class CancelacionDomainService {
                                                     ParametrosAlojamiento parametros, LocalDateTime ahora) {
         validarCorrespondencia(reserva, folio, politica);
         reserva.exigirCancelable();
-        Dinero retenido = retencion(reserva, folio, penalizacionAl(ahora, reserva, politica, parametros), parametros);
-        return new SimulacionCancelacion(retenido, folio.saldoSiSeLiquida(reserva.valorConExtras(), retenido));
+        return simular(reserva, folio, penalizacionAl(ahora, reserva, politica, parametros), parametros);
     }
 
     // RN-13 · POL-05: el tramo sale de las horas que faltan para la entrada
@@ -126,6 +125,13 @@ public class CancelacionDomainService {
         folio.liquidarPenalidad(reserva.valorTotal(), retenido, motivo, ahora.toLocalDate());
         folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
         return retenido;
+    }
+
+    // DEC-91 · DEC-102: la misma cuenta de liquidar, sin registrar nada
+    static SimulacionCancelacion simular(Reserva reserva, Folio folio, Penalizacion penalizacion,
+                                         ParametrosAlojamiento parametros) {
+        Dinero retenido = retencion(reserva, folio, penalizacion, parametros);
+        return new SimulacionCancelacion(retenido, folio.saldoSiSeLiquida(reserva.valorConExtras(), retenido));
     }
 
     private static Dinero retencion(Reserva reserva, Folio folio, Penalizacion penalizacion,

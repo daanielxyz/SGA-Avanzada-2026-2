@@ -193,4 +193,17 @@ class ReservaControllerTest extends PruebaRestDeReservas {
         mvc.perform(get("/api/reservas/" + codigo))
                 .andExpect(jsonPath("$.estado").value("CONFIRMADA"));
     }
+
+    @Test
+    @Tag("RES-16")
+    @Tag("DEC-102")
+    void laSimulacionDelNoShowNoProcedeAntesDelDiaDeEntrada() throws Exception {
+        String codigo = reservaConfirmada(ENTRADA);
+
+        mvc.perform(get("/api/reservas/" + codigo + "/no-show"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("ANTES_DE_TIEMPO"));
+        mvc.perform(get("/api/reservas/RES-2026-99999/no-show"))
+                .andExpect(status().isNotFound());
+    }
 }

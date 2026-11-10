@@ -341,6 +341,18 @@ public class Reserva {
      * @throws ReglaDominioException si no está CONFIRMADA (RN-08) o aún no llega la hora límite (RES-16)
      */
     public void declararNoShow(LocalDateTime ahora, LocalTime horaLimite) {
+        exigirNoShowDeclarable(ahora, horaLimite);
+        estado = EstadoReserva.NO_SHOW;
+    }
+
+    /**
+     * RN-08 · RES-16: revisa que ya se pueda declarar el no-show, sin cambiar la reserva (DEC-102).
+     *
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @param horaLimite {@code ParametrosAlojamiento.horaLimiteNoShow}
+     * @throws ReglaDominioException si no está CONFIRMADA (RN-08) o aún no llega la hora límite (RES-16)
+     */
+    public void exigirNoShowDeclarable(LocalDateTime ahora, LocalTime horaLimite) {
         Objects.requireNonNull(ahora, "ahora");
         Objects.requireNonNull(horaLimite, "horaLimite");
         validarTransicion(EstadoReserva.NO_SHOW);
@@ -349,7 +361,6 @@ public class Reserva {
             throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
                     "El no-show solo puede declararse desde " + limite);
         }
-        estado = EstadoReserva.NO_SHOW;
     }
 
     /**

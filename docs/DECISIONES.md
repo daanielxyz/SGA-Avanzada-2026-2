@@ -367,3 +367,7 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - **Lo que cambia**: el tablero también trae las reservas FINALIZADA y NO_SHOW que tocan el rango, para mostrar quién ya salió y que recepción sepa quién no se presentó. Las canceladas siguen sin llegar. La disponibilidad no cambia: sigue contando solo las activas.
   - **Las noches de un no-show están libres** y se pueden volver a vender, así que su barra puede cruzarse con la de otra reserva sin que sea una doble venta. El PMS la dibuja apagada y en el último carril.
   - **Consultas**: se pagina primero y se traen folios y titulares de una vez por página, para que el tablero no haga varias consultas por reserva.
+- **DEC-102 · Saber cuánto se retiene antes de declarar el no-show** (`feature/nucleo/simulacion-no-show`, #1b de la auditoría del PMS). Sin migración.
+  - **Contrato, solo se agrega**: `GET /api/reservas/{codigo}/no-show` responde `SimulacionCancelacionResponse` (`retenido`, `saldo`, `situacionSaldo`), el mismo de DEC-91, sin cambiar nada, con la política congelada y la misma regla del no-show real.
+  - **Cuándo responde**: 409 si la reserva no está CONFIRMADA (`ESTADO_NO_PERMITIDO`) o si aún no llega la hora límite (`ANTES_DE_TIEMPO`, RES-16), como la declaración real. Por eso el PMS lo pide al abrir el diálogo, cuando el botón ya está habilitado.
+  - **Acceso**: recepción y administración, porque el no-show lo declara el personal. El huésped recibe 403, a diferencia de la simulación de cancelar. No cambia `PermisosPorRol`: ya lo cubre `/api/reservas/**`.
