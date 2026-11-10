@@ -22,11 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Caso de uso: recepción cambia fechas, ocupantes o apartamento de una reserva que no ha iniciado (CU-17 · RN-14).
- * Recalcula con las tarifas vigentes hoy (TAR-06) y registra la diferencia como ajuste en el folio, en la misma
- * transacción (DEC-59). La política congelada no cambia.
+ * Caso de uso: recepción cambia fechas, ocupantes, apartamento, vehículos o mascotas de una reserva que no ha iniciado
+ * (CU-17 · RN-14 · BL-23). Recalcula con las tarifas vigentes hoy (TAR-06) y registra la diferencia como ajuste en el
+ * folio, en la misma transacción (DEC-59). La política congelada no cambia.
  */
 @Service
 public class ModificarReservaUseCase {
@@ -59,7 +60,7 @@ public class ModificarReservaUseCase {
      *         existe la reserva, su folio, su titular o el apartamento destino
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la reserva ya
      *         inició o terminó, el destino no está disponible sin contar esta reserva (RN-14), falta una tarifa
-     *         (RN-05) o los nuevos datos violan una regla de creación (RN-02 · RN-04 · OCU-02 · RP-01)
+     *         (RN-05) o los nuevos datos violan una regla de creación (RN-02 · RN-04 · OCU-02 · RP-01 · RP-02 · RP-03)
      */
     @Transactional
     public ReservaResult ejecutar(ModificarReservaCommand comando) {
@@ -73,6 +74,10 @@ public class ModificarReservaUseCase {
         Estancia estancia = new Estancia(comando.entrada(), comando.salida());
         List<Ocupante> ocupantes = OcupanteCommand.aDominio(comando.ocupantes());
         Dinero valorAnterior = reserva.valorConExtras();
+        // BL-23: lo que no llega en el comando se conserva
+        int carros = Optional.ofNullable(comando.carros()).orElse(reserva.carros());
+        int motos = Optional.ofNullable(comando.motos()).orElse(reserva.motos());
+        int mascotas = Optional.ofNullable(comando.mascotas()).orElse(reserva.mascotas());
 
         disponibilidad.verificarParaModificar(reserva, destino, estancia, ocupantes.size(),
                 reservas.buscarActivasPorApartamento(destino.codigo()), parametros).exigir();
@@ -81,12 +86,14 @@ public class ModificarReservaUseCase {
                 tarifas.buscarVigentesPorApartamento(destino.codigo(), hoy));
         reserva.modificar(estancia, ocupantes, destino.codigo(), cotizacion, destino.capacidad(),
                 calendario.estanciaMinimaPara(estancia), cargador.titular(reserva.titularId()), hoy);
-        // RP-02: las nuevas fechas también deben caber en el parqueadero
-        cupoParqueadero.exigirCupo(estancia, reserva.vehiculos(), reservas.buscarActivasConVehiculos(), reserva,
+        // RP-03 · DEC-93: las mascotas, contra el límite del apartamento destino
+        parametros.exigirMascotas(mascotas, destino);
+        // RP-02: los vehículos y las nuevas fechas también deben caber en el parqueadero
+        cupoParqueadero.exigirCupo(estancia, carros + motos, reservas.buscarActivasConVehiculos(), reserva,
                 parametros.cupoParqueadero());
-        // DEC-89: modificar recalcula también los extras, porque el parqueadero puede cobrarse por noche
-        reserva.declararExtras(reserva.carros(), reserva.motos(), reserva.mascotas(), parametros.calcularExtras(
-                reserva.carros(), reserva.motos(), reserva.mascotas(), estancia.noches().size()));
+        // DEC-89 · BL-23: modificar recalcula los extras, porque el parqueadero puede cobrarse por noche
+        reserva.declararExtras(carros, motos, mascotas,
+                parametros.calcularExtras(carros, motos, mascotas, estancia.noches().size()));
         folio.ajustarPorModificacion(valorAnterior, reserva.valorConExtras(), hoy);
 
         reservas.guardar(reserva);
