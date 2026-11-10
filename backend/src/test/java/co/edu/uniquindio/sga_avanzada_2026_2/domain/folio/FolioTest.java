@@ -280,6 +280,38 @@ class FolioTest {
     }
 
     @Test
+    @Tag("BL-12")
+    @Tag("CAR-05")
+    void variasUnidadesDelMismoServicioVanEnUnSoloCargoQueSeCorrigeEntero() {
+        Folio folio = folio();
+
+        CargoId aguas = folio.agregarServicioAdicional("Agua", Dinero.de(3_000), 2, HOY);
+
+        Cargo cargo = folio.cargos().getLast();
+        assertEquals(aguas, cargo.id());
+        assertEquals(2, cargo.cantidad());
+        assertEquals(Dinero.de(6_000), cargo.valor());
+        assertEquals(saldo(406_000, SituacionSaldo.PENDIENTE), folio.saldo());
+
+        folio.revertirCargo(aguas, "Era una sola", HOY, AUTOR);
+        assertEquals(Dinero.de(6_000), folio.cargos().getLast().valor());
+        assertEquals(saldo(400_000, SituacionSaldo.PENDIENTE), folio.saldo());
+    }
+
+    @Test
+    @Tag("BL-12")
+    void laCantidadEsAlMenosUnoYSoloUnServicioLlevaMasDeUna() {
+        Folio folio = folio();
+
+        assertThrows(ReglaDominioException.class,
+                () -> folio.agregarServicioAdicional("Agua", Dinero.de(3_000), 0, HOY));
+        assertEquals(1, folio.cargos().size());
+        assertEquals(1, folio.cargos().getFirst().cantidad());
+        assertThrows(ReglaDominioException.class, () -> new Cargo(new CargoId("CAR-9"), TipoCargo.HOSPEDAJE,
+                "Alojamiento", Dinero.de(100_000), null, HOY, null, null, 2));
+    }
+
+    @Test
     @Tag("CAR-06")
     void soloUnAjusteLlevaSentidoYTodoCargoEsPositivo() {
         CargoId id = new CargoId("CAR-1");

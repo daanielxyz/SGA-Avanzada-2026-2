@@ -21,15 +21,21 @@ public class Cargo {
     private final LocalDate fecha;
     private final CargoId corrigeA;      // opcional: el cargo que este AJUSTE revierte
     private final UsuarioId autor;       // solo en una corrección hecha por una persona (DEC-100)
+    private final int cantidad;          // > 1 solo en un servicio adicional («dos aguas», BL-12); el valor es el total
 
     public Cargo(CargoId id, TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
                  CargoId corrigeA) {
         this(id, tipo, concepto, valor, sentido, fecha, corrigeA, null);
     }
 
-    // CAR-01 · CAR-06 · TCAR-02
     public Cargo(CargoId id, TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
                  CargoId corrigeA, UsuarioId autor) {
+        this(id, tipo, concepto, valor, sentido, fecha, corrigeA, autor, 1);
+    }
+
+    // CAR-01 · CAR-06 · TCAR-02 · BL-12
+    public Cargo(CargoId id, TipoCargo tipo, String concepto, Dinero valor, SentidoAjuste sentido, LocalDate fecha,
+                 CargoId corrigeA, UsuarioId autor, int cantidad) {
         if (id == null || tipo == null || valor == null || fecha == null) {
             throw new ReglaDominioException("El cargo requiere id, tipo, valor y fecha");
         }
@@ -46,6 +52,9 @@ public class Cargo {
         if (!esAjuste && corrigeA != null) {
             throw new ReglaDominioException("Solo un AJUSTE puede corregir otro cargo");
         }
+        if (cantidad < 1 || (cantidad > 1 && tipo != TipoCargo.SERVICIO_ADICIONAL)) {
+            throw new ReglaDominioException("La cantidad es al menos 1, y solo un servicio adicional lleva más de una");
+        }
         this.id = id;
         this.tipo = tipo;
         this.concepto = concepto.trim();
@@ -54,6 +63,12 @@ public class Cargo {
         this.fecha = fecha;
         this.corrigeA = corrigeA;
         this.autor = autor;
+        this.cantidad = cantidad;
+    }
+
+    /** Cuántas unidades cobra; el valor ya es el total (BL-12). */
+    public int cantidad() {
+        return cantidad;
     }
 
     /**

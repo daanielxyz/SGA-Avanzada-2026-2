@@ -70,6 +70,25 @@ public class Folio {
     }
 
     /**
+     * Agrega en un solo cargo varias unidades del mismo servicio («dos aguas»): el valor es el unitario del momento
+     * por la cantidad, y queda congelado (CAR-05 · BL-12). Se corrige entero, como cualquier cargo (CAR-03).
+     *
+     * @param valorUnitario el valor del servicio en el catálogo, ahora
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07), el valor no es positivo (CAR-06) o la
+     *                               cantidad es menor que 1
+     */
+    public CargoId agregarServicioAdicional(String concepto, Dinero valorUnitario, int cantidad, LocalDate fecha) {
+        if (cantidad < 1) {
+            throw new ReglaDominioException("La cantidad del consumo debe ser al menos 1");
+        }
+        validarAbierto();
+        CargoId nuevo = siguienteCargo();
+        cargos.add(new Cargo(nuevo, TipoCargo.SERVICIO_ADICIONAL, concepto, valorUnitario.multiplicar(cantidad), null,
+                fecha, null, null, cantidad));
+        return nuevo;
+    }
+
+    /**
      * Carga lo que la reserva suma por parqueadero y mascotas; lo que no cuesta no genera cargo (RP-02 · RP-03 ·
      * DEC-89).
      *
