@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -84,6 +85,27 @@ class PoliticaControllerTest {
         mvc.perform(get("/api/politicas/vigente"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.version").value(2));
+    }
+
+    @Test
+    @Tag("RN-13")
+    @Tag("DEC-104")
+    void deberiaConsultarUnaVersionAnteriorPorSuIdAunqueYaNoSeaLaVigente() throws Exception {
+        publicar(NUEVA).andExpect(status().isCreated());
+
+        mvc.perform(get("/api/politicas/" + AlojamientoDePrueba.POLITICA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(AlojamientoDePrueba.POLITICA))
+                .andExpect(jsonPath("$.version").value(1))
+                .andExpect(jsonPath("$.penalizacionNoShow.porcentaje").value(100));
+    }
+
+    @Test
+    @Tag("DEC-104")
+    void deberiaResponder404SiLaPoliticaNoExiste() throws Exception {
+        mvc.perform(get("/api/politicas/POL-99999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("NO_ENCONTRADO"));
     }
 
     @Test

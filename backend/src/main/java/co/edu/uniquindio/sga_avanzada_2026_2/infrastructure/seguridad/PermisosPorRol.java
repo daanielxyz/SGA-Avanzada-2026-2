@@ -73,6 +73,9 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/corregir-registro").hasRole(ADMINISTRADOR)
                 .requestMatchers("/api/reservas/**", "/api/titulares/**", "/api/ocupacion")
                 .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
+                // Recepción lee la política congelada en la reserva y la vigente; publicar y ver el historial de
+                // versiones es del administrador (RN-13 · DEC-104)
+                .requestMatchers(HttpMethod.GET, "/api/politicas/{id}").hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
 
                 // El personal y su propia cuenta (CU-03 · CU-04); gestionar a los demás es del administrador
                 .requestMatchers("/api/usuarios/perfil", "/api/usuarios/perfil/**")
