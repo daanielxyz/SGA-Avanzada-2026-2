@@ -178,6 +178,31 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 
 **Cómo se hace cada pantalla**: mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio. Los consumos se suman netos de sus reversos y cualquier cargo se puede revertir o corregir (ver «Corregir cargos en el folio»).
 
+## Sprint 3: folio (`feature/pms/folio`)
+Lista sacada del contrato (9 nov). Los mockups son borradores y se llaman `S3…`, como los del sprint 2. El folio tiene ruta propia, `/reservas/{codigo}/folio`, y se abre con «Ver folio» desde el bloque Pago del detalle.
+
+| # | Pantalla | Endpoint | Qué manda en cada estado |
+|---|---|---|---|
+| 1 | **Folio**: resumen, cargos y pagos | `GET …/folio` | Cargando; 404; error con «Reintentar»; sin consumos; abierto; cerrado, sin acciones y con su autorización si la hubo |
+| 2 | **Cargar consumo** | `POST …/folio/servicios` | Solo con la reserva EN_CURSO y el folio abierto. Lista: `serviciosAdicionales` de `GET /api/alojamiento`, activos y con `generaCargo`. `cantidad` de 1 a 99 (DEC-107) |
+| 3 | **Revertir cargo** | `POST …/folio/cargos/{id}/revertir` | Motivo obligatorio, hasta 170 caracteres. No se ofrece en un AJUSTE que corrige otro ni en un cargo ya corregido |
+| 4 | **Corregir consumo** | Revertir y luego cargar | Solo en `SERVICIO_ADICIONAL` que siga en el catálogo. Si se abandona después de revertir, el cargo queda revertido y se avisa |
+| 5 | **Registrar pago** | `POST …/folio/pagos` | Ya existe: se reutiliza `FormularioPago` |
+| 6 | **Revertir pago** | `POST …/folio/pagos/{id}/revertir` | Solo en un ABONO sin revertir. Es una confirmación: la API no recibe motivo |
+| 7 | **Registrar devolución** | `POST …/folio/devoluciones` | Mismos campos del pago. Propone el saldo si está A_FAVOR. No supera lo abonado neto |
+| 8 | **Cerrar folio** | `PUT …/folio/cerrar` | Solo en reservas CANCELADA o NO_SHOW: en EN_CURSO lo cierra la salida. Con saldo, solo el administrador, con motivo |
+| 9 | **Registrar salida** | `PUT …/registrar-salida` | Solo EN_CURSO. Deshabilitada con la lista de `datosTraFaltantes`. Con saldo, solo el administrador, con motivo; recepción ve qué falta cobrar o devolver |
+
+Lo que el contrato no da o da distinto a lo planeado:
+- **Cantidad (BL-12)**: hecha en DEC-107. Un solo cargo con `cantidad` y `valor` ya total; el concepto no la trae, así que la pantalla muestra «Desayuno × 2». Se corrige entero: «Corregir» revierte el cargo y propone el mismo servicio y cantidad.
+- **Corregir el hospedaje**: la decisión del 7 nov dice que se puede corregir cualquier cargo, pero solo se puede cargar de nuevo un servicio del catálogo. Hospedaje, parqueadero, mascotas y penalidad se pueden revertir y no volver a cargar desde el folio; su valor se cambia modificando la reserva, que deja el ajuste (RN-14). **Por decidir.**
+- **Valor del consumo**: sale del catálogo y no llega en el Request, así que «Corregir» cambia el servicio o la cantidad, no el valor.
+- **Autor de reversos y devoluciones (#12)**: hecho en DEC-100 y DEC-103. `autorNombre` llega en las correcciones, los reversos de pago, las devoluciones y la autorización de cierre; los abonos y los ajustes automáticos no lo traen. Si es nulo (persona eliminada o movimiento anterior a V23), se muestra `autor` o nada.
+- **Motivo del reverso de un cargo**: no tiene campo propio; va en el concepto («Corrección de CAR-3: motivo»).
+- **Devolución y reverso de pago**: un REVERSO no se revierte (la devolución equivocada se compensa con un abono). `reversaDe` vacío distingue la devolución del reverso de un abono.
+- **Movimientos**: traen fecha, sin hora; se muestran en el orden en que llegan.
+- **Datos del TRA**: la salida los exige, pero se llenan en el registro de llegada, que es la tarea siguiente; hasta entonces la pantalla solo lista lo que falta.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.
