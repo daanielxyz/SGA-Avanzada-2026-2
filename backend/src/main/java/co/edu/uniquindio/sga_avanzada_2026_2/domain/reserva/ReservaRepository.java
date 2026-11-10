@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 
@@ -23,6 +24,13 @@ public interface ReservaRepository {
      * disponibilidad, bloqueo y baja.
      */
     List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId);
+
+    /**
+     * Reservas del apartamento que el tablero dibuja en ese rango: las activas, las FINALIZADA, para ver quién ya
+     * salió, y las NO_SHOW, para que recepción sepa quién no se presentó (CU-24 · BL-09 · DEC-101). Las noches de un
+     * no-show están libres: pueden cruzarse con otra reserva.
+     */
+    List<Reserva> buscarDelTablero(ApartamentoId apartamentoId, Estancia rango);
 
     /** Reservas PENDIENTE, CONFIRMADA o EN_CURSO que declararon vehículos: ocupan el parqueadero (RP-02). */
     List<Reserva> buscarActivasConVehiculos();

@@ -200,7 +200,10 @@ class DatosDePruebaYApiTest {
                 .andExpect(jsonPath("$.contenido[0].bloqueos", hasSize(1)));
         como("recepcion.demo@example.com", get("/api/ocupacion").param("desde", hoy.toString())
                 .param("hasta", hoy.plusDays(1).toString()).param("apartamento", "APT-103"), null)
-                .andExpect(jsonPath("$.contenido[0].reservas[0].estado").value("EN_CURSO"));
+                .andExpect(jsonPath("$.contenido[0].reservas[0].estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.contenido[0].reservas[0].titularNombre").isNotEmpty())
+                .andExpect(jsonPath("$.contenido[0].reservas[0].situacionSaldo").isNotEmpty())
+                .andExpect(jsonPath("$.contenido[0].reservas[0].totalPagado").isNumber());
         mvc.perform(get("/api/ocupacion").param("desde", hoy.toString()).param("hasta", hoy.plusDays(1).toString()))
                 .andExpect(status().isUnauthorized());
         como("servicio.demo@example.com", get("/api/ocupacion").param("desde", hoy.toString())

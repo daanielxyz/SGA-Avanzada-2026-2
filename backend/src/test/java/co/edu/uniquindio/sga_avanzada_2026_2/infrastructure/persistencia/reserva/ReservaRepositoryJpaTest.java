@@ -174,6 +174,45 @@ class ReservaRepositoryJpaTest {
     }
 
     @Test
+    @Tag("BL-09")
+    void elTableroTraeLasActivasYLasFinalizadasQueTocanElRango() {
+        repositorio.guardar(pendiente("RES-2026-00001", 10, 12));
+        Registro registro = new Registro(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 12, 15, 0), RECEPCION,
+                false, null);
+        Salida salida = new Salida(new SalidaId("SAL-1"), LocalDateTime.of(2026, 12, 14, 10, 0), RECEPCION);
+        repositorio.guardar(reserva("RES-2026-00002", APT, 12, 14, EstadoReserva.FINALIZADA, CanalOrigen.DIRECTO,
+                null, null, List.of(registro), salida));
+        repositorio.guardar(reserva("RES-2026-00003", APT, 14, 16, EstadoReserva.CANCELADA, CanalOrigen.DIRECTO,
+                null, null, null, null));
+        repositorio.guardar(pendiente("RES-2026-00004", 20, 22));
+        sincronizar();
+
+        List<String> enElRango = repositorio.buscarDelTablero(APT, new Estancia(LocalDate.of(2026, 12, 12),
+                        LocalDate.of(2026, 12, 18))).stream()
+                .map(r -> r.codigo().valor())
+                .toList();
+
+        assertEquals(List.of("RES-2026-00002"), enElRango); // la del 10 al 12 ya no ocupa la noche del 12
+    }
+
+    @Test
+    @Tag("BL-09")
+    void elTableroTraeElNoShowAunqueSusNochesSeHayanVendidoOtraVez() {
+        repositorio.guardar(reserva("RES-2026-00001", APT, 12, 14, EstadoReserva.NO_SHOW, CanalOrigen.DIRECTO,
+                null, null, null, null));
+        repositorio.guardar(pendiente("RES-2026-00002", 12, 14));
+        sincronizar();
+
+        List<String> enElRango = repositorio.buscarDelTablero(APT, new Estancia(LocalDate.of(2026, 12, 12),
+                        LocalDate.of(2026, 12, 14))).stream()
+                .map(r -> r.codigo().valor())
+                .sorted()
+                .toList();
+
+        assertEquals(List.of("RES-2026-00001", "RES-2026-00002"), enElRango);
+    }
+
+    @Test
     @Tag("EDO-03")
     void deberiaBuscarSoloLasReservasActivasDelApartamento() {
         repositorio.guardar(pendiente("RES-2026-00001", 10, 12));

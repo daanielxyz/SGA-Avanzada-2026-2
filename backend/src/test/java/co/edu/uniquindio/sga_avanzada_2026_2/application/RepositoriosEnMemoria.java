@@ -37,6 +37,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacionRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -57,6 +58,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -221,6 +223,14 @@ public final class RepositoriosEnMemoria {
         }
 
         @Override
+        public List<Reserva> buscarDelTablero(ApartamentoId apartamentoId, Estancia rango) {
+            return guardadas.values().stream()
+                    .filter(r -> r.apartamentoId().equals(apartamentoId) && r.estancia().seSolapaCon(rango)
+                            && (r.estaActiva() || r.estado() == EstadoReserva.FINALIZADA))
+                    .toList();
+        }
+
+        @Override
         public List<Reserva> buscarActivasPorApartamento(ApartamentoId apartamentoId) {
             return guardadas.values().stream()
                     .filter(r -> r.apartamentoId().equals(apartamentoId) && r.estaActiva())
@@ -290,6 +300,11 @@ public final class RepositoriosEnMemoria {
         public Optional<Folio> buscarPorReserva(ReservaId reservaId) {
             return Optional.ofNullable(guardados.get(reservaId));
         }
+
+        @Override
+        public List<Folio> buscarPorReservas(Collection<ReservaId> reservaIds) {
+            return reservaIds.stream().map(guardados::get).filter(Objects::nonNull).toList();
+        }
     }
 
     public static final class Titulares implements TitularRepository {
@@ -304,6 +319,11 @@ public final class RepositoriosEnMemoria {
         @Override
         public Optional<Titular> buscarPorId(TitularId id) {
             return Optional.ofNullable(guardados.get(id));
+        }
+
+        @Override
+        public List<Titular> buscarPorIds(Collection<TitularId> ids) {
+            return ids.stream().map(guardados::get).filter(Objects::nonNull).toList();
         }
 
         @Override

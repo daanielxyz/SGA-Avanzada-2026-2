@@ -6,6 +6,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,5 +38,13 @@ public class FolioRepositoryJpa implements FolioRepository {
     @Transactional(readOnly = true)
     public Optional<Folio> buscarPorReserva(ReservaId reservaId) {
         return filas.findByReservaCodigo(reservaId.valor()).map(FolioMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Folio> buscarPorReservas(Collection<ReservaId> reservaIds) {
+        return filas.findByReservaCodigoIn(reservaIds.stream().map(ReservaId::valor).toList()).stream()
+                .map(FolioMapper::aDominio)
+                .toList();
     }
 }

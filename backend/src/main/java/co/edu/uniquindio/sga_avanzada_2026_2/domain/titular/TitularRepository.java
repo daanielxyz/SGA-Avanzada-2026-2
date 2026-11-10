@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,9 @@ public interface TitularRepository {
     void guardar(Titular titular);
 
     Optional<Titular> buscarPorId(TitularId id);
+
+    /** Varios titulares de una vez, para el tablero. */
+    List<Titular> buscarPorIds(Collection<TitularId> ids);
 
     /**
      * Un mismo titular conserva su identidad entre reservas del alojamiento (TIT-05): se busca por documento antes de
