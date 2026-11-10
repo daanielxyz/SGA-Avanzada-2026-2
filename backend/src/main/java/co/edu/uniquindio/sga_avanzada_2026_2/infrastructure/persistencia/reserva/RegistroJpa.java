@@ -21,4 +21,5 @@ public class RegistroJpa {
     private String autor;
     private boolean anulado;
     private String motivoCorreccion; // solo en una corrección
+    private String motivoSinPago;    // solo si entró sin haber pagado la estancia (BL-22)
 }

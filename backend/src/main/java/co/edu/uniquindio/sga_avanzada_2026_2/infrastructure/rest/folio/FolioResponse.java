@@ -21,34 +21,44 @@ public record FolioResponse(String id, String reserva, List<CargoResponse> cargo
     /**
      * @param sentido  solo en un AJUSTE: AUMENTA o DISMINUYE
      * @param corrigeA el cargo que este AJUSTE revierte, si corrige alguno
+     * @param autor    quien hizo la corrección; vacío en los demás cargos y para el huésped (DEC-100 · DEC-103)
+     * @param autorNombre su nombre vigente; nulo si esa persona ya no existe
      */
     public record CargoResponse(String id, String tipo, String concepto, BigDecimal valor, String sentido,
-                                LocalDate fecha, String corrigeA) {
+                                LocalDate fecha, String corrigeA, String autor, String autorNombre) {
     }
 
     /**
      * @param tipo      ABONO o REVERSO
      * @param reversaDe el abono que este REVERSO corrige; vacío en una devolución
+     * @param autor     quien hizo el REVERSO o la devolución; vacío en un abono y para el huésped
+     *                  (DEC-100 · DEC-103)
+     * @param autorNombre su nombre vigente; nulo si esa persona ya no existe
      */
     public record PagoResponse(String id, String medio, BigDecimal monto, String tipo, LocalDate fecha,
-                               String reversaDe) {
+                               String reversaDe, String autor, String autorNombre) {
     }
 
-    public record AutorizacionResponse(String autor, String motivo, LocalDateTime fechaHora) {
+    /**
+     * @param autor       quien autorizó el cierre con saldo (RN-17); vacío para el huésped (DEC-103)
+     * @param autorNombre su nombre vigente; nulo si esa persona ya no existe
+     */
+    public record AutorizacionResponse(String autor, String motivo, LocalDateTime fechaHora, String autorNombre) {
     }
 
     static FolioResponse de(FolioResult r) {
         return new FolioResponse(r.id(), r.reserva(),
                 r.cargos().stream()
                         .map(c -> new CargoResponse(c.id(), c.tipo(), c.concepto(), c.valor(), c.sentido(), c.fecha(),
-                                c.corrigeA()))
+                                c.corrigeA(), c.autor(), c.autorNombre()))
                         .toList(),
                 r.pagos().stream()
-                        .map(p -> new PagoResponse(p.id(), p.medio(), p.monto(), p.tipo(), p.fecha(), p.reversaDe()))
+                        .map(p -> new PagoResponse(p.id(), p.medio(), p.monto(), p.tipo(), p.fecha(), p.reversaDe(),
+                                p.autor(), p.autorNombre()))
                         .toList(),
                 r.totalPagado(), r.saldo(), r.situacionSaldo(), r.cerrado(),
                 Optional.ofNullable(r.autorizacion())
-                        .map(a -> new AutorizacionResponse(a.autor(), a.motivo(), a.fechaHora()))
+                        .map(a -> new AutorizacionResponse(a.autor(), a.motivo(), a.fechaHora(), a.autorNombre()))
                         .orElse(null));
     }
 }

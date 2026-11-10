@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -40,11 +41,13 @@ public class FolioJpa {
     private Long version;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @BatchSize(size = 50) // el tablero carga varios folios a la vez
     @CollectionTable(name = "folio_cargo", joinColumns = @JoinColumn(name = "folio_id"))
     @OrderColumn(name = "orden")
     private List<CargoJpa> cargos = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @BatchSize(size = 50)
     @CollectionTable(name = "folio_pago", joinColumns = @JoinColumn(name = "folio_id"))
     @OrderColumn(name = "orden")
     private List<PagoJpa> pagos = new ArrayList<>();

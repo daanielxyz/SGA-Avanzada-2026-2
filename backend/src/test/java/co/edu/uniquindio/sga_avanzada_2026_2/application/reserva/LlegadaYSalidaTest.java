@@ -67,7 +67,7 @@ class LlegadaYSalidaTest {
         String codigo = escenario.reservaConfirmada();
 
         EstanciaResult estancia = escenario.registrarLlegada(AL_LLEGAR)
-                .ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION));
+                .ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION, "Cuenta por cobrar"));
 
         assertEquals("EN_CURSO", estancia.estado());
         assertEquals("OCUPADO", estancia.estadoOperativo());
@@ -88,13 +88,13 @@ class LlegadaYSalidaTest {
         String pendiente = escenario.reservaPendiente();
 
         assertThrows(ReglaDominioException.class, () -> escenario.registrarLlegada(AL_LLEGAR)
-                .ejecutar(new RegistrarLlegadaCommand(pendiente, RECEPCION)));
+                .ejecutar(new RegistrarLlegadaCommand(pendiente, RECEPCION, "Cuenta por cobrar")));
 
         EscenarioEstancia otro = new EscenarioEstancia();
         String confirmada = otro.reservaConfirmada();
         assertThrows(ReglaDominioException.class,
                 () -> otro.registrarLlegada(relojEn(ENTRADA.minusDays(1).atTime(18, 0)))
-                        .ejecutar(new RegistrarLlegadaCommand(confirmada, RECEPCION)));
+                        .ejecutar(new RegistrarLlegadaCommand(confirmada, RECEPCION, "Cuenta por cobrar")));
         assertEquals(EstadoReserva.CONFIRMADA, otro.reserva(confirmada).estado());
         assertEquals(EstadoOperativo.PREPARADO, otro.apartamento().estadoOperativo());
     }
@@ -107,7 +107,7 @@ class LlegadaYSalidaTest {
         ponerApartamentoEn(EstadoOperativo.EN_PREPARACION);
 
         assertThrows(ReglaDominioException.class, () -> escenario.registrarLlegada(AL_LLEGAR)
-                .ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION)));
+                .ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION, "Cuenta por cobrar")));
         assertEquals(EstadoReserva.CONFIRMADA, escenario.reserva(codigo).estado());
         assertTrue(escenario.reserva(codigo).registros().isEmpty());
     }

@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,16 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-102")
+    void laSimulacionDelNoShowEsSoloDelPersonal() throws Exception {
+        String simular = "/api/reservas/RES-2026-99999/no-show";
+
+        como(Rol.HUESPED, get(simular)).andExpect(status().isForbidden());
+        como(Rol.PERSONAL_SERVICIO, get(simular)).andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, get(simular)).andExpect(status().isNotFound());
+    }
+
+    @Test
     @Tag("ROL-04")
     @Tag("BLO-04")
     void elRecepcionistaVendeYCobraPeroNoConfigura() throws Exception {
@@ -95,10 +106,23 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
         como(Rol.RECEPCIONISTA, put("/api/alojamiento/parametros"), "{}").andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, put("/api/alojamiento/marca"), "{}").andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, get("/api/apartamentos/APT-101/tarifas")).andExpect(status().isForbidden());
-        como(Rol.RECEPCIONISTA, get("/api/politicas/vigente")).andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, get("/api/politicas")).andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, post("/api/politicas"), "{}").andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, get("/api/conflictos/pendientes")).andExpect(status().isForbidden());
         como(Rol.RECEPCIONISTA, post("/api/apartamentos/APT-101/novedades"), GRIFO)
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Tag("RN-13")
+    @Tag("DEC-104")
+    void elRecepcionistaLeeLaPoliticaDeUnaReservaPeroElHuespedYElServicioNo() throws Exception {
+        String politica = "/api/politicas/" + AlojamientoDePrueba.POLITICA;
+
+        como(Rol.RECEPCIONISTA, get(politica)).andExpect(status().isOk());
+        como(Rol.RECEPCIONISTA, get("/api/politicas/vigente")).andExpect(status().isOk());
+        como(Rol.HUESPED, get(politica)).andExpect(status().isForbidden());
+        como(Rol.PERSONAL_SERVICIO, get(politica)).andExpect(status().isForbidden());
     }
 
     @Test

@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +38,14 @@ public class TitularRepositoryJpa implements TitularRepository {
     @Transactional(readOnly = true)
     public Optional<Titular> buscarPorId(TitularId id) {
         return filas.findById(id.valor()).map(TitularMapper::aDominio);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Titular> buscarPorIds(Collection<TitularId> ids) {
+        return filas.findAllById(ids.stream().map(TitularId::valor).toList()).stream()
+                .map(TitularMapper::aDominio)
+                .toList();
     }
 
     @Override

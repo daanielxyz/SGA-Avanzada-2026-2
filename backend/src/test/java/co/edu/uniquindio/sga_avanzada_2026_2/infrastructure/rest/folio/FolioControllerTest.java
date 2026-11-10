@@ -103,6 +103,8 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.pagos", hasSize(2)))
                 .andExpect(jsonPath("$.pagos[1].tipo").value("REVERSO"))
                 .andExpect(jsonPath("$.pagos[1].reversaDe").value("PAG-1"))
+                .andExpect(jsonPath("$.pagos[1].autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.pagos[0].autor").value(nullValue()))
                 .andExpect(jsonPath("$.totalPagado").value(0));
         mvc.perform(post(folio(codigo) + "/pagos/PAG-1/revertir"))
                 .andExpect(status().isConflict())
@@ -122,6 +124,7 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.pagos[1].tipo").value("REVERSO"))
                 .andExpect(jsonPath("$.pagos[1].reversaDe").value(nullValue()))
+                .andExpect(jsonPath("$.pagos[1].autor").value(SesionDePrueba.ADMINISTRADOR))
                 .andExpect(jsonPath("$.situacionSaldo").value("AL_DIA"));
     }
 
@@ -143,6 +146,8 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.cargos[2].tipo").value("AJUSTE"))
                 .andExpect(jsonPath("$.cargos[2].sentido").value("DISMINUYE"))
                 .andExpect(jsonPath("$.cargos[2].corrigeA").value("CAR-2"))
+                .andExpect(jsonPath("$.cargos[2].autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.cargos[1].autor").value(nullValue()))
                 .andExpect(jsonPath("$.saldo").value(280000));
         enviar(post(folio(codigo) + "/cargos/CAR-2/revertir"), "{}")
                 .andExpect(status().isBadRequest())

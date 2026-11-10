@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,12 @@ import java.util.Optional;
 interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String>, JpaSpecificationExecutor<ReservaJpa> {
 
     List<ReservaJpa> findByApartamentoCodigoAndEstadoIn(String apartamentoCodigo, Collection<EstadoReserva> estados);
+
+    @Query("select r from ReservaJpa r where r.apartamentoCodigo = :apartamento and r.estado in :estados"
+            + " and r.entrada < :hasta and r.salida > :desde")
+    List<ReservaJpa> buscarEnRango(@Param("apartamento") String apartamento,
+                                   @Param("estados") Collection<EstadoReserva> estados,
+                                   @Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 
     @Query("select r from ReservaJpa r where r.estado in :estados and (r.carros > 0 or r.motos > 0)")
     List<ReservaJpa> buscarConVehiculos(@Param("estados") Collection<EstadoReserva> estados);

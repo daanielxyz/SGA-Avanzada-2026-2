@@ -9,9 +9,9 @@ import java.util.Objects;
 
 /**
  * Raíz del agregado Tarifa: valor por ocupante facturable, por noche, de un apartamento en una temporada (TAR-01).
- * Cada instancia es una versión inmutable; cambiar el valor crea otra y conserva el histórico (TAR-05).
+ * Cada instancia es una versión inmutable; cambiar el valor crea otra y conserva el histórico (TAR-05). Los valores
+ * de cada temporada los define cada alojamiento al configurar sus tarifas; no son constantes del sistema.
  */
-// TODO(equipo): valor de la tarifa de Temporada Media por definir (dato inicial, no regla).
 public class Tarifa {
 
     private final TarifaId id;

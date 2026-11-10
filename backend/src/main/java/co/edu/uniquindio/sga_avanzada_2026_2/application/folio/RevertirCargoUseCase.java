@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CargadorReserva;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.CargoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
@@ -37,7 +38,8 @@ public class RevertirCargoUseCase {
     public FolioResult ejecutar(RevertirCargoCommand comando) {
         Folio folio = cargador.folioDe(cargador.reserva(comando.codigoReserva()));
 
-        folio.revertirCargo(new CargoId(comando.cargoId()), comando.motivo(), LocalDate.now(reloj));
+        folio.revertirCargo(new CargoId(comando.cargoId()), comando.motivo(), LocalDate.now(reloj),
+                new UsuarioId(comando.autor()));
 
         folios.guardar(folio);
         return FolioResult.de(folio);

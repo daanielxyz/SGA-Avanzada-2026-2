@@ -46,13 +46,22 @@ function Bandera({ codigo }: { codigo: CountryCode }) {
 interface Props {
   /** Recibe el número completo con su prefijo (`+573001234567`), o vacío mientras no sea válido. */
   alCambiar: (telefono: string) => void
+  /** El que ya tiene, para editarlo; sin prefijo se toma como del país inicial. */
+  inicial?: string | null
+}
+
+// Separa un teléfono guardado en su país y su número; si no se entiende, queda tal cual en el país inicial
+function separar(inicial: string | null | undefined): { pais: Pais; numero: string } {
+  const leido = inicial ? parsePhoneNumberFromString(inicial, PAIS_INICIAL) : undefined
+  const pais = PAISES.find((p) => p.codigo === leido?.country)
+  return leido && pais ? { pais, numero: leido.nationalNumber } : { pais: PRIMERO, numero: inicial ?? '' }
 }
 
 /** El teléfono con su país: cerrado muestra bandera y prefijo; abierto, también el nombre, con un buscador. */
-export default function CampoTelefono({ alCambiar }: Props) {
+export default function CampoTelefono({ alCambiar, inicial }: Props) {
   const id = useId()
-  const [pais, setPais] = useState<Pais>(PRIMERO)
-  const [numero, setNumero] = useState('')
+  const [pais, setPais] = useState<Pais>(() => separar(inicial).pais)
+  const [numero, setNumero] = useState(() => separar(inicial).numero)
   const [tocado, setTocado] = useState(false)
   const [abierto, setAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState('')

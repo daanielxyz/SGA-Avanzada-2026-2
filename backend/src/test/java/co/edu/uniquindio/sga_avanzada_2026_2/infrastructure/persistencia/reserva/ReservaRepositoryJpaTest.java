@@ -19,6 +19,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DeclaracionNoShow;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Salida;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.SalidaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.LineaCotizacion;
@@ -146,11 +148,13 @@ class ReservaRepositoryJpaTest {
 
         Reserva reserva = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
         reserva.confirmar(new Porcentaje(0), Dinero.CERO);
-        reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION, Dinero.CERO,
+                "Cuenta por cobrar");
         repositorio.guardar(reserva);
         sincronizar();
 
         Reserva cargada = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
+        assertEquals("Cuenta por cobrar", cargada.registro().motivoSinPago()); // BL-22
         assertEquals(EstadoReserva.EN_CURSO, cargada.estado());
         assertEquals(new RegistroId("REG-1"), cargada.registro().id());
         assertNull(cargada.salida());
@@ -169,6 +173,70 @@ class ReservaRepositoryJpaTest {
         sincronizar();
 
         assertEquals(versionInicial + 1, filas.findById("RES-2026-00001").orElseThrow().getVersion());
+    }
+
+    @Test
+    @Tag("BL-09")
+    void elTableroTraeLasActivasYLasFinalizadasQueTocanElRango() {
+        repositorio.guardar(pendiente("RES-2026-00001", 10, 12));
+        Registro registro = new Registro(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 12, 15, 0), RECEPCION,
+                false, null);
+        Salida salida = new Salida(new SalidaId("SAL-1"), LocalDateTime.of(2026, 12, 14, 10, 0), RECEPCION);
+        repositorio.guardar(reserva("RES-2026-00002", APT, 12, 14, EstadoReserva.FINALIZADA, CanalOrigen.DIRECTO,
+                null, null, List.of(registro), salida));
+        repositorio.guardar(reserva("RES-2026-00003", APT, 14, 16, EstadoReserva.CANCELADA, CanalOrigen.DIRECTO,
+                null, null, null, null));
+        repositorio.guardar(pendiente("RES-2026-00004", 20, 22));
+        sincronizar();
+
+        List<String> enElRango = repositorio.buscarDelTablero(APT, new Estancia(LocalDate.of(2026, 12, 12),
+                        LocalDate.of(2026, 12, 18))).stream()
+                .map(r -> r.codigo().valor())
+                .toList();
+
+        assertEquals(List.of("RES-2026-00002"), enElRango); // la del 10 al 12 ya no ocupa la noche del 12
+    }
+
+    @Test
+    @Tag("BL-25")
+    void deberiaGuardarQuienDeclaroElNoShowYDejarVacioElDeLosAnteriores() {
+        LocalDateTime momento = LocalDateTime.of(2026, 12, 12, 23, 5);
+        repositorio.guardar(reservaNoShow("RES-2026-00001", new DeclaracionNoShow(RECEPCION, momento)));
+        repositorio.guardar(reservaNoShow("RES-2026-00002", null));
+        sincronizar();
+
+        assertEquals(new DeclaracionNoShow(RECEPCION, momento),
+                repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow().declaracionNoShow());
+        assertNull(repositorio.buscarPorCodigo(new ReservaId("RES-2026-00002")).orElseThrow().declaracionNoShow());
+    }
+
+    private static Reserva reservaNoShow(String codigo, DeclaracionNoShow declaracion) {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 12, 12), LocalDate.of(2026, 12, 13));
+        List<LineaCotizacion> desglose = estancia.noches().stream()
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .toList();
+        return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-301"), new TitularId("TIT-1"), estancia,
+                EstadoReserva.NO_SHOW, CanalOrigen.DIRECTO, null, null,
+                List.of(new Ocupante(new OcupanteId("OCU-1"), "Ana", LocalDate.of(1990, 1, 1), null, null)),
+                List.of(), null, null, Dinero.de(100_000), desglose, new PoliticaId("POL-1"),
+                LocalDateTime.of(2026, 12, 1, 9, 0), 0, 0, 0, Extras.NINGUNO, declaracion);
+    }
+
+    @Test
+    @Tag("BL-09")
+    void elTableroTraeElNoShowAunqueSusNochesSeHayanVendidoOtraVez() {
+        repositorio.guardar(reserva("RES-2026-00001", APT, 12, 14, EstadoReserva.NO_SHOW, CanalOrigen.DIRECTO,
+                null, null, null, null));
+        repositorio.guardar(pendiente("RES-2026-00002", 12, 14));
+        sincronizar();
+
+        List<String> enElRango = repositorio.buscarDelTablero(APT, new Estancia(LocalDate.of(2026, 12, 12),
+                        LocalDate.of(2026, 12, 14))).stream()
+                .map(r -> r.codigo().valor())
+                .sorted()
+                .toList();
+
+        assertEquals(List.of("RES-2026-00001", "RES-2026-00002"), enElRango);
     }
 
     @Test

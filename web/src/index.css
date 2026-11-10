@@ -1346,6 +1346,19 @@ fieldset p {
   overflow-wrap: anywhere;
 }
 
+/* Mi cuenta: la acción principal y, al lado o debajo en el celular, cambiar el correo */
+.acciones-cuenta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 20px;
+}
+
+.acciones-cuenta .accion-principal {
+  margin-top: 0;
+}
+
 .datos-valores {
   grid-template-columns: minmax(0, 1fr) auto;
   font-variant-numeric: tabular-nums;

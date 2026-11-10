@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 
 import java.time.LocalDate;
 
@@ -18,9 +19,15 @@ public class Pago {
     private final TipoPago tipo;
     private final LocalDate fecha;
     private final PagoId reversaDe; // solo REVERSO: el pago que corrige; null en una devolución (TPAG-02)
+    private final UsuarioId autor;  // quien hizo el REVERSO o la devolución (DEC-100)
+
+    public Pago(PagoId id, MedioPago medio, Dinero monto, TipoPago tipo, LocalDate fecha, PagoId reversaDe) {
+        this(id, medio, monto, tipo, fecha, reversaDe, null);
+    }
 
     // PAG-01 · PAG-02 · TPAG-02
-    public Pago(PagoId id, MedioPago medio, Dinero monto, TipoPago tipo, LocalDate fecha, PagoId reversaDe) {
+    public Pago(PagoId id, MedioPago medio, Dinero monto, TipoPago tipo, LocalDate fecha, PagoId reversaDe,
+                UsuarioId autor) {
         if (id == null || tipo == null) {
             throw new ReglaDominioException("El pago requiere id y tipo");
         }
@@ -39,6 +46,7 @@ public class Pago {
         this.tipo = tipo;
         this.fecha = fecha;
         this.reversaDe = reversaDe;
+        this.autor = autor;
     }
 
     public boolean esReverso() {
@@ -67,6 +75,10 @@ public class Pago {
 
     public PagoId reversaDe() {
         return reversaDe;
+    }
+
+    public UsuarioId autor() {
+        return autor;
     }
 
     @Override

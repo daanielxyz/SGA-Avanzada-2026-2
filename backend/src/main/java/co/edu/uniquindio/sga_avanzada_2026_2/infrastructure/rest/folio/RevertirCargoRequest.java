@@ -12,7 +12,7 @@ public record RevertirCargoRequest(
         @Size(max = 170, message = "admite máximo 170 caracteres")
         String motivo) {
 
-    RevertirCargoCommand aCommand(String codigoReserva, String cargoId) {
-        return new RevertirCargoCommand(codigoReserva, cargoId, motivo);
+    RevertirCargoCommand aCommand(String codigoReserva, String cargoId, String autor) {
+        return new RevertirCargoCommand(codigoReserva, cargoId, motivo, autor);
     }
 }

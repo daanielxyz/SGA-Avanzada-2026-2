@@ -211,19 +211,116 @@ describe('Sesión', () => {
 })
 
 describe('Mi cuenta', () => {
+  const CUENTA = {
+    id: 'TIT-1', nombre: 'Ana Ríos', nombres: 'Ana', primerApellido: 'Ríos', segundoApellido: null,
+    tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co', telefono: '+573001234567',
+    validado: false,
+  }
+  const cuerpo = (opciones: RequestInit) => JSON.parse(String(opciones.body)) as Record<string, unknown>
+  /** GET devuelve la cuenta; PUT la guarda con lo que llegó, como el backend. */
+  const conCuenta = (inicial: typeof CUENTA, alGuardar?: (o: RequestInit) => Response) => {
+    let actual = { ...inicial }
+    return (opciones: RequestInit) => {
+      if (opciones.method !== 'PUT') return respuesta(actual)
+      if (alGuardar) return alGuardar(opciones)
+      const c = cuerpo(opciones)
+      actual = { ...actual, ...c, nombre: [c.nombres, c.primerApellido, c.segundoApellido].filter(Boolean).join(' ') }
+      return respuesta(actual)
+    }
+  }
+
   it('muestra los datos del titular', async () => {
     guardarSesion(SESION)
-    laApi({
-      '/api/mi-cuenta': () => respuesta({
-        id: 'TIT-1', nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co',
-        telefono: '+573001234567',
-      }),
-    })
+    laApi({ '/api/mi-cuenta': conCuenta(CUENTA) })
     abrir('/mi-cuenta')
 
     expect(await screen.findByText('Cédula de ciudadanía 1094')).toBeInTheDocument()
     expect(screen.getByText('ana@correo.co')).toBeInTheDocument()
     expect(screen.getByText('+573001234567')).toBeInTheDocument()
+  })
+
+  it('sin validar, cambia sus nombres, sus apellidos y su teléfono', async () => {
+    guardarSesion(SESION)
+    const fetch = laApi({ '/api/mi-cuenta': conCuenta(CUENTA) })
+    abrir('/mi-cuenta')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar mis datos' }))
+    expect(screen.getByLabelText('Nombres')).toHaveValue('Ana')
+    expect(screen.getByLabelText('Apellidos')).toHaveValue('Ríos')
+    expect(screen.getByLabelText('Teléfono')).toHaveValue('3001234567')
+    await userEvent.type(screen.getByLabelText('Nombres'), ' María')
+    await userEvent.type(screen.getByLabelText('Apellidos'), ' Gómez')
+    await userEvent.clear(screen.getByLabelText('Teléfono'))
+    await userEvent.type(screen.getByLabelText('Teléfono'), '3112223333')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByText('Tus datos quedaron guardados.')).toBeInTheDocument()
+    expect(screen.getByText('Ana María Ríos Gómez')).toBeInTheDocument()
+    const guardado = llamadasA(fetch, '/api/mi-cuenta').find((o) => o.method === 'PUT') as RequestInit
+    expect(cuerpo(guardado)).toEqual({ nombres: 'Ana María', primerApellido: 'Ríos Gómez', telefono: '+573112223333' })
+  })
+
+  it('con la identidad validada solo cambia el teléfono y el nombre se pide en recepción', async () => {
+    guardarSesion(SESION)
+    const fetch = laApi({ '/api/mi-cuenta': conCuenta({ ...CUENTA, validado: true }) })
+    abrir('/mi-cuenta')
+
+    expect(await screen.findByText(/pídelo en\s+recepción/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar mi teléfono' }))
+    expect(screen.queryByLabelText('Nombres')).not.toBeInTheDocument()
+    await userEvent.clear(screen.getByLabelText('Teléfono'))
+    await userEvent.type(screen.getByLabelText('Teléfono'), '3112223333')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByText('Tus datos quedaron guardados.')).toBeInTheDocument()
+    const guardado = llamadasA(fetch, '/api/mi-cuenta').find((o) => o.method === 'PUT') as RequestInit
+    expect(cuerpo(guardado)).toEqual({ nombres: 'Ana', primerApellido: 'Ríos', telefono: '+573112223333' })
+  })
+
+  it('si el backend rechaza el cambio, explica por qué y deja el formulario', async () => {
+    guardarSesion(SESION)
+    laApi({ '/api/mi-cuenta': conCuenta(CUENTA, () => errorApi(409, 'REGLA_NEGOCIO',
+      'El hotel ya validó tu identidad: para cambiar tu nombre, pídelo en recepción')) })
+    abrir('/mi-cuenta')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar mis datos' }))
+    await userEvent.type(screen.getByLabelText('Nombres'), ' María')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('para cambiar tu nombre, pídelo en recepción')
+    expect(screen.getByLabelText('Nombres')).toHaveValue('Ana María')
+  })
+
+  it('cambia el correo en dos pasos con el PIN que llega al correo actual', async () => {
+    guardarSesion(SESION)
+    let correo = 'ana@correo.co'
+    const fetch = laApi({
+      '/api/mi-cuenta': () => respuesta({ ...CUENTA, correo }),
+      '/api/auth/huesped/cambio-correo': (opciones) => {
+        if (opciones.method === 'POST') return respuesta({ mensaje: 'Si los datos corresponden…' }, 202)
+        if (cuerpo(opciones).pin !== '123456') return errorApi(401, 'NO_AUTENTICADO', 'El PIN no es válido')
+        correo = 'ana.nueva@correo.co'
+        return respuesta({ mensaje: 'El correo de la cuenta quedó cambiado.' })
+      },
+    })
+    abrir('/mi-cuenta')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Cambiar mi correo' }))
+    await userEvent.type(screen.getByLabelText('Correo nuevo'), 'ana.nueva@correo.co')
+    await userEvent.click(screen.getByRole('button', { name: 'Enviarme un PIN' }))
+    const pin = await screen.findByLabelText('PIN de 6 dígitos')
+    await userEvent.type(pin, '000000')
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar mi correo' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('El PIN no es válido')
+    expect(pin).toHaveValue('')
+    await userEvent.type(pin, '123456')
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar mi correo' }))
+
+    expect(await screen.findByText(/La próxima vez entra con ana\.nueva@correo\.co/)).toBeInTheDocument()
+    const [pedido, primero, segundo] = llamadasA(fetch, '/api/auth/huesped/cambio-correo').map(cuerpo)
+    expect(pedido).toEqual({ tipoDocumento: 'CC', numeroDocumento: '1094', nuevoCorreo: 'ana.nueva@correo.co' })
+    expect(primero).toEqual({ tipoDocumento: 'CC', numeroDocumento: '1094', pin: '000000' })
+    expect(segundo.pin).toBe('123456')
   })
 })
 

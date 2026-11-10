@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
@@ -23,18 +24,21 @@ public class RegistroLlegadaDomainService {
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas; quedan como hora real del registro (REG-05)
      * @param autor recepcionista que registra (REG-05)
+     * @param pagado        lo pagado en el folio hasta ahora (BL-22)
+     * @param motivoSinPago por qué entra sin haber pagado; nulo si no aplica (BL-22)
      * @throws ReglaDominioException si el apartamento no es el de la reserva, no está PREPARADO (RN-11), la reserva
-     *                               no está CONFIRMADA o aún no es la fecha de entrada (RN-10)
+     *                               no está CONFIRMADA, aún no es la fecha de entrada (RN-10) o la estancia no está
+     *                               pagada y no hay motivo (BL-22)
      */
     public void procesarCheckIn(Reserva reserva, Apartamento apartamento, RegistroId registroId, LocalDateTime ahora,
-                                UsuarioId autor) {
+                                UsuarioId autor, Dinero pagado, String motivoSinPago) {
         validarApartamento(reserva, apartamento);
         if (!apartamento.estadoOperativo().permiteRegistro()) {
             throw new ReglaDominioException(MotivoRechazo.APARTAMENTO_NO_PREPARADO,
                     "El apartamento " + apartamento.codigo().valor() + " está "
                     + apartamento.estadoOperativo() + ": solo se entrega PREPARADO");
         }
-        reserva.registrarLlegada(registroId, ahora, autor);
+        reserva.registrarLlegada(registroId, ahora, autor, pagado, motivoSinPago);
         apartamento.ocupar();
     }
 

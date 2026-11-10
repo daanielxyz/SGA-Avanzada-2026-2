@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -23,15 +24,34 @@ public class NoShowDomainService {
      * @param politica   la versión congelada en la reserva
      * @param parametros hora límite de no-show y porcentaje de anticipo del alojamiento
      * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @param autor      quien lo declara (BL-25)
      * @return lo retenido
      * @throws ReglaDominioException si la política no es la congelada (RN-13), el folio es de otra reserva (FOL-02),
      *                               la reserva no está CONFIRMADA (RN-08) o aún no llega la hora límite (RES-16)
      */
     public Dinero declararNoShow(Reserva reserva, Folio folio, PoliticaCancelacion politica,
-                                 ParametrosAlojamiento parametros, LocalDateTime ahora) {
+                                 ParametrosAlojamiento parametros, LocalDateTime ahora, UsuarioId autor) {
         CancelacionDomainService.validarCorrespondencia(reserva, folio, politica);
-        reserva.declararNoShow(ahora, parametros.horaLimiteNoShow());
+        reserva.declararNoShow(ahora, parametros.horaLimiteNoShow(), autor);
         return CancelacionDomainService.liquidar(reserva, folio, politica.penalizacionNoShow(), parametros,
                 "no-show", ahora);
+    }
+
+    /**
+     * Calcula lo que dejaría {@link #declararNoShow} en este momento, sin cambiar nada, para que recepción lo sepa
+     * antes de declararlo (DEC-102).
+     *
+     * @param politica   la versión congelada en la reserva
+     * @param parametros hora límite de no-show y porcentaje de anticipo del alojamiento
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @throws ReglaDominioException si la política no es la congelada (RN-13), el folio es de otra reserva (FOL-02) o
+     *                               está cerrado (CAR-07), la reserva no está CONFIRMADA (RN-08) o aún no llega la
+     *                               hora límite (RES-16)
+     */
+    public SimulacionCancelacion simularNoShow(Reserva reserva, Folio folio, PoliticaCancelacion politica,
+                                               ParametrosAlojamiento parametros, LocalDateTime ahora) {
+        CancelacionDomainService.validarCorrespondencia(reserva, folio, politica);
+        reserva.exigirNoShowDeclarable(ahora, parametros.horaLimiteNoShow());
+        return CancelacionDomainService.simular(reserva, folio, politica.penalizacionNoShow(), parametros);
     }
 }

@@ -42,5 +42,9 @@ public enum MotivoRechazo {
     /** DEC-97: falta el huésped principal, hay más de uno o no es mayor de edad. */
     HUESPED_PRINCIPAL_INVALIDO,
     /** DEC-98: recepción ya validó la identidad del titular; su nombre solo lo cambia el hotel. */
-    IDENTIDAD_VALIDADA
+    IDENTIDAD_VALIDADA,
+    /** BL-22: la estancia y sus extras no están pagados y no se registró por qué entra sin pagar. */
+    ESTANCIA_SIN_PAGAR,
+    /** BL-08: la nota ya se marcó como atendida; pudo hacerlo otro turno. */
+    YA_ATENDIDA
 }

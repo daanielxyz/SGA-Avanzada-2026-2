@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
@@ -37,7 +38,7 @@ class RegistroLlegadaDomainServiceTest {
         Reserva reserva = confirmada("RES-2026-00001", 10, 12);
         Apartamento apartamento = apartamentoEn(EstadoOperativo.PREPARADO);
 
-        servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION);
+        servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION, reserva.valorConExtras(), null);
 
         assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
         assertEquals(EstadoOperativo.OCUPADO, apartamento.estadoOperativo());
@@ -53,7 +54,7 @@ class RegistroLlegadaDomainServiceTest {
         Apartamento apartamento = apartamentoEn(EstadoOperativo.EN_PREPARACION);
 
         exigeMotivo(MotivoRechazo.APARTAMENTO_NO_PREPARADO,
-                () -> servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION));
+                () -> servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION, reserva.valorConExtras(), null));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
         assertEquals(EstadoOperativo.EN_PREPARACION, apartamento.estadoOperativo());
     }
@@ -66,9 +67,22 @@ class RegistroLlegadaDomainServiceTest {
         Apartamento apartamento = apartamentoEn(EstadoOperativo.PREPARADO);
 
         assertThrows(ReglaDominioException.class,
-                () -> servicio.procesarCheckIn(pendiente, apartamento, REGISTRO, LLEGADA, RECEPCION));
+                () -> servicio.procesarCheckIn(pendiente, apartamento, REGISTRO, LLEGADA, RECEPCION, pendiente.valorConExtras(), null));
         assertThrows(ReglaDominioException.class, () -> servicio.procesarCheckIn(confirmada("RES-2026-00002", 10, 12),
-                apartamento, REGISTRO, dia(9).atTime(20, 0), RECEPCION));
+                apartamento, REGISTRO, dia(9).atTime(20, 0), RECEPCION, Dinero.CERO, null));
+        assertEquals(EstadoOperativo.PREPARADO, apartamento.estadoOperativo());
+    }
+
+    @Test
+    @Tag("BL-22")
+    void sinPagarLaEstanciaNiMotivoElApartamentoNoSeOcupa() {
+        Reserva reserva = confirmada("RES-2026-00001", 10, 12);
+        Apartamento apartamento = apartamentoEn(EstadoOperativo.PREPARADO);
+
+        exigeMotivo(MotivoRechazo.ESTANCIA_SIN_PAGAR,
+                () -> servicio.procesarCheckIn(reserva, apartamento, REGISTRO, LLEGADA, RECEPCION, Dinero.CERO, null));
+
+        assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
         assertEquals(EstadoOperativo.PREPARADO, apartamento.estadoOperativo());
     }
 
@@ -78,6 +92,6 @@ class RegistroLlegadaDomainServiceTest {
                 EstadoReserva.CONFIRMADA);
 
         assertThrows(ReglaDominioException.class, () -> servicio.procesarCheckIn(deOtroApartamento,
-                apartamentoEn(EstadoOperativo.PREPARADO), REGISTRO, LLEGADA, RECEPCION));
+                apartamentoEn(EstadoOperativo.PREPARADO), REGISTRO, LLEGADA, RECEPCION, Dinero.CERO, null));
     }
 }

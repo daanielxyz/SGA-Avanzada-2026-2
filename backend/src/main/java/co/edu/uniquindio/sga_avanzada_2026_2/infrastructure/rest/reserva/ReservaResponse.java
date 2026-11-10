@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * JSON de una reserva (DEC-31): estado, estancia, grupo, valor y política congelados (CU-49).
@@ -20,13 +21,23 @@ import java.util.List;
  * @param titularNombre solo en el listado de recepción y en el detalle; en las demás respuestas, nulo
  * @param anticipoExigido lo que debe estar pagado para confirmarla, con los extras (RES-15 · DEC-89); solo en el
  *                        detalle, nulo en las demás respuestas
+ * @param noShow     quién lo declaró y cuándo (BL-25 · DEC-103); solo en el detalle para el personal; nulo si no
+ *                   aplica o si se declaró antes de guardarse este dato
  */
 public record ReservaResponse(String codigo, String apartamento, String titularId, LocalDate entrada,
                               LocalDate salida, String estado, String canalOrigen,
                               List<OcupanteResponse> ocupantes, LocalTime horaEstimadaLlegada,
                               CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
                               String avisoCuenta, int vehiculos, int mascotas, String titularNombre, int carros,
-                              int motos, ExtrasResponse extras, BigDecimal anticipoExigido) {
+                              int motos, ExtrasResponse extras, BigDecimal anticipoExigido,
+                              DeclaracionNoShowResponse noShow) {
+
+    /**
+     * @param autor       id del usuario
+     * @param autorNombre el nombre vigente de esa persona; nulo si ya no existe
+     */
+    public record DeclaracionNoShowResponse(String autor, String autorNombre, LocalDateTime fechaHora) {
+    }
 
     public record ExtrasResponse(BigDecimal parqueadero, BigDecimal mascotas, BigDecimal total) {
     }
@@ -45,14 +56,18 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
     }
 
     public static ReservaResponse de(ReservaResult r) {
-        return de(r, null, null);
+        return de(r, null, null, null);
     }
 
     public static ReservaResponse de(ReservaConTitularResult r) {
-        return de(r.reserva(), r.titularNombre(), r.anticipoExigido());
+        return de(r.reserva(), r.titularNombre(), r.anticipoExigido(),
+                Optional.ofNullable(r.noShow())
+                        .map(n -> new DeclaracionNoShowResponse(n.autor(), n.autorNombre(), n.fechaHora()))
+                        .orElse(null));
     }
 
-    private static ReservaResponse de(ReservaResult r, String titularNombre, BigDecimal anticipoExigido) {
+    private static ReservaResponse de(ReservaResult r, String titularNombre, BigDecimal anticipoExigido,
+                                      DeclaracionNoShowResponse noShow) {
         return new ReservaResponse(r.codigo(), r.apartamento(), r.titularId(), r.entrada(), r.salida(), r.estado(),
                 r.canalOrigen(),
                 r.ocupantes().stream()
@@ -64,6 +79,7 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                         .toList(),
                 r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
                 r.avisoCuenta(), r.vehiculos(), r.mascotas(), titularNombre, r.carros(), r.motos(),
-                new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()), anticipoExigido);
+                new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()),
+                anticipoExigido, noShow);
     }
 }

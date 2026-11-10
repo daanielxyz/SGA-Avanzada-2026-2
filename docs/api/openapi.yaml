@@ -299,6 +299,11 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RegistrarLlegadaRequest"
       responses:
         "200":
           description: OK
@@ -313,6 +318,29 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/no-show":
+    get:
+      tags:
+        - reserva-controller
+      operationId: simularNoShow
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/SimulacionCancelacionResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
     put:
       tags:
         - reserva-controller
@@ -2568,6 +2596,118 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/politicas/{id}:
+    get:
+      tags:
+        - politica-controller
+      operationId: consultarVersion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PoliticaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/notas:
+    get:
+      tags:
+        - nota-reserva-controller
+      operationId: listarNotas
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    post:
+      tags:
+        - nota-reserva-controller
+      operationId: escribirNota
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/EscribirNotaRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/reservas/{codigo}/notas/{id}/atender:
+    put:
+      tags:
+        - nota-reserva-controller
+      operationId: atenderNota
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/NotaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/ocupacion:
     get:
       tags:
@@ -3242,6 +3382,13 @@ components:
           format: int32
         activa:
           type: boolean
+    RegistrarLlegadaRequest:
+      type: object
+      properties:
+        motivoSinPago:
+          type: string
+          maxLength: 500
+          minLength: 0
     RegistrarSalidaRequest:
       type: object
       properties:
@@ -3285,6 +3432,8 @@ components:
         anulado:
           type: boolean
         motivoCorreccion:
+          type: string
+        motivoSinPago:
           type: string
     SalidaResponse:
       type: object
@@ -3345,6 +3494,18 @@ components:
           items:
             "$ref": "#/components/schemas/OcupanteRequest"
           minItems: 1
+        carros:
+          type: integer
+          format: int32
+          minimum: 0
+        motos:
+          type: integer
+          format: int32
+          minimum: 0
+        mascotas:
+          type: integer
+          format: int32
+          minimum: 0
       required:
         - apartamento
         - entrada
@@ -3504,6 +3665,55 @@ components:
           format: int32
         titularNombre:
           type: string
+        noShow:
+          "$ref": "#/components/schemas/DeclaracionNoShowResponse"
+    EscribirNotaRequest:
+      type: object
+      properties:
+        texto:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - texto
+    NotaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        texto:
+          type: string
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        escritaEn:
+          type: string
+          format: date-time
+        atendida:
+          type: boolean
+        atencion:
+          "$ref": "#/components/schemas/AtencionResponse"
+    AtencionResponse:
+      type: object
+      properties:
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+    DeclaracionNoShowResponse:
+      type: object
+      properties:
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
     HoraLlegadaRequest:
       type: object
       properties:
@@ -3523,6 +3733,8 @@ components:
       type: object
       properties:
         autor:
+          type: string
+        autorNombre:
           type: string
         motivo:
           type: string
@@ -3546,6 +3758,10 @@ components:
           type: string
           format: date
         corrigeA:
+          type: string
+        autor:
+          type: string
+        autorNombre:
           type: string
     FolioResponse:
       type: object
@@ -3587,6 +3803,10 @@ components:
           type: string
           format: date
         reversaDe:
+          type: string
+        autor:
+          type: string
+        autorNombre:
           type: string
     DatosOcupanteRequest:
       type: object
@@ -5259,6 +5479,14 @@ components:
           type: string
         titularId:
           type: string
+        titularNombre:
+          type: string
+        saldo:
+          type: number
+        situacionSaldo:
+          type: string
+        totalPagado:
+          type: number
     PaginaResponseConflictoResponse:
       type: object
       properties:

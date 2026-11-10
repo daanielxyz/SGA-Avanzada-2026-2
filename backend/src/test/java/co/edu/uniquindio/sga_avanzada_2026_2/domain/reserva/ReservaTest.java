@@ -88,7 +88,7 @@ class ReservaTest {
 
     private static Reserva enCurso() {
         Reserva reserva = confirmada();
-        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION, reserva.valorConExtras(), null);
         DatosTraDePrueba.completar(reserva);
         return reserva;
     }
@@ -132,7 +132,7 @@ class ReservaTest {
         Dinero congelado = reserva.valorTotal();
 
         reserva.confirmar(new Porcentaje(0), Dinero.CERO);
-        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION, reserva.valorConExtras(), null);
 
         assertEquals(congelado, reserva.valorTotal());
     }
@@ -437,10 +437,35 @@ class ReservaTest {
     void deberiaDeclararNoShowDesdeLaHoraLimiteDelDiaDeEntrada() {
         Reserva reserva = confirmada();
 
-        reserva.declararNoShow(ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW), HORA_LIMITE_NO_SHOW);
+        reserva.declararNoShow(ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW), HORA_LIMITE_NO_SHOW, RECEPCION);
 
         assertEquals(EstadoReserva.NO_SHOW, reserva.estado());
         assertFalse(reserva.estaActiva());
+    }
+
+    @Test
+    @Tag("BL-25")
+    void elNoShowGuardaQuienLoDeclaroYElMomentoReal() {
+        Reserva reserva = confirmada();
+        LocalDateTime momento = ESTANCIA.entrada().plusDays(1).atTime(8, 15);
+
+        reserva.declararNoShow(momento, HORA_LIMITE_NO_SHOW, RECEPCION);
+
+        assertEquals(new DeclaracionNoShow(RECEPCION, momento), reserva.declaracionNoShow());
+    }
+
+    @Test
+    @Tag("BL-25")
+    void sinAutorElNoShowNoSeDeclaraYSiRechazaNoQuedaDeclaracion() {
+        Reserva reserva = confirmada();
+        LocalDateTime momento = ESTANCIA.entrada().atTime(23, 0);
+
+        assertThrows(ReglaDominioException.class, () -> reserva.declararNoShow(momento, HORA_LIMITE_NO_SHOW, null));
+        assertThrows(ReglaDominioException.class,
+                () -> reserva.declararNoShow(momento.minusHours(10), HORA_LIMITE_NO_SHOW, RECEPCION));
+
+        assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
+        assertNull(reserva.declaracionNoShow());
     }
 
     @Test
@@ -449,9 +474,10 @@ class ReservaTest {
         Reserva reserva = confirmada();
         LocalDateTime antes = ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW).minusMinutes(1);
 
-        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO, () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW));
+        exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO,
+                () -> reserva.declararNoShow(antes, HORA_LIMITE_NO_SHOW, RECEPCION));
         assertThrows(ReglaDominioException.class, () -> pendiente()
-                .declararNoShow(ESTANCIA.entrada().atTime(23, 0), HORA_LIMITE_NO_SHOW));
+                .declararNoShow(ESTANCIA.entrada().atTime(23, 0), HORA_LIMITE_NO_SHOW, RECEPCION));
     }
 
     @Test
@@ -482,7 +508,7 @@ class ReservaTest {
         Reserva reserva = confirmada();
         LocalDateTime llegada = ESTANCIA.entrada().atTime(16, 0);
 
-        reserva.registrarLlegada(new RegistroId("REG-1"), llegada, RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), llegada, RECEPCION, reserva.valorConExtras(), null);
 
         assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
         assertEquals(llegada, reserva.registro().fechaHora());
@@ -496,7 +522,7 @@ class ReservaTest {
         Reserva reserva = pendiente();
 
         assertThrows(ReglaDominioException.class,
-                () -> reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(16, 0), RECEPCION));
+                () -> reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(16, 0), RECEPCION, reserva.valorConExtras(), null));
     }
 
     @Test
@@ -506,7 +532,7 @@ class ReservaTest {
         LocalDateTime laVispera = ESTANCIA.entrada().minusDays(1).atTime(23, 59);
 
         exigeMotivo(MotivoRechazo.ANTES_DE_TIEMPO,
-                () -> reserva.registrarLlegada(new RegistroId("REG-1"), laVispera, RECEPCION));
+                () -> reserva.registrarLlegada(new RegistroId("REG-1"), laVispera, RECEPCION, reserva.valorConExtras(), null));
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
     }
 
@@ -665,6 +691,62 @@ class ReservaTest {
                 CAPACIDAD, 0, AHORA);
     }
 
+    // --- La estancia se cobra en la llegada (BL-22) ---
+
+    @Test
+    @Tag("BL-22")
+    void laLlegadaPasaConLaEstanciaPagadaYNoGuardaMotivo() {
+        Reserva reserva = confirmada();
+
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION,
+                reserva.valorConExtras(), "No hace falta");
+
+        assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
+        assertNull(reserva.registro().motivoSinPago());
+    }
+
+    @Test
+    @Tag("BL-22")
+    void laLlegadaSeRechazaSiFaltaUnPesoYNoHayMotivo() {
+        Reserva reserva = confirmada();
+        Dinero casiTodo = Dinero.de(reserva.valorConExtras().monto().longValue() - 1);
+        LocalDateTime llegada = ESTANCIA.entrada().atTime(15, 0);
+
+        exigeMotivo(MotivoRechazo.ESTANCIA_SIN_PAGAR,
+                () -> reserva.registrarLlegada(new RegistroId("REG-1"), llegada, RECEPCION, casiTodo, null));
+        exigeMotivo(MotivoRechazo.ESTANCIA_SIN_PAGAR,
+                () -> reserva.registrarLlegada(new RegistroId("REG-1"), llegada, RECEPCION, casiTodo, "   "));
+
+        assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
+    }
+
+    @Test
+    @Tag("BL-22")
+    void conMotivoEntraSinPagarYQuedaConSuAutor() {
+        Reserva reserva = confirmada();
+
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION, Dinero.CERO,
+                "  Cuenta por cobrar a la empresa  ");
+
+        assertEquals(EstadoReserva.EN_CURSO, reserva.estado());
+        assertEquals("Cuenta por cobrar a la empresa", reserva.registro().motivoSinPago());
+        assertEquals(RECEPCION, reserva.registro().autor());
+    }
+
+    @Test
+    @Tag("BL-22")
+    @Tag("REG-06")
+    void corregirElRegistroConservaElMotivoParaEntrarSinPagar() {
+        Reserva reserva = confirmada();
+        LocalDateTime llegada = ESTANCIA.entrada().atTime(15, 0);
+        reserva.registrarLlegada(new RegistroId("REG-1"), llegada, RECEPCION, Dinero.CERO, "Cuenta por cobrar");
+
+        reserva.corregirRegistro(new RegistroId("REG-2"), llegada.plusHours(1), RECEPCION, "Hora equivocada",
+                llegada.plusHours(2));
+
+        assertEquals("Cuenta por cobrar", reserva.registro().motivoSinPago());
+    }
+
     private static Ocupante ocupante(String id, String nombre) {
         return new Ocupante(new OcupanteId(id), nombre, LocalDate.of(2000, 1, 1), null, null);
     }
@@ -673,7 +755,7 @@ class ReservaTest {
 
     private static Reserva enCursoSinDatosTra() {
         Reserva reserva = confirmada();
-        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION);
+        reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 30), RECEPCION, reserva.valorConExtras(), null);
         return reserva;
     }
 

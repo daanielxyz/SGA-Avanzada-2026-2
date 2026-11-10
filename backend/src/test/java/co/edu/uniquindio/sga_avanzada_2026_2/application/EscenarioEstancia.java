@@ -128,7 +128,7 @@ public final class EscenarioEstancia {
     /** Reserva EN_CURSO: el grupo llegó el 10 de octubre a las 15:30. */
     public String reservaEnCurso() {
         String codigo = reservaConfirmada();
-        registrarLlegada(AL_LLEGAR).ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION));
+        registrarLlegada(AL_LLEGAR).ejecutar(new RegistrarLlegadaCommand(codigo, RECEPCION, "Cuenta por cobrar"));
         completarDatosTra(codigo);
         return codigo;
     }

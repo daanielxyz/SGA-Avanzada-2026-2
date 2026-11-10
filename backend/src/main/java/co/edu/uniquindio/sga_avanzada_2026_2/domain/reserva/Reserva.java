@@ -55,6 +55,7 @@ public class Reserva {
     private int motos;                          // RP-02
     private int mascotas;                       // RP-03
     private Extras extras;                      // congelados; DEC-89
+    private DeclaracionNoShow declaracionNoShow; // nula en los no-show anteriores a BL-25
 
     // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · REG-06 · SAL-01
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
@@ -84,6 +85,18 @@ public class Reserva {
                    LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
                    PoliticaId politicaVersionId, LocalDateTime creadaEn, int carros, int motos, int mascotas,
                    Extras extras) {
+        this(codigo, apartamentoId, titularId, estancia, estado, canalOrigen, canalId, idExterno, ocupantes, registros,
+                salida, horaEstimadaLlegada, valorTotal, desglose, politicaVersionId, creadaEn, carros, motos, mascotas,
+                extras, null);
+    }
+
+    // Reconstrucción completa: también quién declaró el no-show, que solo existe en ese estado (BL-25 · DEC-103)
+    public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
+                   EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
+                   List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
+                   LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
+                   PoliticaId politicaVersionId, LocalDateTime creadaEn, int carros, int motos, int mascotas,
+                   Extras extras, DeclaracionNoShow declaracionNoShow) {
         if (codigo == null || apartamentoId == null || titularId == null || estancia == null || estado == null
                 || canalOrigen == null || ocupantes == null || registros == null || valorTotal == null
                 || desglose == null || politicaVersionId == null || creadaEn == null) {
@@ -98,6 +111,10 @@ public class Reserva {
                 || (estado == EstadoReserva.FINALIZADA) != (salida != null)) {
             throw new ReglaDominioException("El registro y la salida no corresponden al estado " + estado);
         }
+        if (declaracionNoShow != null && estado != EstadoReserva.NO_SHOW) {
+            throw new ReglaDominioException("La declaración del no-show no corresponde al estado " + estado);
+        }
+        this.declaracionNoShow = declaracionNoShow;
         this.codigo = codigo;
         this.apartamentoId = apartamentoId;
         this.titularId = titularId;
@@ -161,6 +178,11 @@ public class Reserva {
 
     public Extras extras() {
         return extras;
+    }
+
+    /** Quién declaró el no-show y cuándo; nula si no lo es o si se declaró antes de guardarse el dato (BL-25). */
+    public DeclaracionNoShow declaracionNoShow() {
+        return declaracionNoShow;
     }
 
     /** La estancia y sus extras: la base del anticipo (RES-15 · DEC-89). */
@@ -334,13 +356,28 @@ public class Reserva {
 
     /**
      * Declara que el titular no se presentó y libera las noches (RN-08 · RN-12). Solo a partir de la hora límite
-     * del día de entrada (RES-16).
+     * del día de entrada (RES-16). Queda quién lo declaró y cuándo (BL-25 · DEC-103).
+     *
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @param horaLimite {@code ParametrosAlojamiento.horaLimiteNoShow}
+     * @param autor      quien lo declara
+     * @throws ReglaDominioException si no está CONFIRMADA (RN-08), aún no llega la hora límite (RES-16) o falta el
+     *                               autor
+     */
+    public void declararNoShow(LocalDateTime ahora, LocalTime horaLimite, UsuarioId autor) {
+        exigirNoShowDeclarable(ahora, horaLimite);
+        declaracionNoShow = new DeclaracionNoShow(autor, ahora);
+        estado = EstadoReserva.NO_SHOW;
+    }
+
+    /**
+     * RN-08 · RES-16: revisa que ya se pueda declarar el no-show, sin cambiar la reserva (DEC-102).
      *
      * @param ahora      fecha y hora actuales en Colombia, inyectadas
      * @param horaLimite {@code ParametrosAlojamiento.horaLimiteNoShow}
      * @throws ReglaDominioException si no está CONFIRMADA (RN-08) o aún no llega la hora límite (RES-16)
      */
-    public void declararNoShow(LocalDateTime ahora, LocalTime horaLimite) {
+    public void exigirNoShowDeclarable(LocalDateTime ahora, LocalTime horaLimite) {
         Objects.requireNonNull(ahora, "ahora");
         Objects.requireNonNull(horaLimite, "horaLimite");
         validarTransicion(EstadoReserva.NO_SHOW);
@@ -349,7 +386,6 @@ public class Reserva {
             throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
                     "El no-show solo puede declararse desde " + limite);
         }
-        estado = EstadoReserva.NO_SHOW;
     }
 
     /**
@@ -394,11 +430,15 @@ public class Reserva {
      * {@code RegistroLlegadaDomainService} (RN-11 · REG-04 · D-02).
      *
      * @param ahora fecha y hora actuales en Colombia, inyectadas
+     * @param pagado        lo pagado hasta ahora en el folio (BL-22)
+     * @param motivoSinPago por qué entra sin haber pagado la estancia y sus extras; se ignora si ya están pagados
      * @throws ReglaDominioException si no está CONFIRMADA (RN-10 · REG-01) o aún no es la fecha de entrada
      *                               (RN-10 · REG-02)
      */
-    public void registrarLlegada(RegistroId id, LocalDateTime ahora, UsuarioId autor) {
+    public void registrarLlegada(RegistroId id, LocalDateTime ahora, UsuarioId autor, Dinero pagado,
+                                 String motivoSinPago) {
         Objects.requireNonNull(ahora, "ahora");
+        Objects.requireNonNull(pagado, "pagado");
         if (estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
                     "Solo se registra la llegada de una reserva CONFIRMADA; está " + estado);
@@ -408,7 +448,13 @@ public class Reserva {
                     "No se puede registrar la llegada antes de la fecha de entrada "
                     + estancia.entrada());
         }
-        registros.add(new Registro(id, ahora, autor, false, null));
+        boolean pagada = !pagado.esMenorQue(valorConExtras());
+        if (!pagada && (motivoSinPago == null || motivoSinPago.isBlank())) { // BL-22
+            throw new ReglaDominioException(MotivoRechazo.ESTANCIA_SIN_PAGAR,
+                    "La estancia y sus extras valen " + valorConExtras().monto() + " y hay pagado " + pagado.monto()
+                    + ": cóbrela o registre por qué entra sin pagar");
+        }
+        registros.add(new Registro(id, ahora, autor, false, null, pagada ? null : motivoSinPago));
         estado = EstadoReserva.EN_CURSO;
     }
 
@@ -443,7 +489,8 @@ public class Reserva {
         if (fechaHoraCorrecta.isAfter(ahora)) {
             throw new ReglaDominioException("La llegada corregida no puede ser posterior a este momento");
         }
-        Registro corregido = new Registro(nuevoId, fechaHoraCorrecta, autor, false, motivo);
+        Registro corregido = new Registro(nuevoId, fechaHoraCorrecta, autor, false, motivo,
+                registro().motivoSinPago());
         registro().anular();
         registros.add(corregido);
     }

@@ -2,6 +2,8 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.folio;
 
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.FolioResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CargarServicioAdicionalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.CerrarFolioCommand;
@@ -36,6 +38,7 @@ import java.util.Optional;
 public class FolioController {
 
     private final UsuarioActual usuario;
+    private final DirectorioPersonal personal;
     private final ConsultarReservaUseCase consultarReserva;
     private final ConsultarFolioUseCase consultarFolio;
     private final RegistrarPagoUseCase registrarPago;
@@ -45,12 +48,14 @@ public class FolioController {
     private final CargarServicioAdicionalUseCase cargarServicio;
     private final CerrarFolioUseCase cerrarFolio;
 
-    public FolioController(UsuarioActual usuario, ConsultarReservaUseCase consultarReserva,
+    public FolioController(UsuarioActual usuario, DirectorioPersonal personal,
+                           ConsultarReservaUseCase consultarReserva,
                            ConsultarFolioUseCase consultarFolio, RegistrarPagoUseCase registrarPago,
                            RegistrarDevolucionUseCase registrarDevolucion, RevertirPagoUseCase revertirPago,
                            RevertirCargoUseCase revertirCargo, CargarServicioAdicionalUseCase cargarServicio,
                            CerrarFolioUseCase cerrarFolio) {
         this.usuario = usuario;
+        this.personal = personal;
         this.consultarReserva = consultarReserva;
         this.consultarFolio = consultarFolio;
         this.registrarPago = registrarPago;
@@ -62,10 +67,15 @@ public class FolioController {
     }
 
     /** El huésped solo ve el folio de sus reservas (USU-04). */
+    // DEC-103: el personal ve quién corrigió o revirtió, con su nombre; el huésped, no (USU-04)
+    private FolioResponse respuesta(FolioResult folio) {
+        return FolioResponse.de(usuario.esHuesped() ? folio.sinDatosDelPersonal() : folio.conNombres(personal));
+    }
+
     @GetMapping
     public FolioResponse consultar(@PathVariable String codigo) {
         usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
-        return FolioResponse.de(consultarFolio.ejecutar(codigo));
+        return respuesta(consultarFolio.ejecutar(codigo));
     }
 
     @PostMapping("/pagos")
@@ -73,7 +83,7 @@ public class FolioController {
     public ResponseEntity<FolioResponse> registrarPago(@PathVariable String codigo,
                                        @Valid @RequestBody RegistrarPagoRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(registrarPago.ejecutar(solicitud.aCommand(codigo))));
+                .body(respuesta(registrarPago.ejecutar(solicitud.aCommand(codigo))));
     }
 
     @PostMapping("/devoluciones")
@@ -81,14 +91,15 @@ public class FolioController {
     public ResponseEntity<FolioResponse> registrarDevolucion(@PathVariable String codigo,
                                              @Valid @RequestBody RegistrarPagoRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(registrarDevolucion.ejecutar(solicitud.aCommand(codigo))));
+                .body(respuesta(registrarDevolucion.ejecutar(
+                        solicitud.aDevolucionCommand(codigo, usuario.id()))));
     }
 
     @PostMapping("/pagos/{id}/revertir")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<FolioResponse> revertirPago(@PathVariable String codigo, @PathVariable String id) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id))));
+                .body(respuesta(revertirPago.ejecutar(new RevertirPagoCommand(codigo, id, usuario.id()))));
     }
 
     @PostMapping("/cargos/{id}/revertir")
@@ -96,7 +107,7 @@ public class FolioController {
     public ResponseEntity<FolioResponse> revertirCargo(@PathVariable String codigo, @PathVariable String id,
                                        @Valid @RequestBody RevertirCargoRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(revertirCargo.ejecutar(solicitud.aCommand(codigo, id))));
+                .body(respuesta(revertirCargo.ejecutar(solicitud.aCommand(codigo, id, usuario.id()))));
     }
 
     @PostMapping("/servicios")
@@ -104,7 +115,7 @@ public class FolioController {
     public ResponseEntity<FolioResponse> cargarServicio(@PathVariable String codigo,
                                         @Valid @RequestBody CargarServicioRequest solicitud) {
         return ResponseEntity.created(URI.create("/api/reservas/" + codigo + "/folio"))
-                .body(FolioResponse.de(cargarServicio.ejecutar(solicitud.aCommand(codigo))));
+                .body(respuesta(cargarServicio.ejecutar(solicitud.aCommand(codigo))));
     }
 
     /**
@@ -118,6 +129,6 @@ public class FolioController {
         if (motivo != null) {
             usuario.exigirAdministrador("autorizar el cierre de un folio con saldo");
         }
-        return FolioResponse.de(cerrarFolio.ejecutar(new CerrarFolioCommand(codigo, usuario.id(), motivo)));
+        return respuesta(cerrarFolio.ejecutar(new CerrarFolioCommand(codigo, usuario.id(), motivo)));
     }
 }

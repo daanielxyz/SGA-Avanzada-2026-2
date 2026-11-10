@@ -10,6 +10,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosViaje;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DeclaracionNoShow;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
@@ -44,7 +45,7 @@ final class ReservaMapper {
                 jpa.getOcupantes().stream().map(ReservaMapper::ocupante).toList(),
                 jpa.getRegistros().stream()
                         .map(r -> new Registro(new RegistroId(r.getId()), r.getFechaHora(), new UsuarioId(r.getAutor()),
-                                r.isAnulado(), r.getMotivoCorreccion()))
+                                r.isAnulado(), r.getMotivoCorreccion(), r.getMotivoSinPago()))
                         .toList(),
                 jpa.getSalidaId() == null ? null : new Salida(new SalidaId(jpa.getSalidaId()),
                         jpa.getSalidaFechaHora(), new UsuarioId(jpa.getSalidaAutor())),
@@ -59,7 +60,9 @@ final class ReservaMapper {
                 jpa.getCarros(),
                 jpa.getMotos(),
                 jpa.getMascotas(),
-                new Extras(new Dinero(jpa.getExtrasParqueadero()), new Dinero(jpa.getExtrasMascotas())));
+                new Extras(new Dinero(jpa.getExtrasParqueadero()), new Dinero(jpa.getExtrasMascotas())),
+                jpa.getNoShowAutor() == null ? null
+                        : new DeclaracionNoShow(new UsuarioId(jpa.getNoShowAutor()), jpa.getNoShowFechaHora()));
     }
 
     /**
@@ -87,11 +90,14 @@ final class ReservaMapper {
         jpa.setMascotas(reserva.mascotas());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
-                r.autor().valor(), r.anulado(), r.motivoCorreccion())));
+                r.autor().valor(), r.anulado(), r.motivoCorreccion(), r.motivoSinPago())));
         Salida salida = reserva.salida();
         jpa.setSalidaId(salida == null ? null : salida.id().valor());
         jpa.setSalidaFechaHora(salida == null ? null : salida.fechaHora());
         jpa.setSalidaAutor(salida == null ? null : salida.autor().valor());
+        DeclaracionNoShow noShow = reserva.declaracionNoShow();
+        jpa.setNoShowAutor(noShow == null ? null : noShow.autor().valor());
+        jpa.setNoShowFechaHora(noShow == null ? null : noShow.fechaHora());
         jpa.getOcupantes().clear();
         reserva.ocupantes().forEach(o -> jpa.getOcupantes().add(new OcupanteJpa(o.id().valor(), o.nombres(),
                 o.primerApellido(), o.segundoApellido(), o.fechaNacimiento(),

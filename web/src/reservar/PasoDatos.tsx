@@ -34,18 +34,20 @@ const TIPOS_DOCUMENTO: { valor: TipoDocumento; texto: string }[] = [
   { valor: 'TI', texto: 'Tarjeta de identidad' },
 ]
 
-// Hasta el incremento del TRA (B5), el backend guarda un solo nombre: se envían unidos
-const nombreCompleto = ({ nombres, apellidos }: Persona) => `${nombres.trim()} ${apellidos.trim()}`
+// Dos campos: nombres y apellidos. Los apellidos van juntos, como los escribe, en primerApellido (BL-07 · DEC-98)
+const nombreDe = ({ nombres, apellidos }: Persona) => ({ nombres: nombres.trim(), primerApellido: apellidos.trim() })
 
 /**
- * Paso 1: quién viaja. El titular es la primera persona del grupo (TIT-01). Con todas las fechas de nacimiento, el
- * total se recalcula con la regla real (RN-06): si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
+ * Paso 1: quién viaja. Quien reserva es la primera persona del grupo; el backend toma como huésped principal al
+ * primer mayor de edad (DEC-97). Con todas las fechas de nacimiento, el total se recalcula con la regla real (RN-06):
+ * si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
  */
 export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteMascotas, precioBuscado,
   alCambiarPrecio, alCambiarExtras, alReservar }: Props) {
   const hoy = fechaDesdeHoy()
   const [personas, setPersonas] = useState<Persona[]>(() =>
-    Array.from({ length: grupo.adultos + grupo.ninos }, () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
+    Array.from({ length: grupo.adultos + grupo.ninos },
+      () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>('CC')
   const [numeroDocumento, setNumeroDocumento] = useState('')
   const [correo, setCorreo] = useState('')
@@ -105,10 +107,10 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
       alReservar(await reservar({
         apartamento: codigo,
         ...estadia,
-        titular: { nombre: nombreCompleto(titular), tipoDocumento, numeroDocumento, correo, telefono },
+        titular: { ...nombreDe(titular), tipoDocumento, numeroDocumento, correo, telefono },
         ocupantes: [
-          { nombre: nombreCompleto(titular), fechaNacimiento: titular.fechaNacimiento, tipoDocumento, numeroDocumento },
-          ...acompanantes.map((p) => ({ nombre: nombreCompleto(p), fechaNacimiento: p.fechaNacimiento })),
+          { ...nombreDe(titular), fechaNacimiento: titular.fechaNacimiento, tipoDocumento, numeroDocumento },
+          ...acompanantes.map((p) => ({ ...nombreDe(p), fechaNacimiento: p.fechaNacimiento })),
         ],
         carros,
         motos,

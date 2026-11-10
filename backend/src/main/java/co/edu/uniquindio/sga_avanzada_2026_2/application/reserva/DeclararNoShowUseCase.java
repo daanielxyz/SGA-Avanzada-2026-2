@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaCancelacion;
@@ -47,8 +48,8 @@ public class DeclararNoShowUseCase {
      *                                      CONFIRMADA (RN-08) o aún no llega la hora límite (RES-16)
      */
     @Transactional
-    public CancelacionResult ejecutar(String codigo) {
-        Reserva reserva = cargador.reserva(codigo);
+    public CancelacionResult ejecutar(DeclararNoShowCommand comando) {
+        Reserva reserva = cargador.reserva(comando.codigoReserva());
         Folio folio = cargador.folioDe(reserva);
         PoliticaCancelacion politica = politicas.buscarPorId(reserva.politicaVersionId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("la política",
@@ -56,7 +57,7 @@ public class DeclararNoShowUseCase {
         Alojamiento alojamiento = cargador.alojamientoDe(cargador.apartamento(reserva.apartamentoId()));
 
         Dinero retenido = noShow.declararNoShow(reserva, folio, politica, alojamiento.parametros(),
-                LocalDateTime.now(reloj));
+                LocalDateTime.now(reloj), new UsuarioId(comando.autor()));
 
         reservas.guardar(reserva);
         folios.guardar(folio);
