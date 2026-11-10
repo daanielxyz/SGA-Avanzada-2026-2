@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.folio;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarDevolucionCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoCommand;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -32,5 +33,9 @@ public record RegistrarPagoRequest(
 
     RegistrarPagoCommand aCommand(String codigoReserva) {
         return new RegistrarPagoCommand(codigoReserva, medio, monto, fecha);
+    }
+
+    RegistrarDevolucionCommand aDevolucionCommand(String codigoReserva, String autor) {
+        return new RegistrarDevolucionCommand(codigoReserva, medio, monto, fecha, autor);
     }
 }

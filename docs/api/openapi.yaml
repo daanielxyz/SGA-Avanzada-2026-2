@@ -3561,6 +3561,8 @@ components:
           format: date
         corrigeA:
           type: string
+        autor:
+          type: string
     FolioResponse:
       type: object
       properties:
@@ -3601,6 +3603,8 @@ components:
           type: string
           format: date
         reversaDe:
+          type: string
+        autor:
           type: string
     DatosOcupanteRequest:
       type: object

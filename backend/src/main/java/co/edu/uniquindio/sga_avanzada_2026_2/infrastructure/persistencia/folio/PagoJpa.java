@@ -29,4 +29,5 @@ public class PagoJpa {
 
     private LocalDate fecha;
     private String reversaDe;
+    private String autor; // quien hizo el REVERSO o la devolución (DEC-100)
 }

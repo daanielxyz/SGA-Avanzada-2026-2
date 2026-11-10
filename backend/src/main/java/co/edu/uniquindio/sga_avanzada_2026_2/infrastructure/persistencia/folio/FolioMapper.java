@@ -27,11 +27,14 @@ final class FolioMapper {
                 jpa.getCargos().stream()
                         .map(c -> new Cargo(new CargoId(c.getId()), c.getTipo(), c.getConcepto(),
                                 new Dinero(c.getValor()), c.getSentido(), c.getFecha(),
-                                c.getCorrigeA() == null ? null : new CargoId(c.getCorrigeA())))
+                                c.getCorrigeA() == null ? null : new CargoId(c.getCorrigeA()),
+                                c.getAutor() == null ? null : new UsuarioId(c.getAutor())))
                         .toList(),
                 jpa.getPagos().stream()
                         .map(p -> new Pago(new PagoId(p.getId()), new MedioPago(p.getMedio()), new Dinero(p.getMonto()),
-                                p.getTipo(), p.getFecha(), p.getReversaDe() == null ? null : new PagoId(p.getReversaDe())))
+                                p.getTipo(), p.getFecha(),
+                                p.getReversaDe() == null ? null : new PagoId(p.getReversaDe()),
+                                p.getAutor() == null ? null : new UsuarioId(p.getAutor())))
                         .toList(),
                 jpa.isCerrado(),
                 jpa.getAutorizacionAutor() == null ? null : new AutorizacionCierre(
@@ -53,9 +56,11 @@ final class FolioMapper {
         jpa.setAutorizacionFechaHora(autorizacion == null ? null : autorizacion.fechaHora());
         jpa.getCargos().clear();
         folio.cargos().forEach(c -> jpa.getCargos().add(new CargoJpa(c.id().valor(), c.tipo(), c.concepto(),
-                c.valor().monto(), c.sentido(), c.fecha(), c.corrigeA() == null ? null : c.corrigeA().valor())));
+                c.valor().monto(), c.sentido(), c.fecha(), c.corrigeA() == null ? null : c.corrigeA().valor(),
+                c.autor() == null ? null : c.autor().valor())));
         jpa.getPagos().clear();
         folio.pagos().forEach(p -> jpa.getPagos().add(new PagoJpa(p.id().valor(), p.medio().nombre(),
-                p.monto().monto(), p.tipo(), p.fecha(), p.reversaDe() == null ? null : p.reversaDe().valor())));
+                p.monto().monto(), p.tipo(), p.fecha(), p.reversaDe() == null ? null : p.reversaDe().valor(),
+                p.autor() == null ? null : p.autor().valor())));
     }
 }

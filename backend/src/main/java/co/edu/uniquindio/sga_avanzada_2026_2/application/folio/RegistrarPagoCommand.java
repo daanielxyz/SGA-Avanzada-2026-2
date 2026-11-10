@@ -4,11 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Entrada de {@link RegistrarPagoUseCase} y de {@link RegistrarDevolucionUseCase}: el folio se identifica por su
- * reserva (FOL-02).
+ * Entrada de {@link RegistrarPagoUseCase}: el folio se identifica por su reserva (FOL-02).
  *
  * @param medio nombre del medio de pago, que debe estar habilitado en el alojamiento (MPAG-02)
- * @param fecha cuándo se recibió o se devolvió el dinero; no puede ser futura (PAG-07)
+ * @param fecha cuándo se recibió el dinero; no puede ser futura (PAG-07)
  */
 public record RegistrarPagoCommand(String codigoReserva, String medio, BigDecimal monto, LocalDate fecha) {
 }

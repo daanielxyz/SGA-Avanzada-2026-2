@@ -47,9 +47,9 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 
 ### Folio
 - **R Folio**: id · reservaId · cargos: Cargo[] · pagos: Pago[] · cerrado · autorizacion?. Ids de movimientos `CAR-n`/`PAG-n` numerados por el folio (DEC-43).
-  `abrir(id, reservaId, valorAlojamiento, fecha)` · `agregarServicioAdicional(concepto, valor, fecha)` · `registrarPago(medio, monto, fecha, hoy, mediosHabilitados)` · `registrarDevolucion(…)` · `revertirPago(pagoId, fecha, hoy)` · `revertirCargo(cargoId, motivo, fecha)` · `ajustarPorModificacion(anterior, nuevo, fecha)` · `liquidarPenalidad(valorEstancia, penalidad, motivo, fecha)` · `saldo(): Saldo` · `totalPagado()` · `cerrar()` · `cerrar(autorizacion)`. No existe editar/eliminar cargo o pago.
-- **E Cargo**: id · tipo · concepto · valor: Dinero (> 0) · sentido: SentidoAjuste? (solo AJUSTE — DEC-20) · fecha · corrigeA: CargoId?. `aumentaSaldo()` · `esAjuste()`
-- **E Pago**: id · medio: MedioPago · monto: Dinero (>0) · tipo: TipoPago · fecha · reversaDe: PagoId? (null en una devolución). `esReverso()`
+  `abrir(id, reservaId, valorAlojamiento, fecha)` · `agregarServicioAdicional(concepto, valor, fecha)` · `registrarPago(medio, monto, fecha, hoy, mediosHabilitados)` · `registrarDevolucion(…, autor)` · `revertirPago(pagoId, fecha, hoy, autor)` · `revertirCargo(cargoId, motivo, fecha, autor)` · `ajustarPorModificacion(anterior, nuevo, fecha)` · `liquidarPenalidad(valorEstancia, penalidad, motivo, fecha)` · `saldo(): Saldo` · `totalPagado()` · `cerrar()` · `cerrar(autorizacion)`. No existe editar/eliminar cargo o pago.
+- **E Cargo**: id · tipo · concepto · valor: Dinero (> 0) · sentido: SentidoAjuste? (solo AJUSTE — DEC-20) · fecha · corrigeA: CargoId? · autor: UsuarioId? (solo en una corrección, DEC-100). `aumentaSaldo()` · `esAjuste()`
+- **E Pago**: id · medio: MedioPago · monto: Dinero (>0) · tipo: TipoPago · fecha · reversaDe: PagoId? (null en una devolución) · autor: UsuarioId? (reverso o devolución, DEC-100). `esReverso()`
 - **VO Saldo**(monto ≥ 0, situacion: PENDIENTE | A_FAVOR | AL_DIA) — calculado, nunca se guarda · **EN SentidoAjuste**: AUMENTA, DISMINUYE
 - **VO AutorizacionCierre**(autor: UsuarioId, motivo, fechaHora) · **VO MedioPago**(nombre; validado contra el catálogo habilitado del Alojamiento)
 - **EN TipoCargo**: HOSPEDAJE, SERVICIO_ADICIONAL, PENALIDAD_CANCELACION, AJUSTE · **EN TipoPago**: ABONO, REVERSO (el reverso mantiene el monto positivo y resta en el reporte de ingresos)

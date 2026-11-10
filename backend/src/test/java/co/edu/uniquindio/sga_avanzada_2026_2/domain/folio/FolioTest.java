@@ -28,6 +28,8 @@ class FolioTest {
     private static final AutorizacionCierre AUTORIZACION = new AutorizacionCierre(new UsuarioId("ADM-1"),
             "Cortesía por inconvenientes", HOY.atTime(12, 0));
 
+    private static final UsuarioId AUTOR = new UsuarioId("USR-2");
+
     private static Folio folio() {
         return Folio.abrir(new FolioId("FOL-1"), new ReservaId("RES-2026-00001"), Dinero.de(400_000), HOY);
     }
@@ -98,7 +100,7 @@ class FolioTest {
         Folio folio = folio();
         CargoId servicio = folio.agregarServicioAdicional("Desayuno", Dinero.de(25_000), HOY);
 
-        CargoId correccion = folio.revertirCargo(servicio, "No lo tomó", HOY);
+        CargoId correccion = folio.revertirCargo(servicio, "No lo tomó", HOY, AUTOR);
 
         Cargo ajuste = folio.cargos().getLast();
         assertEquals(correccion, ajuste.id());
@@ -114,11 +116,45 @@ class FolioTest {
     void deberiaRechazarEditarOBorrarUnMovimientoExistente() {
         Folio folio = folio();
         CargoId alojamiento = folio.cargos().getFirst().id();
-        folio.revertirCargo(alojamiento, "Error", HOY);
+        folio.revertirCargo(alojamiento, "Error", HOY, AUTOR);
 
         assertThrows(UnsupportedOperationException.class, () -> folio.cargos().clear());
-        assertThrows(ReglaDominioException.class, () -> folio.revertirCargo(alojamiento, "Otra vez", HOY));
-        assertThrows(ReglaDominioException.class, () -> folio.revertirCargo(new CargoId("CAR-2"), "x", HOY));
+        assertThrows(ReglaDominioException.class, () -> folio.revertirCargo(alojamiento, "Otra vez", HOY, AUTOR));
+        assertThrows(ReglaDominioException.class, () -> folio.revertirCargo(new CargoId("CAR-2"), "x", HOY, AUTOR));
+    }
+
+    @Test
+    @Tag("DEC-100")
+    void lasCorreccionesYLasDevolucionesGuardanSuAutor() {
+        Folio folio = folio();
+        CargoId alojamiento = folio.cargos().getFirst().id();
+        PagoId abono = folio.registrarPago(TARJETA, Dinero.de(100_000), HOY, HOY, HABILITADOS);
+
+        folio.revertirCargo(alojamiento, "Error", HOY, AUTOR);
+        folio.revertirPago(abono, HOY, HOY, AUTOR);
+        folio.registrarPago(EFECTIVO, Dinero.de(50_000), HOY, HOY, HABILITADOS);
+        folio.registrarDevolucion(EFECTIVO, Dinero.de(50_000), HOY, HOY, HABILITADOS, new UsuarioId("USR-3"));
+
+        assertEquals(AUTOR, folio.cargos().getLast().autor());
+        assertEquals(AUTOR, folio.pagos().get(1).autor());
+        assertEquals(new UsuarioId("USR-3"), folio.pagos().getLast().autor());
+        assertEquals(null, folio.cargos().getFirst().autor());
+        assertEquals(null, folio.pagos().getFirst().autor());
+    }
+
+    @Test
+    @Tag("DEC-100")
+    void sinAutorNoSeCorrigeNiSeDevuelveNada() {
+        Folio folio = folio();
+        CargoId alojamiento = folio.cargos().getFirst().id();
+        PagoId abono = folio.registrarPago(TARJETA, Dinero.de(100_000), HOY, HOY, HABILITADOS);
+
+        assertThrows(ReglaDominioException.class, () -> folio.revertirCargo(alojamiento, "Error", HOY, null));
+        assertThrows(ReglaDominioException.class, () -> folio.revertirPago(abono, HOY, HOY, null));
+        assertThrows(ReglaDominioException.class,
+                () -> folio.registrarDevolucion(TARJETA, Dinero.de(1_000), HOY, HOY, HABILITADOS, null));
+        assertEquals(1, folio.cargos().size());
+        assertEquals(1, folio.pagos().size());
     }
 
     @Test
@@ -128,7 +164,7 @@ class FolioTest {
         Folio folio = folio();
         PagoId abono = folio.registrarPago(TARJETA, Dinero.de(100_000), HOY, HOY, HABILITADOS);
 
-        PagoId reverso = folio.revertirPago(abono, HOY, HOY);
+        PagoId reverso = folio.revertirPago(abono, HOY, HOY, AUTOR);
 
         Pago registrado = folio.pagos().getLast();
         assertEquals(reverso, registrado.id());
@@ -136,8 +172,8 @@ class FolioTest {
         assertEquals(abono, registrado.reversaDe());
         assertEquals(TARJETA, registrado.medio());
         assertEquals(Dinero.CERO, folio.totalPagado());
-        exigeMotivo(MotivoRechazo.YA_REVERTIDO, () -> folio.revertirPago(abono, HOY, HOY));
-        assertThrows(ReglaDominioException.class, () -> folio.revertirPago(reverso, HOY, HOY));
+        exigeMotivo(MotivoRechazo.YA_REVERTIDO, () -> folio.revertirPago(abono, HOY, HOY, AUTOR));
+        assertThrows(ReglaDominioException.class, () -> folio.revertirPago(reverso, HOY, HOY, AUTOR));
     }
 
     @Test
@@ -148,8 +184,8 @@ class FolioTest {
         folio.registrarPago(EFECTIVO, Dinero.de(100_000), HOY, HOY, HABILITADOS);
 
         assertThrows(ReglaDominioException.class,
-                () -> folio.registrarDevolucion(EFECTIVO, Dinero.de(100_001), HOY, HOY, HABILITADOS));
-        folio.registrarDevolucion(EFECTIVO, Dinero.de(40_000), HOY, HOY, HABILITADOS);
+                () -> folio.registrarDevolucion(EFECTIVO, Dinero.de(100_001), HOY, HOY, HABILITADOS, AUTOR));
+        folio.registrarDevolucion(EFECTIVO, Dinero.de(40_000), HOY, HOY, HABILITADOS, AUTOR);
 
         assertEquals(Dinero.de(60_000), folio.totalPagado());
         assertEquals(null, folio.pagos().getLast().reversaDe());

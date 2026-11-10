@@ -47,6 +47,10 @@ class GestionarFolioTest {
         return new RegistrarPagoUseCase(escenario.cargador, escenario.folios, AL_CREAR);
     }
 
+    private static RegistrarDevolucionCommand devolucion(String codigo, long monto) {
+        return new RegistrarDevolucionCommand(codigo, "EFECTIVO", BigDecimal.valueOf(monto), HOY, "USR-2");
+    }
+
     private static RegistrarPagoCommand pago(String codigo, String medio, long monto) {
         return new RegistrarPagoCommand(codigo, medio, BigDecimal.valueOf(monto), HOY);
     }
@@ -128,14 +132,17 @@ class GestionarFolioTest {
         registrarPago().ejecutar(pago(codigo, "EFECTIVO", 200_000));
         RevertirPagoUseCase revertir = new RevertirPagoUseCase(escenario.cargador, escenario.folios, AL_CREAR);
 
-        FolioResult folio = revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-1"));
+        FolioResult folio = revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-1", "USR-2"));
 
         assertEquals(2, folio.pagos().size());
         assertEquals("REVERSO", folio.pagos().getLast().tipo());
         assertEquals("PAG-1", folio.pagos().getLast().reversaDe());
+        assertEquals("USR-2", folio.pagos().getLast().autor());
         assertMonto(0, folio.totalPagado());
-        assertThrows(ReglaDominioException.class, () -> revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-1")));
-        assertThrows(ReglaDominioException.class, () -> revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-9")));
+        assertThrows(ReglaDominioException.class,
+                () -> revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-1", "USR-2")));
+        assertThrows(ReglaDominioException.class,
+                () -> revertir.ejecutar(new RevertirPagoCommand(codigo, "PAG-9", "USR-2")));
     }
 
     @Test
@@ -148,11 +155,12 @@ class GestionarFolioTest {
         RegistrarDevolucionUseCase devolver = new RegistrarDevolucionUseCase(escenario.cargador, escenario.folios,
                 AL_CREAR);
 
-        assertThrows(ReglaDominioException.class, () -> devolver.ejecutar(pago(codigo, "EFECTIVO", 200_000)));
-        FolioResult folio = devolver.ejecutar(pago(codigo, "EFECTIVO", 180_000));
+        assertThrows(ReglaDominioException.class, () -> devolver.ejecutar(devolucion(codigo, 200_000)));
+        FolioResult folio = devolver.ejecutar(devolucion(codigo, 180_000));
 
         assertEquals("REVERSO", folio.pagos().getLast().tipo());
         assertNull(folio.pagos().getLast().reversaDe());
+        assertEquals("USR-2", folio.pagos().getLast().autor());
         assertEquals("AL_DIA", folio.situacionSaldo());
     }
 
@@ -189,15 +197,17 @@ class GestionarFolioTest {
         cargarServicio(ALOJADO).ejecutar(new CargarServicioAdicionalCommand(codigo, "SRV-1"));
         RevertirCargoUseCase revertir = new RevertirCargoUseCase(escenario.cargador, escenario.folios, ALOJADO);
 
-        FolioResult folio = revertir.ejecutar(new RevertirCargoCommand(codigo, "CAR-2", "Se cobró a otro apartamento"));
+        FolioResult folio = revertir.ejecutar(new RevertirCargoCommand(codigo, "CAR-2", "Se cobró a otro apartamento",
+                "USR-2"));
 
         assertEquals(3, folio.cargos().size());
         assertEquals("AJUSTE", folio.cargos().getLast().tipo());
         assertEquals("DISMINUYE", folio.cargos().getLast().sentido());
         assertEquals("CAR-2", folio.cargos().getLast().corrigeA());
+        assertEquals("USR-2", folio.cargos().getLast().autor());
         assertMonto(420_000, folio.saldo());
         assertThrows(ReglaDominioException.class,
-                () -> revertir.ejecutar(new RevertirCargoCommand(codigo, "CAR-2", "Otra vez")));
+                () -> revertir.ejecutar(new RevertirCargoCommand(codigo, "CAR-2", "Otra vez", "USR-2")));
     }
 
     @Test
