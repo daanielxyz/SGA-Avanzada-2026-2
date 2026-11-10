@@ -14,6 +14,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasU
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ListarReservasCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ModificarReservaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.SimularCancelacionUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.SimularNoShowUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaConTitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ReservaResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
@@ -52,6 +53,7 @@ public class ReservaController {
     private final ConfirmarReservaUseCase confirmarReserva;
     private final CancelarReservaUseCase cancelarReserva;
     private final SimularCancelacionUseCase simularCancelacion;
+    private final SimularNoShowUseCase simularNoShow;
     private final ConsultarPagoPendienteUseCase consultarPagoPendiente;
     private final DeclararNoShowUseCase declararNoShow;
     private final ListarReservasUseCase listarReservas;
@@ -62,7 +64,7 @@ public class ReservaController {
                              ModificarReservaUseCase modificarReserva,
                              IndicarHoraLlegadaUseCase indicarHoraLlegada, ConfirmarReservaUseCase confirmarReserva,
                              CancelarReservaUseCase cancelarReserva,
-                             SimularCancelacionUseCase simularCancelacion,
+                             SimularCancelacionUseCase simularCancelacion, SimularNoShowUseCase simularNoShow,
                              ConsultarPagoPendienteUseCase consultarPagoPendiente,
                              DeclararNoShowUseCase declararNoShow, ListarReservasUseCase listarReservas) {
         this.usuario = usuario;
@@ -74,6 +76,7 @@ public class ReservaController {
         this.confirmarReserva = confirmarReserva;
         this.cancelarReserva = cancelarReserva;
         this.simularCancelacion = simularCancelacion;
+        this.simularNoShow = simularNoShow;
         this.consultarPagoPendiente = consultarPagoPendiente;
         this.declararNoShow = declararNoShow;
         this.listarReservas = listarReservas;
@@ -149,6 +152,12 @@ public class ReservaController {
     public CancelacionResponse cancelar(@PathVariable String codigo) {
         usuario.exigirAccesoA(consultarReserva.ejecutar(codigo).titularId());
         return CancelacionResponse.de(cancelarReserva.ejecutar(codigo));
+    }
+
+    /** Lo que pasaría al declarar el no-show, sin declararlo; solo el personal (DEC-102). */
+    @GetMapping("/{codigo}/no-show")
+    public SimulacionCancelacionResponse simularNoShow(@PathVariable String codigo) {
+        return SimulacionCancelacionResponse.de(simularNoShow.ejecutar(codigo));
     }
 
     @PutMapping("/{codigo}/no-show")

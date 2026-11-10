@@ -83,6 +83,16 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-102")
+    void laSimulacionDelNoShowEsSoloDelPersonal() throws Exception {
+        String simular = "/api/reservas/RES-2026-99999/no-show";
+
+        como(Rol.HUESPED, get(simular)).andExpect(status().isForbidden());
+        como(Rol.PERSONAL_SERVICIO, get(simular)).andExpect(status().isForbidden());
+        como(Rol.RECEPCIONISTA, get(simular)).andExpect(status().isNotFound());
+    }
+
+    @Test
     @Tag("ROL-04")
     @Tag("BLO-04")
     void elRecepcionistaVendeYCobraPeroNoConfigura() throws Exception {

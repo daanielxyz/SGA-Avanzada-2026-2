@@ -5,7 +5,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SimulacionCancelaci
 import java.math.BigDecimal;
 
 /**
- * Salida de {@link SimularCancelacionUseCase}: lo que pasaría al cancelar en este momento (DEC-91).
+ * Salida de {@link SimularCancelacionUseCase} (DEC-91) y de {@link SimularNoShowUseCase} (DEC-102): lo que pasaría en
+ * este momento.
  *
  * @param situacionSaldo PENDIENTE (debería el huésped), A_FAVOR (habría que devolver) o AL_DIA
  */
