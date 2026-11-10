@@ -28,7 +28,7 @@ final class FolioMapper {
                         .map(c -> new Cargo(new CargoId(c.getId()), c.getTipo(), c.getConcepto(),
                                 new Dinero(c.getValor()), c.getSentido(), c.getFecha(),
                                 c.getCorrigeA() == null ? null : new CargoId(c.getCorrigeA()),
-                                c.getAutor() == null ? null : new UsuarioId(c.getAutor())))
+                                c.getAutor() == null ? null : new UsuarioId(c.getAutor()), c.getCantidad()))
                         .toList(),
                 jpa.getPagos().stream()
                         .map(p -> new Pago(new PagoId(p.getId()), new MedioPago(p.getMedio()), new Dinero(p.getMonto()),
@@ -57,7 +57,7 @@ final class FolioMapper {
         jpa.getCargos().clear();
         folio.cargos().forEach(c -> jpa.getCargos().add(new CargoJpa(c.id().valor(), c.tipo(), c.concepto(),
                 c.valor().monto(), c.sentido(), c.fecha(), c.corrigeA() == null ? null : c.corrigeA().valor(),
-                c.autor() == null ? null : c.autor().valor())));
+                c.autor() == null ? null : c.autor().valor(), c.cantidad())));
         jpa.getPagos().clear();
         folio.pagos().forEach(p -> jpa.getPagos().add(new PagoJpa(p.id().valor(), p.medio().nombre(),
                 p.monto().monto(), p.tipo(), p.fecha(), p.reversaDe() == null ? null : p.reversaDe().valor(),

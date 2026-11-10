@@ -24,7 +24,7 @@ class FolioResultTest {
             LocalDateTime.of(2026, 11, 9, 12, 0), null);
 
     private static CargoResult cargo(String id, String autor) {
-        return new CargoResult(id, "AJUSTE", "Corrección", BigDecimal.TEN, "DISMINUYE", HOY, null, autor, null);
+        return new CargoResult(id, "AJUSTE", "Corrección", BigDecimal.TEN, "DISMINUYE", HOY, null, autor, null, 1);
     }
 
     private static PagoResult pago(String id, String autor) {

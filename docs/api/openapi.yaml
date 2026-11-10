@@ -3763,6 +3763,9 @@ components:
           type: string
         autorNombre:
           type: string
+        cantidad:
+          type: integer
+          format: int32
     FolioResponse:
       type: object
       properties:
@@ -4760,6 +4763,11 @@ components:
         servicioId:
           type: string
           minLength: 1
+        cantidad:
+          type: integer
+          format: int32
+          maximum: 99
+          minimum: 1
       required:
         - servicioId
     RegistrarPagoRequest:

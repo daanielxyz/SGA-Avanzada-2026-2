@@ -140,6 +140,7 @@ class FolioControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.cargos[1].tipo").value("SERVICIO_ADICIONAL"))
                 .andExpect(jsonPath("$.cargos[1].concepto").value("Desayuno"))
                 .andExpect(jsonPath("$.cargos[1].valor").value(25000))
+                .andExpect(jsonPath("$.cargos[1].cantidad").value(1))
                 .andExpect(jsonPath("$.saldo").value(305000));
         enviar(post(folio(codigo) + "/cargos/CAR-2/revertir"), "{\"motivo\": \"Era de otro apartamento\"}")
                 .andExpect(status().isCreated())
@@ -152,6 +153,28 @@ class FolioControllerTest extends PruebaRestDeReservas {
         enviar(post(folio(codigo) + "/cargos/CAR-2/revertir"), "{}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("motivo: es obligatorio")));
+    }
+
+    @Test
+    @Tag("BL-12")
+    void deberiaCobrarVariasUnidadesDeUnServicioEnUnSoloCargo() throws Exception {
+        String codigo = reservaEnCurso();
+        String dos = "{\"servicioId\": \"%s\", \"cantidad\": 2}".formatted(AlojamientoDePrueba.DESAYUNO);
+
+        enviar(post(folio(codigo) + "/servicios"), dos)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.cargos", hasSize(2)))
+                .andExpect(jsonPath("$.cargos[1].concepto").value("Desayuno"))
+                .andExpect(jsonPath("$.cargos[1].cantidad").value(2))
+                .andExpect(jsonPath("$.cargos[1].valor").value(50000))
+                .andExpect(jsonPath("$.cargos[0].cantidad").value(1))
+                .andExpect(jsonPath("$.saldo").value(330000));
+        enviar(post(folio(codigo) + "/servicios"), dos.replace("2}", "0}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("cantidad: debe ser al menos 1")));
+        enviar(post(folio(codigo) + "/servicios"), dos.replace("2}", "100}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("cantidad: admite máximo 99")));
     }
 
     @Test
