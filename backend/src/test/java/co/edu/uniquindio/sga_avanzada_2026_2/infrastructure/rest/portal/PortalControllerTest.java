@@ -261,6 +261,58 @@ class PortalControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.extras.mascotas").value(30000));
     }
 
+    /** El mismo JSON con esos campos al principio. */
+    private static String con(String json, String campos) {
+        return json.replaceFirst("\\{", "{" + campos + ",");
+    }
+
+    @Test
+    @Tag("BL-23")
+    @Tag("RP-02")
+    @Tag("RP-03")
+    void recepcionCorrigeAntesDeLaLlegadaLosVehiculosYLasMascotasQueDeVerdadLlegan() throws Exception {
+        mvc.perform(put("/api/alojamiento/parametros").contentType(MediaType.APPLICATION_JSON).content("""
+                {
+                  "umbralEdadFacturable": 12, "horaEntrada": "15:00", "horaSalida": "11:00",
+                  "tiempoPreparacionHoras": 3, "plazoConfirmacionHoras": 24, "horaLimiteNoShow": "22:00",
+                  "anticipoPct": 30, "minimoMediosPago": 1, "minimoServiciosAdicionales": 1, "minimoTemporadas": 0,
+                  "minimoTramosCancelacion": 1, "minimoCapacidadesDistintas": 1, "pagoEnLinea": "ANTICIPO",
+                  "plazoPagoEnLineaMinutos": 30, "cupoParqueadero": 5, "aceptaMascotas": true, "limiteMascotas": 1,
+                  "cargoMascota": 30000, "cobroParqueadero": "POR_NOCHE", "cargoCarro": 15000, "cargoMoto": 8000
+                }
+                """)).andExpect(status().isOk());
+        String respuesta = pedir(post("/api/portal/reservas"),
+                con(reservaDelPortal(), "\"carros\": 1, \"motos\": 1, \"mascotas\": 1"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String codigo = JsonPath.read(respuesta, "$.reserva.codigo");
+        String modificar = "/api/reservas/" + codigo + "/modificar";
+        String tresNoches = reservaJson("APT-101", HOY.plusDays(5), HOY.plusDays(8));
+
+        // Llegó sin la moto y sin la mascota: se quitan del total y la diferencia entra al folio
+        enviar(put(modificar), con(tresNoches, "\"carros\": 1, \"motos\": 0, \"mascotas\": 0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.carros").value(1))
+                .andExpect(jsonPath("$.motos").value(0))
+                .andExpect(jsonPath("$.mascotas").value(0))
+                .andExpect(jsonPath("$.extras.parqueadero").value(45000)) // un carro × 3 noches
+                .andExpect(jsonPath("$.extras.mascotas").value(0));
+        mvc.perform(get("/api/reservas/" + codigo + "/folio"))
+                .andExpect(jsonPath("$.cargos[-1:].tipo").value(hasItem("AJUSTE")));
+
+        // Las reglas de crear también aplican al modificar
+        enviar(put(modificar), con(tresNoches, "\"mascotas\": 2"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        enviar(put(modificar), con(tresNoches, "\"carros\": 99")).andExpect(status().isConflict());
+        enviar(put(modificar), con(tresNoches, "\"motos\": -1")).andExpect(status().isBadRequest());
+        // Sin los campos, se conserva lo que ya tenía
+        enviar(put(modificar), tresNoches)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.carros").value(1))
+                .andExpect(jsonPath("$.mascotas").value(0));
+    }
+
     @Test
     @Tag("DEC-93")
     @Tag("RP-03")
