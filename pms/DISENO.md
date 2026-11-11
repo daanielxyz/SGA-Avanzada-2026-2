@@ -195,13 +195,26 @@ Lista sacada del contrato (9 nov). Los mockups son borradores y se llaman `S3…
 
 Lo que el contrato no da o da distinto a lo planeado:
 - **Cantidad (BL-12)**: hecha en DEC-107. Un solo cargo con `cantidad` y `valor` ya total; el concepto no la trae, así que la pantalla muestra «Desayuno × 2». Se corrige entero: «Corregir» revierte el cargo y propone el mismo servicio y cantidad.
-- **Corregir el hospedaje**: la decisión del 7 nov dice que se puede corregir cualquier cargo, pero solo se puede cargar de nuevo un servicio del catálogo. Hospedaje, parqueadero, mascotas y penalidad se pueden revertir y no volver a cargar desde el folio; su valor se cambia modificando la reserva, que deja el ajuste (RN-14). **Por decidir.**
+- **Corregir el hospedaje**: la decisión del 7 nov dice que se puede corregir cualquier cargo, pero solo se puede cargar de nuevo un servicio del catálogo. Hospedaje, parqueadero, mascotas y penalidad se pueden revertir y no volver a cargar desde el folio; su valor se cambia modificando la reserva, que deja el ajuste (RN-14; carros, motos y mascotas desde DEC-106). **Decidido (Daniel, 10 nov)**: solo tienen «Revertir», con el aviso «Desde el folio no se puede volver a cargar. Si el valor cambió, modifica la reserva». Esto reemplaza «cualquier cargo se puede corregir» del 7 nov.
 - **Valor del consumo**: sale del catálogo y no llega en el Request, así que «Corregir» cambia el servicio o la cantidad, no el valor.
 - **Autor de reversos y devoluciones (#12)**: hecho en DEC-100 y DEC-103. `autorNombre` llega en las correcciones, los reversos de pago, las devoluciones y la autorización de cierre; los abonos y los ajustes automáticos no lo traen. Si es nulo (persona eliminada o movimiento anterior a V23), se muestra `autor` o nada.
 - **Motivo del reverso de un cargo**: no tiene campo propio; va en el concepto («Corrección de CAR-3: motivo»).
 - **Devolución y reverso de pago**: un REVERSO no se revierte (la devolución equivocada se compensa con un abono). `reversaDe` vacío distingue la devolución del reverso de un abono.
 - **Movimientos**: traen fecha, sin hora; se muestran en el orden en que llegan.
 - **Datos del TRA**: la salida los exige, pero se llenan en el registro de llegada, que es la tarea siguiente; hasta entonces la pantalla solo lista lo que falta.
+
+Mockups en `pms/diseno/mockups-meridian-sprint3/sprint3/` (20 pantallas, con su LEEME; se hicieron antes de DEC-100 y DEC-107). Lo resuelto al compararlos con el contrato (paso 3):
+- **Corrección de un cargo**: la API manda «Corrección de CAR-5: motivo». El PMS cambia el código por el concepto del cargo que corrige (`corrigeA`), como en el mockup. Si el texto no empieza así, lo muestra tal cual.
+- **Quién lo hizo** (falta en el mockup): «por {autorNombre}» como dato secundario en las correcciones, los reversos de pago, las devoluciones y la autorización de cierre. Sin nombre, no se muestra nada.
+- **Pagos**: el reverso de un abono dice «Reverso del abono» y va debajo del abono, con el medio repetido. Un REVERSO sin `reversaDe` es una «Devolución», va en su orden y no tiene acciones.
+- **Cantidad**: la pista dice «De 1 a 99» (DEC-107). La fila muestra «Agua × 2» cuando `cantidad` es mayor que 1.
+- **Resumen**: «Cargos» es la suma neta (los AJUSTE que disminuyen restan) y debe dar `totalPagado` ± `saldo`.
+- **Botones por estado**: «Registrar pago» sigue `puedeRegistrarPago`, así que también aparece en una reserva Cancelada o No-show que debe. «Cerrar folio» solo en Cancelada y No-show. «Cargar consumo» y «Registrar salida» solo en En curso. «Revertir» en cualquier estado mientras el folio esté abierto.
+- **Admin o recepción**: los diálogos de cerrar y de salida eligen su variante con el rol de la sesión. El motivo solo se envía cuando hay saldo. Si recepción intenta salir con saldo, «Registrar pago» o «Registrar devolución» abre el formulario dentro del mismo diálogo, como en Confirmar.
+- **Textos de los rechazos**: son los de la API (`mensaje` y `motivo`), no los del mockup.
+- **TRA**: la lista sale de `datosTraFaltantes`, con los textos del backend (documento, primer apellido, nacionalidad, género, país y ciudad de residencia, procedencia, destino y motivo del viaje). Completarlos es del registro de llegada.
+- **Detalle**: del mockup solo se toman «Registrar salida» junto al título y «Ver folio» en el bloque Pago. Lo demás queda como está en el código (extras, política, etc.).
+- **Se aceptan** los botones agregados («Salir», «Salir sin cargar», «Seguir aquí», «Cerrar» en el resultado y «Autorizar y cerrar»).
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
