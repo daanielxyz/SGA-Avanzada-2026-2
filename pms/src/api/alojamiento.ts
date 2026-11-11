@@ -24,6 +24,17 @@ export interface Alojamiento {
     cargoMoto: number
   }
   mediosPago: string[]
+  /** Catálogo de consumos que se cargan al folio (CAR-05). Puede faltar en respuestas viejas. */
+  serviciosAdicionales?: ServicioAdicional[]
+}
+
+export interface ServicioAdicional {
+  id: string
+  nombre: string
+  /** Falso: el servicio se ofrece sin cobro y no se carga al folio. */
+  generaCargo: boolean
+  valor: number
+  activo: boolean
 }
 
 /** `GET /api/alojamiento` (público). */

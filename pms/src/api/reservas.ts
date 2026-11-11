@@ -28,6 +28,8 @@ export interface Ocupante {
   tipoDocumento: string | null
   numeroDocumento: string | null
   nacionalidad: string | null
+  /** Lo que le falta para el TRA, de DOCUMENTO a MOTIVO_VIAJE; vacío si está completo (DEC-96). */
+  datosTraFaltantes?: string[]
 }
 
 export interface Noche {
@@ -160,6 +162,29 @@ export function cancelarReserva(codigo: string): Promise<Liquidacion> {
  */
 export function declararNoShow(codigo: string): Promise<Liquidacion> {
   return accion(codigo, 'no-show')
+}
+
+/** `EstanciaResponse` del backend: cómo quedaron la reserva, el apartamento y el folio. */
+export interface Estancia {
+  codigo: string
+  estado: EstadoReserva
+  apartamento: string
+  estadoOperativo: string
+  folioCerrado: boolean
+  saldo: number
+  situacionSaldo: SituacionSaldo
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/registrar-salida` (CU-22 · CU-38 · SAL-03): cierra el folio, finaliza la reserva y deja
+ * el apartamento pendiente de preparación.
+ *
+ * @param motivoAutorizacion solo para salir con saldo; solo el administrador puede enviarlo
+ * @throws ErrorApi 409 si no está en curso (`ESTADO_NO_PERMITIDO`), hay saldo sin motivo (`SALDO_PENDIENTE`) o faltan
+ *                  datos del TRA (`DATOS_TRA_INCOMPLETOS`); 403 si recepción manda el motivo
+ */
+export function registrarSalida(codigo: string, motivoAutorizacion?: string): Promise<Estancia> {
+  return accion(codigo, 'registrar-salida', motivoAutorizacion ? { motivoAutorizacion } : undefined)
 }
 
 /** `CotizacionResponse`: el valor de una estancia, antes de crear la reserva. */

@@ -2,7 +2,7 @@ import type { Alojamiento } from '../api/alojamiento'
 import type { Reserva } from '../api/reservas'
 import { fechaSinAnio, hora } from '../formato'
 
-export type Accion = 'confirmar' | 'cancelar' | 'noShow'
+export type Accion = 'confirmar' | 'cancelar' | 'noShow' | 'salida'
 
 /** RES-16: el no-show se declara desde la hora límite del día de entrada. Si no se conoce, decide el backend. */
 function noShowDisponibleDesde({ entrada }: Reserva, alojamiento: Alojamiento | null): string | null {
@@ -12,9 +12,11 @@ function noShowDisponibleDesde({ entrada }: Reserva, alojamiento: Alojamiento | 
 }
 
 /** Lo que se puede hacer según el estado (RN-08). Una reserva sin acciones no muestra nada. */
-export default function AccionesReserva({ reserva, alojamiento, alElegir }: {
+export default function AccionesReserva({ reserva, alojamiento, salidaDisponible = true, alElegir }: {
   reserva: Reserva
   alojamiento: Alojamiento | null
+  /** La salida necesita el folio: si no cargó, el bloque Pago ya ofrece «Reintentar». */
+  salidaDisponible?: boolean
   alElegir: (accion: Accion) => void
 }) {
   if (reserva.estado === 'PENDIENTE') {
@@ -47,6 +49,15 @@ export default function AccionesReserva({ reserva, alojamiento, alElegir }: {
         </div>
         <button type="button" className="boton boton-peligro-borde" onClick={() => alElegir('cancelar')}>
           Cancelar
+        </button>
+      </div>
+    )
+  }
+  if (reserva.estado === 'EN_CURSO') {
+    return (
+      <div className="acciones-reserva">
+        <button type="button" className="boton" disabled={!salidaDisponible} onClick={() => alElegir('salida')}>
+          Registrar salida
         </button>
       </div>
     )

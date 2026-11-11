@@ -136,12 +136,23 @@ describe('botones según el estado (RN-08)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Declarar no-show' })).toBeEnabled())
   })
 
-  it.each(['EN_CURSO', 'FINALIZADA', 'CANCELADA', 'NO_SHOW'] as const)('%s no tiene acciones', async (estado) => {
+  it('una reserva en curso solo registra la salida y abre su folio (SAL-01)', async () => {
+    apiCon({ reserva: { estado: 'EN_CURSO' } })
+    abrir()
+
+    expect(await screen.findByRole('button', { name: 'Registrar salida' })).toBeEnabled()
+    expect(await screen.findByRole('link', { name: /Ver folio/ })).toHaveAttribute('href', '/reservas/RES-2026-00042/folio')
+    for (const nombre of ['Confirmar', 'Cancelar', 'Declarar no-show']) {
+      expect(screen.queryByRole('button', { name: nombre })).not.toBeInTheDocument()
+    }
+  })
+
+  it.each(['FINALIZADA', 'CANCELADA', 'NO_SHOW'] as const)('%s no tiene acciones', async (estado) => {
     apiCon({ reserva: { estado } })
     abrir()
 
     await screen.findByRole('heading', { name: 'Datos de la reserva' })
-    for (const nombre of ['Confirmar', 'Cancelar', 'Declarar no-show']) {
+    for (const nombre of ['Confirmar', 'Cancelar', 'Declarar no-show', 'Registrar salida']) {
       expect(screen.queryByRole('button', { name: nombre })).not.toBeInTheDocument()
     }
   })
