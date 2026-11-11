@@ -14,7 +14,8 @@ import java.time.Clock;
 import java.time.LocalDate;
 
 /**
- * Caso de uso: recepción cobra en el folio un servicio adicional que consumió el grupo alojado (CAR-05 · DEC-60).
+ * Caso de uso: recepción cobra en el folio un servicio adicional que consumió el grupo alojado, con su cantidad en un
+ * solo cargo (CAR-05 · DEC-60 · BL-12).
  * Solo cambia el Folio; la reserva y el alojamiento se leen.
  */
 @Service
@@ -46,7 +47,7 @@ public class CargarServicioAdicionalUseCase {
         Alojamiento alojamiento = cargador.alojamientoDe(reserva);
 
         cargoServicio.cargar(reserva, folio, alojamiento, new ServicioAdicionalId(comando.servicioId()),
-                LocalDate.now(reloj));
+                comando.cantidad(), LocalDate.now(reloj));
 
         folios.guardar(folio);
         return FolioResult.de(folio);

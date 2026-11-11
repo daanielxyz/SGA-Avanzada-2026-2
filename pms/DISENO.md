@@ -154,7 +154,7 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 - **Notas** de la reserva para el siguiente turno, en el detalle y en la llegada (BL-08). El backend ya está (DEC-105): `GET`/`POST /api/reservas/{codigo}/notas` y `PUT …/notas/{id}/atender`; arriba las pendientes, abajo las atendidas con quién y cuándo, y sin «Agregar nota» en una reserva terminada.
 - **Tablero**: la barra se colorea por la cuenta (ya salió, al día, con saldo, debe todo; BL-09), además del estado. Los colores salen de la base y se revisan con `impeccable audit`; no se copian los del otro sistema.
 - **Reserva de mostrador**: si la reserva directa entra hoy, al crearla se sigue con el pago, la confirmación y la llegada (BL-11).
-- **Folio**: los consumos se cargan con cantidad (BL-12).
+- **Folio**: los consumos se cargan con cantidad (BL-12). El backend ya está (DEC-107): `POST …/folio/servicios` acepta `cantidad` (1 a 99) y cada cargo trae `cantidad`; `valor` ya es el total, así que se muestra «Desayuno × 2 · $50.000». Un cargo se corrige entero.
 - **IVA** según el documento: se pregunta al cliente en el cierre 3 (BL-13).
 
 ## Próxima sesión: sprint 3 (9 – 13 nov)

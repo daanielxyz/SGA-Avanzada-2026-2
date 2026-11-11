@@ -40,4 +40,6 @@ public class CargoJpa {
     private String corrigeA;
 
     private String autor; // solo en una corrección hecha por una persona (DEC-100)
+
+    private int cantidad; // BL-12; 1 en los cargos anteriores a V26
 }

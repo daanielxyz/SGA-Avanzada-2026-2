@@ -29,6 +29,17 @@ public class CargoServicioDomainService {
      */
     public CargoId cargar(Reserva reserva, Folio folio, Alojamiento alojamiento, ServicioAdicionalId servicioId,
                           LocalDate hoy) {
+        return cargar(reserva, folio, alojamiento, servicioId, 1, hoy);
+    }
+
+    /**
+     * Como {@link #cargar(Reserva, Folio, Alojamiento, ServicioAdicionalId, LocalDate)}, con varias unidades del
+     * servicio en un solo cargo («dos aguas», BL-12).
+     *
+     * @throws ReglaDominioException además, si la cantidad es menor que 1
+     */
+    public CargoId cargar(Reserva reserva, Folio folio, Alojamiento alojamiento, ServicioAdicionalId servicioId,
+                          int cantidad, LocalDate hoy) {
         if (!folio.reservaId().equals(reserva.codigo())) {
             throw new ReglaDominioException("El folio " + folio.id().valor() + " no es de la reserva "
                     + reserva.codigo().valor());
@@ -38,6 +49,6 @@ public class CargoServicioDomainService {
                     + reserva.estado());
         }
         ServicioAdicional servicio = alojamiento.servicioCobrable(servicioId);
-        return folio.agregarServicioAdicional(servicio.nombre(), servicio.valor(), hoy);
+        return folio.agregarServicioAdicional(servicio.nombre(), servicio.valor(), cantidad, hoy);
     }
 }

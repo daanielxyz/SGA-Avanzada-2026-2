@@ -36,17 +36,17 @@ public record FolioResult(String id, String reserva, List<CargoResult> cargos, L
      * @param autorNombre su nombre vigente, solo con {@link FolioResult#conNombres} (DEC-103)
      */
     public record CargoResult(String id, String tipo, String concepto, BigDecimal valor, String sentido,
-                              LocalDate fecha, String corrigeA, String autor, String autorNombre) {
+                              LocalDate fecha, String corrigeA, String autor, String autorNombre, int cantidad) {
 
         static CargoResult de(Cargo cargo) {
             return new CargoResult(cargo.id().valor(), cargo.tipo().name(), cargo.concepto(), cargo.valor().monto(),
                     Optional.ofNullable(cargo.sentido()).map(Enum::name).orElse(null), cargo.fecha(),
                     Optional.ofNullable(cargo.corrigeA()).map(c -> c.valor()).orElse(null),
-                    Optional.ofNullable(cargo.autor()).map(a -> a.valor()).orElse(null), null);
+                    Optional.ofNullable(cargo.autor()).map(a -> a.valor()).orElse(null), null, cargo.cantidad());
         }
 
         private CargoResult conAutor(String nuevoAutor, String nombre) {
-            return new CargoResult(id, tipo, concepto, valor, sentido, fecha, corrigeA, nuevoAutor, nombre);
+            return new CargoResult(id, tipo, concepto, valor, sentido, fecha, corrigeA, nuevoAutor, nombre, cantidad);
         }
     }
 

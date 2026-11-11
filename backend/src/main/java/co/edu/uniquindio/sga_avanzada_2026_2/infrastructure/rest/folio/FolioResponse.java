@@ -23,9 +23,10 @@ public record FolioResponse(String id, String reserva, List<CargoResponse> cargo
      * @param corrigeA el cargo que este AJUSTE revierte, si corrige alguno
      * @param autor    quien hizo la corrección; vacío en los demás cargos y para el huésped (DEC-100 · DEC-103)
      * @param autorNombre su nombre vigente; nulo si esa persona ya no existe
+     * @param cantidad unidades del servicio («Agua × 2», BL-12); 1 en los demás cargos. {@code valor} ya es el total
      */
     public record CargoResponse(String id, String tipo, String concepto, BigDecimal valor, String sentido,
-                                LocalDate fecha, String corrigeA, String autor, String autorNombre) {
+                                LocalDate fecha, String corrigeA, String autor, String autorNombre, int cantidad) {
     }
 
     /**
@@ -50,7 +51,7 @@ public record FolioResponse(String id, String reserva, List<CargoResponse> cargo
         return new FolioResponse(r.id(), r.reserva(),
                 r.cargos().stream()
                         .map(c -> new CargoResponse(c.id(), c.tipo(), c.concepto(), c.valor(), c.sentido(), c.fecha(),
-                                c.corrigeA(), c.autor(), c.autorNombre()))
+                                c.corrigeA(), c.autor(), c.autorNombre(), c.cantidad()))
                         .toList(),
                 r.pagos().stream()
                         .map(p -> new PagoResponse(p.id(), p.medio(), p.monto(), p.tipo(), p.fecha(), p.reversaDe(),
