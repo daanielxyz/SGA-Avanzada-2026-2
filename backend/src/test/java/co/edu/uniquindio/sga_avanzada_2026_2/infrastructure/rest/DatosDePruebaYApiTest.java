@@ -117,6 +117,33 @@ class DatosDePruebaYApiTest {
         }
     }
 
+    private String codigoDe(String estado, String apartamento) throws Exception {
+        String cuerpo = admin(get(RESERVAS).param("estado", estado), null)
+                .andReturn().getResponse().getContentAsString();
+        List<String> codigos = JsonPath.read(cuerpo, "$.contenido[?(@.apartamento == '" + apartamento + "')].codigo");
+        return codigos.getFirst();
+    }
+
+    @Test
+    @Tag("BL-12")
+    @Tag("BL-23")
+    void elHotelCobraServiciosYAdmiteParqueaderoYMascotasParaProbarElFolio() throws Exception {
+        admin(get("/api/alojamiento"), null)
+                .andExpect(jsonPath("$.serviciosAdicionales[?(@.nombre == 'Desayuno')].valor").value(hasItem(25000)))
+                .andExpect(jsonPath("$.serviciosAdicionales[?(@.nombre == 'Agua')].generaCargo").value(hasItem(true)))
+                .andExpect(jsonPath("$.parametros.cupoParqueadero").value(greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.parametros.aceptaMascotas").value(true));
+
+        admin(get(RESERVAS + "/" + codigoDe("CONFIRMADA", "APT-102")), null)
+                .andExpect(jsonPath("$.carros").value(1))
+                .andExpect(jsonPath("$.mascotas").value(1))
+                .andExpect(jsonPath("$.extras.total").value(greaterThanOrEqualTo(1)));
+        admin(get(RESERVAS + "/" + codigoDe("EN_CURSO", "APT-103") + "/folio"), null)
+                .andExpect(jsonPath("$.cargos[?(@.concepto == 'Desayuno')].cantidad").value(hasItem(2)))
+                .andExpect(jsonPath("$.cargos[?(@.concepto == 'Desayuno')].valor").value(hasItem(50000)))
+                .andExpect(jsonPath("$.saldo").value(50000));
+    }
+
     @Test
     void hayUnBloqueoVigenteYUnApartamentoFueraDeServicio() throws Exception {
         admin(get("/api/apartamentos/APT-109"), null).andExpect(jsonPath("$.bloqueos", hasSize(1)));

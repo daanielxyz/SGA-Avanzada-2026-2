@@ -22,6 +22,10 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.tarifa.DefinirTarifaUse
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.CobroParqueadero;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicional;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ServicioAdicionalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
@@ -82,6 +86,8 @@ import java.util.List;
  * Completa los datos de prueba de la sección 12.3 del proyecto sobre los de {@link CargadorDatosDemo}: los 10
  * apartamentos con sus tarifas, un usuario por rol, reservas en todos los estados y por los tres canales, un bloqueo
  * vigente y un apartamento fuera de servicio. Las fechas se calculan desde hoy para que sirvan en cualquier arranque.
+ * Además deja servicios con precio, una reserva confirmada con un carro y una mascota, y un consumo de dos desayunos en
+ * la reserva en curso, para probar el folio y los extras (BL-12 · BL-23).
  * <p>
  * Las reservas se arman con el constructor de reconstrucción del dominio, que valida las invariantes pero no las reglas
  * de creación (DEC-06), porque RN-04 no deja crear una reserva pasada y el historial necesita alguna. Si ya existe
@@ -115,6 +121,15 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
             new Nuevo("APT-108", "Estudio Bahareque", 2, 1, 110_000, List.of("Wifi", "Cocina", "Televisor")),
             new Nuevo("APT-109", "Patio de los Guayacanes", 4, 2, 95_000, List.of("Wifi", "Patio", "Lavadora")),
             new Nuevo(ULTIMO, "Mirador del Cocora", 3, 2, 125_000, List.of("Wifi", "Vista al valle", "Chimenea")));
+
+    static final String DESAYUNO = "Desayuno";
+
+    private record ServicioDemo(String nombre, long valor) {
+    }
+
+    /** Servicios que se cobran en el folio (BL-12); el Parqueadero de {@code sga.alojamiento} no genera cargo. */
+    private static final List<ServicioDemo> SERVICIOS = List.of(new ServicioDemo(DESAYUNO, 25_000),
+            new ServicioDemo("Agua", 3_000), new ServicioDemo("Lavandería", 18_000));
 
     private final AlojamientoRepository alojamientos;
     private final ApartamentoRepository apartamentos;
@@ -187,8 +202,15 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments argumentos) {
         String alojamientoId = propiedades.alojamiento().id();
-        if (alojamientos.buscarPorId(new AlojamientoId(alojamientoId)).isEmpty()
-                || apartamentos.buscarPorCodigo(new ApartamentoId(ULTIMO)).isPresent()) {
+        if (alojamientos.buscarPorId(new AlojamientoId(alojamientoId)).isEmpty()) {
+            return;
+        }
+        try {
+            transaccion.executeWithoutResult(estado -> completarConfiguracion(alojamientoId));
+        } catch (RuntimeException error) {
+            LOG.warn("Datos de prueba: no se agregaron los servicios con precio ({})", error.getMessage(), error);
+        }
+        if (apartamentos.buscarPorCodigo(new ApartamentoId(ULTIMO)).isPresent()) {
             return;
         }
         try {
@@ -198,6 +220,43 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
             LOG.warn("Datos de prueba (12.3): no se cargaron ({}). El backend sigue sin ellos", error.getMessage(),
                     error);
         }
+    }
+
+    /**
+     * Deja el alojamiento listo para probar el folio y los extras (BL-12 · BL-23): servicios que se cobran y, en una
+     * base creada antes de V15 (sin parqueadero ni mascotas), los valores iniciales de {@code sga.parametros}. Corre
+     * una sola vez: si ya existe {@link #DESAYUNO}, no toca nada, para no deshacer lo que configuró el administrador.
+     */
+    private void completarConfiguracion(String alojamientoId) {
+        Alojamiento alojamiento = alojamientos.buscarPorId(new AlojamientoId(alojamientoId)).orElseThrow();
+        if (alojamiento.serviciosAdicionales().stream().anyMatch(s -> s.nombre().equals(DESAYUNO))) {
+            return;
+        }
+        SERVICIOS.forEach(s -> alojamiento.agregarServicioAdicional(new ServicioAdicional(
+                new ServicioAdicionalId(codigos.siguiente(SerieCodigo.SERVICIO)), s.nombre(), true,
+                Dinero.de(s.valor()), true)));
+        alojamiento.cambiarParametros(conParqueaderoYMascotas(alojamiento.parametros(), propiedades.parametros()));
+        alojamientos.guardar(alojamiento);
+        LOG.info("Datos de prueba: servicios con precio, parqueadero y mascotas listos para el folio");
+    }
+
+    /**
+     * Los parámetros con el parqueadero y las mascotas de {@code sga.parametros} si el alojamiento no tiene ninguno de
+     * los dos (una base creada antes de V15 quedó con cupo 0 y sin mascotas); si no, los mismos.
+     */
+    static ParametrosAlojamiento conParqueaderoYMascotas(ParametrosAlojamiento actual,
+                                                         SgaPropiedades.Parametros iniciales) {
+        if (actual.cupoParqueadero() > 0 || actual.aceptaMascotas()) {
+            return actual;
+        }
+        return new ParametrosAlojamiento(actual.umbralEdadFacturable(), actual.horaEntrada(), actual.horaSalida(),
+                actual.tiempoPreparacion(), actual.plazoConfirmacion(), actual.horaLimiteNoShow(), actual.anticipo(),
+                actual.minimoMediosPago(), actual.minimoServiciosAdicionales(), actual.minimoTemporadas(),
+                actual.minimoTramosCancelacion(), actual.minimoCapacidadesDistintas(), actual.pagoEnLinea(),
+                actual.plazoPagoEnLinea(), iniciales.cupoParqueadero(), iniciales.aceptaMascotas(),
+                iniciales.limiteMascotas(), new Dinero(iniciales.cargoMascota()),
+                CobroParqueadero.valueOf(iniciales.cobroParqueadero()), new Dinero(iniciales.cargoCarro()),
+                new Dinero(iniciales.cargoMoto()));
     }
 
     private void cargar(String alojamientoId) {
@@ -276,10 +335,12 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
                 null, null, ahora);
         Reserva confirmada = reserva(c, "APT-102", ana, hoy.plusDays(10), hoy.plusDays(13), EstadoReserva.CONFIRMADA,
                 CanalOrigen.PORTAL, null, null, ahora.minusDays(2));
+        declararExtras(c, confirmada, 1, 1); // recepción los puede corregir antes de la llegada (BL-23)
         pagar(c, confirmada, confirmada.valorTotal().porcentaje(alojamiento.parametros().anticipo()));
         Reserva enCurso = reserva(c, "APT-103", luis, hoy.minusDays(1), hoy.plusDays(2), EstadoReserva.EN_CURSO,
                 CanalOrigen.DIRECTO, null, null, ahora.minusDays(5));
         pagar(c, enCurso, enCurso.valorTotal());
+        consumir(c, enCurso, DESAYUNO, 2); // queda con saldo pendiente para probar el cobro en la salida (BL-12)
         Reserva finalizada = reserva(c, "APT-104", luis, hoy.minusDays(10), hoy.minusDays(7), EstadoReserva.FINALIZADA,
                 CanalOrigen.DIRECTO, null, null, ahora.minusDays(20));
         pagar(c, finalizada, finalizada.valorTotal());
@@ -320,6 +381,24 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
         folios.guardar(Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
                 reserva.valorTotal(), creadaEn.toLocalDate()));
         return reserva;
+    }
+
+    private void declararExtras(Contexto c, Reserva reserva, int carros, int mascotas) {
+        reserva.declararExtras(carros, 0, mascotas, c.alojamiento().parametros().calcularExtras(carros, 0, mascotas,
+                reserva.estancia().noches().size()));
+        reservas.guardar(reserva);
+        Folio folio = folios.buscarPorReserva(reserva.codigo()).orElseThrow();
+        folio.cargarExtras(reserva.extras(), c.hoy());
+        folios.guardar(folio);
+    }
+
+    private void consumir(Contexto c, Reserva reserva, String servicio, int cantidad) {
+        Folio folio = folios.buscarPorReserva(reserva.codigo()).orElseThrow();
+        c.alojamiento().serviciosAdicionales().stream()
+                .filter(s -> s.nombre().equals(servicio))
+                .findFirst()
+                .ifPresent(s -> folio.agregarServicioAdicional(s.nombre(), s.valor(), cantidad, c.hoy()));
+        folios.guardar(folio);
     }
 
     private void pagar(Contexto c, Reserva reserva, Dinero monto) {
