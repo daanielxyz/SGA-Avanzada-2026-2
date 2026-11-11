@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 import { ErrorApi } from '../api/cliente'
 import type { SituacionSaldo } from '../api/folio'
 import type { Reserva } from '../api/reservas'
@@ -20,8 +21,8 @@ const SALDO: Record<SituacionSaldo, { titulo: string; situacion: string; clase: 
 }
 
 /**
- * Valor, extras, anticipo, lo pagado y el saldo de la reserva (RN-15 · RES-15 · DEC-89). Los movimientos son del
- * sprint 3.
+ * Valor, extras, anticipo, lo pagado y el saldo de la reserva (RN-15 · RES-15 · DEC-89). Los movimientos están en el
+ * folio, que se abre desde aquí.
  */
 export default function BloquePago({ reserva, pago, alRegistrarPago }: {
   reserva: Reserva
@@ -83,11 +84,16 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
     <>
       <div className="pago-cabecera">
         <h2 id="titulo-pago">Pago</h2>
-        {puedeRegistrarPago(reserva.estado, folio) && (
-          <button type="button" className="boton boton-secundario pago-registrar" onClick={alRegistrarPago}>
-            Registrar pago
-          </button>
-        )}
+        <div className="pago-acciones">
+          <Link to={`/reservas/${encodeURIComponent(reserva.codigo)}/folio`} className="pago-ver-folio">
+            Ver folio <span aria-hidden="true">→</span>
+          </Link>
+          {puedeRegistrarPago(reserva.estado, folio) && (
+            <button type="button" className="boton boton-secundario pago-registrar" onClick={alRegistrarPago}>
+              Registrar pago
+            </button>
+          )}
+        </div>
       </div>
       <dl className="tarjeta datos datos-pago">
         <Dato nombre="Estancia" codigo>

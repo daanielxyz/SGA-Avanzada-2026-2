@@ -4,6 +4,7 @@ import ProteccionErrores from './componentes/ProteccionErrores'
 import { OPCIONES, RECEPCION } from './navegacion'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
+import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
 import ListadoReservas from './paginas/ListadoReservas'
@@ -53,6 +54,14 @@ export default function App() {
           element={
             <SoloPara roles={RECEPCION}>
               <DetalleReserva />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/reservas/:codigo/folio"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <Folio />
             </SoloPara>
           }
         />

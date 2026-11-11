@@ -10,6 +10,7 @@ import Dialogo from '../componentes/Dialogo'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import TablaDesglose from '../componentes/TablaDesglose'
 import { useTitulo } from '../componentes/useTitulo'
+import { DialogoSalida } from '../folio/DialogosFolio'
 import { cantidad, dinero, edadEn, fechaCorta, hora, noches } from '../formato'
 import AccionesReserva, { type Accion } from '../reserva/AccionesReserva'
 import BloquePago from '../reserva/BloquePago'
@@ -18,6 +19,7 @@ import DialogoLiquidar from '../reserva/DialogoLiquidar'
 import FormularioPago from '../reserva/FormularioPago'
 import { mediosDeRecepcion, montoSugerido } from '../reserva/pago'
 import { useDatosDePago } from '../reserva/useDatosDePago'
+import { useSesion } from '../sesion/contexto'
 
 type Resultado = { clave: string; reserva: Reserva } | { clave: string; error: unknown }
 
@@ -33,6 +35,7 @@ export default function DetalleReserva() {
   const { codigo = '' } = useParams()
   const ubicacion = useLocation()
   const navegar = useNavigate()
+  const { sesion } = useSesion()
   const estadoRecibido = ubicacion.state as { volverA?: string; creada?: ReservaRecienCreada } | null
   const volverA = estadoRecibido?.volverA ?? ''
   const [intento, setIntento] = useState(0)
@@ -166,7 +169,12 @@ export default function DetalleReserva() {
             </h1>
             <EtiquetaEstado estado={reserva.estado} />
           </div>
-          <AccionesReserva reserva={reserva} alojamiento={pago.datos?.alojamiento ?? null} alElegir={setDialogo} />
+          <AccionesReserva
+            reserva={reserva}
+            alojamiento={pago.datos?.alojamiento ?? null}
+            salidaDisponible={Boolean(pago.datos)}
+            alElegir={setDialogo}
+          />
         </div>
       </div>
 
@@ -255,6 +263,21 @@ export default function DetalleReserva() {
           alCerrar={() => setDialogo(null)}
           alTerminar={(liquidacion) =>
             alLiquidar(liquidacion, dialogo === 'cancelar' ? 'Reserva cancelada' : 'No-show declarado')}
+          alFallar={actualizar}
+        />
+      )}
+      {dialogo === 'salida' && pago.datos && (
+        <DialogoSalida
+          reserva={reserva}
+          folio={pago.datos.folio}
+          esAdministrador={sesion?.rol === 'ADMINISTRADOR'}
+          medios={mediosDeRecepcion(pago.datos.alojamiento)}
+          alCerrar={() => {
+            enfocarTitulo.current = true
+            setDialogo(null)
+          }}
+          alCambiarFolio={pago.ponerFolio}
+          alTerminar={actualizar}
           alFallar={actualizar}
         />
       )}

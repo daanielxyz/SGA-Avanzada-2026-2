@@ -3,6 +3,7 @@
 import type { Alojamiento } from '../api/alojamiento'
 import type { Cargo, Folio } from '../api/folio'
 import type { EstadoReserva, Reserva } from '../api/reservas'
+import { esConsumo, valorConSigno } from '../folio/movimientos'
 
 const TERMINALES: readonly EstadoReserva[] = ['FINALIZADA', 'CANCELADA', 'NO_SHOW']
 
@@ -24,17 +25,17 @@ export function valorRetenido(folio: Folio): number {
   return sumaDe(folio.cargos, 'PENALIDAD_CANCELACION')
 }
 
-// El backend carga los extras de la reserva al folio como servicios con estos conceptos (`Folio.cargarExtras`); las
-// reservas anteriores a DEC-89 traen «Mascotas (n)». La reserva ya dice cuánto suman, así que aquí se dejan fuera.
-function esExtraDeLaReserva(cargo: Cargo): boolean {
-  return cargo.concepto === 'Parqueadero' || cargo.concepto === 'Mascotas' || cargo.concepto.startsWith('Mascotas (')
-}
-
-/** Los consumos cargados al folio (minibar, lavandería…), sin los extras de la reserva. */
+/**
+ * Los consumos cargados al folio (minibar, lavandería…), netos de sus correcciones. Los extras de la reserva quedan
+ * fuera: la reserva ya dice cuánto suman.
+ */
 export function otrosCargos(folio: Folio): number {
-  return folio.cargos
-    .filter((cargo) => cargo.tipo === 'SERVICIO_ADICIONAL' && !esExtraDeLaReserva(cargo))
-    .reduce((suma, cargo) => suma + cargo.valor, 0)
+  const consumos = folio.cargos.filter(esConsumo)
+  const ids = new Set(consumos.map((cargo) => cargo.id))
+  const corregidos = folio.cargos
+    .filter((cargo) => cargo.corrigeA && ids.has(cargo.corrigeA))
+    .reduce((suma, cargo) => suma + valorConSigno(cargo), 0)
+  return consumos.reduce((suma, cargo) => suma + cargo.valor, 0) + corregidos
 }
 
 /** Una reserva terminada solo recibe pagos si todavía debe algo; lo que tenga a favor se devuelve (PAG-06). */

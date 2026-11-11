@@ -129,7 +129,7 @@ Mientras se hacía el frontend del sprint 2, los mockups se adaptaron al backend
 El equipo web cambió el núcleo después del sprint 2 del PMS. No hay nada que decidir: hay que hacerlo, y va primero en el sprint 3. **Hechos**: el anticipo, la nueva reserva, el límite de mascotas y el detalle en `feature/pms/ajustes-extras`; cancelar en `feature/pms/previa-cancelacion`.
 - Cómo quedó: el bloque Pago muestra Estancia, Parqueadero, Cargo por mascotas y Consumos por separado, y el anticipo sale de la estancia más los extras de la reserva (sin consumos). Los consumos son los servicios del folio que no son los extras: el backend carga los extras con los conceptos «Parqueadero» y «Mascotas» («Mascotas (n)» antes de DEC-89), así que si cambian esos nombres hay que cambiar `pms/src/reserva/pago.ts`. En la nueva reserva, carros y motos llevan su precio en la pista y se revisa que no pasen del cupo total; el total ya suma los extras. El límite de mascotas sale de `GET /api/apartamentos/{codigo}`; si no carga, rige el del hotel y el backend lo exige igual.
 - Auditoría (`impeccable audit`, sin su ejecutable, 17/20) y sus cinco P2 corregidos: los extras de una reserva cancelada o con no-show dicen «anulado»; carros y motos van en el grupo «Parqueadero» con un solo error para los dos; el texto dice «El anticipo incluye el parqueadero y las mascotas»; el campo de mascotas espera el límite del apartamento y avisa si se descartan las escritas; la hora y las mascotas van en una fila de dos y el total se anuncia (`aria-live`). Quedan dos P3: el «$» se puede separar del número (`dinero()`, para la fase de estilos) y los consumos revertidos (en el folio, abajo).
-- **Corregir cargos en el folio** (sprint 3): un cargo o un pago nunca se edita ni se borra (RN-16); se corrige con su movimiento inverso, que el backend ya tiene (`POST …/folio/cargos/{id}/revertir` con motivo y `…/pagos/{id}/revertir`) y que rechaza revertir dos veces lo mismo o revertir una corrección. En la pantalla: «Revertir» en cada cargo, con motivo obligatorio; «Corregir» es revertir y abrir el formulario de cargo nuevo ya lleno, para cambiar la cantidad o el valor. El cargo revertido se ve tachado junto a su reverso (`corrigeA`, que el PMS todavía no lee), y los consumos se suman netos de sus reversos. Se puede revertir y corregir cualquier cargo, también el hospedaje (decisión del 7 nov), y queda quién lo hizo (#12).
+- **Corregir cargos en el folio** (sprint 3): un cargo o un pago nunca se edita ni se borra (RN-16); se corrige con su movimiento inverso, que el backend ya tiene (`POST …/folio/cargos/{id}/revertir` con motivo y `…/pagos/{id}/revertir`) y que rechaza revertir dos veces lo mismo o revertir una corrección. En la pantalla: «Revertir» en cada cargo, con motivo obligatorio; «Corregir» es revertir y abrir el formulario de cargo nuevo ya lleno, para cambiar la cantidad o el valor. El cargo revertido se ve tachado junto a su reverso (`corrigeA`), y los consumos se suman netos de sus reversos. Cualquier cargo se revierte, pero solo los consumos se corrigen (decisión del 10 nov, que reemplaza la del 7 nov), y queda quién lo hizo (#12). Hecho en `feature/pms/folio`.
 - **Anticipo con extras** (DEC-89): la confirmación exige el anticipo sobre la estancia más los extras (`valor.total + extras.total`). `pms/src/reserva/pago.ts` lo calcula solo sobre la estancia: con parqueadero o mascotas cobrados, el PMS muestra un anticipo menor y el backend rechaza la confirmación. Si se hace el #6, se usa el valor que mande la API.
 - **Nueva reserva** (DEC-89): enviar `carros` y `motos` en vez de `vehiculos` (obsoleto: cuenta como carros), con el cobro de parqueadero de `cobroParqueadero`, `cargoCarro` y `cargoMoto`. Quitar «van aparte en el pago»: los extras ahora suman en el anticipo.
 - **Límite de mascotas por apartamento** (DEC-93): usar el del apartamento (`limiteMascotas`, vacío = el del hotel) en vez del del hotel. El backend ya lo exige.
@@ -160,23 +160,66 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 ## Próxima sesión: sprint 3 (9 – 13 nov)
 **Para retomar**, una sesión nueva de Claude lee `CLAUDE.md`, `CLAUDE.local.md`, la sección pms del sprint actual en `docs/SPRINTS.md` y esta sección. Lo que falta para trabajar y no va a git: `CLAUDE.local.md`, `backend/.env` (cada quien con sus valores), `pms/diseno/` y la fuente Satoshi en `pms/public/fuentes/`.
 
-**Ya hecho** (8 nov): entrevista (BL-07 a BL-23), ajustes del PMS por DEC-89, DEC-91 y DEC-93, `motivo` en los 409 (DEC-94) y anticipo en la respuesta (DEC-95). `feature/pms/motivo-y-anticipo` (PR #43) los usa en el PMS y está por integrar.
+**Ya hecho** (10 nov): entrevista (BL-07 a BL-23), ajustes del PMS por DEC-89, DEC-91 y DEC-93, y todo el núcleo del reparto: BL-07 (DEC-96) y #9 (DEC-97) del equipo web; BL-22, #12, BL-09, #1b, #7, BL-08, BL-23 y BL-12 de Reyes (DEC-99 a DEC-107).
+
+**Folio, terminado** (`feature/pms/folio`, Daniel, 10 nov): pantalla `/reservas/{codigo}/folio` y sus diálogos (`src/folio/`), «Ver folio» y «Registrar salida» en el detalle, pruebas (`src/folio/movimientos.test.ts`, `src/paginas/Folio.test.tsx`), comprobado contra el backend de la rama y auditado (18/20, «Sprint 3: folio»). Falta el PR. **Sigue**: el registro de llegada (tarea 2), en `feature/pms/registro-llegada`, que sale de `develop` cuando entre el folio porque toca el mismo detalle. Los datos de prueba no traen consumos con cobro: para probar en local, el administrador crea uno (`POST /api/alojamiento/servicios`).
 
 **Reparto** (8 nov, se puede cambiar). Si una tarea depende de otra que no ha entrado, se avanza contra el contrato acordado o se toma la siguiente.
 
 | Quién | Tarea, en orden | Depende de |
 |---|---|---|
-| Daniel (pantallas) | 1. **Folio**, en `feature/pms/folio`: cargos con cantidad (BL-12), pagos, devoluciones, revertir y corregir, cierre y salida. Los endpoints ya existen | Nada, salvo el bloqueo de la salida por el TRA, que espera el BL-07 |
-| Daniel (pantallas) | 2. **Registro de llegada**: layout y mockups desde ya; el código, cuando entren sus reglas. Datos del TRA, desglose, cobro de la estancia con autorización, cambio de titular y reserva de mostrador (BL-10, BL-11, BL-23) | BL-07 y #9 (equipo web), BL-22 (Reyes) |
-| Daniel (pantallas) | 3. **Tablero por la cuenta y notas** (BL-09, BL-08) | #2 con BL-09 y BL-08 (Reyes) |
+| Daniel (pantallas) | 1. **Folio**, en `feature/pms/folio`: falta el PR | Nada |
+| Daniel (pantallas) | 2. **Registro de llegada**: datos del TRA (completa lo que la salida exige), desglose, cobro de la estancia con autorización, cambio de titular y de huésped principal, vehículos y mascotas antes de llegar, y reserva de mostrador (BL-10, BL-11, BL-22, BL-23) | Nada: ya entraron sus reglas |
+| Daniel (pantallas) | 3. **Tablero por la cuenta y notas** (BL-09, BL-08) | Nada: ya entraron |
 | Daniel (pantallas) | 4. **Preparación de apartamentos** para el personal de servicio, pensada para el celular; no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS. Probar en un celular real las pantallas del sprint 2 | Nada |
-| Reyes (núcleo) | En ramas `feature/nucleo/…`, cada una con su PR: BL-22, #12 (autor de reversos y devoluciones), #2 con BL-09, #1b, #7, BL-08 y #11 | Nada |
-| Reyes (núcleo) | Acordar con el equipo web el BL-07 y el #9 | Equipo web |
-| Equipo web | #9 y BL-07 | Acordar antes los puntos de abajo |
+| Reyes (núcleo) | Hecho lo del reparto (DEC-99 a DEC-107) | — |
 
-**Por acordar con el equipo web** antes de que programen el #9 y el BL-07: los nombres de los campos del TRA en el Request y el Response de la llegada; quién hace el bloqueo de la salida si faltan datos (propuesta: entra en su BL-07); que estén integrados a más tardar el miércoles 11 (`docs/SPRINTS.md`); y que pms quite la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts` cuando entre el #9.
+**Pendiente de pms por el #9**: quitar la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts`.
 
-**Cómo se hace cada pantalla**: mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) ya está hecho para reutilizarse en el folio. Los consumos se suman netos de sus reversos y cualquier cargo se puede revertir o corregir (ver «Corregir cargos en el folio»).
+**Cómo se hace cada pantalla**: mismo flujo del sprint 2: lista de pantallas sacada del contrato, prompt para Claude Design, revisión de los mockups contra el contrato, código y auditoría. «Registrar pago» (`src/reserva/FormularioPago.tsx`) también registra devoluciones (`tipo`). Los consumos se suman netos de sus correcciones; cualquier cargo se revierte, pero solo los consumos se corrigen (decisión del 10 nov, «Sprint 3: folio»).
+
+## Sprint 3: folio (`feature/pms/folio`)
+Lista sacada del contrato (9 nov). Los mockups son borradores y se llaman `S3…`, como los del sprint 2. El folio tiene ruta propia, `/reservas/{codigo}/folio`, y se abre con «Ver folio» desde el bloque Pago del detalle.
+
+| # | Pantalla | Endpoint | Qué manda en cada estado |
+|---|---|---|---|
+| 1 | **Folio**: resumen, cargos y pagos | `GET …/folio` | Cargando; 404; error con «Reintentar»; sin consumos; abierto; cerrado, sin acciones y con su autorización si la hubo |
+| 2 | **Cargar consumo** | `POST …/folio/servicios` | Solo con la reserva EN_CURSO y el folio abierto. Lista: `serviciosAdicionales` de `GET /api/alojamiento`, activos y con `generaCargo`. `cantidad` de 1 a 99 (DEC-107) |
+| 3 | **Revertir cargo** | `POST …/folio/cargos/{id}/revertir` | Motivo obligatorio, hasta 170 caracteres. No se ofrece en un AJUSTE que corrige otro ni en un cargo ya corregido |
+| 4 | **Corregir consumo** | Revertir y luego cargar | Solo en `SERVICIO_ADICIONAL` que siga en el catálogo. Si se abandona después de revertir, el cargo queda revertido y se avisa |
+| 5 | **Registrar pago** | `POST …/folio/pagos` | Ya existe: se reutiliza `FormularioPago` |
+| 6 | **Revertir pago** | `POST …/folio/pagos/{id}/revertir` | Solo en un ABONO sin revertir. Es una confirmación: la API no recibe motivo |
+| 7 | **Registrar devolución** | `POST …/folio/devoluciones` | Mismos campos del pago. Propone el saldo si está A_FAVOR. No supera lo abonado neto |
+| 8 | **Cerrar folio** | `PUT …/folio/cerrar` | Solo en reservas CANCELADA o NO_SHOW: en EN_CURSO lo cierra la salida. Con saldo, solo el administrador, con motivo |
+| 9 | **Registrar salida** | `PUT …/registrar-salida` | Solo EN_CURSO. Deshabilitada con la lista de `datosTraFaltantes`. Con saldo, solo el administrador, con motivo; recepción ve qué falta cobrar o devolver |
+
+Lo que el contrato no da o da distinto a lo planeado:
+- **Cantidad (BL-12)**: hecha en DEC-107. Un solo cargo con `cantidad` y `valor` ya total; el concepto no la trae, así que la pantalla muestra «Desayuno × 2». Se corrige entero: «Corregir» revierte el cargo y propone el mismo servicio y cantidad.
+- **Corregir el hospedaje**: la decisión del 7 nov dice que se puede corregir cualquier cargo, pero solo se puede cargar de nuevo un servicio del catálogo. Hospedaje, parqueadero, mascotas y penalidad se pueden revertir y no volver a cargar desde el folio; su valor se cambia modificando la reserva, que deja el ajuste (RN-14; carros, motos y mascotas desde DEC-106). **Decidido (Daniel, 10 nov)**: solo tienen «Revertir», con el aviso «Desde el folio no se puede volver a cargar. Si el valor cambió, modifica la reserva». Esto reemplaza «cualquier cargo se puede corregir» del 7 nov.
+- **Valor del consumo**: sale del catálogo y no llega en el Request, así que «Corregir» cambia el servicio o la cantidad, no el valor.
+- **Autor de reversos y devoluciones (#12)**: hecho en DEC-100 y DEC-103. `autorNombre` llega en las correcciones, los reversos de pago, las devoluciones y la autorización de cierre; los abonos y los ajustes automáticos no lo traen. Si es nulo (persona eliminada o movimiento anterior a V23), se muestra `autor` o nada.
+- **Motivo del reverso de un cargo**: no tiene campo propio; va en el concepto («Corrección de CAR-3: motivo»).
+- **Devolución y reverso de pago**: un REVERSO no se revierte (la devolución equivocada se compensa con un abono). `reversaDe` vacío distingue la devolución del reverso de un abono.
+- **Movimientos**: traen fecha, sin hora; se muestran en el orden en que llegan.
+- **Datos del TRA**: la salida los exige, pero se llenan en el registro de llegada, que es la tarea siguiente; hasta entonces la pantalla solo lista lo que falta.
+
+Mockups en `pms/diseno/mockups-meridian-sprint3/sprint3/` (20 pantallas, con su LEEME; se hicieron antes de DEC-100 y DEC-107). Lo resuelto al compararlos con el contrato (paso 3):
+- **Corrección de un cargo**: la API manda «Corrección de CAR-5: motivo». El PMS cambia el código por el concepto del cargo que corrige (`corrigeA`), como en el mockup. Si el texto no empieza así, lo muestra tal cual.
+- **Quién lo hizo** (falta en el mockup): «por {autorNombre}» como dato secundario en las correcciones, los reversos de pago, las devoluciones y la autorización de cierre. Sin nombre, no se muestra nada.
+- **Pagos**: el reverso de un abono dice «Reverso del abono» y va debajo del abono, con el medio repetido. Un REVERSO sin `reversaDe` es una «Devolución», va en su orden y no tiene acciones.
+- **Cantidad**: la pista dice «De 1 a 99» (DEC-107). La fila muestra «Agua × 2» cuando `cantidad` es mayor que 1.
+- **Resumen**: «Cargos» es la suma neta (los AJUSTE que disminuyen restan) y debe dar `totalPagado` ± `saldo`.
+- **Botones por estado**: «Registrar pago» sigue `puedeRegistrarPago`, así que también aparece en una reserva Cancelada o No-show que debe. «Cerrar folio» solo en Cancelada y No-show. «Cargar consumo» y «Registrar salida» solo en En curso. «Revertir» en cualquier estado mientras el folio esté abierto.
+- **Admin o recepción**: los diálogos de cerrar y de salida eligen su variante con el rol de la sesión. El motivo solo se envía cuando hay saldo. Si recepción intenta salir con saldo, «Registrar pago» o «Registrar devolución» abre el formulario dentro del mismo diálogo, como en Confirmar.
+- **Textos de los rechazos**: son los de la API (`mensaje` y `motivo`), no los del mockup.
+- **TRA**: la lista sale de `datosTraFaltantes`, con los textos del backend (documento, primer apellido, nacionalidad, género, país y ciudad de residencia, procedencia, destino y motivo del viaje). Completarlos es del registro de llegada.
+- **Detalle**: del mockup solo se toman «Registrar salida» junto al título y «Ver folio» en el bloque Pago. Lo demás queda como está en el código (extras, política, etc.).
+- **Se aceptan** los botones agregados («Salir», «Salir sin cargar», «Seguir aquí», «Cerrar» en el resultado y «Autorizar y cerrar»).
+
+Auditoría (paso 5, 10 nov): `impeccable audit`, `harden` y `adapt` sin su ejecutable (sin el detector automático) y `break-ui` con la API simulada en el navegador (montos de 9 dígitos, motivo de 170 caracteres, nombres de 70, 16 cargos, 10 ocupantes sin TRA), a 1280, 1024 y 390 px. Nota **18/20**: accesibilidad 3, rendimiento 4, tema 4, adaptable 3 → 4 tras los arreglos, integridad 4. Contrastes nuevos de 6,5:1 o más.
+- **Corregido (P1)**: un nombre largo de quien corrige ensanchaba la columna Concepto y dejaba «Revertir» fuera del marco, incluso a 1280 px; a 1024 px se cortaban el valor y los botones. Ahora la tabla tiene columnas fijas (112, libre, 180, 140 y 210 px), el concepto y el autor se parten, y la tabla aparece desde 820 px de contenido (antes, las tarjetas).
+- **Corregido (P2)**: el autor se salía de la tarjeta en el celular; si una acción fallaba (otro turno revirtió o cerró), el folio quedaba viejo: ahora se vuelve a leer al cerrar el diálogo; «Registrar salida» en el detalle no hacía nada si el pago no cargó: ahora queda deshabilitado; en la salida, lo que la bloquea va primero y el botón deshabilitado lo anuncia (`aria-describedby`); el administrador no ve el motivo de autorización mientras falten datos del TRA.
+- **Queda (P3)**: en el celular la tabla pasa a tarjetas cambiando el `display`, y algunos lectores de pantalla (Safari) dejan de anunciarla como tabla; es el mismo patrón de los ocupantes del detalle. Al salir de «Corregir» sin cargar no queda un aviso en la página (el folio sí muestra el cargo revertido).
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
