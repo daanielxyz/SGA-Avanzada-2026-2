@@ -160,19 +160,23 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 ## Próxima sesión: sprint 3 (9 – 13 nov)
 **Para retomar**, una sesión nueva de Claude lee `CLAUDE.md`, `CLAUDE.local.md`, la sección pms del sprint actual en `docs/SPRINTS.md` y esta sección. Lo que falta para trabajar y no va a git: `CLAUDE.local.md`, `backend/.env` (cada quien con sus valores), `pms/diseno/` y la fuente Satoshi en `pms/public/fuentes/`.
 
-**Ya hecho** (10 nov): entrevista (BL-07 a BL-23), ajustes del PMS por DEC-89, DEC-91 y DEC-93, y todo el núcleo del reparto: BL-07 (DEC-96) y #9 (DEC-97) del equipo web; BL-22, #12, BL-09, #1b, #7, BL-08, BL-23 y BL-12 de Reyes (DEC-99 a DEC-107).
+**Ya hecho** (10 nov): entrevista (BL-07 a BL-23), ajustes del PMS por DEC-89, DEC-91 y DEC-93, y todo el núcleo del reparto: BL-07 (DEC-96) y #9 (DEC-97) del equipo web; BL-22, #12, BL-09, #1b, #7, BL-08, BL-23 y BL-12 de Reyes (DEC-99 a DEC-107), más los datos de demo para probar el folio y los extras (`feature/nucleo/demo-completa`).
 
-**Folio, terminado** (`feature/pms/folio`, Daniel, 10 nov): pantalla `/reservas/{codigo}/folio` y sus diálogos (`src/folio/`), «Ver folio» y «Registrar salida» en el detalle, pruebas (`src/folio/movimientos.test.ts`, `src/paginas/Folio.test.tsx`), comprobado contra el backend de la rama y auditado (18/20, «Sprint 3: folio»). Falta el PR. **Sigue**: el registro de llegada (tarea 2), en `feature/pms/registro-llegada`, que sale de `develop` cuando entre el folio porque toca el mismo detalle. Los datos de prueba no traen consumos con cobro: para probar en local, el administrador crea uno (`POST /api/alojamiento/servicios`).
+**Folio, terminado** (`feature/pms/folio`, Daniel, 10 nov): pantalla `/reservas/{codigo}/folio` y sus diálogos (`src/folio/`), «Ver folio» y «Registrar salida» en el detalle, pruebas (`src/folio/movimientos.test.ts`, `src/paginas/Folio.test.tsx`), comprobado contra el backend de la rama y auditado (18/20, «Sprint 3: folio»). Integrado (PR #59). **Sigue**: el registro de llegada (tarea 2), en `feature/pms/registro-llegada`, que ya puede salir de `develop`.
+
+**Datos de prueba** (`feature/nucleo/demo-completa`): el hotel cobra Desayuno ($25.000), Agua ($3.000) y Lavandería ($18.000), admite parqueadero (8 cupos, carro $15.000 y moto $8.000 por noche) y hasta 2 mascotas ($30.000). En una base nueva, la reserva confirmada de APT-102 trae 1 carro y 1 mascota (para corregirlos antes de la llegada, BL-23) y la que está en curso en APT-103 ya consumió «Desayuno × 2» y debe $50.000 (para el folio y la salida con saldo). En una base creada antes de V15, los servicios, el parqueadero y las mascotas se agregan solos al arrancar, una vez; las reservas de ejemplo solo salen borrando y creando de nuevo la base `sga`.
 
 **Reparto** (8 nov, se puede cambiar). Si una tarea depende de otra que no ha entrado, se avanza contra el contrato acordado o se toma la siguiente.
 
 | Quién | Tarea, en orden | Depende de |
 |---|---|---|
-| Daniel (pantallas) | 1. **Folio**, en `feature/pms/folio`: falta el PR | Nada |
+| Daniel (pantallas) | 1. **Folio**: hecho (PR #59) | — |
 | Daniel (pantallas) | 2. **Registro de llegada**: datos del TRA (completa lo que la salida exige), desglose, cobro de la estancia con autorización, cambio de titular y de huésped principal, vehículos y mascotas antes de llegar, y reserva de mostrador (BL-10, BL-11, BL-22, BL-23) | Nada: ya entraron sus reglas |
 | Daniel (pantallas) | 3. **Tablero por la cuenta y notas** (BL-09, BL-08) | Nada: ya entraron |
 | Daniel (pantallas) | 4. **Preparación de apartamentos** para el personal de servicio, pensada para el celular; no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS. Probar en un celular real las pantallas del sprint 2 | Nada |
-| Reyes (núcleo) | Hecho lo del reparto (DEC-99 a DEC-107) | — |
+| Reyes (núcleo) | Hecho lo del reparto (DEC-99 a DEC-107) y los datos de demo | — |
+
+**Sprint 4 (17 – 20 nov), reparto propuesto** con la misma división: Reyes hace el núcleo, cada cosa en su rama `feature/nucleo/…` con su PR, y Daniel las pantallas. Núcleo: los mensajes de los 409 pensados para recepción (#8) y el nombre de la temporada en el desglose (#10). El #8 cambia textos que también ve la web (el `motivo` de DEC-94): avisarle al equipo web antes de empezar. Como el núcleo es corto, Reyes también puede tomar pantallas: usuarios del personal y novedades de mantenimiento. Daniel: la configuración del hotel (apartamentos, temporadas y tarifas, política de cancelación, parámetros y medios de pago). Las pantallas de canales esperan la API del equipo web.
 
 **Pendiente de pms por el #9**: quitar la validación «El titular debe estar entre los ocupantes» de `src/reserva/nueva/formulario.ts`.
 

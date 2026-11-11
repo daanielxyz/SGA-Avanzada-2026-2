@@ -11,7 +11,7 @@ Necesita Java 25 y PostgreSQL con una base `sga` y su usuario `sga`.
 1. En `backend/`, copiar `.env.example` como `.env` (no va a git) y poner la clave de PostgreSQL en `DB_PASSWORD` y un `SGA_JWT_SECRETO` de mínimo 32 caracteres.
 2. Arrancar desde esa carpeta: `cd backend && ./gradlew bootRun`. Queda en `http://localhost:8080` y Flyway crea el esquema.
 
-Al arrancar sobre una base vacía quedan solos los datos de prueba de la sección 12.3 del proyecto: los 10 apartamentos con sus tarifas, un usuario por rol, reservas en todos los estados y por los tres canales, un bloqueo vigente y un apartamento fuera de servicio. Para volver a empezar de cero, se borra y se crea otra vez la base `sga`.
+Al arrancar sobre una base vacía quedan solos los datos de prueba de la sección 12.3 del proyecto: los 10 apartamentos con sus tarifas, un usuario por rol, reservas en todos los estados y por los tres canales, un bloqueo vigente y un apartamento fuera de servicio. Para probar el folio y los extras, el hotel cobra Desayuno, Agua y Lavandería, admite carros y mascotas, la reserva confirmada de APT-102 trae un carro y una mascota, y la que está en curso en APT-103 ya consumió dos desayunos. En una base creada antes de esos datos, los servicios, el parqueadero y las mascotas se agregan solos al arrancar (una sola vez; las reservas no cambian). Para volver a empezar de cero, se borra y se crea otra vez la base `sga`.
 
 | Rol | Correo | Contraseña |
 |---|---|---|
