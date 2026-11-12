@@ -17,7 +17,19 @@ export function fechaCorta(fecha: string) {
     .toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }))
 }
 
-/** «2026-12-20T15:30:00» → «dom, 20 de dic a las 3:30 p. m.», sin mover la hora: ya viene en hora de Colombia. */
+/** «2026-12-20» → «dom»: el día de la semana, que una casilla angosta puede ocultar. */
+export function diaDeLaSemana(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { weekday: 'short' })
+}
+
+/** «2026-12-20» → «20 de dic»: lo que siempre se muestra de la fecha, sin partirse. */
+export function diaYMes(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return sinPartir(new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }))
+}
+
+/** «2026-12-20T15:30:00» →«dom, 20 de dic a las 3:30 p. m.», sin mover la hora: ya viene en hora de Colombia. */
 export function fechaHora(momento: string) {
   const [fecha, hora] = momento.split('T')
   const [horas, minutos] = hora.split(':').map(Number)

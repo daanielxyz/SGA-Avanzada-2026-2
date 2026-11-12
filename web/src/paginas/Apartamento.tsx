@@ -117,7 +117,7 @@ function Ficha({ apartamento, umbral }: { apartamento: ApartamentoPublico; umbra
             alPedirFechas={() => fechas.current?.abrir()} />
         </aside>
         <div className="ficha-detalle">
-          {apartamento.descripcion && <p className="descripcion-completa">{apartamento.descripcion}</p>}
+          {apartamento.descripcion && <Descripcion texto={apartamento.descripcion} />}
           {apartamento.caracteristicas.length > 0 && (
             <>
               <h2>Qué incluye</h2>
@@ -247,5 +247,33 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar, alPedirFec
         Reservar
       </Link>
     </div>
+  )
+}
+
+/**
+ * Una descripción larga se pliega a 8 líneas con «Leer más», para que «Qué incluye» y el precio queden a la vista;
+ * una corta se ve entera y sin botón.
+ */
+function Descripcion({ texto }: { texto: string }) {
+  const parrafo = useRef<HTMLParagraphElement>(null)
+  const [abierta, setAbierta] = useState(false)
+  const [larga, setLarga] = useState(false)
+
+  useEffect(() => {
+    const p = parrafo.current
+    // Se mide plegada: si el texto no cabe en las 8 líneas, hace falta el botón
+    if (p && !abierta) setLarga(p.scrollHeight > p.clientHeight + 1)
+  }, [texto, abierta])
+
+  return (
+    <>
+      <p ref={parrafo} className="descripcion-completa" data-plegada={!abierta}>{texto}</p>
+      {larga && (
+        <button type="button" className="secundario leer-mas" aria-expanded={abierta}
+          onClick={() => setAbierta(!abierta)}>
+          {abierta ? 'Leer menos' : 'Leer más'}
+        </button>
+      )}
+    </>
   )
 }

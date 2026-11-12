@@ -331,6 +331,12 @@ button.secundario {
   margin: 0 auto;
 }
 
+.portada-texto h1 {
+  font-size: clamp(1.75rem, 1rem + 4vw, 3.5rem);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
 .portada-texto p {
   max-width: 60ch;
   margin: 8px 0 0;
@@ -634,6 +640,18 @@ button.secundario {
   white-space: pre-line;
 }
 
+.descripcion-completa[data-plegada='true'] {
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+button.leer-mas {
+  margin: 0 0 24px;
+}
+
 /* Lo que incluye el apartamento, completo en su página */
 .dotacion {
   display: flex;
@@ -811,7 +829,9 @@ button.secundario {
 }
 
 .total-estancia strong {
+  min-width: 0;
   font-size: var(--texto-xl);
+  overflow-wrap: anywhere;
 }
 
 .por-noche {
@@ -886,6 +906,7 @@ button.secundario {
 /* Reservar: el formulario y, en pantallas anchas, el resumen fijo a la derecha */
 .reservar-columnas {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -1848,6 +1869,16 @@ button.boton-peligro {
 
 .fecha-disparador span {
   white-space: nowrap;
+}
+
+.fecha-disparador {
+  container-type: inline-size;
+}
+
+@container (max-width: 150px) {
+  .fecha-disparador .dia-semana {
+    display: none;
+  }
 }
 
 /* En el celular, el ícono le quita el espacio a la fecha: el botón ya dice qué es */

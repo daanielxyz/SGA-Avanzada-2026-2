@@ -1,6 +1,6 @@
 import { useEffect, useId, useImperativeHandle, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import type { Estadia } from '../api/apartamentos'
-import { fechaCorta } from '../formato'
+import { diaDeLaSemana, diaYMes } from '../formato'
 import Calendario from './Calendario'
 
 const ANCHA = '(min-width: 720px)'
@@ -106,7 +106,8 @@ export default function SelectorFechas({ ref, estadia, alCambiar, codigo, alinea
           setAbierto((a) => !a)
         }}>
         <span id={`${id}-${rotulo}-valor`} className={fecha ? undefined : 'suave'}>
-          {fecha ? fechaCorta(fecha) : 'Agregar fecha'}
+          {/* En una casilla angosta el día de la semana se oculta y la fecha sigue cabiendo (index.css) */}
+          {fecha ? <><span className="dia-semana">{diaDeLaSemana(fecha)}, </span>{diaYMes(fecha)}</> : 'Agregar fecha'}
         </span>
         <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor"
           strokeWidth="1.6" strokeLinecap="round">
