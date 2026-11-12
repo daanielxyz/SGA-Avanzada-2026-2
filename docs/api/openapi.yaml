@@ -2814,6 +2814,11 @@ paths:
             format: int32
             default: 0
             minimum: 0
+        - name: vigentes
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: OK

@@ -397,3 +397,7 @@ Complementa `CLAUDE.md` y `docs/MODELO.md`. Cada decisión: qué se decidió y p
   - **Corrección**: el cargo se corrige entero, como cualquier otro (CAR-03). Si solo una unidad estaba mal, se revierte el cargo y se carga de nuevo con la cantidad correcta. Se descartó revertir unidades sueltas: es un caso raro y complica el folio.
   - **Contrato, solo se agrega**: `CargarServicioRequest.cantidad` (opcional, de 1 a 99; sin ella, 1) y `CargoResponse.cantidad` (1 en los demás cargos y en los anteriores a V26). El concepto no cambia («Desayuno»): la pantalla muestra «Desayuno × 2» con la cantidad.
   - **Regla**: la cantidad es al menos 1, y solo un servicio adicional lleva más de una.
+- **DEC-108 · Mis reservas: las vigentes aparte de las terminadas** (`feature/nucleo/mis-reservas-vigentes`, del equipo web, por la prueba del huésped). Sin migración.
+  - **Por qué**: el huésped veía todas sus reservas mezcladas, canceladas incluidas, ordenadas por cuándo las creó; lo que busca al entrar es la próxima estancia.
+  - **`GET /api/mis-reservas?vigentes=true`**: PENDIENTE, CONFIRMADA y EN_CURSO, de la próxima llegada a la más lejana. **`vigentes=false`**: FINALIZADA, CANCELADA y NO_SHOW, de la estancia más reciente a la más antigua. Sin el parámetro responde como antes: todas, de la creada más recientemente a la más antigua. Paginado de 10 (DEC-18); un valor que no sea `true` ni `false` responde 400.
+  - **Contrato, solo se agrega**: el parámetro opcional `vigentes`; ningún Request ni Response cambia. Lo usa solo la web.

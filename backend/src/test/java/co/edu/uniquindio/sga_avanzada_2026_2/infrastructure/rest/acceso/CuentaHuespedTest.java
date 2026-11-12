@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -435,6 +436,27 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detalles").value(hasItem("telefono: es obligatorio")));
         mvc.perform(get("/api/mi-cuenta")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Tag("USU-04")
+    @Tag("DEC-108")
+    void elHuespedVeAparteSusReservasVigentesYLasTerminadas() throws Exception {
+        String lejana = reservaPendiente(HOY.plusDays(20));
+        String proxima = reservaPendiente(HOY.plusDays(5));
+        String cancelada = reservaPendiente(HOY.plusDays(10));
+        mvc.perform(put("/api/reservas/" + cancelada + "/cancelar")).andExpect(status().isOk());
+        String token = entrarComoHuesped(ANA, "1094");
+
+        cliente.perform(con(token, get("/api/mis-reservas?vigentes=true")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(proxima, lejana)))
+                .andExpect(jsonPath("$.totalElementos").value(2));
+        cliente.perform(con(token, get("/api/mis-reservas?vigentes=false")))
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(cancelada)));
+        cliente.perform(con(token, get("/api/mis-reservas")))
+                .andExpect(jsonPath("$.totalElementos").value(3));
+        cliente.perform(con(token, get("/api/mis-reservas?vigentes=quizas"))).andExpect(status().isBadRequest());
     }
 
     @Test
