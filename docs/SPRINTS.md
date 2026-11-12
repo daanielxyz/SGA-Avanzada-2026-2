@@ -97,7 +97,7 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [x] «Mi cuenta» editable: teléfono, nombres y apellidos (dos campos) mientras el hotel no valide la identidad, y cambio de correo con PIN; al reservar, nombres y apellidos van en dos campos (`feature/web/cuenta-editable`, DEC-98).
   - [x] Núcleo para la web: «Mis reservas» trae aparte las vigentes, de la próxima llegada en adelante, y las terminadas (`feature/nucleo/mis-reservas-vigentes`, DEC-108).
   - [x] Núcleo para la web: una cuenta con el nombre todo junto separa sus apellidos desde «Mi cuenta» (`feature/nucleo/separar-apellidos`, DEC-109).
-  - [ ] Pulir la web: diseño adaptable al celular, textos y mensajes de error.
+  - [~] Pulir la web: diseño adaptable al celular, revisado con datos de peor caso a 320 px y en computador (`feature/web/revision-publica`): la página de reservar ya no se ensancha con un monto enorme, las fechas caben en sus casillas, la portada no ocupa toda la pantalla con un nombre largo y la descripción larga se pliega con «Leer más». Faltan los textos y mensajes de error.
   - [x] Pulir las pantallas del huésped con sesión (`feature/web/pulir-huesped`): hechas las pestañas «Próximas» y «Anteriores» en mis reservas (DEC-108), el aviso para separar los apellidos de las cuentas de antes, los datos de la cuenta al reservar con sesión y «Yo también me hospedo» para reservar a nombre de otros (DEC-97). Revisión con datos de peor caso a 320 px y en computador (`feature/web/revision-huesped`): montos que no se salen al pagar, huéspedes uno por renglón, fechas y horas sin partir, lo retenido en las canceladas y «← Mis reservas» de vuelta a su pestaña.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
