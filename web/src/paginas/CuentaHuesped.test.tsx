@@ -181,7 +181,7 @@ describe('Sesión', () => {
     abrir('/mis-reservas')
     await screen.findByText('Suite Jardín')
 
-    expect(new Headers(llamadasA(fetch, '/api/mis-reservas?pagina=0')[0].headers).get('Authorization'))
+    expect(new Headers(llamadasA(fetch, '/api/mis-reservas?pagina=0&vigentes=true')[0].headers).get('Authorization'))
       .toBe('Bearer token-de-prueba')
     expect(new Headers(llamadasA(fetch, '/api/alojamiento')[0]?.headers).get('Authorization')).toBeNull()
     expect(new Headers(llamadasA(fetch, '/api/portal/apartamentos/APT-101')[0].headers).get('Authorization')).toBeNull()
@@ -189,7 +189,7 @@ describe('Sesión', () => {
 
   it('si el backend rechaza el token, borra la sesión y pide entrar de nuevo', async () => {
     guardarSesion(SESION)
-    laApi({ '/api/mis-reservas?pagina=0': () => errorApi(401, 'NO_AUTENTICADO', 'Inicie sesión') })
+    laApi({ '/api/mis-reservas?pagina=0&vigentes=true': () => errorApi(401, 'NO_AUTENTICADO', 'Inicie sesión') })
     abrir('/mis-reservas')
 
     expect(await screen.findByText('Tu sesión terminó. Vuelve a entrar para continuar.')).toBeInTheDocument()
@@ -212,7 +212,7 @@ describe('Sesión', () => {
 
 describe('Mi cuenta', () => {
   const CUENTA = {
-    id: 'TIT-1', nombre: 'Ana Ríos', nombres: 'Ana', primerApellido: 'Ríos', segundoApellido: null,
+    id: 'TIT-1', nombre: 'Ana Ríos', nombres: 'Ana', primerApellido: 'Ríos' as string | null, segundoApellido: null,
     tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co', telefono: '+573001234567',
     validado: false,
   }
@@ -258,6 +258,18 @@ describe('Mi cuenta', () => {
     expect(screen.getByText('Ana María Ríos Gómez')).toBeInTheDocument()
     const guardado = llamadasA(fetch, '/api/mi-cuenta').find((o) => o.method === 'PUT') as RequestInit
     expect(cuerpo(guardado)).toEqual({ nombres: 'Ana María', primerApellido: 'Ríos Gómez', telefono: '+573112223333' })
+  })
+
+  it('una cuenta de antes, con el nombre todo junto, pide separar los apellidos', async () => {
+    guardarSesion(SESION)
+    laApi({ '/api/mi-cuenta': conCuenta({ ...CUENTA, nombres: 'Ana Ríos', primerApellido: null }) })
+    abrir('/mi-cuenta')
+
+    expect(await screen.findByText(/sepáralos en «Editar mis datos»/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Editar mis datos' }))
+    expect(screen.getByRole('note')).toHaveTextContent('Tu nombre quedó guardado todo junto')
+    expect(screen.getByLabelText('Nombres')).toHaveValue('Ana Ríos')
+    expect(screen.getByLabelText('Apellidos')).toHaveValue('')
   })
 
   it('con la identidad validada solo cambia el teléfono y el nombre se pide en recepción', async () => {
@@ -345,23 +357,45 @@ describe('Mis reservas', () => {
     expect(await screen.findByRole('link', { name: /APT-101/ })).toBeInTheDocument()
   })
 
-  it('sin reservas, invita a ver apartamentos', async () => {
+  it('sin reservas próximas, invita a ver apartamentos', async () => {
     guardarSesion(SESION)
-    laApi({ '/api/mis-reservas?pagina=0': () => respuesta(PAGINA([])) })
+    laApi({ '/api/mis-reservas?pagina=0&vigentes=true': () => respuesta(PAGINA([])) })
     abrir('/mis-reservas')
 
-    expect(await screen.findByText('Todavía no tienes reservas.')).toBeInTheDocument()
+    expect(await screen.findByText('No tienes reservas próximas.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ver apartamentos' })).toHaveAttribute('href', '/')
   })
 
-  it('con más de una página, pide la siguiente', async () => {
+  it('abre en las próximas y las anteriores, como las canceladas, van en su propia pestaña', async () => {
     guardarSesion(SESION)
-    const fetch = laApi({ '/api/mis-reservas?pagina=0': () => respuesta(PAGINA([RESERVA], 2)) })
+    const CANCELADA = { ...RESERVA, codigo: 'RES-2026-00007', estado: 'CANCELADA' }
+    const fetch = laApi({
+      '/api/mis-reservas?pagina=0&vigentes=true': () => respuesta(PAGINA([RESERVA])),
+      '/api/mis-reservas?pagina=0&vigentes=false': () => respuesta(PAGINA([CANCELADA])),
+    })
     abrir('/mis-reservas')
+
+    const proximas = await screen.findByRole('link', { name: 'Próximas' })
+    expect(proximas).toHaveAttribute('aria-current', 'page')
+    expect(await screen.findByText('RES-2026-00042')).toBeInTheDocument()
+    expect(screen.queryByText('RES-2026-00007')).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('link', { name: 'Anteriores' }))
+
+    expect(await screen.findByText('RES-2026-00007')).toBeInTheDocument()
+    expect(screen.getByText('Cancelada')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Anteriores' })).toHaveAttribute('aria-current', 'page')
+    expect(llamadasA(fetch, '/api/mis-reservas?pagina=0&vigentes=false')).toHaveLength(1)
+  })
+
+  it('con más de una página, pide la siguiente sin salir de su pestaña', async () => {
+    guardarSesion(SESION)
+    const fetch = laApi({ '/api/mis-reservas?pagina=0&vigentes=false': () => respuesta(PAGINA([RESERVA], 2)) })
+    abrir('/mis-reservas?ver=anteriores')
 
     await userEvent.click(await screen.findByRole('button', { name: /Siguiente/ }))
 
-    await waitFor(() => expect(llamadasA(fetch, '/api/mis-reservas?pagina=1')).toHaveLength(1))
+    await waitFor(() => expect(llamadasA(fetch, '/api/mis-reservas?pagina=1&vigentes=false')).toHaveLength(1))
   })
 })
 

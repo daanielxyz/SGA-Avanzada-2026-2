@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Alojamiento } from '../api/alojamiento'
 import type { ApartamentoPublico, EstanciaPortal, Precio } from '../api/apartamentos'
 import { fechaDesdeHoy, masDias } from '../formato'
+import { borrarSesion, guardarSesion } from '../sesion/almacen'
 import Reservar from './Reservar'
 
 const ENTRADA = fechaDesdeHoy(10)
@@ -67,11 +68,13 @@ const respuesta = (cuerpo: unknown, estado = 200) => new Response(JSON.stringify
 
 /** La API simulada responde según la ruta; `pagos` y `reservas` se consumen en orden. */
 function laApi({ estancia = LIBRE, cotizacion = precio(1), reservas = [respuesta(APARTADA, 201)],
-  pagos = [respuesta(CONFIRMADA)], liberaciones = [new Response(null, { status: 204 })], apartamento = SUITE }: {
+  pagos = [respuesta(CONFIRMADA)], liberaciones = [new Response(null, { status: 204 })], apartamento = SUITE,
+  cuenta }: {
   estancia?: EstanciaPortal; cotizacion?: Precio; reservas?: Response[]; pagos?: Response[]
-  liberaciones?: Response[]; apartamento?: ApartamentoPublico
+  liberaciones?: Response[]; apartamento?: ApartamentoPublico; cuenta?: unknown
 } = {}) {
   const fetch = vi.fn((ruta: string) => {
+    if (ruta === '/api/mi-cuenta') return Promise.resolve(cuenta ? respuesta(cuenta) : respuesta({}, 500))
     if (ruta.includes('/estancia')) return Promise.resolve(respuesta(estancia))
     if (ruta === '/api/cotizaciones') return Promise.resolve(respuesta(cotizacion))
     if (ruta === '/api/portal/politica') return Promise.resolve(respuesta(POLITICA))
@@ -114,7 +117,10 @@ function llenarTitular() {
   fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: '3001234567' } })
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  borrarSesion()
+})
 
 describe('Reservar', () => {
   it('abre con el resumen de lo que se reserva y un campo de nombre por cada persona', async () => {
@@ -229,7 +235,7 @@ describe('Reservar', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('envía el titular como primer ocupante con su documento, los apellidos juntos aparte del nombre, el prefijo y los extras', async () => {
+  it('envía el titular como primer ocupante con documento, apellidos aparte del nombre, prefijo y extras', async () => {
     const fetch = laApi()
     abrir()
     await screen.findByLabelText('Nombres')
@@ -483,5 +489,68 @@ describe('Reservar', () => {
     abrir('adultos=1&ninos=0', fechaDesdeHoy(-1))
 
     expect(await screen.findByRole('heading', { name: 'Revisa tus fechas' })).toBeInTheDocument()
+  })
+})
+
+describe('Quién reserva y quiénes se hospedan (DEC-97)', () => {
+  const CUENTA = {
+    id: 'TIT-1', nombre: 'Ana Ríos', nombres: 'Ana', primerApellido: 'Ríos', segundoApellido: null,
+    tipoDocumento: 'CC', numeroDocumento: '1094', correo: 'ana@correo.co', telefono: '+573001234567', validado: false,
+  }
+  const MANANA = new Date(Date.now() + 86400000).toISOString()
+
+  it('con sesión, quien reserva es la cuenta: se muestra sin campos y solo pide su fecha de nacimiento', async () => {
+    guardarSesion({ token: 'token-de-prueba', expiraEn: MANANA, nombre: 'Ana Ríos' })
+    const fetch = laApi({ cuenta: CUENTA })
+    abrir()
+
+    expect(await screen.findByText('Ana Ríos')).toBeInTheDocument()
+    expect(screen.getByText('Cédula de ciudadanía 1094')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Corrígelo en Mi cuenta/ })).toHaveAttribute('href', '/mi-cuenta')
+    expect(screen.queryByLabelText('Correo')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Número de documento')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Fecha de nacimiento'), { target: { value: '1990-05-01' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    const cuerpo = cuerpoDe(fetch, '/api/portal/reservas')
+    expect(cuerpo.titular).toEqual({ nombres: 'Ana', primerApellido: 'Ríos', tipoDocumento: 'CC',
+      numeroDocumento: '1094', correo: 'ana@correo.co', telefono: '+573001234567' })
+    expect(cuerpo.ocupantes).toEqual([{ nombres: 'Ana', primerApellido: 'Ríos', fechaNacimiento: '1990-05-01',
+      tipoDocumento: 'CC', numeroDocumento: '1094' }])
+  })
+
+  it('si la cuenta no carga, pide los datos como sin sesión', async () => {
+    guardarSesion({ token: 'token-de-prueba', expiraEn: MANANA, nombre: 'Ana Ríos' })
+    laApi()
+    abrir()
+
+    expect(await screen.findByLabelText('Correo')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nombres')).toBeInTheDocument()
+  })
+
+  it('quien reserva para otros deja su contacto y los huéspedes van aparte', async () => {
+    const fetch = laApi()
+    abrir('adultos=1&ninos=0')
+    await screen.findByLabelText('Nombres')
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Yo también me hospedo' }))
+    expect(screen.queryByLabelText('Fecha de nacimiento')).not.toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Quienes se hospedan' })).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Nombres'), { target: { value: 'Marta' } })
+    fireEvent.change(screen.getByLabelText('Apellidos'), { target: { value: 'Gómez' } })
+    fireEvent.change(screen.getByLabelText('Número de documento'), { target: { value: '4040' } })
+    fireEvent.change(screen.getByLabelText('Correo'), { target: { value: 'marta@correo.co' } })
+    fireEvent.change(screen.getByLabelText('Teléfono'), { target: { value: '3001234567' } })
+    fireEvent.change(screen.getByLabelText('Nombres de la persona 1'), { target: { value: 'Tomás' } })
+    fireEvent.change(screen.getByLabelText('Apellidos de la persona 1'), { target: { value: 'Gómez' } })
+    fireEvent.change(screen.getByLabelText('Fecha de nacimiento de la persona 1'), { target: { value: '1999-02-02' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+    await screen.findByRole('heading', { level: 1, name: 'Paga para confirmar' })
+
+    const cuerpo = cuerpoDe(fetch, '/api/portal/reservas')
+    expect(cuerpo.titular).toEqual({ nombres: 'Marta', primerApellido: 'Gómez', tipoDocumento: 'CC',
+      numeroDocumento: '4040', correo: 'marta@correo.co', telefono: '+573001234567' })
+    expect(cuerpo.ocupantes).toEqual([{ nombres: 'Tomás', primerApellido: 'Gómez', fechaNacimiento: '1999-02-02' }])
   })
 })
