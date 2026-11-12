@@ -9,6 +9,7 @@ import {
   type Grupo,
 } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import CamposEstancia from '../busqueda/CamposEstancia'
 import type { ControlFechas } from '../fechas/SelectorFechas'
 import { problemaDeEstadia } from '../busqueda/estadia'
@@ -44,7 +45,10 @@ export default function Apartamento({ umbral }: { umbral: number | null }) {
         if (error instanceof ErrorApi && error.codigo === 'NO_ENCONTRADO') {
           setCarga({ estado: 'no-existe' })
         } else {
-          setCarga({ estado: 'error', mensaje: error instanceof ErrorApi ? error.message : 'Algo salió mal.' })
+          setCarga({
+            estado: 'error',
+            mensaje: explicar(error, 'No pudimos abrir este apartamento. Intenta de nuevo en un momento.'),
+          })
         }
       })
     return () => {
@@ -174,7 +178,7 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar, alPedirFec
       .then((estancia) => vigente && setCalculo({ estado: 'listo', clave, estancia }))
       .catch((error: unknown) => vigente && setCalculo({
         estado: 'problema', clave,
-        mensaje: error instanceof ErrorApi ? error.message : 'No pudimos calcular el precio.',
+        mensaje: explicar(error, 'No pudimos calcular el precio. Intenta de nuevo en un momento.'),
       }))
     return () => {
       vigente = false

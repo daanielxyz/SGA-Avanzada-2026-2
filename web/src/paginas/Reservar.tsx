@@ -10,6 +10,7 @@ import {
   type Precio,
 } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import { liberar, SIN_EXTRAS, type Extras, type PagoAprobado, type ReservaApartada } from '../api/reservas'
 import { problemaDeEstadia } from '../busqueda/estadia'
 import Confirmacion from '../reservar/Confirmacion'
@@ -82,7 +83,7 @@ export default function Reservar({ alojamiento }: { alojamiento: Alojamiento | n
       .catch((error: unknown) => vigente && setCarga({
         estado: 'problema',
         titulo: 'No pudimos abrir tu reserva',
-        mensaje: error instanceof ErrorApi ? error.message : 'Intenta de nuevo en un momento.',
+        mensaje: explicar(error, 'Intenta de nuevo en un momento.'),
       }))
     return () => {
       vigente = false

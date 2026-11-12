@@ -2,7 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import type { Alojamiento } from '../api/alojamiento'
 import type { Estadia, Grupo, Precio } from '../api/apartamentos'
-import { ErrorApi } from '../api/cliente'
+import { explicarConDetalles } from '../api/mensajes'
 import { consultarCuenta, type Cuenta } from '../api/cuenta'
 import { cotizar, reservar, type Extras, type ReservaApartada, type TipoDocumento } from '../api/reservas'
 import { enPesos, fechaDesdeHoy, horaDelDia, noches } from '../formato'
@@ -156,9 +156,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
       }))
       setEnviando(false) // al volver desde el pago, el formulario se puede enviar otra vez
     } catch (error) {
-      setProblema(error instanceof ErrorApi
-        ? { mensaje: error.message, detalles: error.detalles }
-        : { mensaje: 'No pudimos crear tu reserva. Intenta de nuevo.', detalles: [] })
+      setProblema(explicarConDetalles(error, 'No pudimos crear tu reserva. Intenta de nuevo.'))
       setEnviando(false)
     }
   }

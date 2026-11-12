@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import { iniciarSesion, solicitarPin } from '../api/cuenta'
 import { useSesion } from '../sesion/useSesion'
 
 // DEC-68: el PIN vale 15 minutos y sirve una sola vez; si esa regla cambia en el backend, cambia aquí
 const MINUTOS_PIN = 15
 const SIN_CONEXION = 'No pudimos comunicarnos con el servidor. Intenta de nuevo en un momento.'
-const mensajeDe = (error: unknown) => (error instanceof ErrorApi ? error.message : SIN_CONEXION)
+const mensajeDe = (error: unknown) => explicar(error, SIN_CONEXION)
 
 // Solo una página de esta misma web: un enlace armado no puede mandar al huésped a otro sitio después de entrar
 function destinoSeguro(volver: string | null) {

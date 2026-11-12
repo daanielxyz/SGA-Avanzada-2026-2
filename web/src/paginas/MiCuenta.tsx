@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import {
   actualizarCuenta,
   confirmarCambioCorreo,
@@ -20,7 +20,7 @@ const DOCUMENTOS: Record<TipoDocumento, string> = {
 
 // DEC-69: el PIN del cambio de correo vale 15 minutos; si esa regla cambia en el backend, cambia aquí
 const MINUTOS_PIN = 15
-const mensajeDe = (error: unknown, siNoResponde: string) => (error instanceof ErrorApi ? error.message : siNoResponde)
+const mensajeDe = explicar
 const opcional = (texto: string) => texto.trim() || undefined
 
 type Modo = 'ver' | 'editar' | 'correo'

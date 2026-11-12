@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import {
   consultarPolitica,
   pagar,
@@ -50,7 +50,7 @@ export default function PasoPago({ apartada, alPagar, yaPagado = 0, condiciones 
     try {
       alPagar(await pagar(reserva.codigo, token, clave))
     } catch (error) {
-      setProblema(error instanceof ErrorApi ? error.message : 'No pudimos procesar el pago. Intenta de nuevo.')
+      setProblema(explicar(error, 'No pudimos procesar el pago. Intenta de nuevo.'))
       setPagando(false)
     }
   }
