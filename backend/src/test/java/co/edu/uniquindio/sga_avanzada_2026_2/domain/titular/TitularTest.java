@@ -146,6 +146,22 @@ class TitularTest {
     }
 
     @Test
+    @Tag("DEC-109")
+    void unaCuentaDeAntesSeparaSusApellidosAunqueEsteValidada() {
+        Titular deAntes = new Titular(ID, ALO, "Ana María Gómez", CC, CORREO, "3001234567");
+        Titular validada = new Titular(ID, ALO, "Ana María Gómez", CC, CORREO, "3001234567");
+        validada.validarIdentidad(RECEPCION, AHORA);
+
+        deAntes.actualizarDesdeCuenta("Ana María", "Gómez", null, "3001234567");
+        validada.actualizarDesdeCuenta("ana maría", "GÓMEZ", null, "3001234567");
+
+        assertEquals("Ana María", deAntes.nombres());
+        assertEquals("Gómez", deAntes.primerApellido());
+        assertEquals("ana maría GÓMEZ", validada.nombre(), "es el mismo nombre, solo cambia cómo está escrito");
+        assertEquals("GÓMEZ", validada.primerApellido());
+    }
+
+    @Test
     @Tag("DEC-98")
     void validadoElHuespedSoloCambiaElTelefonoYElHotelSiCambiaElNombre() {
         Titular titular = anaGomez();

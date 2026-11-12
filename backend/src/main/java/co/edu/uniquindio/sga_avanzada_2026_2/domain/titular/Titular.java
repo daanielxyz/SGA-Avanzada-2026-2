@@ -68,7 +68,8 @@ public class Titular {
 
     /**
      * El huésped cambia su nombre y su teléfono desde su cuenta (DEC-68). Con la identidad validada, el nombre ya no
-     * lo cambia él sino recepción; el teléfono sí (DEC-98).
+     * lo cambia él sino recepción; el teléfono sí (DEC-98). Separar los apellidos sin cambiar el nombre sí se puede
+     * siempre: así se arreglan las cuentas de antes, que lo guardaron todo junto (DEC-109).
      *
      * @throws ReglaDominioException si la identidad está validada y el nombre cambia, falta el nombre o el teléfono es
      *                               inválido (DEC-49)
@@ -81,7 +82,9 @@ public class Titular {
             throw new ReglaDominioException(MotivoRechazo.IDENTIDAD_VALIDADA, "El hotel ya validó tu identidad: "
                     + "para cambiar tu nombre, pídelo en recepción");
         }
-        if (!cambiaNombre) {
+        // DEC-109: con el mismo nombre todo junto se conserva como estaba, para no borrar apellidos ya separados
+        boolean conservaComoEstaba = !cambiaNombre && limpio(nuevoPrimerApellido) == null;
+        if (conservaComoEstaba) {
             asignarDatos(nombres, primerApellido, segundoApellido, correo, nuevoTelefono);
             return;
         }
