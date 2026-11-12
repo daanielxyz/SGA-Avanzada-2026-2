@@ -1171,6 +1171,23 @@ label.casilla input {
 .cuentas dd {
   margin: 0;
   text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* En celular el monto grande no cabe al lado de su etiqueta: va debajo */
+@media (max-width: 419px) {
+  .cuentas {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .cuentas dd {
+    text-align: left;
+  }
+
+  .cuentas dd + dt {
+    margin-top: 8px;
+  }
 }
 
 .resumen .total-estancia {
@@ -1387,6 +1404,34 @@ label.casilla input {
   overflow-wrap: anywhere;
 }
 
+@media (max-width: 419px) {
+  .datos:not(.datos-valores) {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .datos:not(.datos-valores) dd + dt {
+    margin-top: 10px;
+  }
+}
+
+/* Quienes viajan, uno por renglón */
+.lista-viajeros {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-viajeros li + li {
+  margin-top: 2px;
+}
+
+/* El valor de una reserva cancelada: se ve, pero no se cobra */
+.tachado {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
 /* Mi cuenta: la acción principal y, al lado o debajo en el celular, cambiar el correo */
 .acciones-cuenta {
   display: flex;
@@ -1401,7 +1446,7 @@ label.casilla input {
 }
 
 .datos-valores {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(8ch, 1fr) minmax(0, auto);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1451,7 +1496,9 @@ label.casilla input {
 
 .fila-reserva-total {
   grid-column: 2;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 720px) {
@@ -1522,18 +1569,41 @@ label.casilla input {
 
 .detalle-cabeza {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
   margin-bottom: 16px;
+}
+
+.ficha .detalle-cabeza h1 {
+  font-size: var(--texto-lg);
+}
+
+@media (min-width: 720px) {
+  .detalle-cabeza {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .ficha .detalle-cabeza h1 {
+    font-size: var(--texto-xl);
+  }
 }
 
 .detalle-cabeza img,
 .detalle-cabeza .sin-foto {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
   border-radius: var(--radio-mediano);
+}
+
+@media (min-width: 720px) {
+  .detalle-cabeza img,
+  .detalle-cabeza .sin-foto {
+    width: 96px;
+    height: 96px;
+  }
 }
 
 .detalle-cabeza h1 {
