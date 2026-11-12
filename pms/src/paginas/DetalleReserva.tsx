@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
-import { consultarApartamento } from '../api/apartamentos'
+import { consultarApartamento, type Apartamento } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import { consultarReserva, NOMBRE_DEL_CANAL, type Liquidacion, type Ocupante, type Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
@@ -11,9 +11,14 @@ import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import TablaDesglose from '../componentes/TablaDesglose'
 import { useTitulo } from '../componentes/useTitulo'
 import { DialogoSalida } from '../folio/DialogosFolio'
-import { cantidad, dinero, edadEn, fechaCorta, hora, noches } from '../formato'
+import { cantidad, dinero, edadEn, fechaCorta, fechaHoy, hora, noches } from '../formato'
 import AccionesReserva, { type Accion } from '../reserva/AccionesReserva'
+import DialogoTra from '../reserva/llegada/DialogoTra'
+import { DialogoCorregirRegistro, DialogoVehiculos } from '../reserva/llegada/DialogosLlegada'
+import { fechaYHora, textoTra, tieneTraPendiente } from '../reserva/llegada/llegada'
 import BloquePago from '../reserva/BloquePago'
+import NotasTurno from '../reserva/NotasTurno'
+import PoliticaAplicada from '../reserva/PoliticaAplicada'
 import DialogoConfirmar from '../reserva/DialogoConfirmar'
 import DialogoLiquidar from '../reserva/DialogoLiquidar'
 import FormularioPago from '../reserva/FormularioPago'
@@ -30,20 +35,29 @@ interface ReservaRecienCreada {
   avisoCuenta: string | null
 }
 
+type DialogoAbierto = Exclude<Accion, 'llegada'> | 'pago' | 'vehiculos' | { tra: string }
+
 /** Detalle de una reserva (CU-49): sus datos, su pago, su grupo, el valor por noche y lo que se puede hacer con ella. */
 export default function DetalleReserva() {
   const { codigo = '' } = useParams()
   const ubicacion = useLocation()
   const navegar = useNavigate()
   const { sesion } = useSesion()
-  const estadoRecibido = ubicacion.state as { volverA?: string; creada?: ReservaRecienCreada } | null
+  const estadoRecibido = ubicacion.state as {
+    volverA?: string
+    creada?: ReservaRecienCreada
+    /** Lo que manda la llegada al registrarla. */
+    aviso?: { asunto: string; mensaje: string }
+  } | null
   const volverA = estadoRecibido?.volverA ?? ''
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState<Resultado | null>(null)
-  const [nombreApartamento, setNombreApartamento] = useState<{ codigo: string; nombre: string } | null>(null)
-  const [dialogo, setDialogo] = useState<Accion | 'pago' | null>(null)
+  const [apartamentoLeido, setApartamentoLeido] = useState<Apartamento | null>(null)
+  const [dialogo, setDialogo] = useState<DialogoAbierto | null>(null)
   const [enviandoPago, setEnviandoPago] = useState(false)
-  const [exito, setExito] = useState<{ asunto: string; mensaje: string } | null>(estadoRecibido?.creada ?? null)
+  const [exito, setExito] = useState<{ asunto: string; mensaje: string } | null>(
+    estadoRecibido?.creada ?? estadoRecibido?.aviso ?? null,
+  )
   const [avisoCuenta] = useState(estadoRecibido?.creada?.avisoCuenta ?? null)
   const titulo = useRef<HTMLHeadingElement>(null)
   const enfocarTitulo = useRef(false)
@@ -54,7 +68,7 @@ export default function DetalleReserva() {
 
   // El aviso de recién creada se muestra una vez: al recargar ya no debe salir
   useEffect(() => {
-    if (estadoRecibido?.creada) {
+    if (estadoRecibido?.creada || estadoRecibido?.aviso) {
       navegar(ubicacion.pathname, { replace: true, state: { volverA: estadoRecibido.volverA } })
     }
   }, [estadoRecibido, navegar, ubicacion.pathname])
@@ -87,8 +101,8 @@ export default function DetalleReserva() {
     let vigente = true
     // Si no se puede leer el nombre, basta el código: no vale la pena un error en la pantalla
     consultarApartamento(apartamento)
-      .then(({ nombre }) => {
-        if (vigente) setNombreApartamento({ codigo: apartamento, nombre })
+      .then((datos) => {
+        if (vigente) setApartamentoLeido({ ...datos, codigo: apartamento })
       })
       .catch(() => undefined)
     return () => {
@@ -142,6 +156,11 @@ export default function DetalleReserva() {
   }
 
   const { reserva } = actual
+  const esAdministrador = sesion?.rol === 'ADMINISTRADOR'
+  const apartamentoActual = apartamentoLeido?.codigo === reserva.apartamento ? apartamentoLeido : null
+  const activa = reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA' || reserva.estado === 'EN_CURSO'
+  // CU-17: solo se modifica antes de iniciar y hasta el día de la entrada
+  const modificable = (reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA') && reserva.entrada >= fechaHoy()
 
   async function alConfirmar() {
     await actualizar()
@@ -173,7 +192,11 @@ export default function DetalleReserva() {
             reserva={reserva}
             alojamiento={pago.datos?.alojamiento ?? null}
             salidaDisponible={Boolean(pago.datos)}
-            alElegir={setDialogo}
+            esAdministrador={esAdministrador}
+            alElegir={(accion) => {
+              if (accion === 'llegada') navegar(`/reservas/${encodeURIComponent(reserva.codigo)}/llegada`)
+              else setDialogo(accion)
+            }}
           />
         </div>
       </div>
@@ -186,7 +209,7 @@ export default function DetalleReserva() {
         <dl className="tarjeta datos">
           <Dato nombre="Apartamento">
             <span className="codigo">{reserva.apartamento}</span>
-            {nombreApartamento?.codigo === reserva.apartamento && ` · ${nombreApartamento.nombre}`}
+            {apartamentoActual && ` · ${apartamentoActual.nombre}`}
           </Dato>
           <Dato nombre="Titular">
             {reserva.titularNombre && <span className="dato-titular">{reserva.titularNombre}</span>}
@@ -204,16 +227,33 @@ export default function DetalleReserva() {
             )}
           </Dato>
           <Dato nombre="Fecha de creación">{fechaCorta(reserva.creadaEn)}</Dato>
-          <Dato nombre="Política aplicada" codigo>
-            {reserva.politicaId}
+          <Dato nombre="Política aplicada">
+            <PoliticaAplicada politicaId={reserva.politicaId} codigo={reserva.codigo} />
           </Dato>
-          <Dato nombre="Carros">{reserva.carros}</Dato>
-          <Dato nombre="Motos">{reserva.motos}</Dato>
-          <Dato nombre="Mascotas">{reserva.mascotas}</Dato>
+          {reserva.noShow?.autorNombre && (
+            <Dato nombre="No se presentó">
+              Declarado por {reserva.noShow.autorNombre} el {fechaYHora(reserva.noShow.fechaHora)}
+            </Dato>
+          )}
+          <Dato nombre="Vehículos y mascotas">
+            Carros: {reserva.carros} · Motos: {reserva.motos} · Mascotas: {reserva.mascotas}
+            {modificable && pago.datos && (
+              <button
+                type="button"
+                className="boton boton-secundario boton-chico dato-accion"
+                aria-label="Cambiar vehículos y mascotas"
+                onClick={() => setDialogo('vehiculos')}
+              >
+                Cambiar
+              </button>
+            )}
+          </Dato>
         </dl>
       </section>
 
       <BloquePago reserva={reserva} pago={pago} alRegistrarPago={() => setDialogo('pago')} />
+
+      <NotasTurno codigo={reserva.codigo} activa={activa} />
 
       <section aria-labelledby="titulo-ocupantes" className="detalle-seccion">
         <h2 id="titulo-ocupantes">Ocupantes ({reserva.ocupantes.length})</h2>
@@ -225,15 +265,43 @@ export default function DetalleReserva() {
                 <th scope="col">Documento</th>
                 <th scope="col">Nacionalidad</th>
                 <th scope="col">Fecha de nacimiento</th>
+                {activa && <th scope="col">Datos del TRA</th>}
+                {activa && <th scope="col"><span className="solo-lectores">Acciones</span></th>}
               </tr>
             </thead>
             <tbody>
               {reserva.ocupantes.map((ocupante) => (
                 <tr key={ocupante.id}>
-                  <td className="ocupante-nombre">{ocupante.nombre}</td>
+                  <td className="ocupante-nombre">
+                    {ocupante.nombre}
+                    {ocupante.principal && (
+                      <span className="etiqueta ocupante-principal"><span aria-hidden="true">★</span> Huésped principal</span>
+                    )}
+                  </td>
                   <td className="codigo">{documento(ocupante)}</td>
                   <td>{ocupante.nacionalidad ?? 'Sin dato'}</td>
                   <td className="ocupante-nacimiento">{nacimiento(ocupante, reserva.entrada)}</td>
+                  {activa && (
+                    <td className="ocupante-tra">
+                      <span className="etiqueta">
+                        <span aria-hidden="true">{tieneTraPendiente(ocupante) ? '!' : '✓'}</span> {textoTra(ocupante)}
+                      </span>
+                    </td>
+                  )}
+                  {activa && (
+                    <td className="ocupante-acciones">
+                      {tieneTraPendiente(ocupante) && (
+                        <button
+                          type="button"
+                          className="boton boton-secundario boton-chico"
+                          aria-label={`Completar datos de ${ocupante.nombre}`}
+                          onClick={() => setDialogo({ tra: ocupante.id })}
+                        >
+                          Completar datos
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -270,7 +338,7 @@ export default function DetalleReserva() {
         <DialogoSalida
           reserva={reserva}
           folio={pago.datos.folio}
-          esAdministrador={sesion?.rol === 'ADMINISTRADOR'}
+          esAdministrador={esAdministrador}
           medios={mediosDeRecepcion(pago.datos.alojamiento)}
           alCerrar={() => {
             enfocarTitulo.current = true
@@ -279,6 +347,38 @@ export default function DetalleReserva() {
           alCambiarFolio={pago.ponerFolio}
           alTerminar={actualizar}
           alFallar={actualizar}
+        />
+      )}
+      {dialogo === 'corregir' && (
+        <DialogoCorregirRegistro
+          reserva={reserva}
+          alCerrar={() => {
+            enfocarTitulo.current = true
+            setDialogo(null)
+          }}
+          alCorregir={() => setExito({ asunto: 'Registro de llegada corregido', mensaje: 'El registro anterior queda anulado como historial.' })}
+        />
+      )}
+      {typeof dialogo === 'object' && dialogo !== null && (
+        <DialogoTra
+          reserva={reserva}
+          ocupanteId={dialogo.tra}
+          alCambiar={(nueva) => setResultado({ clave, reserva: nueva })}
+          alCerrar={() => setDialogo(null)}
+        />
+      )}
+      {dialogo === 'vehiculos' && pago.datos && (
+        <DialogoVehiculos
+          reserva={reserva}
+          alojamiento={pago.datos.alojamiento}
+          limiteApartamento={apartamentoActual?.limiteMascotas ?? null}
+          alCerrar={() => setDialogo(null)}
+          alModificar={(nueva) => {
+            setResultado({ clave, reserva: nueva })
+            void pago.recargar()
+            setExito({ asunto: 'Vehículos y mascotas actualizados', mensaje: 'La diferencia quedó en el folio.' })
+            setDialogo(null)
+          }}
         />
       )}
       {dialogo === 'pago' && pago.datos && (

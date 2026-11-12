@@ -7,11 +7,13 @@ import EnConstruccion from './paginas/EnConstruccion'
 import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
+import Llegada from './paginas/Llegada'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
+import Preparacion from './paginas/Preparacion'
 import SinPermiso from './paginas/SinPermiso'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
@@ -20,6 +22,7 @@ import type { Rol } from './sesion/roles'
 const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
   '/ocupacion': <Ocupacion />,
+  '/preparacion': <Preparacion />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
@@ -62,6 +65,14 @@ export default function App() {
           element={
             <SoloPara roles={RECEPCION}>
               <Folio />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/reservas/:codigo/llegada"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <Llegada />
             </SoloPara>
           }
         />

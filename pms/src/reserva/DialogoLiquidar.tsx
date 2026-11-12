@@ -5,6 +5,7 @@ import {
   cancelarReserva,
   declararNoShow,
   simularCancelacion,
+  simularNoShow,
   type Liquidacion,
   type Reserva,
   type SimulacionCancelacion,
@@ -51,17 +52,18 @@ type Previa =
   | { estado: 'error'; mensaje: string; reintentable: boolean }
 
 /**
- * Lo que se retendría al cancelar, pedido al abrir (DEC-91). Sin ese valor no se deja cancelar. Un 409 dice que la
- * reserva ya no se puede cancelar: reintentar no lo cambia.
+ * Lo que se retendría al cancelar o al declarar el no-show, pedido al abrir (DEC-91 · DEC-102). Sin ese valor no se
+ * deja continuar. Un 409 dice que la reserva ya no lo admite: reintentar no lo cambia.
  */
-function usePreviaCancelacion(codigo: string, activa: boolean) {
+function usePreviaLiquidacion(tipo: TipoLiquidacion, codigo: string, activa: boolean) {
   const [intento, setIntento] = useState(0)
   const [previa, setPrevia] = useState<{ intento: number; previa: Previa } | null>(null)
 
   useEffect(() => {
     if (!activa) return
     let vigente = true
-    simularCancelacion(codigo)
+    const simular = tipo === 'cancelar' ? simularCancelacion : simularNoShow
+    simular(codigo)
       .then((valor) => {
         if (vigente) setPrevia({ intento, previa: { estado: 'lista', valor } })
       })
@@ -80,16 +82,15 @@ function usePreviaCancelacion(codigo: string, activa: boolean) {
     return () => {
       vigente = false
     }
-  }, [codigo, activa, intento])
+  }, [tipo, codigo, activa, intento])
 
   const actual: Previa = previa?.intento === intento ? previa.previa : { estado: 'calculando' }
   return { previa: actual, reintentar: () => setIntento((n) => n + 1) }
 }
 
 /**
- * Cancelar o declarar el no-show (RN-08 · RN-12 · RN-13). Al cancelar, antes de decidir se muestra cuánto se
- * retendría (DEC-91). Para el no-show la API todavía no lo dice (`pms/DISENO.md`, #1b): se avisa y al terminar se
- * muestra el valor.
+ * Cancelar o declarar el no-show (RN-08 · RN-12 · RN-13). Antes de decidir se muestra cuánto se retendría (DEC-91 ·
+ * DEC-102).
  *
  * @param alTerminar la acción se hizo; el detalle debe actualizarse
  * @param alFallar   algo falló: la reserva pudo cambiar, así que hay que volver a leerla
@@ -106,9 +107,8 @@ export default function DialogoLiquidar({ tipo, reserva, alCerrar, alTerminar, a
   const [error, setError] = useState<string | null>(null)
   const [liquidacion, setLiquidacion] = useState<Liquidacion | null>(null)
   const disponible = reserva.estado === 'CONFIRMADA' || (tipo === 'cancelar' && reserva.estado === 'PENDIENTE')
-  const conPrevia = tipo === 'cancelar'
-  const { previa, reintentar } = usePreviaCancelacion(reserva.codigo, conPrevia && disponible)
-  const previaLista = !conPrevia || previa.estado === 'lista'
+  const { previa, reintentar } = usePreviaLiquidacion(tipo, reserva.codigo, disponible)
+  const previaLista = previa.estado === 'lista'
 
   async function ejecutar() {
     setEnviando(true)
@@ -157,22 +157,12 @@ export default function DialogoLiquidar({ tipo, reserva, alCerrar, alTerminar, a
           {error && <Aviso tipo="error" asunto={textos.errorAsunto} mensaje={error} />}
           <ResumenDialogo reserva={reserva} />
           <p className="dialogo-texto">{textos.explicar(nochesLiberadas(reserva))}</p>
-          {conPrevia ? (
-            <>
-              <Retencion previa={previa} alReintentar={reintentar} />
-              <Aviso
-                tipo="advertencia"
-                asunto="No se puede deshacer"
-                mensaje="La retención sale de la política de la reserva y es la de este momento: más tarde puede cambiar."
-              />
-            </>
-          ) : (
-            <Aviso
-              tipo="advertencia"
-              asunto="Puede haber una retención"
-              mensaje="Esto no se puede deshacer. La retención depende de la política; verás el valor exacto al terminar."
-            />
-          )}
+          <Retencion previa={previa} alReintentar={reintentar} />
+          <Aviso
+            tipo="advertencia"
+            asunto="No se puede deshacer"
+            mensaje="La retención sale de la política de la reserva y es la de este momento: más tarde puede cambiar."
+          />
           {enviando && <p className="suave" role="status">{textos.enviando}</p>}
         </div>
         <div className="dialogo-pie">

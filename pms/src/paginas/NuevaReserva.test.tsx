@@ -278,7 +278,8 @@ describe('paso 3: personas (TIT-01 · OCU-02 · OCU-05)', () => {
     expect(within(segundo).getByText('Ya está en la lista (ocupante 1).')).toBeInTheDocument()
   })
 
-  it('un titular que no está entre los ocupantes se marca (TIT-01)', async () => {
+  // La regla del mayor de edad se prueba en formulario.test.ts: aquí la entrada es de 2099 y nadie nacido es menor
+  it('el titular puede no alojarse (DEC-97)', async () => {
     apiDePrueba()
     abrir()
     const usuario = userEvent.setup()
@@ -286,12 +287,14 @@ describe('paso 3: personas (TIT-01 · OCU-02 · OCU-05)', () => {
     await completarTitular(usuario)
     await usuario.click(screen.getByRole('checkbox', { name: 'El titular también se aloja' }))
     const primero = screen.getByRole('group', { name: 'Ocupante 1' })
+    await usuario.clear(within(primero).getByLabelText('Nombre completo'))
+    await usuario.type(within(primero).getByLabelText('Nombre completo'), 'Luis Ríos')
     await usuario.clear(within(primero).getByLabelText(/Número/))
     await usuario.selectOptions(within(primero).getByLabelText(/Documento/), '')
+    escribirFecha('Fecha de nacimiento', '2010-11-14', primero)
 
     await usuario.click(screen.getByRole('button', { name: /Siguiente: resumen/ }))
-
-    expect(screen.getByText('El titular debe estar entre los ocupantes, con el mismo documento.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Resumen' })).toBeInTheDocument()
   })
 })
 

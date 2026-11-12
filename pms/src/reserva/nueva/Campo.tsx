@@ -1,9 +1,11 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
 
 /** Un campo con su etiqueta, su pista y su error, conectados para los lectores de pantalla. */
-export default function Campo({ etiqueta, nota, pista, error, invalido = false, opciones, ...control }: {
+export default function Campo({ etiqueta, nota, marca, pista, error, invalido = false, opciones, ...control }: {
   etiqueta: string
   nota?: string
+  /** Algo más junto al rótulo, como la marca de un valor propuesto. */
+  marca?: ReactNode
   pista?: ReactNode
   error?: string
   /** Inválido por un error que se muestra en otro lado, por ejemplo el de su grupo. */
@@ -18,6 +20,7 @@ export default function Campo({ etiqueta, nota, pista, error, invalido = false, 
     <div className="campo">
       <label className="campo-rotulo" htmlFor={id}>
         {etiqueta} {nota && <span className="campo-rotulo-nota">({nota})</span>}
+        {marca}
       </label>
       {opciones ? (
         <select

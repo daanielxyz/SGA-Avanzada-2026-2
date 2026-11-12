@@ -14,13 +14,12 @@ import {
 const TIPOS = TIPOS_DE_DOCUMENTO.map((tipo) => [tipo, tipo] as const)
 const TIPOS_OPCIONALES = [['', 'Ninguno'] as const, ...TIPOS]
 
-/** Paso 3: el titular y el grupo (TIT-01 · OCU-02 · OCU-05). */
-export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, umbral, alCambiarTitular, alCambiarOcupante, alCambiarSeAloja, alSeguir, alVolver }: {
+/** Paso 3: el titular y el grupo (OCU-02 · OCU-05 · DEC-97). El titular puede no alojarse. */
+export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, alCambiarTitular, alCambiarOcupante, alCambiarSeAloja, alSeguir, alVolver }: {
   titular: DatosTitular
   grupo: DatosOcupante[]
   titularSeAloja: boolean
   entrada: string
-  umbral: number
   alCambiarTitular: (titular: DatosTitular) => void
   alCambiarOcupante: (indice: number, ocupante: DatosOcupante) => void
   alCambiarSeAloja: (seAloja: boolean) => void
@@ -33,7 +32,7 @@ export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, 
 
   function enviar(evento: FormEvent) {
     evento.preventDefault()
-    const encontrados = validarPersonas(titular, grupo, entrada, umbral)
+    const encontrados = validarPersonas(titular, grupo, entrada)
     setErrores(encontrados)
     if (Object.keys(encontrados).length === 0) alSeguir()
   }
@@ -76,15 +75,11 @@ export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, 
             />
             El titular también se aloja
           </label>
-          {errores['titular.alojamiento']
-            ? <p className="campo-mensaje">{errores['titular.alojamiento']}</p>
-            : (
-              <p className="campo-pista">
-                {titularSeAloja
-                  ? 'Llena el ocupante 1 con sus datos. El titular debe ser un ocupante que paga.'
-                  : 'El titular debe estar entre los ocupantes: escribe su documento en uno de ellos.'}
-              </p>
-            )}
+          <p className="campo-pista">
+            {titularSeAloja
+              ? 'Sus datos llenan el ocupante 1.'
+              : 'El titular responde por la reserva y su folio; puede no alojarse, por ejemplo si reserva para otra persona.'}
+          </p>
         </div>
       </section>
 
@@ -92,6 +87,7 @@ export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, 
         <div>
           <h3 id="titulo-ocupantes-nuevos">Ocupantes ({grupo.length})</h3>
           <p className="campo-pista">Nombre y fecha de nacimiento son obligatorios; documento y nacionalidad, opcionales.</p>
+          {errores['grupo.mayor'] && <p className="campo-mensaje">{errores['grupo.mayor']}</p>}
         </div>
         {grupo.map((ocupante, indice) => {
           const esTitular = titularSeAloja && indice === 0

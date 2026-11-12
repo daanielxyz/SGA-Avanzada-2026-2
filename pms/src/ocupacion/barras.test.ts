@@ -75,3 +75,17 @@ describe('barrasDe (EST-01)', () => {
     expect(barras(apartamento([reserva('R1', '2026-11-01', DESDE)]))).toEqual([])
   })
 })
+
+describe('barrasDe con un no-show (DEC-101)', () => {
+  it('el no-show va en el último carril aunque empiece primero: sus noches quedaron libres', () => {
+    const noShow = { ...reserva('NS', '2026-11-13', '2026-11-15'), estado: 'NO_SHOW' as const }
+    const resultado = barras(apartamento([noShow, reserva('R2', '2026-11-14', '2026-11-16')]))
+    expect(resultado.find((barra) => barra.clave === 'R2')?.carril).toBe(0)
+    expect(resultado.find((barra) => barra.clave === 'NS')?.carril).toBe(1)
+  })
+
+  it('sin otra reserva encima, el no-show usa el primer carril', () => {
+    const noShow = { ...reserva('NS', '2026-11-13', '2026-11-15'), estado: 'NO_SHOW' as const }
+    expect(barras(apartamento([noShow]))[0].carril).toBe(0)
+  })
+})

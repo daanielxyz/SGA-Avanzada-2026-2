@@ -232,7 +232,7 @@ describe('menú plegable del celular', () => {
 
 describe('salida', () => {
   it('salir cierra la sesión en el backend y vuelve a la entrada', async () => {
-    entrarComo('PERSONAL_SERVICIO')
+    entrarComo('RECEPCIONISTA')
     const fetch = laApiResponde([200, { nombre: 'Hotel de Prueba' }], [200, { mensaje: 'La sesión quedó cerrada.' }])
     abrir('/')
 
@@ -240,7 +240,7 @@ describe('salida', () => {
 
     expect(await screen.findByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
     expect(llamada(fetch, 1)).toMatchObject({
-      url: '/api/auth/logout', metodo: 'POST', cabeceras: { Authorization: 'Bearer token-PERSONAL_SERVICIO' },
+      url: '/api/auth/logout', metodo: 'POST', cabeceras: { Authorization: 'Bearer token-RECEPCIONISTA' },
     })
     expect(leerSesion()).toBeNull()
   })

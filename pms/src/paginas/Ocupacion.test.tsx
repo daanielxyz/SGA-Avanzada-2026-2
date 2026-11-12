@@ -98,10 +98,28 @@ describe('tablero de ocupación (DEC-86)', () => {
 
     const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
     const barra = within(cuadricula).getByRole('link', {
-      name: 'Reserva RES-2026-00042, Confirmada, titular TIT-7, del 14 nov 2026 al 16 nov 2026',
+      name: 'Titular TIT-7, del 14 nov al 16 nov, reserva RES-2026-00042, Confirmada',
     })
     expect(barra).toHaveAttribute('href', '/reservas/RES-2026-00042')
     expect(barra).toHaveStyle({ gridColumn: '3 / span 2' })
+  })
+
+  it('con la cuenta, la barra lleva el titular, su color y la cuenta en palabras (BL-09 · DEC-101)', async () => {
+    api([{
+      ...FILA,
+      reservas: [{
+        ...FILA.reservas[0], titularNombre: 'Ana Torres Vélez', saldo: 675000, situacionSaldo: 'PENDIENTE', totalPagado: 300000,
+      }],
+    }])
+    abrir()
+
+    const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
+    const barra = within(cuadricula).getByRole('link', {
+      name: 'Ana Torres Vélez, del 14 nov al 16 nov, reserva RES-2026-00042, Confirmada. Con saldo: debe $ 675.000',
+    })
+    expect(barra).toHaveClass('cuenta-con-saldo')
+    expect(barra).toHaveTextContent('Ana Torres Vélez')
+    expect(barra).toHaveTextContent('Con saldo')
   })
 
   it('un bloqueo se ve distinto, con su motivo, y no lleva a ningún lado', async () => {

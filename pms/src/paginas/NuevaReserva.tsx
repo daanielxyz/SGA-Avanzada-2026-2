@@ -132,8 +132,20 @@ export default function NuevaReserva() {
     if (seAloja) setGrupo((actual) => actual.map((o, i) => (i === 0 ? ocupanteDelTitular(titular, o) : o)))
   }
 
-  function alCrear(reserva: Reserva) {
+  function alCrear(reserva: Reserva, continuarLlegada: boolean) {
     setCreada(true)
+    if (continuarLlegada) {
+      navegar(`/reservas/${reserva.codigo}/llegada`, {
+        replace: true,
+        state: {
+          aviso: {
+            asunto: `Reserva creada · ${reserva.codigo}`,
+            mensaje: `Cobra y registra la llegada para terminar.${reserva.avisoCuenta ? ` ${reserva.avisoCuenta}` : ''}`,
+          },
+        },
+      })
+      return
+    }
     navegar(`/reservas/${reserva.codigo}`, {
       replace: true,
       state: {
@@ -214,7 +226,6 @@ export default function NuevaReserva() {
           grupo={grupo}
           titularSeAloja={titularSeAloja}
           entrada={estanciaLista.entrada}
-          umbral={alojamiento.parametros.umbralEdadFacturable}
           alCambiarTitular={cambiarTitular}
           alCambiarOcupante={cambiarOcupante}
           alCambiarSeAloja={cambiarSeAloja}

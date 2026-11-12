@@ -105,31 +105,27 @@ function validarOcupantes(grupo: DatosOcupante[], hoy: string): Errores {
   return errores
 }
 
+/** DEC-97: el huésped principal debe ser mayor de edad a la fecha de entrada (`Ocupante.MAYORIA_DE_EDAD`). */
+export const MAYORIA_DE_EDAD = 18
+
 /**
- * TIT-01 · OCU-02: el titular se reconoce entre los ocupantes por su documento y debe ser facturable a la fecha de
- * entrada. Si está pero no alcanza la edad, el error sale junto a él.
+ * DEC-97: el titular ya no tiene que alojarse, pero el grupo debe traer un mayor de edad a la fecha de entrada, que
+ * será el huésped principal (el backend elige al primero). Solo se revisa cuando todas las fechas están escritas: si
+ * falta alguna, el error de esa fecha sale primero.
  */
-function validarTitularEntreOcupantes(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, umbral: number): Errores {
-  if (!titular.numeroDocumento.trim()) return {}
-  const indice = grupo.findIndex((ocupante) => tieneDocumento(ocupante) && mismoDocumento(ocupante, titular))
-  if (indice < 0) {
-    return { 'titular.alojamiento': 'El titular debe estar entre los ocupantes, con el mismo documento.' }
-  }
-  const { fechaNacimiento } = grupo[indice]
-  if (!fechaNacimiento) return {}
-  const edad = edadEn(fechaNacimiento, entrada)
-  if (edad >= umbral) return {}
-  return {
-    [`ocupante.${indice}.fechaNacimiento`]:
-      `Tendrá ${edad} ${edad === 1 ? 'año' : 'años'} al entrar. El titular debe ser un ocupante que paga: ${umbral} años o más.`,
-  }
+function validarMayorDeEdad(grupo: DatosOcupante[], entrada: string): Errores {
+  if (!entrada || grupo.some((ocupante) => !ocupante.fechaNacimiento)) return {}
+  const hayMayor = grupo.some((ocupante) => edadEn(ocupante.fechaNacimiento, entrada) >= MAYORIA_DE_EDAD)
+  return hayMayor
+    ? {}
+    : { 'grupo.mayor': `El grupo necesita un mayor de edad (${MAYORIA_DE_EDAD} años o más al entrar): será el huésped principal.` }
 }
 
-export function validarPersonas(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, umbral: number, hoy = fechaHoy()): Errores {
+export function validarPersonas(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, hoy = fechaHoy()): Errores {
   return {
     ...validarTitular(titular),
-    ...validarTitularEntreOcupantes(titular, grupo, entrada, umbral),
     ...validarOcupantes(grupo, hoy),
+    ...validarMayorDeEdad(grupo, entrada),
   }
 }
 

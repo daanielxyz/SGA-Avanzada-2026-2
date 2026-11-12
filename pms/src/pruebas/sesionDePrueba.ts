@@ -33,14 +33,15 @@ export function laApiResponde(...respuestas: [number, unknown][]) {
 
 /**
  * La API simulada responde según la ruta, sin importar el orden de las llamadas, porque cada pantalla pide lo suyo
- * al abrirse. Lo que no esté en la lista responde 404. Una función responde según lo que ya haya cambiado.
+ * al abrirse. Lo que no esté en la lista responde 404. Una función responde según lo que ya haya cambiado, y recibe
+ * el método para separar, por ejemplo, el `GET` que simula del `PUT` que hace la acción.
  */
-export function laApiRespondePorRuta(rutas: Record<string, [number, unknown] | (() => [number, unknown])>) {
-  const fetch = vi.fn((url: string, _opciones?: RequestInit) => {
+export function laApiRespondePorRuta(rutas: Record<string, [number, unknown] | ((metodo: string) => [number, unknown])>) {
+  const fetch = vi.fn((url: string, opciones?: RequestInit) => {
     const ruta = rutas[url.split('?')[0]] ?? [404, {
       estado: 404, codigo: 'NO_ENCONTRADO', mensaje: 'No existe', detalles: [],
     }]
-    const [estado, cuerpo] = typeof ruta === 'function' ? ruta() : ruta
+    const [estado, cuerpo] = typeof ruta === 'function' ? ruta(opciones?.method ?? 'GET') : ruta
     return Promise.resolve(new Response(JSON.stringify(cuerpo), { status: estado }))
   })
   vi.stubGlobal('fetch', fetch)

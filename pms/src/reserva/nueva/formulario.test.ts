@@ -14,14 +14,14 @@ import {
 
 const HOY = '2026-11-12'
 const ENTRADA = '2026-11-14'
-const UMBRAL = 12
 const TITULAR: DatosTitular = {
   nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '52481', correo: 'ana@correo.test', telefono: '3105550142',
 }
 const DE_TITULAR: DatosOcupante = {
   nombre: 'Ana Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481', nacionalidad: '',
 }
-const validar = (grupo: DatosOcupante[], titular = TITULAR) => validarPersonas(titular, grupo, ENTRADA, UMBRAL, HOY)
+const DE_TITULAR_ADULTO: DatosOcupante = { ...OCUPANTE_VACIO, nombre: 'Pedro Ríos', fechaNacimiento: '1985-01-01' }
+const validar = (grupo: DatosOcupante[], titular = TITULAR) => validarPersonas(titular, grupo, ENTRADA, HOY)
 
 describe('validarEstancia (EST-01 · RN-02)', () => {
   it('acepta una estancia correcta', () => {
@@ -35,25 +35,25 @@ describe('validarEstancia (EST-01 · RN-02)', () => {
 })
 
 describe('validarPersonas', () => {
-  it('acepta al titular entre los ocupantes, facturable', () => {
+  it('acepta al titular entre los ocupantes', () => {
     expect(validar([DE_TITULAR])).toEqual({})
   })
 
-  it('OCU-02: un titular que no alcanza la edad a la fecha de entrada se marca junto a él', () => {
-    const errores = validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15' }])
-    expect(errores['ocupante.0.fechaNacimiento']).toBe(
-      'Tendrá 9 años al entrar. El titular debe ser un ocupante que paga: 12 años o más.',
-    )
+  it('DEC-97: el titular puede no alojarse', () => {
+    expect(validar([{ ...DE_TITULAR, nombre: 'Luis Ríos', numeroDocumento: '999' }])).toEqual({})
   })
 
-  it('OCU-02: la edad cuenta a la fecha de entrada: el que cumple ese día ya alcanza', () => {
-    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2014-11-14' }])).toEqual({})
-    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2014-11-15' }])['ocupante.0.fechaNacimiento']).toContain('11 años')
+  it('DEC-97: el grupo necesita un mayor de edad a la fecha de entrada; el que cumple 18 ese día ya cuenta', () => {
+    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15' }])['grupo.mayor']).toContain('mayor de edad')
+    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2008-11-15' }])['grupo.mayor']).toBeDefined()
+    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2008-11-14' }])).toEqual({})
+    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15' }, DE_TITULAR_ADULTO])).toEqual({})
   })
 
-  it('TIT-01: el titular debe estar entre los ocupantes con su documento', () => {
-    expect(validar([{ ...DE_TITULAR, numeroDocumento: '999' }])['titular.alojamiento']).toBeDefined()
-    expect(validar([{ ...DE_TITULAR, tipoDocumento: 'CE' }])['titular.alojamiento']).toBeDefined()
+  it('sin todas las fechas no revisa la mayoría de edad: sale primero el error de la fecha', () => {
+    const errores = validar([{ ...DE_TITULAR, fechaNacimiento: '' }])
+    expect(errores['ocupante.0.fechaNacimiento']).toBe('Escribe la fecha de nacimiento.')
+    expect(errores['grupo.mayor']).toBeUndefined()
   })
 
   it('OCU-05: dos ocupantes con el mismo documento son la misma persona', () => {
