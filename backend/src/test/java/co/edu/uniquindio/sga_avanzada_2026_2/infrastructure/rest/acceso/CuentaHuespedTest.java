@@ -460,6 +460,24 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-109")
+    void unaCuentaConElNombreTodoJuntoSeparaSusApellidos() throws Exception {
+        reservaPendiente(HOY.plusDays(5)); // la reserva trae "nombre": "Ana Ríos", todo en un solo texto
+        String token = entrarComoHuesped(ANA, "1094");
+        cliente.perform(con(token, get("/api/mi-cuenta")))
+                .andExpect(jsonPath("$.nombres").value("Ana Ríos"))
+                .andExpect(jsonPath("$.primerApellido").value(nullValue()));
+
+        cliente.perform(con(token, put("/api/mi-cuenta")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombres\": \"Ana\", \"primerApellido\": \"Ríos\", "
+                                + "\"telefono\": \"300 123 4567\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombres").value("Ana"))
+                .andExpect(jsonPath("$.primerApellido").value("Ríos"))
+                .andExpect(jsonPath("$.nombre").value("Ana Ríos"));
+    }
+
+    @Test
     @Tag("DEC-98")
     void conLaIdentidadValidadaElHuespedYaNoCambiaSuNombre() throws Exception {
         reservaPendiente(HOY.plusDays(5));
