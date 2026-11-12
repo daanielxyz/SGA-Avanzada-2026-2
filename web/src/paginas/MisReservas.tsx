@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { consultarApartamento, type ApartamentoPublico, type Pagina } from '../api/apartamentos'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import { ESTADOS, listarMisReservas, type ReservaDelHuesped } from '../api/cuenta'
 import Foto from '../busqueda/Foto'
 import Paginacion from '../busqueda/Paginacion'
@@ -35,7 +35,7 @@ export default function MisReservas() {
         }
       })
       .catch((error: unknown) => vigente && setProblema(
-        error instanceof ErrorApi ? error.message : 'No pudimos abrir tus reservas. Intenta de nuevo en un momento.'))
+        explicar(error, 'No pudimos abrir tus reservas. Intenta de nuevo en un momento.')))
     return () => {
       vigente = false
     }

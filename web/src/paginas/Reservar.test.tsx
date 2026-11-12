@@ -403,6 +403,38 @@ describe('Reservar', () => {
     expect(screen.getByRole('button', { name: 'Continuar al pago' })).toBeEnabled()
   })
 
+  it('un rechazo con motivo se explica para el huésped y dice qué hacer, no con el texto técnico', async () => {
+    laApi({ reservas: [respuesta({
+      estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'Disponibilidad: APT-101 retenido por RES-2026-00041',
+      detalles: [], motivo: 'NO_DISPONIBLE',
+    }, 409)] })
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+
+    const aviso = await screen.findByRole('alert')
+    expect(aviso).toHaveTextContent('Esas noches ya no están libres en este apartamento')
+    expect(aviso).not.toHaveTextContent('RES-2026-00041')
+  })
+
+  it('datos inválidos dicen qué revisar con el nombre de cada campo', async () => {
+    laApi({ reservas: [respuesta({
+      estado: 400, codigo: 'VALIDACION', mensaje: 'La solicitud tiene datos inválidos',
+      detalles: ['titular.correo: no tiene formato de correo'],
+    }, 400)] })
+    abrir()
+    await screen.findByLabelText('Nombres')
+    llenarTitular()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar al pago' }))
+
+    const aviso = await screen.findByRole('alert')
+    expect(aviso).toHaveTextContent('Revisa estos datos:')
+    expect(within(aviso).getByRole('listitem')).toHaveTextContent('Correo: no tiene formato de correo')
+  })
+
   it('el pago muestra cuánto y hasta cuándo, las condiciones de cancelación y luego confirma', async () => {
     const fetch = laApi()
     abrir()

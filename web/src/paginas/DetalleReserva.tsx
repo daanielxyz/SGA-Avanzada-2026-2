@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import type { Alojamiento } from '../api/alojamiento'
 import { consultarApartamento, type ApartamentoPublico } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import {
   cancelarReserva,
   ESTADOS,
@@ -59,7 +60,7 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
           : {
             estado: 'problema',
             titulo: 'No pudimos abrir tu reserva',
-            mensaje: error instanceof ErrorApi ? error.message : 'Intenta de nuevo en un momento.',
+            mensaje: explicar(error, 'Intenta de nuevo en un momento.'),
           })
       })
     return () => {
@@ -271,9 +272,8 @@ function PagoDeReserva({ reserva, yaPagado, alPagar }: PropsPago) {
     let vigente = true
     consultarPagoPendiente(codigo)
       .then((p) => vigente && setPago(p))
-      .catch((error: unknown) => vigente && setProblema(error instanceof ErrorApi
-        ? error.message
-        : 'No pudimos revisar el pago de esta reserva. Intenta de nuevo en un momento.'))
+      .catch((error: unknown) => vigente && setProblema(
+        explicar(error, 'No pudimos revisar el pago de esta reserva. Intenta de nuevo en un momento.')))
     return () => {
       vigente = false
     }
@@ -341,7 +341,7 @@ function CancelarReserva({ codigo, alCancelar }: { codigo: string; alCancelar: (
     try {
       setSimulacion(await simularCancelacion(codigo))
     } catch (error) {
-      setProblema(error instanceof ErrorApi ? error.message : 'No pudimos calcular cuánto se retendría.')
+      setProblema(explicar(error, 'No pudimos calcular cuánto se retendría. Intenta de nuevo en un momento.'))
     } finally {
       setCalculando(false)
     }
@@ -353,7 +353,7 @@ function CancelarReserva({ codigo, alCancelar }: { codigo: string; alCancelar: (
     try {
       await alCancelar()
     } catch (error) {
-      setProblema(error instanceof ErrorApi ? error.message : 'No pudimos cancelar tu reserva. Intenta de nuevo.')
+      setProblema(explicar(error, 'No pudimos cancelar tu reserva. Intenta de nuevo.'))
       setCancelando(false)
     }
   }
