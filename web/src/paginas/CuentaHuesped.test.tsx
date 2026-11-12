@@ -357,6 +357,19 @@ describe('Mis reservas', () => {
     expect(await screen.findByRole('link', { name: /APT-101/ })).toBeInTheDocument()
   })
 
+  it('en «Anteriores» una cancelada no muestra un total que ya no se cobra', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/mis-reservas?pagina=0&vigentes=false': () => respuesta(PAGINA([{ ...RESERVA, estado: 'CANCELADA' },
+        { ...RESERVA, codigo: 'RES-2026-00043', estado: 'FINALIZADA' }])),
+    })
+    abrir('/mis-reservas?ver=anteriores')
+
+    const [cancelada, finalizada] = await screen.findAllByRole('listitem')
+    expect(cancelada).not.toHaveTextContent('$')
+    expect(finalizada).toHaveTextContent(/\$\s*436\.000/)
+  })
+
   it('sin reservas próximas, invita a ver apartamentos', async () => {
     guardarSesion(SESION)
     laApi({ '/api/mis-reservas?pagina=0&vigentes=true': () => respuesta(PAGINA([])) })
@@ -411,8 +424,33 @@ describe('Detalle de una reserva', () => {
     expect(within(cuenta).getByText('Falta por pagar').closest('dt')?.nextElementSibling)
       .toHaveTextContent(/\$\s*305\.200/)
     const estadia = screen.getByRole('region', { name: 'Tu estadía' })
-    expect(estadia).toHaveTextContent('Ana Ríos, Luis Ríos')
+    expect(within(estadia).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ana Ríos', 'Luis Ríos'])
     expect(within(estadia).getByText('Llegada').nextElementSibling).toHaveTextContent(/3:00/)
+  })
+
+  it('una cancelada muestra lo retenido, no cobra su valor y al volver regresa a «Anteriores»', async () => {
+    guardarSesion(SESION)
+    laApi({
+      '/api/reservas/RES-2026-00042': () => respuesta({ ...RESERVA, estado: 'CANCELADA' }),
+      '/api/reservas/RES-2026-00042/folio': () =>
+        respuesta({ totalPagado: 150000, saldo: 52000, situacionSaldo: 'A_FAVOR' }),
+    })
+    abrir('/mis-reservas/RES-2026-00042')
+
+    const valor = await screen.findByText('Valor de la reserva, que ya no se cobra')
+    expect(valor.nextElementSibling).toHaveClass('tachado')
+    expect(screen.getByText('Retenido por cancelar').nextElementSibling).toHaveTextContent(/\$\s*98\.000/)
+    expect(screen.getByText('A tu favor').closest('dt')?.nextElementSibling).toHaveTextContent(/\$\s*52\.000/)
+    expect(screen.queryByText(/^Alojamiento/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '← Mis reservas' })).toHaveAttribute('href', '/mis-reservas?ver=anteriores')
+  })
+
+  it('una vigente vuelve a «Próximas»', async () => {
+    guardarSesion(SESION)
+    laApi()
+    abrir('/mis-reservas/RES-2026-00042')
+
+    expect(await screen.findByRole('link', { name: '← Mis reservas' })).toHaveAttribute('href', '/mis-reservas')
   })
 
   it('una reserva ajena o inexistente dice lo mismo', async () => {
@@ -541,7 +579,7 @@ describe('Detalle de una reserva', () => {
 
     expect(await screen.findByText('Tu reserva quedó cancelada.')).toBeInTheDocument()
     expect(screen.queryByText('Recibimos tu pago. Tu reserva quedó confirmada.')).not.toBeInTheDocument()
-    expect(screen.getByText(/ya no se cobran/)).toBeInTheDocument()
+    expect(screen.getByText(/Solo se cobra lo retenido/)).toBeInTheDocument()
   })
 
   it('al retomar el pago muestra las condiciones congeladas en la reserva, no las vigentes', async () => {

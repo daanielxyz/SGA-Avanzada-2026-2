@@ -87,7 +87,10 @@ function FilaReserva({ reserva, apartamento }: { reserva: ReservaDelHuesped; apa
           <span className="suave">{fechaCorta(reserva.entrada)} – {fechaCorta(reserva.salida)}</span>
           <span className="suave">{reserva.codigo}</span>
         </div>
-        <strong className="fila-reserva-total">{enPesos(reserva.valor.total + reserva.extras.total)}</strong>
+        {/* Una cancelada o sin llegada ya no se cobra: su total confundiría; lo retenido está en su detalle */}
+        {reserva.estado !== 'CANCELADA' && reserva.estado !== 'NO_SHOW' && (
+          <strong className="fila-reserva-total">{enPesos(reserva.valor.total + reserva.extras.total)}</strong>
+        )}
       </Link>
     </li>
   )

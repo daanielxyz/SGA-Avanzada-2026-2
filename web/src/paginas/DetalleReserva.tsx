@@ -85,6 +85,8 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
   const n = noches(reserva.entrada, reserva.salida)
   const horaEntrada = alojamiento?.parametros.horaEntrada
   const horaSalida = alojamiento?.parametros.horaSalida
+  const terminada = !['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'].includes(reserva.estado)
+  const sinCobro = reserva.estado === 'CANCELADA' || reserva.estado === 'NO_SHOW'
 
   // Después de cancelar o pagar se vuelve a pedir: lo que se muestra siempre es lo que dice el backend
   async function recargar(estado: ReservaDelHuesped['estado']) {
@@ -111,7 +113,8 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
 
   return (
     <main className="ficha detalle-reserva">
-      <Link to="/mis-reservas" className="volver">← Mis reservas</Link>
+      {/* Vuelve a la pestaña de donde vino: las terminadas están en «Anteriores» (DEC-108) */}
+      <Link to={terminada ? '/mis-reservas?ver=anteriores' : '/mis-reservas'} className="volver">← Mis reservas</Link>
       <div className="detalle-cabeza">
         <Foto url={foto?.url} alt="" carga="eager" />
         <div>
@@ -137,7 +140,12 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
           <dt>Salida</dt>
           <dd>{fechaCorta(reserva.salida)}{horaSalida && `, hasta las ${horaDelDia(horaSalida)}`}</dd>
           <dt>Viajan</dt>
-          <dd>{reserva.ocupantes.map((o) => o.nombre).join(', ')}</dd>
+          <dd>
+            {/* Una persona por renglón: un grupo grande se revisa nombre por nombre */}
+            <ul className="lista-viajeros">
+              {reserva.ocupantes.map((o) => <li key={o.id}>{o.nombre}</li>)}
+            </ul>
+          </dd>
           {reserva.carros > 0 && (
             <>
               <dt>Carros</dt>
@@ -162,18 +170,33 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
       <section aria-labelledby="titulo-cuenta">
         <h2 id="titulo-cuenta">Tu cuenta</h2>
         <dl className="datos datos-valores">
-          <dt>Alojamiento, {n} {n === 1 ? 'noche' : 'noches'}</dt>
-          <dd>{enPesos(reserva.valor.total)}</dd>
-          {reserva.extras.parqueadero > 0 && (
+          {sinCobro ? (
+            <>
+              <dt>Valor de la reserva, que ya no se cobra</dt>
+              <dd className="tachado">{enPesos(reserva.valor.total + reserva.extras.total)}</dd>
+            </>
+          ) : (
+            <>
+              <dt>Alojamiento, {n} {n === 1 ? 'noche' : 'noches'}</dt>
+              <dd>{enPesos(reserva.valor.total)}</dd>
+            </>
+          )}
+          {!sinCobro && reserva.extras.parqueadero > 0 && (
             <>
               <dt>Parqueadero</dt>
               <dd>{enPesos(reserva.extras.parqueadero)}</dd>
             </>
           )}
-          {reserva.extras.mascotas > 0 && (
+          {!sinCobro && reserva.extras.mascotas > 0 && (
             <>
               <dt>Mascotas</dt>
               <dd>{enPesos(reserva.extras.mascotas)}</dd>
+            </>
+          )}
+          {cuenta && sinCobro && (
+            <>
+              <dt>{reserva.estado === 'NO_SHOW' ? 'Retenido por no llegar' : 'Retenido por cancelar'}</dt>
+              <dd>{enPesos(retenidoDe(cuenta))}</dd>
             </>
           )}
           {cuenta && (
@@ -185,9 +208,9 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
             </>
           )}
         </dl>
-        {(reserva.estado === 'CANCELADA' || reserva.estado === 'NO_SHOW') && (
+        {sinCobro && (
           <p className="suave">
-            El alojamiento y los extras ya no se cobran; el saldo tiene en cuenta lo pagado y lo retenido.
+            Solo se cobra lo retenido según las condiciones que aceptaste; el saldo descuenta lo que ya pagaste.
           </p>
         )}
       </section>
@@ -197,6 +220,16 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
       )}
     </main>
   )
+}
+
+/**
+ * En una reserva cancelada o sin llegada, la cuenta solo carga lo retenido: saldo = retenido − pagado (FOL-01). Así se
+ * despeja sin pedir otro dato al backend.
+ */
+function retenidoDe({ totalPagado, saldo, situacionSaldo }: CuentaDeReserva) {
+  if (situacionSaldo === 'A_FAVOR') return totalPagado - saldo
+  if (situacionSaldo === 'PENDIENTE') return totalPagado + saldo
+  return totalPagado
 }
 
 const SITUACION = {
