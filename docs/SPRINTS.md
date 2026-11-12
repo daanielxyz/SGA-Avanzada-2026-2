@@ -97,7 +97,7 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [x] «Mi cuenta» editable: teléfono, nombres y apellidos (dos campos) mientras el hotel no valide la identidad, y cambio de correo con PIN; al reservar, nombres y apellidos van en dos campos (`feature/web/cuenta-editable`, DEC-98).
   - [x] Núcleo para la web: «Mis reservas» trae aparte las vigentes, de la próxima llegada en adelante, y las terminadas (`feature/nucleo/mis-reservas-vigentes`, DEC-108).
   - [ ] Pulir la web: diseño adaptable al celular, textos y mensajes de error.
-  - [ ] Pulir las pantallas del huésped con sesión: entrar con PIN, mi cuenta, mis reservas y el detalle de cada reserva.
+  - [~] Pulir las pantallas del huésped con sesión (`feature/web/pulir-huesped`): hechas las pestañas «Próximas» y «Anteriores» en mis reservas (DEC-108), el aviso para separar los apellidos de las cuentas de antes, los datos de la cuenta al reservar con sesión y «Yo también me hospedo» para reservar a nombre de otros (DEC-97). Sigue la prueba del usuario con el correo real.
   - [ ] Requisitos de la entrevista del producto web priorizados en el cierre 1.
 - **pms**
   - [x] Entrevista a la recepcionista: anotada en `docs/BACKLOG.md` (BL-07 a BL-23). Entran a este sprint BL-07 a BL-12, BL-22 y BL-23; para hacerles espacio, el nombre de la temporada y los mensajes de los 409 pasan al sprint 4 (`feature/pms/entrevista`).

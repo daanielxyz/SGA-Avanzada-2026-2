@@ -130,8 +130,13 @@ export function confirmarCambioCorreo({ tipoDocumento, numeroDocumento }: Docume
   })
 }
 
-export function listarMisReservas(pagina = 0) {
-  return pedir<Pagina<ReservaDelHuesped>>(`/api/mis-reservas?pagina=${pagina}`, { conSesion: true })
+/**
+ * Las vigentes (pendientes, confirmadas y en curso), de la próxima llegada en adelante, o las terminadas, de la más
+ * reciente a la más antigua (DEC-108).
+ */
+export function listarMisReservas(vigentes: boolean, pagina = 0) {
+  return pedir<Pagina<ReservaDelHuesped>>(`/api/mis-reservas?pagina=${pagina}&vigentes=${vigentes}`,
+    { conSesion: true })
 }
 
 export function consultarReserva(codigo: string) {

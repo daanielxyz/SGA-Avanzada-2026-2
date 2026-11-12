@@ -1,9 +1,12 @@
 import { useEffect, useId, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import type { Alojamiento } from '../api/alojamiento'
 import type { Estadia, Grupo, Precio } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
+import { consultarCuenta, type Cuenta } from '../api/cuenta'
 import { cotizar, reservar, type Extras, type ReservaApartada, type TipoDocumento } from '../api/reservas'
 import { enPesos, fechaDesdeHoy, horaDelDia, noches } from '../formato'
+import { leerSesion } from '../sesion/almacen'
 import CampoTelefono from './CampoTelefono'
 
 interface Props {
@@ -33,18 +36,36 @@ const TIPOS_DOCUMENTO: { valor: TipoDocumento; texto: string }[] = [
   { valor: 'PASAPORTE', texto: 'Pasaporte' },
   { valor: 'TI', texto: 'Tarjeta de identidad' },
 ]
+const TEXTO_DOCUMENTO = Object.fromEntries(TIPOS_DOCUMENTO.map((t) => [t.valor, t.texto])) as Record<TipoDocumento,
+  string>
 
 // Dos campos: nombres y apellidos. Los apellidos van juntos, como los escribe, en primerApellido (BL-07 · DEC-98)
-const nombreDe = ({ nombres, apellidos }: Persona) => ({ nombres: nombres.trim(), primerApellido: apellidos.trim() })
+const nombreDe = ({ nombres, apellidos }: Pick<Persona, 'nombres' | 'apellidos'>) =>
+  ({ nombres: nombres.trim(), primerApellido: apellidos.trim() })
+
+// Con sesión, el nombre sale de la cuenta tal como está guardado; las cuentas viejas no traen apellidos (DEC-98)
+const nombreDeCuenta = ({ nombres, primerApellido, segundoApellido }: Cuenta) => ({
+  nombres,
+  ...(primerApellido ? { primerApellido } : {}),
+  ...(segundoApellido ? { segundoApellido } : {}),
+})
 
 /**
- * Paso 1: quién viaja. Quien reserva es la primera persona del grupo; el backend toma como huésped principal al
- * primer mayor de edad (DEC-97). Con todas las fechas de nacimiento, el total se recalcula con la regla real (RN-06):
- * si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
+ * Paso 1: quién reserva y quiénes se hospedan. Quien reserva responde por la reserva y su pago, y puede no hospedarse
+ * (DEC-97): la casilla «Yo también me hospedo» decide si es la primera persona del grupo. El backend toma como huésped
+ * principal al primer mayor de edad. Con sesión, quien reserva es la cuenta: sus datos se muestran y se cambian en «Mi
+ * cuenta», porque el backend usa los guardados (DEC-69). Con todas las fechas de nacimiento, el total se recalcula con
+ * la regla real (RN-06): si no coincide con lo que dijo al buscar, se le avisa antes de pagar.
  */
 export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteMascotas, precioBuscado,
   alCambiarPrecio, alCambiarExtras, alReservar }: Props) {
   const hoy = fechaDesdeHoy()
+  const [conSesion] = useState(() => leerSesion() !== null)
+  const [cuenta, setCuenta] = useState<Cuenta | null>(null)
+  const [cargandoCuenta, setCargandoCuenta] = useState(conSesion)
+  const [meHospedo, setMeHospedo] = useState(true)
+  const [quien, setQuien] = useState({ nombres: '', apellidos: '' })
+  // Una por cada persona del grupo; si quien reserva se hospeda, la primera es él y solo se usa su fecha
   const [personas, setPersonas] = useState<Persona[]>(() =>
     Array.from({ length: grupo.adultos + grupo.ninos },
       () => ({ nombres: '', apellidos: '', fechaNacimiento: '' })))
@@ -94,6 +115,19 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
     alCambiarExtras({ parqueadero: porParqueadero, mascotas: porMascotas, total: porParqueadero + porMascotas })
   }, [porParqueadero, porMascotas, alCambiarExtras])
 
+  useEffect(() => {
+    if (!conSesion) return
+    let vigente = true
+    consultarCuenta()
+      .then((c) => vigente && setCuenta(c))
+      // Si la cuenta no carga, se piden los datos como sin sesión: nada impide reservar
+      .catch(() => {})
+      .finally(() => vigente && setCargandoCuenta(false))
+    return () => {
+      vigente = false
+    }
+  }, [conSesion])
+
   function cambiarPersona(indice: number, cambio: Partial<Persona>) {
     setPersonas((actuales) => actuales.map((p, i) => (i === indice ? { ...p, ...cambio } : p)))
   }
@@ -102,16 +136,20 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
     evento.preventDefault()
     setProblema(null)
     setEnviando(true)
-    const [titular, ...acompanantes] = personas
+    const nombre = cuenta ? nombreDeCuenta(cuenta) : nombreDe(quien)
+    const documento = cuenta
+      ? { tipoDocumento: cuenta.tipoDocumento, numeroDocumento: cuenta.numeroDocumento }
+      : { tipoDocumento, numeroDocumento }
+    const [primera, ...resto] = personas
+    const huespedes = (lista: Persona[]) => lista.map((p) => ({ ...nombreDe(p), fechaNacimiento: p.fechaNacimiento }))
     try {
       alReservar(await reservar({
         apartamento: codigo,
         ...estadia,
-        titular: { ...nombreDe(titular), tipoDocumento, numeroDocumento, correo, telefono },
-        ocupantes: [
-          { ...nombreDe(titular), fechaNacimiento: titular.fechaNacimiento, tipoDocumento, numeroDocumento },
-          ...acompanantes.map((p) => ({ ...nombreDe(p), fechaNacimiento: p.fechaNacimiento })),
-        ],
+        titular: { ...nombre, ...documento, correo: cuenta?.correo ?? correo, telefono: cuenta?.telefono ?? telefono },
+        ocupantes: meHospedo
+          ? [{ ...nombre, fechaNacimiento: primera.fechaNacimiento, ...documento }, ...huespedes(resto)]
+          : huespedes(personas),
         carros,
         motos,
         mascotas,
@@ -136,37 +174,86 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
     <form className="formulario-reserva" onSubmit={enviar}>
       <fieldset>
         <legend>Quien reserva</legend>
-        <p className="suave">A este correo te llega la confirmación. Con él y tu documento entras a ver tu reserva.</p>
+        {cargandoCuenta && <p className="suave">Cargando los datos de tu cuenta…</p>}
+        {cuenta && (
+          <div className="cuenta-reserva">
+            <strong>{cuenta.nombre}</strong>
+            <span>{TEXTO_DOCUMENTO[cuenta.tipoDocumento]} {cuenta.numeroDocumento}</span>
+            <span>{cuenta.correo}</span>
+            {cuenta.telefono && <span>{cuenta.telefono}</span>}
+            <Link to="/mi-cuenta" className="suave">¿Algún dato cambió? Corrígelo en Mi cuenta</Link>
+          </div>
+        )}
+        {!cargandoCuenta && !cuenta && (
+          <p className="suave">
+            A este correo te llega la confirmación. Con él y tu documento entras a ver tu reserva.
+          </p>
+        )}
         <div className="campos">
-          <CampoPersona indice={0} persona={personas[0]} hoy={hoy} alCambiar={cambiarPersona} />
-          <label>
-            Tipo de documento
-            <select value={tipoDocumento} onChange={(e) => setTipoDocumento(e.target.value as TipoDocumento)}>
-              {TIPOS_DOCUMENTO.map((t) => <option key={t.valor} value={t.valor}>{t.texto}</option>)}
-            </select>
-          </label>
-          <label>
-            Número de documento
-            <input value={numeroDocumento} maxLength={30} required autoComplete="off"
-              onChange={(e) => setNumeroDocumento(e.target.value)} />
-          </label>
-          <label>
-            Correo
-            <input type="email" value={correo} maxLength={150} required autoComplete="email"
-              onChange={(e) => setCorreo(e.target.value)} />
-          </label>
-          <CampoTelefono alCambiar={setTelefono} />
+          {!cargandoCuenta && !cuenta && (
+            <>
+              <label>
+                Nombres
+                <input value={quien.nombres} maxLength={59} pattern=".*\S.*" required autoComplete="given-name"
+                  onChange={(e) => setQuien((q) => ({ ...q, nombres: e.target.value }))} />
+              </label>
+              <label>
+                Apellidos
+                <input value={quien.apellidos} maxLength={60} pattern=".*\S.*" required autoComplete="family-name"
+                  onChange={(e) => setQuien((q) => ({ ...q, apellidos: e.target.value }))} />
+              </label>
+            </>
+          )}
+          {meHospedo && !cargandoCuenta && (
+            <label>
+              Fecha de nacimiento
+              <input type="date" value={personas[0].fechaNacimiento} max={hoy} required
+                onChange={(e) => cambiarPersona(0, { fechaNacimiento: e.target.value })} />
+            </label>
+          )}
+          {!cargandoCuenta && !cuenta && (
+            <>
+              <label>
+                Tipo de documento
+                <select value={tipoDocumento} onChange={(e) => setTipoDocumento(e.target.value as TipoDocumento)}>
+                  {TIPOS_DOCUMENTO.map((t) => <option key={t.valor} value={t.valor}>{t.texto}</option>)}
+                </select>
+              </label>
+              <label>
+                Número de documento
+                <input value={numeroDocumento} maxLength={30} required autoComplete="off"
+                  onChange={(e) => setNumeroDocumento(e.target.value)} />
+              </label>
+              <label>
+                Correo
+                <input type="email" value={correo} maxLength={150} required autoComplete="email"
+                  onChange={(e) => setCorreo(e.target.value)} />
+              </label>
+            </>
+          )}
+          {/* Una cuenta sin teléfono lo completa aquí: la reserva lo exige para recuperar la cuenta (DEC-68) */}
+          {!cargandoCuenta && !cuenta?.telefono && <CampoTelefono alCambiar={setTelefono} />}
         </div>
+        <label className="casilla">
+          <input type="checkbox" checked={meHospedo} onChange={(e) => setMeHospedo(e.target.checked)} />
+          Yo también me hospedo
+        </label>
+        {!meHospedo && (
+          <p className="suave">
+            Reservas para otras personas: respondes por la reserva y su pago, y abajo nos dices quiénes se hospedan.
+          </p>
+        )}
       </fieldset>
 
-      {personas.length > 1 && (
+      {(meHospedo ? personas.length > 1 : true) && (
         <fieldset>
-          <legend>Quienes viajan contigo</legend>
-          {personas.slice(1).map((persona, i) => (
-            <div className="campos" key={i} role="group" aria-label={`Persona ${i + 2}`}>
-              <CampoPersona indice={i + 1} persona={persona} hoy={hoy} alCambiar={cambiarPersona} />
+          <legend>{meHospedo ? 'Quienes viajan contigo' : 'Quienes se hospedan'}</legend>
+          {personas.map((persona, i) => (meHospedo && i === 0 ? null : (
+            <div className="campos" key={i} role="group" aria-label={`Persona ${i + 1}`}>
+              <CampoPersona numero={i + 1} persona={persona} hoy={hoy}
+                alCambiar={(cambio) => cambiarPersona(i, cambio)} />
             </div>
-          ))}
+          )))}
         </fieldset>
       )}
 
@@ -251,32 +338,30 @@ function CampoCantidad({ nombre, valor, maximo, ayuda, alCambiar }: PropsCantida
 }
 
 interface PropsPersona {
-  indice: number
+  /** Su lugar en el grupo, para que cada campo tenga su nombre. */
+  numero: number
   persona: Persona
   hoy: string
-  alCambiar: (indice: number, cambio: Partial<Persona>) => void
+  alCambiar: (cambio: Partial<Persona>) => void
 }
 
-function CampoPersona({ indice, persona, hoy, alCambiar }: PropsPersona) {
-  const titular = indice === 0
+function CampoPersona({ numero, persona, hoy, alCambiar }: PropsPersona) {
   return (
     <>
       <label>
-        {titular ? 'Nombres' : `Nombres de la persona ${indice + 1}`}
-        <input value={persona.nombres} maxLength={59} pattern=".*\S.*" required
-          autoComplete={titular ? 'given-name' : 'off'}
-          onChange={(e) => alCambiar(indice, { nombres: e.target.value })} />
+        {`Nombres de la persona ${numero}`}
+        <input value={persona.nombres} maxLength={59} pattern=".*\S.*" required autoComplete="off"
+          onChange={(e) => alCambiar({ nombres: e.target.value })} />
       </label>
       <label>
-        {titular ? 'Apellidos' : `Apellidos de la persona ${indice + 1}`}
-        <input value={persona.apellidos} maxLength={60} pattern=".*\S.*" required
-          autoComplete={titular ? 'family-name' : 'off'}
-          onChange={(e) => alCambiar(indice, { apellidos: e.target.value })} />
+        {`Apellidos de la persona ${numero}`}
+        <input value={persona.apellidos} maxLength={60} pattern=".*\S.*" required autoComplete="off"
+          onChange={(e) => alCambiar({ apellidos: e.target.value })} />
       </label>
       <label>
-        {titular ? 'Fecha de nacimiento' : `Fecha de nacimiento de la persona ${indice + 1}`}
+        {`Fecha de nacimiento de la persona ${numero}`}
         <input type="date" value={persona.fechaNacimiento} max={hoy} required
-          onChange={(e) => alCambiar(indice, { fechaNacimiento: e.target.value })} />
+          onChange={(e) => alCambiar({ fechaNacimiento: e.target.value })} />
       </label>
     </>
   )

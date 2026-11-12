@@ -7,17 +7,21 @@ import Foto from '../busqueda/Foto'
 import Paginacion from '../busqueda/Paginacion'
 import { enPesos, fechaCorta } from '../formato'
 
-/** Las reservas del huésped, de la más reciente a la más antigua, de 10 en 10 (DEC-18). */
+/**
+ * Las reservas del huésped de 10 en 10 (DEC-18), en dos pestañas (DEC-108): «Próximas», lo que busca al entrar, de la
+ * próxima llegada en adelante; y «Anteriores», las terminadas o canceladas, de la más reciente a la más antigua.
+ */
 export default function MisReservas() {
   const [consulta, setConsulta] = useSearchParams()
   const numero = Math.max(0, Number(consulta.get('pagina')) || 0)
+  const anteriores = consulta.get('ver') === 'anteriores'
   const [pagina, setPagina] = useState<Pagina<ReservaDelHuesped> | null>(null)
   const [apartamentos, setApartamentos] = useState<Map<string, ApartamentoPublico>>(new Map())
   const [problema, setProblema] = useState<string | null>(null)
 
   useEffect(() => {
     let vigente = true
-    listarMisReservas(numero)
+    listarMisReservas(!anteriores, numero)
       .then(async (p) => {
         if (!vigente) return
         setProblema(null)
@@ -35,17 +39,25 @@ export default function MisReservas() {
     return () => {
       vigente = false
     }
-  }, [numero])
+  }, [numero, anteriores])
 
   return (
     <main className="ficha mis-reservas">
       <h1>Mis reservas</h1>
+      <nav className="pestanas" aria-label="Qué reservas ver">
+        <Link to="/mis-reservas" aria-current={anteriores ? undefined : 'page'}>Próximas</Link>
+        <Link to="/mis-reservas?ver=anteriores" aria-current={anteriores ? 'page' : undefined}>Anteriores</Link>
+      </nav>
       {problema && <p role="alert" className="aviso">{problema}</p>}
       {!pagina && !problema && <p className="suave">Cargando tus reservas…</p>}
       {pagina?.contenido.length === 0 && (
         <div className="vacio">
-          <p>Todavía no tienes reservas.</p>
-          <Link to="/" className="boton">Ver apartamentos</Link>
+          {anteriores ? <p>No tienes reservas anteriores.</p> : (
+            <>
+              <p>No tienes reservas próximas.</p>
+              <Link to="/" className="boton">Ver apartamentos</Link>
+            </>
+          )}
         </div>
       )}
       {pagina && pagina.contenido.length > 0 && (
@@ -55,7 +67,8 @@ export default function MisReservas() {
               <FilaReserva key={reserva.codigo} reserva={reserva} apartamento={apartamentos.get(reserva.apartamento)} />
             ))}
           </ul>
-          <Paginacion pagina={pagina} alCambiar={(n) => setConsulta({ pagina: String(n) })} />
+          <Paginacion pagina={pagina}
+            alCambiar={(n) => setConsulta({ ...(anteriores ? { ver: 'anteriores' } : {}), pagina: String(n) })} />
         </>
       )}
     </main>

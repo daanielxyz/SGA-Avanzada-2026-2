@@ -8,7 +8,8 @@ export type TipoDocumento = 'CC' | 'CE' | 'PASAPORTE' | 'TI'
 /** Nombres aparte de los apellidos (BL-07 · DEC-98). La web envía los apellidos juntos en `primerApellido`. */
 export interface NombreSeparado {
   nombres: string
-  primerApellido: string
+  /** Vacío en las cuentas de antes de DEC-98, que guardan el nombre completo en nombres. */
+  primerApellido?: string
   segundoApellido?: string
 }
 
@@ -16,7 +17,7 @@ export interface SolicitudReserva {
   apartamento: string
   entrada: string
   salida: string
-  /** Quien reserva y tiene la cuenta; puede no alojarse (DEC-97), pero la web lo pone de primero en el grupo. */
+  /** Quien reserva y tiene la cuenta; puede no hospedarse (DEC-97): la web pregunta «Yo también me hospedo». */
   titular: NombreSeparado & {
     tipoDocumento: TipoDocumento
     numeroDocumento: string
