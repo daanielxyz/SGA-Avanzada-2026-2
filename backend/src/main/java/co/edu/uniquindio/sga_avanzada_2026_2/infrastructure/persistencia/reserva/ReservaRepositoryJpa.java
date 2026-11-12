@@ -37,6 +37,9 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     private static final List<EstadoReserva> ACTIVOS = Arrays.stream(EstadoReserva.values())
             .filter(EstadoReserva::retieneDisponibilidad)
             .toList();
+    private static final List<EstadoReserva> TERMINADOS = Arrays.stream(EstadoReserva.values())
+            .filter(e -> !e.retieneDisponibilidad())
+            .toList();
 
     private final ReservaJpaRepository filas;
 
@@ -105,6 +108,17 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     public Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina) {
         Page<ReservaJpa> pagina = filas.findByTitularIdOrderByCreadaEnDescCodigoDesc(titularId.valor(),
                 PageRequest.of(numeroPagina, Pagina.TAMANO));
+        return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
+                Pagina.TAMANO, pagina.getTotalElements());
+    }
+
+    // DEC-108: las vigentes, de la próxima llegada a la más lejana; las terminadas, de la más reciente a la más antigua
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Reserva> listarPorTitular(TitularId titularId, boolean vigentes, int numeroPagina) {
+        Sort orden = vigentes ? Sort.by("entrada", "codigo") : Sort.by(Sort.Direction.DESC, "entrada", "codigo");
+        Page<ReservaJpa> pagina = filas.findByTitularIdAndEstadoIn(titularId.valor(), vigentes ? ACTIVOS : TERMINADOS,
+                PageRequest.of(numeroPagina, Pagina.TAMANO, orden));
         return new Pagina<>(pagina.getContent().stream().map(ReservaMapper::aDominio).toList(), numeroPagina,
                 Pagina.TAMANO, pagina.getTotalElements());
     }

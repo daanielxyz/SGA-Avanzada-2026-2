@@ -253,6 +253,18 @@ public final class RepositoriosEnMemoria {
         }
 
         @Override
+        public Pagina<Reserva> listarPorTitular(TitularId titularId, boolean vigentes, int numeroPagina) {
+            Comparator<Reserva> porLlegada = Comparator.comparing((Reserva r) -> r.estancia().entrada())
+                    .thenComparing(r -> r.codigo().valor());
+            List<Reserva> grupo = guardadas.values().stream()
+                    .filter(r -> r.titularId().equals(titularId) && r.estado().retieneDisponibilidad() == vigentes)
+                    .sorted(vigentes ? porLlegada : porLlegada.reversed())
+                    .toList();
+            return new Pagina<>(grupo.stream().skip((long) numeroPagina * Pagina.TAMANO).limit(Pagina.TAMANO).toList(),
+                    numeroPagina, Pagina.TAMANO, grupo.size());
+        }
+
+        @Override
         public Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina) {
             List<Reserva> todas = guardadas.values().stream()
                     .filter(r -> r.titularId().equals(titularId))

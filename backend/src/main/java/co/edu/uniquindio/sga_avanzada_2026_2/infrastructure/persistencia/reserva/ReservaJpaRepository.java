@@ -35,4 +35,6 @@ interface ReservaJpaRepository extends JpaRepository<ReservaJpa, String>, JpaSpe
     List<ReservaJpa> findByEstadoAndCreadaEnBeforeOrderByCreadaEn(EstadoReserva estado, LocalDateTime limite);
 
     Page<ReservaJpa> findByTitularIdOrderByCreadaEnDescCodigoDesc(String titularId, Pageable pagina);
+
+    Page<ReservaJpa> findByTitularIdAndEstadoIn(String titularId, Collection<EstadoReserva> estados, Pageable pagina);
 }
