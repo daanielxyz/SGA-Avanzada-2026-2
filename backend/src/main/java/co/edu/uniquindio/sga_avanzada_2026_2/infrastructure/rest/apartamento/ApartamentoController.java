@@ -121,7 +121,7 @@ public class ApartamentoController {
         return PaginaResponse.de(listarApartamentos.ejecutar(alojamiento.id(), pagina), ApartamentoResponse::de);
     }
 
-    /** Lo que falta por preparar (CU-41 · CU-42). */
+    /** Lo que falta por preparar, primero lo de la ocupación más cercana (CU-41 · CU-42 · DEC-111). */
     @GetMapping("/pendientes-preparacion")
     public PaginaResponse<ApartamentoResponse> listarPendientesPreparacion(
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {

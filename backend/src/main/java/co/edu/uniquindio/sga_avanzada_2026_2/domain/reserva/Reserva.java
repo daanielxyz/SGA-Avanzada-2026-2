@@ -316,11 +316,10 @@ public class Reserva {
         Objects.requireNonNull(ahora, "ahora");
         Objects.requireNonNull(horaLimite, "horaLimite");
         validarTransicion(EstadoReserva.CONFIRMADA);
-        LocalDateTime limite = estancia.entrada().atTime(horaLimite);
-        if (ahora.isAfter(limite) && creadaEn.isBefore(limite)) {
+        if (llegadaVencidaParaConfirmar(ahora, horaLimite)) {
             throw new ReglaDominioException(MotivoRechazo.LLEGADA_VENCIDA,
-                    "Ya pasó la hora límite de llegada (" + limite + "): la reserva no se confirma; se cancela o se "
-                    + "hace una nueva");
+                    "Ya pasó la hora límite de llegada (" + estancia.entrada().atTime(horaLimite)
+                    + "): la reserva no se confirma; se cancela o se hace una nueva");
         }
         if (horaEstimadaLlegada == null) {
             throw new ReglaDominioException(MotivoRechazo.FALTA_HORA_LLEGADA,
@@ -333,6 +332,31 @@ public class Reserva {
                     + exigido.monto() + ")");
         }
         estado = EstadoReserva.CONFIRMADA;
+    }
+
+    // DEC-110 · #20: pasó la hora límite de llegada y la reserva ya existía antes de esa hora
+    private boolean llegadaVencidaParaConfirmar(LocalDateTime ahora, LocalTime horaLimite) {
+        LocalDateTime limite = estancia.entrada().atTime(horaLimite);
+        return ahora.isAfter(limite) && creadaEn.isBefore(limite);
+    }
+
+    /**
+     * CU-41 · DEC-111: indica si todavía se espera a este huésped, para ordenar la preparación de los apartamentos.
+     * Se espera una reserva CONFIRMADA que entra hoy o después (aunque hoy ya haya pasado la hora límite: mientras no
+     * se declare el no-show, puede llegar) y una PENDIENTE que entra hoy o después y aún se puede confirmar (DEC-110).
+     * No se espera una EN_CURSO (ya llegó), una terminada ni una cuya entrada ya pasó.
+     *
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @param horaLimite {@code ParametrosAlojamiento.horaLimiteNoShow}
+     */
+    public boolean llegadaEsperada(LocalDateTime ahora, LocalTime horaLimite) {
+        Objects.requireNonNull(ahora, "ahora");
+        Objects.requireNonNull(horaLimite, "horaLimite");
+        if (estancia.entrada().isBefore(ahora.toLocalDate())) {
+            return false;
+        }
+        return estado == EstadoReserva.CONFIRMADA
+                || (estado == EstadoReserva.PENDIENTE && !llegadaVencidaParaConfirmar(ahora, horaLimite));
     }
 
     /**
