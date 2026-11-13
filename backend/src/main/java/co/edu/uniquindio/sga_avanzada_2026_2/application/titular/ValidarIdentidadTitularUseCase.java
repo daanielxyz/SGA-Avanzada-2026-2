@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.titular;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
@@ -20,10 +21,12 @@ public class ValidarIdentidadTitularUseCase {
 
     private final TitularRepository titulares;
     private final Clock reloj;
+    private final DirectorioPersonal personal;
 
-    public ValidarIdentidadTitularUseCase(TitularRepository titulares, Clock reloj) {
+    public ValidarIdentidadTitularUseCase(TitularRepository titulares, Clock reloj, DirectorioPersonal personal) {
         this.titulares = titulares;
         this.reloj = reloj;
+        this.personal = personal;
     }
 
     /**
@@ -40,6 +43,6 @@ public class ValidarIdentidadTitularUseCase {
         titular.validarIdentidad(new UsuarioId(autor), LocalDateTime.now(reloj));
 
         titulares.guardar(titular);
-        return TitularResult.de(titular);
+        return TitularResult.de(titular, personal);
     }
 }
