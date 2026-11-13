@@ -1,6 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Rol;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Tag;
@@ -69,6 +70,72 @@ class EstanciaControllerTest extends PruebaRestDeReservas {
                 .andExpect(status().isNotFound());
         mvc.perform(get("/api/apartamentos/APT-101"))
                 .andExpect(jsonPath("$.estadoOperativo").value("PREPARADO"));
+    }
+
+    @Test
+    @Tag("REG-06")
+    @Tag("DEC-114")
+    void deberiaLeerLaLlegadaVigenteLasAnuladasYLaSalida() throws Exception {
+        String codigo = reservaEnCurso();
+        LocalDateTime llegadaReal = LocalDateTime.now(ZoneId.of("America/Bogota")).truncatedTo(ChronoUnit.SECONDS);
+        enviar(put(reserva(codigo) + "/corregir-registro"),
+                "{\"fechaHora\": \"%s\", \"motivo\": \"Se digitó mal la hora\"}".formatted(llegadaReal))
+                .andExpect(status().isOk());
+
+        mvc.perform(get(reserva(codigo) + "/estancia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.estadoOperativo").value("OCUPADO"))
+                .andExpect(jsonPath("$.registros", hasSize(2)))
+                .andExpect(jsonPath("$.registros[0].anulado").value(true))
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value("Cuenta por cobrar"))
+                .andExpect(jsonPath("$.registros[1].anulado").value(false))
+                .andExpect(jsonPath("$.registros[1].motivoCorreccion").value("Se digitó mal la hora"))
+                .andExpect(jsonPath("$.registros[1].motivoSinPago").value("Cuenta por cobrar"))
+                .andExpect(jsonPath("$.registros[1].autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.salida").value(nullValue()))
+                .andExpect(jsonPath("$.saldo").value(280000))
+                .andExpect(jsonPath("$.situacionSaldo").value("PENDIENTE"));
+
+        pagar(codigo, 280_000);
+        mvc.perform(put(reserva(codigo) + "/registrar-salida")).andExpect(status().isOk());
+        mvc.perform(get(reserva(codigo) + "/estancia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("FINALIZADA"))
+                .andExpect(jsonPath("$.salida.autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.folioCerrado").value(true))
+                .andExpect(jsonPath("$.saldo").value(0));
+    }
+
+    @Test
+    @Tag("DEC-114")
+    void unaReservaSinLlegadaTieneLaEstanciaVacia() throws Exception {
+        String codigo = reservaConfirmada(HOY.plusDays(3));
+
+        mvc.perform(get(reserva(codigo) + "/estancia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CONFIRMADA"))
+                .andExpect(jsonPath("$.registros", hasSize(0)))
+                .andExpect(jsonPath("$.salida").value(nullValue()))
+                .andExpect(jsonPath("$.saldo").value(280000));
+    }
+
+    @Test
+    @Tag("DEC-99")
+    @Tag("DEC-114")
+    void laEstanciaSoloLaLeeElPersonalDeRecepcion() throws Exception {
+        String codigo = reservaEnCurso();
+        String titular = JsonPath.read(mvc.perform(get(reserva(codigo))).andReturn().getResponse()
+                .getContentAsString(), "$.titularId");
+
+        mvc.perform(get(reserva("RES-2026-99999") + "/estancia")).andExpect(status().isNotFound());
+        mvc.perform(get(reserva(codigo) + "/estancia").with(SesionDePrueba.como(Rol.RECEPCIONISTA)))
+                .andExpect(status().isOk());
+        mvc.perform(get(reserva(codigo) + "/estancia").with(SesionDePrueba.como(Rol.HUESPED, titular)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("SIN_PERMISO"));
+        mvc.perform(get(reserva(codigo) + "/estancia").with(SesionDePrueba.como(Rol.PERSONAL_SERVICIO)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

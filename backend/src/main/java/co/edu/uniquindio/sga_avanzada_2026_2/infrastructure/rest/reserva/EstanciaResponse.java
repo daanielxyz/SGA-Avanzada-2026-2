@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * JSON de la llegada, su corrección y la salida (DEC-31): cómo quedan juntos la reserva, el apartamento y el folio
- * (D-02).
+ * JSON de la llegada, su corrección, la salida y la consulta de la estancia (DEC-31): cómo quedan juntos la reserva,
+ * el apartamento y el folio (D-02). Solo para el personal (DEC-99 · DEC-114).
  *
  * @param registros      historial de registros de llegada; el vigente es el único no anulado (REG-06)
  * @param salida         solo cuando la reserva está FINALIZADA
@@ -19,21 +19,27 @@ public record EstanciaResponse(String codigo, String estado, String apartamento,
                                List<RegistroResponse> registros, SalidaResponse salida, boolean folioCerrado,
                                BigDecimal saldo, String situacionSaldo) {
 
-    public record RegistroResponse(String id, LocalDateTime fechaHora, String autor, boolean anulado,
-                                   String motivoCorreccion, String motivoSinPago) {
+    /**
+     * @param autorNombre el nombre vigente de quien registró; nulo si ya no existe (DEC-114)
+     */
+    public record RegistroResponse(String id, LocalDateTime fechaHora, String autor, String autorNombre,
+                                   boolean anulado, String motivoCorreccion, String motivoSinPago) {
     }
 
-    public record SalidaResponse(String id, LocalDateTime fechaHora, String autor) {
+    /**
+     * @param autorNombre el nombre vigente de quien registró la salida; nulo si ya no existe (DEC-114)
+     */
+    public record SalidaResponse(String id, LocalDateTime fechaHora, String autor, String autorNombre) {
     }
 
     static EstanciaResponse de(EstanciaResult r) {
         return new EstanciaResponse(r.codigo(), r.estado(), r.apartamento(), r.estadoOperativo(),
                 r.registros().stream()
-                        .map(g -> new RegistroResponse(g.id(), g.fechaHora(), g.autor(), g.anulado(),
-                                g.motivoCorreccion(), g.motivoSinPago()))
+                        .map(g -> new RegistroResponse(g.id(), g.fechaHora(), g.autor(), g.autorNombre(),
+                                g.anulado(), g.motivoCorreccion(), g.motivoSinPago()))
                         .toList(),
                 Optional.ofNullable(r.salida())
-                        .map(s -> new SalidaResponse(s.id(), s.fechaHora(), s.autor()))
+                        .map(s -> new SalidaResponse(s.id(), s.fechaHora(), s.autor(), s.autorNombre()))
                         .orElse(null),
                 r.folioCerrado(), r.saldo(), r.situacionSaldo());
     }

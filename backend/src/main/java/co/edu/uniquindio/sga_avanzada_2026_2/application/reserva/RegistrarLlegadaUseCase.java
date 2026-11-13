@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
@@ -25,15 +26,17 @@ public class RegistrarLlegadaUseCase {
     private final ReservaRepository reservas;
     private final ApartamentoRepository apartamentos;
     private final RegistroLlegadaDomainService registroLlegada;
+    private final DirectorioPersonal personal;
     private final Clock reloj;
 
     public RegistrarLlegadaUseCase(CargadorReserva cargador, ReservaRepository reservas,
                                    ApartamentoRepository apartamentos, RegistroLlegadaDomainService registroLlegada,
-                                   Clock reloj) {
+                                   DirectorioPersonal personal, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.apartamentos = apartamentos;
         this.registroLlegada = registroLlegada;
+        this.personal = personal;
         this.reloj = reloj;
     }
 
@@ -56,7 +59,7 @@ public class RegistrarLlegadaUseCase {
 
         reservas.guardar(reserva);
         apartamentos.guardar(apartamento);
-        return EstanciaResult.de(reserva, apartamento, folio);
+        return EstanciaResult.de(reserva, apartamento, folio, personal);
     }
 
     /** Los registros solo deben ser únicos dentro de su reserva y nunca se borran: se numeran en orden (DEC-61). */
