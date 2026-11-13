@@ -8,6 +8,7 @@ import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
 import Dialogo from '../componentes/Dialogo'
 import EstadoApartamento from '../componentes/EstadoApartamento'
+import MotivoFueraDeServicio from '../componentes/MotivoFueraDeServicio'
 import { FormaEstado } from '../componentes/EtiquetaEstado'
 import { claseDeEstado } from '../componentes/estadosReserva'
 import Paginador from '../componentes/Paginador'
@@ -381,6 +382,7 @@ function FilaApartamento({ fila, dias, desde, hasta, hoy, alAbrir }: {
         <span className="codigo">{fila.apartamento}</span>
         <strong title={fila.nombre}>{fila.nombre}</strong>
         <EstadoApartamento estado={fila.estadoOperativo} />
+        <MotivoFueraDeServicio motivo={fila.motivoFueraDeServicio} corto />
       </div>
       <div className="ocupacion-noches" style={{ '--carriles': carriles } as CSSProperties}>
         {dias.map((dia, indice) => (
@@ -491,6 +493,7 @@ function ListaCelular({ filas, desde, hasta }: { filas: OcupacionApartamento[]; 
             <span className="codigo ocupacion-lista-codigo">{fila.apartamento}</span>
             <strong>{fila.nombre}</strong>
             <EstadoApartamento estado={fila.estadoOperativo} />
+            <MotivoFueraDeServicio motivo={fila.motivoFueraDeServicio} />
             {barras.length === 0 && <p className="suave ocupacion-lista-vacia">Sin reservas ni bloqueos en este rango.</p>}
             {barras.map((barra) =>
               barra.tipo === 'reserva' ? (

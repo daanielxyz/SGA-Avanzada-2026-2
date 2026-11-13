@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import App from '../App'
 import type { ApartamentoOperativo } from '../api/apartamentos'
 import { paginaDe } from '../pruebas/reservasDePrueba'
-import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
+import { entrarComo, laApiRespondePorRuta, llamada } from '../pruebas/sesionDePrueba'
 import ProveedorSesion from '../sesion/ProveedorSesion'
 import type { Rol } from '../sesion/roles'
 
@@ -14,7 +14,7 @@ const APARTAMENTOS: ApartamentoOperativo[] = [
   { codigo: 'APT-102', nombre: 'Apartamento Jardín', estadoOperativo: 'PREPARADO' },
   { codigo: 'APT-103', nombre: 'Estudio Terraza', estadoOperativo: 'EN_PREPARACION' },
   { codigo: 'APT-104', nombre: 'Loft Central', estadoOperativo: 'OCUPADO' },
-  { codigo: 'APT-110', nombre: 'Mirador del Lago', estadoOperativo: 'FUERA_DE_SERVICIO' },
+  { codigo: 'APT-110', nombre: 'Mirador del Lago', estadoOperativo: 'FUERA_DE_SERVICIO', motivoFueraDeServicio: 'Fuga de agua en el baño' },
 ]
 
 const DESTINO: Record<string, string> = {
@@ -125,13 +125,29 @@ describe('preparación de apartamentos (CU-41 · CU-42)', () => {
     expect(within(panel).getByText('Se libera al registrar la salida.')).toBeInTheDocument()
     expect(within(panel).queryByRole('button', { name: 'Declarar fuera de servicio: APT-104' })).not.toBeInTheDocument()
     expect(within(panel).getByRole('button', { name: 'Volver a preparación: APT-110' })).toBeInTheDocument()
+    expect(within(panel).getByText('Fuga de agua en el baño')).toBeInTheDocument()
 
     await usuario.click(within(panel).getByRole('button', { name: 'Declarar fuera de servicio: APT-102' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Declarar fuera de servicio' })
+    await usuario.type(within(dialogo).getByLabelText(/Motivo/), 'Cambio de colchones, vuelve el lunes')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Declarar fuera de servicio' }))
 
     expect(await screen.findByText(/APT-102 quedó fuera de servicio/)).toBeInTheDocument()
-    expect(fetch.mock.calls.some(([url]) => url === '/api/apartamentos/APT-102/declarar-fuera-de-servicio')).toBe(true)
+    const declarar = fetch.mock.calls.map((_, n) => llamada(fetch, n)).find((l) => l.url === '/api/apartamentos/APT-102/declarar-fuera-de-servicio')
+    expect(declarar?.cuerpo).toEqual({ motivo: 'Cambio de colchones, vuelve el lunes' })
+  })
+
+  it('sin motivo, declarar fuera de servicio no envía cuerpo (DEC-113)', async () => {
+    const fetch = apiCon()
+    const usuario = abrir('ADMINISTRADOR')
+    await usuario.click(await screen.findByRole('tab', { name: /Todos/ }))
+    await usuario.click(within(screen.getByRole('tabpanel')).getByRole('button', { name: 'Declarar fuera de servicio: APT-102' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Declarar fuera de servicio' })
+    expect(within(dialogo).getByLabelText(/Motivo/)).toHaveAccessibleName(/opcional/)
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Declarar fuera de servicio' }))
+    await screen.findByText(/APT-102 quedó fuera de servicio/)
+    const declarar = fetch.mock.calls.map((_, n) => llamada(fetch, n)).find((l) => l.url === '/api/apartamentos/APT-102/declarar-fuera-de-servicio')
+    expect(declarar?.cuerpo).toBeUndefined()
   })
 
   it('recepción no puede abrirla', () => {

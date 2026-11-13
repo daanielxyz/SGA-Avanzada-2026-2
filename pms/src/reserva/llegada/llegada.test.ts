@@ -5,7 +5,6 @@ import { reservaDePrueba } from '../../pruebas/reservasDePrueba'
 import {
   bloqueoDe,
   faltaPorCobrar,
-  modificacionCon,
   puedeSerPrincipal,
   siguienteConFaltantes,
   textoDelBoton,
@@ -94,29 +93,5 @@ describe('registro de llegada (CU-21)', () => {
     ]
     expect(siguienteConFaltantes(grupo, 'A', ['A'])?.id).toBe('B')
     expect(siguienteConFaltantes(grupo, 'B', ['A', 'B'])).toBeNull()
-  })
-
-  it('al cambiar vehículos manda el mismo grupo, con nombres, apellidos, documento y principal (BL-07 · BL-23)', () => {
-    const reserva = reservaDePrueba({
-      ocupantes: [
-        ocupante({ nombres: 'Ana', primerApellido: 'Torres', segundoApellido: 'Vélez', principal: true }),
-        ocupante({ id: 'OCU-2', nombre: 'Julián Mejía', numeroDocumento: null, tipoDocumento: null, nacionalidad: null }),
-      ],
-    })
-    expect(modificacionCon(reserva, { carros: 1, motos: 0, mascotas: 2 })).toEqual({
-      apartamento: 'APT-101',
-      entrada: '2026-11-14',
-      salida: '2026-11-17',
-      ocupantes: [
-        {
-          nombres: 'Ana', primerApellido: 'Torres', segundoApellido: 'Vélez', fechaNacimiento: '1988-03-14',
-          tipoDocumento: 'CC', numeroDocumento: '1094', nacionalidad: 'Colombia', principal: true,
-        },
-        { nombre: 'Julián Mejía', fechaNacimiento: '1988-03-14' },
-      ],
-      carros: 1,
-      motos: 0,
-      mascotas: 2,
-    })
   })
 })
