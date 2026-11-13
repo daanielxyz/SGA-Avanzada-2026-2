@@ -6115,3 +6115,167 @@ button.barra {
   align-items: center;
   min-height: 44px;
 }
+
+/* Calendario del bloqueo: el de la web con la marca de Meridian. Lo elegido va en Arena; los bloqueos con las rayas
+   del tablero de ocupación y las noches con reserva tachadas, para que se lean igual en todo el PMS */
+.calendario-bloqueo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2-medio);
+  padding: var(--espacio-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--fondo-pagina);
+}
+
+.calendario-bloqueo:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.calendario-bloqueo.invalido {
+  border-color: var(--error);
+}
+
+.calendario-ayuda {
+  min-height: var(--interlinea-chica);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendario-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+}
+
+.calendario-cabecera .boton {
+  min-width: 44px;
+}
+
+.calendario-mes-nombre {
+  font-family: var(--letra-titulo);
+  font-size: var(--tamano-control);
+  font-weight: 600;
+}
+
+.calendario-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendario-tabla th {
+  padding-bottom: var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: var(--tamano-rotulo);
+  font-weight: 600;
+}
+
+.calendario-tabla abbr {
+  text-decoration: none;
+}
+
+.calendario-tabla td {
+  padding: 1px;
+}
+
+.calendario-tabla .dia {
+  width: 100%;
+  min-height: 40px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radio-chico);
+  background: transparent;
+  color: var(--texto);
+  font: inherit;
+  font-size: var(--tamano-chico);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+
+.calendario-tabla .dia[aria-disabled='true'] {
+  color: var(--texto-pista);
+  font-weight: 400;
+  cursor: default;
+}
+
+.calendario-tabla .dia.hoy {
+  border-color: var(--borde-fuerte);
+}
+
+.calendario-tabla .dia.reservada {
+  background: var(--superficie-2);
+  text-decoration: line-through;
+}
+
+.calendario-tabla .dia.bloqueada {
+  background: repeating-linear-gradient(135deg, var(--barra-bloqueo-1) 0 6px, var(--barra-bloqueo-2) 6px 12px);
+}
+
+.calendario-tabla .dia.en-rango {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--acento) 22%, var(--superficie));
+}
+
+.calendario-tabla .dia.extremo {
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 700;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .calendario-tabla .dia:not([aria-disabled='true']):not(.extremo):hover {
+    border-color: var(--acento);
+  }
+}
+
+.calendario-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-1) var(--espacio-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.calendario-leyenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1-medio);
+}
+
+.muestra {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 3px;
+}
+
+.muestra-reservada {
+  background: var(--superficie-2);
+}
+
+.muestra-bloqueada {
+  background: repeating-linear-gradient(135deg, var(--barra-bloqueo-1) 0 3px, var(--barra-bloqueo-2) 3px 6px);
+}
+
+.muestra-elegida {
+  border-color: var(--acento);
+  background: var(--acento);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendario-tabla .dia {
+    transition: none;
+  }
+}

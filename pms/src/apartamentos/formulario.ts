@@ -2,6 +2,7 @@
 // se ordenan los bloqueos. Las reglas son las de CrearApartamentoRequest y del dominio (pms/DISENO.md, «Sprint 4:
 // apartamentos»); la API sigue siendo quien decide.
 import type { Bloqueo, DatosApartamento, FichaApartamento, Imagen, NuevoApartamento } from '../api/apartamentos'
+import { sumarDias } from '../formato'
 
 export const MAXIMO_NOMBRE = 120
 export const MAXIMO_DESCRIPCION = 2000
@@ -167,13 +168,35 @@ export interface FormBloqueo {
   motivo: string
 }
 
-export function validarBloqueo(form: FormBloqueo): Errores<keyof FormBloqueo> {
+/**
+ * Un bloqueo es para noches que vienen: una noche que ya pasó no se puede dejar de vender. La API hoy lo acepta
+ * (propuesta para el núcleo en pms/DISENO.md), así que lo cuida la pantalla.
+ */
+export function validarBloqueo(form: FormBloqueo, hoy: string): Errores<keyof FormBloqueo> {
   const errores: Errores<keyof FormBloqueo> = {}
-  if (!form.inicio) errores.inicio = 'Elige la primera noche bloqueada.'
-  if (!form.fin) errores.fin = 'Elige el día en que vuelve a venderse.'
-  else if (form.inicio && form.fin <= form.inicio) errores.fin = '«Hasta» debe ser después de «Desde».'
+  if (!form.inicio) errores.inicio = 'Elige en el calendario la primera noche que no se vende.'
+  else if (form.inicio < hoy) errores.inicio = 'La primera noche no puede haber pasado.'
+  else if (!form.fin) errores.fin = 'Elige en el calendario el día en que vuelve a venderse.'
+  else if (form.fin <= form.inicio) errores.fin = 'El día en que vuelve a venderse debe ser después de la primera noche.'
   if (!form.motivo.trim()) errores.motivo = 'Escribe el motivo del bloqueo.'
   return errores
+}
+
+/** Las noches de unos rangos `[inicio, fin)` que caen entre `desde` y `hasta` (exclusiva). */
+export function nochesNoLibres(rangos: { inicio: string; fin: string }[], desde: string, hasta: string): string[] {
+  const noches = new Set<string>()
+  for (const { inicio, fin } of rangos) {
+    for (let d = inicio < desde ? desde : inicio; d < fin && d < hasta; d = sumarDias(d, 1)) noches.add(d)
+  }
+  return [...noches].sort()
+}
+
+/** La primera noche ocupada desde esa fecha, o nula si no hay ninguna antes del tope. */
+export function primeraNoLibreDesde(desde: string, ocupada: (fecha: string) => boolean, tope: string): string | null {
+  for (let d = desde; d < tope; d = sumarDias(d, 1)) {
+    if (ocupada(d)) return d
+  }
+  return null
 }
 
 /** Lo que dice la sección Mascotas, o nulo si el hotel no las acepta. */

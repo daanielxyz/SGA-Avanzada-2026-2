@@ -27,6 +27,7 @@ import {
   type Errores,
   type FormBloqueo,
 } from './formulario'
+import CalendarioBloqueo from './CalendarioBloqueo'
 import { Foto } from './Piezas'
 
 /** Lo que el detalle muestra al terminar una acción. */
@@ -239,7 +240,7 @@ export function DialogoBloqueo({ apartamento, alCerrar, alHacer }: Comunes) {
   function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     const formulario = evento.currentTarget
-    const encontrados = validarBloqueo(form)
+    const encontrados = validarBloqueo(form, fechaHoy())
     setErrores(encontrados)
     setErrorFechas(null)
     if (Object.values(encontrados).some(Boolean)) {
@@ -268,16 +269,18 @@ export function DialogoBloqueo({ apartamento, alCerrar, alHacer }: Comunes) {
     <DialogoFormulario titulo="Nuevo bloqueo" subtitulo={subtituloDe(apartamento)} enviando={enviando}
       rechazo={rechazo} textoBoton="Crear bloqueo" textoEnviando="Creando…" alCerrar={alCerrar} alEnviar={enviar}>
       <fieldset className="bloqueo-fechas" disabled={enviando}>
-        <legend className="solo-lectores">Fechas</legend>
-        <div className="formulario-apartamento-pareja">
-          <Campo etiqueta="Desde" type="date" min={fechaHoy()} value={form.inicio} data-foco-inicial
-            error={errores.inicio} invalido={Boolean(errorFechas)} onChange={(e) => cambiar('inicio', e.target.value)} />
-          <Campo etiqueta="Hasta" type="date" min={form.inicio || fechaHoy()} value={form.fin}
-            error={errores.fin} invalido={Boolean(errorFechas)} onChange={(e) => cambiar('fin', e.target.value)} />
-        </div>
-        {errorFechas
-          ? <p className="campo-mensaje">{errorFechas}</p>
-          : <p className="campo-pista">Esas noches no se venden en ningún canal. La noche de «Hasta» ya se vende.</p>}
+        <legend className="campo-rotulo">Noches que no se venden</legend>
+        <CalendarioBloqueo codigo={apartamento.codigo} bloqueos={apartamento.bloqueos}
+          rango={{ inicio: form.inicio, fin: form.fin }}
+          invalido={Boolean(errores.inicio || errores.fin || errorFechas)}
+          alCambiar={({ inicio, fin }) => {
+            setForm((actual) => ({ ...actual, inicio, fin }))
+            setErrores((actuales) => ({ ...actuales, inicio: undefined, fin: undefined }))
+            setErrorFechas(null)
+          }} />
+        {errores.inicio || errores.fin || errorFechas
+          ? <p className="campo-mensaje" role="alert">{errores.inicio ?? errores.fin ?? errorFechas}</p>
+          : <p className="campo-pista">Esas noches no se venden en ningún canal.</p>}
       </fieldset>
       <CampoConContador id={`${id}-motivo`} rotulo="Motivo" valor={form.motivo} maximo={MAXIMO_MOTIVO_BLOQUEO}
         varias deshabilitado={enviando} error={errores.motivo} pista="Por ejemplo, Mantenimiento de la cubierta."

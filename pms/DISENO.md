@@ -527,6 +527,15 @@ Programada en `src/paginas/Apartamentos.tsx` (`/apartamentos`) y `src/paginas/Fi
 
 Queda, a propósito: una descripción de 2000 caracteres se lee completa en el detalle (es la pantalla del administrador); el rótulo «Apartamento» sobre el título viene del mockup.
 
+**Ajustes tras la prueba de Arias** (13 nov):
+- **Código repetido**: se avisa al salir del campo, sin esperar a «Crear» (`GET /api/apartamentos/APT-n`: 200 es que existe; 404, libre). Al crear, la API lo vuelve a revisar.
+- **Bloqueo en un calendario** (`src/apartamentos/CalendarioBloqueo.tsx`), como el de la web con la marca de Meridian: un clic elige la primera noche y el siguiente el día en que vuelve a venderse; un mes a la vez, hasta 12 meses adelante, con las flechas del teclado. Las noches pasadas no se eligen; las que tienen una reserva activa (de `GET /api/ocupacion` del apartamento) salen tachadas y las ya bloqueadas con las rayas del tablero. Como la API rechaza un bloqueo encima de una reserva activa, el rango no puede pasar por encima de una; el día en que vuelve a venderse sí puede ser la llegada de una reserva.
+- **Bloqueos en el pasado**: la API acepta uno que empezó antes de hoy (por ejemplo en marzo), que no tiene sentido. La pantalla ya no lo deja.
+
+**Para el núcleo (Reyes), sin urgencia**:
+- Que `RegistrarBloqueoUseCase` rechace un bloqueo cuyo inicio ya pasó (409), con el reloj inyectado. Hoy solo lo cuida el PMS.
+- Subir las fotos desde el dispositivo (pedido por Arias el 13 nov): hoy la API solo recibe la dirección de una foto ya publicada. Hace falta un endpoint que reciba el archivo (multipart), lo valide (tipo, tamaño), lo guarde tras un puerto (`AlmacenImagenes`, con implementación local en disco y luego una nube) y devuelva su dirección. Es para después de la entrega universitaria; el PMS solo cambiaría el diálogo de foto.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

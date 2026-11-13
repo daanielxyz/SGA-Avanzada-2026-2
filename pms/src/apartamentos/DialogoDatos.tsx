@@ -1,6 +1,7 @@
-import { useId, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import {
   actualizarApartamento,
+  consultarFicha,
   crearApartamento,
   type FichaApartamento,
 } from '../api/apartamentos'
@@ -51,7 +52,10 @@ export default function DialogoDatos({ apartamento, alCerrar, alGuardar }: {
   const [enviando, setEnviando] = useState(false)
   const asunto = nuevo ? 'No se creó el apartamento' : 'No se guardaron los cambios'
 
+  const numeroActual = useRef(form.numero)
+
   function cambiar<C extends CampoApartamento>(campo: C, valor: FormApartamento[C]) {
+    if (campo === 'numero') numeroActual.current = valor as string
     setForm((actual) => ({ ...actual, [campo]: valor }))
     setErrores((actuales) => ({ ...actuales, [campo]: undefined }))
   }
@@ -73,6 +77,20 @@ export default function DialogoDatos({ apartamento, alCerrar, alGuardar }: {
       evento.preventDefault()
       sumarCaracteristica()
     }
+  }
+
+  // Al salir del código se revisa si ya existe, sin esperar a «Crear»: si existe, la API responde 200; si no, 404.
+  // Cualquier otra falla se ignora aquí: al crear, la API lo vuelve a revisar.
+  function revisarCodigo() {
+    const numero = form.numero.trim()
+    if (!nuevo || !/^\d+$/.test(numero)) return
+    consultarFicha(`APT-${numero}`)
+      .then(() => {
+        // Si mientras respondía se escribió otro código, este aviso ya no aplica
+        if (numeroActual.current.trim() !== numero) return
+        setErrores((actuales) => ({ ...actuales, numero: `Ya hay un apartamento con el código APT-${numero}.` }))
+      })
+      .catch(() => undefined)
   }
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
@@ -140,6 +158,7 @@ export default function DialogoDatos({ apartamento, alCerrar, alGuardar }: {
                 aria-invalid={Boolean(errores.numero)}
                 aria-describedby={`${id}-codigo-pista${errores.numero ? ` ${id}-codigo-error` : ''}`}
                 onChange={(e) => cambiar('numero', e.target.value.replace(/\D/g, ''))}
+                onBlur={revisarCodigo}
               />
             </div>
             {errores.numero && <p className="campo-mensaje" id={`${id}-codigo-error`}>{errores.numero}</p>}

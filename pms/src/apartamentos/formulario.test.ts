@@ -6,6 +6,8 @@ import {
   campoDelDetalle,
   cuerpoNuevo,
   FORM_VACIO,
+  nochesNoLibres,
+  primeraNoLibreDesde,
   quitarFoto,
   separarBloqueos,
   textoMascotas,
@@ -88,12 +90,25 @@ describe('bloqueos', () => {
     expect(anteriores.map((b) => b.id)).toEqual(['B3', 'B4', 'B2'])
   })
 
-  it('pide las dos fechas en orden y el motivo', () => {
-    expect(validarBloqueo({ inicio: '2026-11-24', fin: '2026-11-24', motivo: ' ' })).toEqual({
-      fin: '«Hasta» debe ser después de «Desde».',
+  it('pide las dos fechas en orden, que no hayan pasado, y el motivo', () => {
+    const hoy = '2026-11-17'
+    expect(validarBloqueo({ inicio: '2026-11-24', fin: '2026-11-24', motivo: ' ' }, hoy)).toEqual({
+      fin: 'El día en que vuelve a venderse debe ser después de la primera noche.',
       motivo: 'Escribe el motivo del bloqueo.',
     })
-    expect(validarBloqueo({ inicio: '2026-11-24', fin: '2026-11-27', motivo: 'Pintura' })).toEqual({})
+    expect(validarBloqueo({ inicio: '2026-03-01', fin: '2026-03-05', motivo: 'Pintura' }, hoy).inicio)
+      .toBe('La primera noche no puede haber pasado.')
+    expect(validarBloqueo({ inicio: '2026-11-10', fin: '2026-11-20', motivo: 'Pintura' }, hoy).inicio)
+      .toBe('La primera noche no puede haber pasado.')
+    expect(validarBloqueo({ inicio: hoy, fin: '2026-11-20', motivo: 'Pintura' }, hoy)).toEqual({})
+  })
+
+  it('las noches ocupadas de unos rangos, sin la de salida, y la primera ocupada desde un día', () => {
+    expect(nochesNoLibres([{ inicio: '2026-11-20', fin: '2026-11-22' }, { inicio: '2026-11-15', fin: '2026-11-18' }],
+      '2026-11-17', '2026-11-21')).toEqual(['2026-11-17', '2026-11-20'])
+    const ocupadas = new Set(['2026-11-20'])
+    expect(primeraNoLibreDesde('2026-11-18', (d) => ocupadas.has(d), '2026-12-01')).toBe('2026-11-20')
+    expect(primeraNoLibreDesde('2026-11-21', (d) => ocupadas.has(d), '2026-12-01')).toBeNull()
   })
 })
 
