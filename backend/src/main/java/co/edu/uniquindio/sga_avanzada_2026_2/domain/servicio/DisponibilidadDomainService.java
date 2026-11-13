@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.EstadoOperativo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -23,9 +24,13 @@ public class DisponibilidadDomainService {
 
     /**
      * Disponible si en todas las noches: el apartamento está activo y su capacidad alcanza (DISP-02 · RN-02), no
-     * tiene bloqueo vigente (RN-07 · BLO-03), no hay reserva activa solapada de ningún canal (RN-01 · CORI-02) y se
-     * respeta el tiempo de preparación con la reserva anterior y la siguiente (RN-20 · TPRE-02 · TPRE-03). Las
-     * horas solo intervienen a través del tiempo de preparación (DISP-04).
+     * está fuera de servicio, no tiene bloqueo vigente (RN-07 · BLO-03), no hay reserva activa solapada de ningún
+     * canal (RN-01 · CORI-02) y se respeta el tiempo de preparación con la reserva anterior y la siguiente (RN-20 ·
+     * TPRE-02 · TPRE-03). Las horas solo intervienen a través del tiempo de preparación (DISP-04).
+     * <p>
+     * Fuera de servicio lo declara solo el administrador (EOPE-04) y no tiene fecha de regreso: mientras dure, el
+     * apartamento no se vende en ninguna fecha. Pendiente o en preparación sí se vende: es el ciclo normal tras una
+     * salida (pruebas del sprint 3).
      *
      * @param reservas   reservas del apartamento ({@code ReservaRepository.buscarActivasPorApartamento}); las de
      *                   otro apartamento o inactivas se ignoran
@@ -37,7 +42,13 @@ public class DisponibilidadDomainService {
         List<Reserva> activas = reservas.stream()
                 .filter(r -> r.apartamentoId().equals(apartamento.codigo()) && r.estaActiva())
                 .toList();
-        return motivo(apartamento, estancia, ocupantes, activas, parametros)
+        return verificar(apartamento, estancia, ocupantes, activas, parametros, true);
+    }
+
+    private static Disponibilidad verificar(Apartamento apartamento, Estancia estancia, int ocupantes,
+                                            List<Reserva> activas, ParametrosAlojamiento parametros,
+                                            boolean exigeEnServicio) {
+        return motivo(apartamento, estancia, ocupantes, activas, parametros, exigeEnServicio)
                 .map(m -> Disponibilidad.ocupada(apartamento.codigo(), estancia, m))
                 .orElseGet(() -> Disponibilidad.libre(apartamento.codigo(), estancia));
     }
@@ -58,11 +69,19 @@ public class DisponibilidadDomainService {
                 .toList();
     }
 
+    /**
+     * Para modificar una reserva: si sigue en su mismo apartamento, que esté fuera de servicio no impide cambiarle,
+     * por ejemplo, los vehículos; el administrador decide aparte si la mueve. Para pasarla a otro apartamento, ese
+     * otro sí debe estar en servicio.
+     */
     public Disponibilidad verificarParaModificar(Reserva reserva, Apartamento apartamento, Estancia estancia,
                                                  int ocupantes, List<Reserva> reservas,
                                                  ParametrosAlojamiento parametros) {
-        List<Reserva> otras = reservas.stream().filter(r -> !r.equals(reserva)).toList();
-        return verificarDisponibilidad(apartamento, estancia, ocupantes, otras, parametros);
+        List<Reserva> otras = reservas.stream()
+                .filter(r -> !r.equals(reserva) && r.apartamentoId().equals(apartamento.codigo()) && r.estaActiva())
+                .toList();
+        boolean mismoApartamento = reserva.apartamentoId().equals(apartamento.codigo());
+        return verificar(apartamento, estancia, ocupantes, otras, parametros, !mismoApartamento);
     }
 
     /**
@@ -84,10 +103,14 @@ public class DisponibilidadDomainService {
     }
 
     private static Optional<String> motivo(Apartamento apartamento, Estancia estancia, int ocupantes,
-                                           List<Reserva> activas, ParametrosAlojamiento parametros) {
+                                           List<Reserva> activas, ParametrosAlojamiento parametros,
+                                           boolean exigeEnServicio) {
         String codigo = apartamento.codigo().valor();
         if (!apartamento.activo()) {
             return Optional.of("El apartamento " + codigo + " no está a la venta");
+        }
+        if (exigeEnServicio && apartamento.estadoOperativo() == EstadoOperativo.FUERA_DE_SERVICIO) {
+            return Optional.of("El apartamento " + codigo + " está fuera de servicio");
         }
         if (!apartamento.admite(ocupantes)) {
             return Optional.of("El apartamento " + codigo + " admite máximo " + apartamento.capacidad().valor()

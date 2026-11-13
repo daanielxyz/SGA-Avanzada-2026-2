@@ -46,6 +46,16 @@ class TitularTest {
     }
 
     @Test
+    @Tag("TIT-01")
+    void noDeberiaIdentificarAlTitularConRegistroCivil() {
+        Documento registroCivil = new Documento(TipoDocumento.RC, "1094000111");
+
+        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO,
+                () -> new Titular(ID, ALO, "Ana", registroCivil, CORREO, null));
+        assertDoesNotThrow(() -> new Titular(ID, ALO, "Ana", new Documento(TipoDocumento.TI, "1094"), CORREO, null));
+    }
+
+    @Test
     @Tag("DEC-49")
     void deberiaRechazarTelefonosInvalidos() {
         assertThrows(ReglaDominioException.class, () -> new Titular(ID, ALO, "Ana", CC, null, "123"));

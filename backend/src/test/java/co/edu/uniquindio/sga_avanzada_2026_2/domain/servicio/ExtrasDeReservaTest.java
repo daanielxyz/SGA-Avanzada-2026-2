@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -115,9 +116,9 @@ class ExtrasDeReservaTest {
         Reserva reserva = conExtras(reserva("RES-2026-00001", APT, 10, 12, EstadoReserva.PENDIENTE));
         reserva.indicarHoraEstimadaLlegada(LocalTime.of(15, 0));
 
-        assertThrows(ReglaDominioException.class, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(60_000)));
+        assertThrows(ReglaDominioException.class, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(60_000), LocalDateTime.MIN, LocalTime.MAX));
 
-        reserva.confirmar(new Porcentaje(30), Dinero.de(75_000));
+        reserva.confirmar(new Porcentaje(30), Dinero.de(75_000), LocalDateTime.MIN, LocalTime.MAX);
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
     }
 

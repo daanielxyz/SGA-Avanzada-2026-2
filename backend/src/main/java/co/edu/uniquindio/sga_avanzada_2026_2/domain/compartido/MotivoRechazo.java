@@ -46,5 +46,7 @@ public enum MotivoRechazo {
     /** BL-22: la estancia y sus extras no están pagados y no se registró por qué entra sin pagar. */
     ESTANCIA_SIN_PAGAR,
     /** BL-08: la nota ya se marcó como atendida; pudo hacerlo otro turno. */
-    YA_ATENDIDA
+    YA_ATENDIDA,
+    /** Pruebas del sprint 3: la reserva pendiente no se confirmó antes de la hora límite de llegada de su entrada. */
+    LLEGADA_VENCIDA
 }

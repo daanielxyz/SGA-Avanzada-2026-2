@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Bloqueo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.BloqueoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Noche;
@@ -167,5 +168,40 @@ class DisponibilidadDomainServiceTest {
 
         assertTrue(disponibilidad.disponible());
         assertEquals(unaNocheMas, disponibilidad.estancia());
+    }
+
+    @Test
+    @Tag("EOPE-04")
+    void fueraDeServicioNoSeVendeEnNingunaFecha() {
+        Apartamento apartamento = apartamentoActivo();
+        apartamento.declararFueraDeServicio();
+
+        Disponibilidad disponibilidad = servicio.verificarDisponibilidad(apartamento, DEL_10_AL_12, 2, List.of(),
+                parametros(3));
+
+        assertFalse(disponibilidad.disponible());
+        assertTrue(disponibilidad.motivo().contains("fuera de servicio"));
+    }
+
+    @Test
+    @Tag("EOPE-04")
+    void pendienteDePreparacionSiSeVende() {
+        Apartamento apartamento = apartamentoActivo();
+        apartamento.declararFueraDeServicio();
+        apartamento.marcarPendientePreparacion();
+
+        assertTrue(servicio.verificarDisponibilidad(apartamento, DEL_10_AL_12, 2, List.of(), parametros(3))
+                .disponible());
+    }
+
+    @Test
+    @Tag("EOPE-04")
+    void alModificarUnaReservaQueYaEstaEnUnApartamentoFueraDeServicioNoSeRechaza() {
+        Apartamento apartamento = apartamentoActivo();
+        apartamento.declararFueraDeServicio();
+        Reserva propia = confirmada("RES-2026-00001", 10, 12);
+
+        assertTrue(servicio.verificarParaModificar(propia, apartamento, DEL_10_AL_12, 2, List.of(propia),
+                parametros(3)).disponible());
     }
 }

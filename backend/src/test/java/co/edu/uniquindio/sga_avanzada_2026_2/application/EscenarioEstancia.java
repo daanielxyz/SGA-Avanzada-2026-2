@@ -121,7 +121,7 @@ public final class EscenarioEstancia {
         new IndicarHoraLlegadaUseCase(cargador, reservas)
                 .ejecutar(new IndicarHoraLlegadaCommand(codigo, LocalTime.of(16, 0)));
         pagar(codigo, 180_000, AL_CREAR);
-        new ConfirmarReservaUseCase(cargador, reservas).ejecutar(codigo);
+        new ConfirmarReservaUseCase(cargador, reservas, RepositoriosEnMemoria.RELOJ).ejecutar(codigo);
         return codigo;
     }
 
