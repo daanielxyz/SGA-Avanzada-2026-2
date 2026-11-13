@@ -6,11 +6,13 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
  * foco empieza ahí; si no, en el título. También se mueve cuando cambia el título, porque el contenido ya es otro.
  *
  * @param ocupado mientras se envía algo no se puede cerrar
+ * @param ancho  para una tabla: en el computador mide 720 px en vez de 480
  */
-export default function Dialogo({ titulo, subtitulo, ocupado = false, alCerrar, children }: {
+export default function Dialogo({ titulo, subtitulo, ocupado = false, ancho = false, alCerrar, children }: {
   titulo: string
   subtitulo?: ReactNode
   ocupado?: boolean
+  ancho?: boolean
   alCerrar: () => void
   children: ReactNode
 }) {
@@ -37,7 +39,7 @@ export default function Dialogo({ titulo, subtitulo, ocupado = false, alCerrar, 
   return (
     <dialog
       ref={marco}
-      className="dialogo"
+      className={ancho ? 'dialogo dialogo-ancho' : 'dialogo'}
       aria-labelledby={id}
       onCancel={(evento) => {
         evento.preventDefault()

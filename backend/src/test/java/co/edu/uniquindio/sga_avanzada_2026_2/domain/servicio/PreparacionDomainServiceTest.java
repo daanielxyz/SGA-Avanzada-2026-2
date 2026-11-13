@@ -168,7 +168,7 @@ class PreparacionDomainServiceTest {
                                    LocalTime hora, LocalDateTime creadaEn) {
         Estancia estancia = new Estancia(dia(entrada), dia(entrada + 2));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), Dinero.de(100_000), 1,
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), "Temporada base", Dinero.de(100_000), 1,
                         Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), new ApartamentoId(apartamento), new TitularId("TIT-1"), estancia,

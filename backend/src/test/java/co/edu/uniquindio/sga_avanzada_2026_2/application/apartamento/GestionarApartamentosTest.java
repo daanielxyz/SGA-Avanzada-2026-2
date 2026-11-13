@@ -92,7 +92,7 @@ class GestionarApartamentosTest {
     private static Reserva reserva(String codigo, ApartamentoId apartamento, LocalDate entrada, int personas) {
         Estancia estancia = new Estancia(entrada, entrada.plusDays(2));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, BASE, Dinero.de(100_000), personas,
+                .map(n -> new LineaCotizacion(n, BASE, "Temporada base", Dinero.de(100_000), personas,
                         Dinero.de(100_000L * personas)))
                 .toList();
         List<Ocupante> ocupantes = IntStream.rangeClosed(1, personas)

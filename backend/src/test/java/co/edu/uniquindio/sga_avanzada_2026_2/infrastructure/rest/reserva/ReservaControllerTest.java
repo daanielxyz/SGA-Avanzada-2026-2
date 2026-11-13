@@ -40,6 +40,7 @@ class ReservaControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.ocupantes", hasSize(2)))
                 .andExpect(jsonPath("$.ocupantes[0].id").value("OCU-1"))
                 .andExpect(jsonPath("$.valor.desglose", hasSize(2)))
+                .andExpect(jsonPath("$.valor.desglose[1].temporadaNombre").value("Temporada base")) // DEC-117
                 .andExpect(jsonPath("$.valor.total").value(400000))
                 .andExpect(jsonPath("$.anticipoExigido").value(nullValue()))
                 .andExpect(jsonPath("$.politicaId").value(AlojamientoDePrueba.POLITICA));

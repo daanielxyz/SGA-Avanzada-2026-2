@@ -13,12 +13,16 @@ import java.util.List;
  */
 public record CotizacionResult(List<NocheResult> desglose, BigDecimal total) {
 
-    public record NocheResult(LocalDate noche, String temporada, BigDecimal tarifa, int ocupantesFacturables,
-                              BigDecimal subtotal) {
+    /**
+     * @param temporada       id de la temporada de esa noche
+     * @param temporadaNombre su nombre, congelado con la reserva (#10 · DEC-117)
+     */
+    public record NocheResult(LocalDate noche, String temporada, String temporadaNombre, BigDecimal tarifa,
+                              int ocupantesFacturables, BigDecimal subtotal) {
 
         static NocheResult de(LineaCotizacion linea) {
-            return new NocheResult(linea.noche().fecha(), linea.temporadaId().valor(), linea.tarifa().monto(),
-                    linea.ocupantesFacturables(), linea.subtotal().monto());
+            return new NocheResult(linea.noche().fecha(), linea.temporadaId().valor(), linea.temporadaNombre(),
+                    linea.tarifa().monto(), linea.ocupantesFacturables(), linea.subtotal().monto());
         }
     }
 

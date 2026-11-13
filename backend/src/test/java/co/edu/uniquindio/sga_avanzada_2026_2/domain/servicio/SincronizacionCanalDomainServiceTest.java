@@ -64,7 +64,7 @@ class SincronizacionCanalDomainServiceTest {
 
     private static Reserva externa(String codigo, CanalId canal, String idExterno) {
         List<LineaCotizacion> desglose = PEDIDA.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), Dinero.de(100_000), 1,
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), "Temporada base", Dinero.de(100_000), 1,
                         Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), APT, new TitularId("TIT-1"), PEDIDA, EstadoReserva.PENDIENTE,

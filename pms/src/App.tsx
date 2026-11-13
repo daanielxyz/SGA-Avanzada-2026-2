@@ -20,6 +20,7 @@ import Politica from './paginas/Politica'
 import Preparacion from './paginas/Preparacion'
 import PublicarPolitica from './paginas/PublicarPolitica'
 import SinPermiso from './paginas/SinPermiso'
+import Tarifas from './paginas/Tarifas'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
 
@@ -31,6 +32,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/alojamiento': <Alojamiento />,
   '/politica': <Politica />,
   '/apartamentos': <Apartamentos />,
+  '/tarifas': <Tarifas />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */

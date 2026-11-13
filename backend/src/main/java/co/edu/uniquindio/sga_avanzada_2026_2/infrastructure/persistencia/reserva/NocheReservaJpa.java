@@ -19,6 +19,7 @@ public class NocheReservaJpa {
 
     private LocalDate noche;
     private String temporadaId;
+    private String temporadaNombre;    // DEC-117: congelado al cotizar
     private BigDecimal tarifa;
     private int ocupantesFacturables;
     private BigDecimal subtotal;
