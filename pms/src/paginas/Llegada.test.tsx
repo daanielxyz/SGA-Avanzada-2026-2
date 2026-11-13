@@ -59,7 +59,7 @@ function reservaDeLlegada(cambios: Partial<Reserva> = {}): Reserva {
     ocupantes: [ANA, JULIAN, SOFIA],
     valor: {
       desglose: [0, 1, 2].map((dia) => ({
-        noche: sumarDias(HOY, dia), temporada: 'TEM-1', tarifa: 150000, ocupantesFacturables: 2, subtotal: 300000,
+        noche: sumarDias(HOY, dia), temporada: 'TEM-1', temporadaNombre: 'Temporada base', tarifa: 150000, ocupantesFacturables: 2, subtotal: 300000,
       })),
       total: 900000,
     },
@@ -513,6 +513,14 @@ describe('la llegada desde el detalle', () => {
 
     const botones = await screen.findAllByRole('button', { name: /Continuar llegada|Confirmar|Cancelar/ })
     expect(botones.map((boton) => boton.textContent)).toEqual(['Continuar llegada', 'Confirmar', 'Cancelar'])
+  })
+
+  it('el desglose dice el nombre de la temporada, no su código (DEC-117)', async () => {
+    apiCon()
+    abrir(`/reservas/${CODIGO}`)
+    const tabla = await screen.findByRole('table', { name: 'Desglose por noche' })
+    expect(within(tabla).getAllByText('Temporada base').length).toBeGreaterThan(0)
+    expect(within(tabla).queryByText('TEM-1')).not.toBeInTheDocument()
   })
 
   it('la tabla de ocupantes muestra el TRA y abre el mismo diálogo', async () => {

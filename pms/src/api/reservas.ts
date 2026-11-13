@@ -61,7 +61,10 @@ export interface Ocupante {
 
 export interface Noche {
   noche: string
+  /** El id de la temporada (`TEM-1`). */
   temporada: string
+  /** Su nombre, congelado con la reserva (DEC-117). Puede faltar en respuestas viejas. */
+  temporadaNombre?: string
   tarifa: number
   ocupantesFacturables: number
   subtotal: number

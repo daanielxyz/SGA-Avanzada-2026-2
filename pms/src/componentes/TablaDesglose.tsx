@@ -3,6 +3,8 @@ import { dinero, fechaCorta } from '../formato'
 interface Noche {
   noche: string
   temporada: string
+  /** DEC-117: el nombre que recepción reconoce; si no llega, el id. */
+  temporadaNombre?: string
   tarifa: number
   ocupantesFacturables: number
   subtotal: number
@@ -47,7 +49,7 @@ export default function TablaDesglose({ idTitulo, desglose, total }: {
                     <span className="codigo">{dinero(noche.tarifa)}</span> × {noche.ocupantesFacturables}
                   </span>
                 </td>
-                <td>{noche.temporada}</td>
+                <td>{noche.temporadaNombre || noche.temporada}</td>
                 <td className="derecha codigo">{dinero(noche.tarifa)}</td>
                 <td className="derecha numero">{noche.ocupantesFacturables}</td>
                 <td className="derecha codigo">{dinero(noche.subtotal)}</td>
