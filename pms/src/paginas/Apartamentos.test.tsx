@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -137,6 +137,23 @@ describe('nuevo apartamento', () => {
     })
   })
 
+  it('al salir del código avisa si ya existe, sin esperar a «Crear»', async () => {
+    api()
+    const usuario = abrir()
+    await usuario.click(await screen.findByRole('button', { name: /Nuevo apartamento/ }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Nuevo apartamento' })
+    await usuario.type(within(dialogo).getByLabelText('Código'), '101')
+    await usuario.tab()
+
+    expect(await within(dialogo).findByText('Ya hay un apartamento con el código APT-101.')).toBeInTheDocument()
+
+    // Uno libre (la API responde 404) no muestra nada
+    await usuario.clear(within(dialogo).getByLabelText('Código'))
+    await usuario.type(within(dialogo).getByLabelText('Código'), '999')
+    await usuario.tab()
+    await waitFor(() => expect(within(dialogo).queryByText(/Ya hay un apartamento/)).not.toBeInTheDocument())
+  })
+
   it('un código repetido se dice junto al código', async () => {
     api({ '/api/apartamentos': (metodo) => (metodo === 'POST'
       ? error(409, 'DUPLICADO', 'Ya existe el apartamento APT-101')
@@ -212,18 +229,41 @@ describe('detalle de un apartamento', () => {
     expect(within(dialogo).getByRole('button', { name: 'Poner a la venta' })).toBeDisabled()
   })
 
-  it('un bloqueo rechazado dice el porqué junto a las fechas', async () => {
-    api({ '/api/apartamentos/APT-101/bloqueos': error(409, 'REGLA_NEGOCIO', 'El fin del bloqueo debe ser posterior al inicio') })
+  it('el bloqueo se elige en el calendario: las noches con reserva no se eligen y la API decide al final', async () => {
+    const fetch = api({
+      '/api/ocupacion': [200, paginaDe([{ apartamento: 'APT-101', nombre: 'Penthouse Mirador', estadoOperativo: 'PREPARADO',
+        bloqueos: [], reservas: [{ codigo: 'RES-2026-00042', entrada: sumarDias(hoy, 3), salida: sumarDias(hoy, 5),
+          estado: 'CONFIRMADA', canalOrigen: 'DIRECTO', titularId: 'TIT-1' }] }])],
+      '/api/apartamentos/APT-101/bloqueos': error(409, 'REGLA_NEGOCIO', 'Una reserva activa ocupa esas noches'),
+    })
     const usuario = abrir('/apartamentos/APT-101')
     await usuario.click(await screen.findByRole('button', { name: 'Nuevo bloqueo' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Nuevo bloqueo' })
-    await usuario.type(within(dialogo).getByLabelText('Desde'), sumarDias(hoy, 3))
-    await usuario.type(within(dialogo).getByLabelText('Hasta'), sumarDias(hoy, 5))
+    const dia = async (fecha: string) => {
+      for (let i = 0; i < 2 && !dialogo.querySelector(`[data-fecha="${fecha}"]`); i++) {
+        await usuario.click(within(dialogo).getByRole('button', { name: 'Mes siguiente' }))
+      }
+      return dialogo.querySelector<HTMLButtonElement>(`[data-fecha="${fecha}"]`)!
+    }
+
+    // Sin fechas no se envía: lo dice junto al calendario
     await usuario.type(within(dialogo).getByLabelText(/Motivo/), 'Pintura')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Crear bloqueo' }))
+    expect(within(dialogo).getByText('Elige en el calendario la primera noche que no se vende.')).toBeInTheDocument()
 
-    expect(await within(dialogo).findByText('El fin del bloqueo debe ser posterior al inicio')).toBeInTheDocument()
-    expect(within(dialogo).getByLabelText('Desde')).toHaveAttribute('aria-invalid', 'true')
+    await waitFor(async () => expect(await dia(sumarDias(hoy, 3))).toHaveAccessibleName(/tiene una reserva/))
+    await usuario.click(await dia(sumarDias(hoy, 1)))
+    expect(await dia(sumarDias(hoy, 4))).toHaveAttribute('aria-disabled', 'true')
+    // El día en que vuelve a venderse puede ser la llegada de la reserva
+    await usuario.click(await dia(sumarDias(hoy, 3)))
+    expect(within(dialogo).getByText(/2 noches sin vender/)).toBeInTheDocument()
+
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Crear bloqueo' }))
+    expect(await within(dialogo).findByText('Una reserva activa ocupa esas noches')).toBeInTheDocument()
+    expect(within(dialogo).getByRole('group', { name: 'Calendario del bloqueo' })).toHaveAttribute('aria-invalid', 'true')
+    const post = fetch.mock.calls.findIndex(([url, opciones]) => String(url).endsWith('/bloqueos')
+      && (opciones as RequestInit | undefined)?.method === 'POST')
+    expect(llamada(fetch, post).cuerpo).toEqual({ inicio: sumarDias(hoy, 1), fin: sumarDias(hoy, 3), motivo: 'Pintura' })
   })
 
   it('si el hotel no acepta mascotas, lo dice sin ofrecer cambiarlo', async () => {
