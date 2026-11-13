@@ -8,9 +8,12 @@ import java.util.List;
 
 /**
  * JSON de una fila del calendario de ocupación (CU-24).
+ *
+ * @param motivoFueraDeServicio solo mientras está FUERA_DE_SERVICIO, si el administrador lo dio (DEC-113)
  */
 public record OcupacionResponse(String apartamento, String nombre, String estadoOperativo,
-                                List<ReservaOcupadaResponse> reservas, List<BloqueoOcupadoResponse> bloqueos) {
+                                String motivoFueraDeServicio, List<ReservaOcupadaResponse> reservas,
+                                List<BloqueoOcupadoResponse> bloqueos) {
 
     /**
      * @param estado         también FINALIZADA (ya salió) y NO_SHOW (no se presentó; sus noches están libres) (BL-09)
@@ -27,7 +30,7 @@ public record OcupacionResponse(String apartamento, String nombre, String estado
     }
 
     static OcupacionResponse de(OcupacionResult r) {
-        return new OcupacionResponse(r.apartamento(), r.nombre(), r.estadoOperativo(),
+        return new OcupacionResponse(r.apartamento(), r.nombre(), r.estadoOperativo(), r.motivoFueraDeServicio(),
                 r.reservas().stream().map(x -> new ReservaOcupadaResponse(x.codigo(), x.entrada(), x.salida(),
                         x.estado(), x.canalOrigen(), x.titularId(), x.titularNombre(), x.saldo(), x.situacionSaldo(),
                         x.totalPagado())).toList(),

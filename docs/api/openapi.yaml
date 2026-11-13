@@ -1080,6 +1080,11 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/DeclararFueraDeServicioRequest"
       responses:
         "200":
           description: OK
@@ -3401,6 +3406,13 @@ components:
           type: string
           maxLength: 500
           minLength: 0
+    DeclararFueraDeServicioRequest:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 500
+          minLength: 0
     EstanciaResponse:
       type: object
       properties:
@@ -4083,6 +4095,8 @@ components:
         limiteMascotas:
           type: integer
           format: int32
+        motivoFueraDeServicio:
+          type: string
     BloqueoResponse:
       type: object
       properties:
@@ -5447,6 +5461,8 @@ components:
         nombre:
           type: string
         estadoOperativo:
+          type: string
+        motivoFueraDeServicio:
           type: string
         reservas:
           type: array

@@ -44,12 +44,15 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.POST, "/api/portal/reservas", "/api/portal/reservas/{codigo}/pago")
                 .permitAll()
                 .requestMatchers(HttpMethod.PUT, "/api/portal/reservas/{codigo}/liberar").permitAll()
-                // Lo que falta por preparar es del personal (CU-41); va antes de la regla pública de {codigo}
+                // Lo que falta por preparar es del personal (CU-41); va antes de la regla de {codigo}
                 .requestMatchers(HttpMethod.GET, "/api/apartamentos/pendientes-preparacion")
                 .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
-                .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos",
-                        "/api/apartamentos/disponibles", "/api/apartamentos/{codigo}",
+                .requestMatchers(HttpMethod.GET, "/api/alojamiento", "/api/apartamentos/disponibles",
                         "/api/apartamentos/{codigo}/calendario").permitAll()
+                // La ficha completa de un apartamento (estado operativo, motivos de bloqueos y de fuera de servicio)
+                // es solo del personal; el público ve /api/portal/apartamentos (DEC-80 · DEC-113)
+                .requestMatchers(HttpMethod.GET, "/api/apartamentos", "/api/apartamentos/{codigo}")
+                .hasAnyRole(RECEPCIONISTA, PERSONAL_SERVICIO, ADMINISTRADOR)
                 // Buscar y cotizar en el portal, sin cuenta: solo datos públicos y un cálculo que no guarda nada
                 // (CU-07 · CU-08 · CU-09 · equipo web)
                 .requestMatchers(HttpMethod.GET, "/api/portal/apartamentos", "/api/portal/apartamentos/disponibles",

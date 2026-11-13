@@ -20,16 +20,17 @@ public class DeclararFueraDeServicioUseCase {
     }
 
     /**
+     * @param motivo opcional: por qué sale de operación; se ve mientras siga fuera de servicio (DEC-113)
      * @throws RecursoNoEncontradoException si el apartamento no existe
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si la transición no está permitida (EOPE-02)
      */
     @Transactional
-    public ApartamentoResult ejecutar(String codigo) {
+    public ApartamentoResult ejecutar(String codigo, String motivo) {
         ApartamentoId id = new ApartamentoId(codigo);
         Apartamento apartamento = apartamentos.buscarPorCodigo(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el apartamento", id.valor()));
 
-        apartamento.declararFueraDeServicio();
+        apartamento.declararFueraDeServicio(motivo);
 
         apartamentos.guardar(apartamento);
         return ApartamentoResult.de(apartamento);
