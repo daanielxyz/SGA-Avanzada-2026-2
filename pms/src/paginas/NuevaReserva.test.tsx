@@ -287,11 +287,13 @@ describe('paso 3: personas (TIT-01 · OCU-02 · OCU-05)', () => {
     await completarTitular(usuario)
     await usuario.click(screen.getByRole('checkbox', { name: 'El titular también se aloja' }))
     const primero = screen.getByRole('group', { name: 'Ocupante 1' })
-    await usuario.clear(within(primero).getByLabelText('Nombre completo'))
+    // El ocupante 1 queda en blanco: ya no es el titular
+    expect(within(primero).getByLabelText('Nombre completo')).toHaveValue('')
+    expect(within(primero).getByLabelText(/Número/)).toHaveValue('')
     await usuario.type(within(primero).getByLabelText('Nombre completo'), 'Luis Ríos')
-    await usuario.clear(within(primero).getByLabelText(/Número/))
-    await usuario.selectOptions(within(primero).getByLabelText(/Documento/), '')
     escribirFecha('Fecha de nacimiento', '2010-11-14', primero)
+    await usuario.selectOptions(within(primero).getByLabelText(/Documento/), 'CC')
+    await usuario.type(within(primero).getByLabelText(/Número/), '71234567')
 
     await usuario.click(screen.getByRole('button', { name: /Siguiente: resumen/ }))
     expect(await screen.findByRole('heading', { name: 'Resumen' })).toBeInTheDocument()
@@ -645,28 +647,32 @@ describe('moverse sin perder lo escrito', () => {
     expect(within(screen.getByRole('group', { name: 'Ocupante 2' })).getByLabelText('Nombre completo')).toHaveValue('Luis Ríos')
   })
 
-  it('salir por un enlace con algo escrito pregunta antes', async () => {
+  it('salir por un enlace con algo escrito pregunta antes, en la página', async () => {
     apiDePrueba({ '/api/reservas': [200, paginaDe([])] })
-    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false)
     abrir()
     const usuario = userEvent.setup()
 
     escribirFecha('Entrada', '2099-03-10')
     await usuario.click(screen.getByRole('link', { name: 'Volver a reservas' }))
 
-    expect(confirmar).toHaveBeenCalled()
+    const dialogo = screen.getByRole('dialog', { name: '¿Salir sin crear la reserva?' })
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Seguir con la reserva' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: 'Nueva reserva' })).toBeInTheDocument()
+
+    await usuario.click(screen.getByRole('link', { name: 'Volver a reservas' }))
+    await usuario.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Salir y perder lo escrito' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
   })
 
   it('sin nada escrito sale sin preguntar', async () => {
     apiDePrueba({ '/api/reservas': [200, paginaDe([])] })
-    const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(false)
     abrir()
     const usuario = userEvent.setup()
 
     await usuario.click(screen.getByRole('link', { name: 'Volver a reservas' }))
 
-    expect(confirmar).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(await screen.findByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
   })
 })

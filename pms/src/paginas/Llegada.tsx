@@ -7,6 +7,7 @@ import {
   consultarReserva,
   designarPrincipal,
   indicarHoraLlegada,
+  listarSalidasVencidas,
   NOMBRE_DEL_ESTADO,
   registrarLlegada,
   type Reserva,
@@ -17,9 +18,10 @@ import BloqueVacio from '../componentes/BloqueVacio'
 import Dialogo from '../componentes/Dialogo'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import TablaDesglose from '../componentes/TablaDesglose'
+import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
 import CampoMotivo from '../folio/CampoMotivo'
-import { cantidad, dinero, edadEn, fechaCorta, fechaHoy, noches } from '../formato'
+import { cantidad, dinero, fechaCorta, fechaHoy, noches, textoEdad } from '../formato'
 import FormularioPago from '../reserva/FormularioPago'
 import NotasTurno from '../reserva/NotasTurno'
 import DialogoTra from '../reserva/llegada/DialogoTra'
@@ -112,6 +114,8 @@ export default function Llegada() {
   const codigoApartamento = reserva?.apartamento ?? null
   const titularId = reserva?.titularId ?? null
 
+  // El estado del apartamento lo cambian otros (servicio, administrador): se vuelve a leer solo, sin recargar
+  const pulso = usePulso()
   useEffect(() => {
     if (!codigoApartamento) return
     let vigente = true
@@ -121,12 +125,13 @@ export default function Llegada() {
         if (vigente) setApartamento({ codigo: codigoApartamento, datos })
       })
       .catch(() => {
-        if (vigente) setApartamento({ codigo: codigoApartamento, datos: null })
+        // Si falla al volver a leer, se queda lo que ya se sabía
+        if (vigente) setApartamento((actual) => actual?.codigo === codigoApartamento && actual.datos ? actual : { codigo: codigoApartamento, datos: null })
       })
     return () => {
       vigente = false
     }
-  }, [codigoApartamento])
+  }, [codigoApartamento, pulso])
 
   useEffect(() => {
     if (!titularId) return
@@ -305,7 +310,9 @@ export default function Llegada() {
             ) : (
               <Condicion tipo={estadoApartamento === 'PREPARADO' ? 'listo' : 'falta'} titulo="Apartamento preparado">
                 {datosReserva.apartamento} · {NOMBRE_ESTADO_OPERATIVO[estadoApartamento] ?? estadoApartamento}
-                {estadoApartamento !== 'PREPARADO' && '. Debe prepararlo el personal de servicio.'}
+                {estadoApartamento === 'OCUPADO'
+                  ? <QuienLoOcupa apartamento={datosReserva.apartamento} hoy={hoy} />
+                  : estadoApartamento !== 'PREPARADO' && '. Debe prepararlo el personal de servicio.'}
               </Condicion>
             )}
             {datosReserva.estado === 'PENDIENTE' && (datosReserva.anticipoExigido ?? 0) > 0 && (
@@ -393,6 +400,8 @@ export default function Llegada() {
           principal={principal}
           alCompletar={(ocupante) => setDialogo({ tipo: 'tra', ocupante })}
           alHacerPrincipal={hacerPrincipal}
+          titularSinValidar={titularDatos && !titularDatos.validado ? titularDatos : null}
+          alValidar={() => setDialogo({ tipo: 'validar' })}
         />
       </section>
 
@@ -401,11 +410,6 @@ export default function Llegada() {
           <div className="bloque-llegada-cabecera">
             <h2 id="titulo-titular">Titular</h2>
             <div className="bloque-llegada-acciones">
-              {titularDatos && !titularDatos.validado && titularSeAloja(titularDatos, datosReserva.ocupantes) && (
-                <button type="button" className="boton boton-secundario boton-chico" onClick={() => setDialogo({ tipo: 'validar' })}>
-                  Validar identidad
-                </button>
-              )}
               <button type="button" className="boton boton-secundario boton-chico" onClick={() => setDialogo({ tipo: 'titular' })}>
                 Cambiar titular
               </button>
@@ -584,6 +588,33 @@ const ICONO = {
 } as const
 
 /** Una condición con su forma (✓, ✕, !) y su estado dicho en palabras: no depende solo del color. */
+/**
+ * Si el apartamento sigue ocupado por una reserva cuya salida ya pasó, lo dice con el enlace para registrarla: es lo
+ * que impide entregarlo. Si no se puede averiguar, queda la explicación general.
+ */
+function QuienLoOcupa({ apartamento, hoy }: { apartamento: string; hoy: string }) {
+  const [vencida, setVencida] = useState<Reserva | null>(null)
+  useEffect(() => {
+    let vigente = true
+    listarSalidasVencidas(hoy, apartamento)
+      .then(([primera]) => {
+        if (vigente) setVencida(primera ?? null)
+      })
+      .catch(() => undefined)
+    return () => {
+      vigente = false
+    }
+  }, [apartamento, hoy])
+
+  if (!vencida) return <>. Lo libera la salida del huésped; luego lo prepara el personal de servicio.</>
+  return (
+    <>
+      . Lo ocupa <Link to={`/reservas/${encodeURIComponent(vencida.codigo)}`} className="codigo">{vencida.codigo}</Link>, que
+      debía salir el {fechaCorta(vencida.salida)} y no tiene la salida registrada: regístrala y que lo preparen.
+    </>
+  )
+}
+
 function Condicion({ tipo, titulo, children }: { tipo: keyof typeof ICONO; titulo: string; children: ReactNode }) {
   const icono = ICONO[tipo]
   return (
@@ -599,13 +630,24 @@ function Condicion({ tipo, titulo, children }: { tipo: keyof typeof ICONO; titul
 }
 
 /** Huéspedes con su papel y el estado de su TRA. La comparten la llegada y el detalle. */
-export function TablaHuespedes({ reserva, idTitulo, principal = null, alCompletar, alHacerPrincipal }: {
+export function TablaHuespedes({
+  reserva,
+  idTitulo,
+  principal = null,
+  alCompletar,
+  alHacerPrincipal,
+  titularSinValidar = null,
+  alValidar,
+}: {
   reserva: Reserva
   idTitulo: string
   principal?: { ocupante: string; error: ErrorMostrado | null } | null
   alCompletar: (ocupante: string) => void
   /** Sin ella no se ofrece «Hacer principal». */
   alHacerPrincipal?: (ocupante: string) => void
+  /** #19 · DEC-98: la identidad se valida con el documento en la mano, en la fila del titular, si se aloja. */
+  titularSinValidar?: Pick<Titular, 'tipoDocumento' | 'numeroDocumento'> | null
+  alValidar?: () => void
 }) {
   return (
     <div className="tarjeta tabla-marco">
@@ -626,12 +668,13 @@ export function TablaHuespedes({ reserva, idTitulo, principal = null, alCompleta
             const pendiente = tieneTraPendiente(ocupante)
             const enviando = principal?.ocupante === ocupante.id && !principal.error
             const error = principal?.ocupante === ocupante.id ? principal.error : null
+            const validable = Boolean(alValidar && titularSinValidar && titularSeAloja(titularSinValidar, [ocupante]))
             return (
               <tr key={ocupante.id}>
                 <td className="huesped-nombre">{ocupante.nombre}</td>
                 <td className="numero">
                   {ocupante.fechaNacimiento ? (
-                    <><span className="solo-lectores">Edad: </span>{edadEn(ocupante.fechaNacimiento, reserva.entrada)}</>
+                    <><span className="solo-lectores">Edad: </span>{textoEdad(ocupante.fechaNacimiento, reserva.entrada)}</>
                   ) : <span className="suave">Sin dato</span>}
                 </td>
                 <td>{documento ? <span className="codigo">{documento}</span> : <span className="suave">Sin documento</span>}</td>
@@ -646,14 +689,22 @@ export function TablaHuespedes({ reserva, idTitulo, principal = null, alCompleta
                   </span>
                 </td>
                 <td className="huesped-acciones">
-                  {pendiente && (
+                  <button
+                    type="button"
+                    className="boton boton-secundario boton-chico"
+                    aria-label={`${pendiente ? 'Completar' : 'Editar'} datos de ${ocupante.nombre}`}
+                    onClick={() => alCompletar(ocupante.id)}
+                  >
+                    {pendiente ? 'Completar datos' : 'Editar datos'}
+                  </button>
+                  {validable && (
                     <button
                       type="button"
                       className="boton boton-secundario boton-chico"
-                      aria-label={`Completar datos de ${ocupante.nombre}`}
-                      onClick={() => alCompletar(ocupante.id)}
+                      aria-label={`Validar identidad de ${ocupante.nombre}`}
+                      onClick={alValidar}
                     >
-                      Completar datos
+                      Validar identidad
                     </button>
                   )}
                   {alHacerPrincipal && puedeSerPrincipal(ocupante, reserva.entrada) && (

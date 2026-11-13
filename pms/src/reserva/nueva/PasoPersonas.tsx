@@ -5,6 +5,8 @@ import Campo from './Campo'
 import {
   sinError,
   TIPOS_DE_DOCUMENTO,
+  TIPOS_DE_DOCUMENTO_OCUPANTE,
+  tiposPorEdad,
   validarPersonas,
   type DatosOcupante,
   type DatosTitular,
@@ -12,7 +14,7 @@ import {
 } from './formulario'
 
 const TIPOS = TIPOS_DE_DOCUMENTO.map((tipo) => [tipo, tipo] as const)
-const TIPOS_OPCIONALES = [['', 'Ninguno'] as const, ...TIPOS]
+const TIPOS_OCUPANTE = [['', 'Elige'] as const, ...TIPOS_DE_DOCUMENTO_OCUPANTE]
 
 /** Paso 3: el titular y el grupo (OCU-02 · OCU-05 · DEC-97). El titular puede no alojarse. */
 export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, alCambiarTitular, alCambiarOcupante, alCambiarSeAloja, alSeguir, alVolver }: {
@@ -86,8 +88,8 @@ export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, 
       <section className="paso" aria-labelledby="titulo-ocupantes-nuevos">
         <div>
           <h3 id="titulo-ocupantes-nuevos">Ocupantes ({grupo.length})</h3>
-          <p className="campo-pista">Nombre y fecha de nacimiento son obligatorios; documento y nacionalidad, opcionales.</p>
-          {errores['grupo.mayor'] && <p className="campo-mensaje">{errores['grupo.mayor']}</p>}
+          <p className="campo-pista">Nombre, fecha de nacimiento y documento son obligatorios; la nacionalidad, opcional. Un niño menor de 7 años va con su registro civil.</p>
+          {errores['grupo.mayor'] && <p className="campo-mensaje">{errores['grupo.mayor']} Revisa las fechas marcadas.</p>}
         </div>
         {grupo.map((ocupante, indice) => {
           const esTitular = titularSeAloja && indice === 0
@@ -104,9 +106,24 @@ export default function PasoPersonas({ titular, grupo, titularSeAloja, entrada, 
               <legend>Ocupante {indice + 1}{esTitular && ' · titular'}</legend>
               <div className="ocupante-campos">
                 <Campo etiqueta="Nombre completo" autoComplete="off" maxLength={120} readOnly={esTitular} {...delOcupante('nombre')} />
-                <Campo etiqueta="Fecha de nacimiento" type="date" max={hoy} {...delOcupante('fechaNacimiento')} />
-                <Campo etiqueta="Documento" nota="opcional" opciones={TIPOS_OPCIONALES} disabled={esTitular} {...delOcupante('tipoDocumento')} />
-                <Campo etiqueta="Número" nota="opcional" autoComplete="off" maxLength={30} readOnly={esTitular} {...delOcupante('numeroDocumento')} />
+                <Campo
+                  etiqueta="Fecha de nacimiento"
+                  type="date"
+                  max={hoy}
+                  invalido={Boolean(errores['grupo.mayor'])}
+                  {...delOcupante('fechaNacimiento')}
+                  onChange={(evento) => {
+                    setErrores((actuales) => sinError(sinError(actuales, `ocupante.${indice}.fechaNacimiento`), 'grupo.mayor'))
+                    alCambiarOcupante(indice, { ...ocupante, fechaNacimiento: evento.target.value })
+                  }}
+                />
+                <Campo
+                  etiqueta="Documento"
+                  opciones={tiposPorEdad(TIPOS_OCUPANTE, ocupante.fechaNacimiento, entrada, ocupante.tipoDocumento)}
+                  disabled={esTitular}
+                  {...delOcupante('tipoDocumento')}
+                />
+                <Campo etiqueta="Número" autoComplete="off" maxLength={30} readOnly={esTitular} {...delOcupante('numeroDocumento')} />
                 <Campo etiqueta="Nacionalidad" nota="opcional" autoComplete="off" maxLength={60} {...delOcupante('nacionalidad')} />
               </div>
             </fieldset>

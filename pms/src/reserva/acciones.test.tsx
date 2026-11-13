@@ -6,6 +6,7 @@ import App from '../App'
 import type { Folio } from '../api/folio'
 import type { Reserva } from '../api/reservas'
 import { reservaDePrueba } from '../pruebas/reservasDePrueba'
+import { fechaHoy, sumarDias } from '../formato'
 import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
 import ProveedorSesion from '../sesion/ProveedorSesion'
 
@@ -118,6 +119,34 @@ describe('botones según el estado (RN-08)', () => {
     expect(await screen.findByRole('button', { name: 'Confirmar' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Declarar no-show' })).not.toBeInTheDocument()
+  })
+
+  it('una pendiente que pasó su hora límite de llegada solo se cancela (DEC-110)', async () => {
+    apiCon({ reserva: { ...PENDIENTE, entrada: '2020-01-01', salida: '2020-01-03', creadaEn: '2019-12-20T10:00:00' } })
+    abrir()
+
+    const cancelar = await screen.findByRole('button', { name: 'Cancelar' })
+    expect(cancelar).toHaveAccessibleDescription(/No se confirmó antes de la hora límite de llegada \(1 ene, 10:00 p\. m\.\)/)
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).not.toBeInTheDocument()
+  })
+
+  it('desde la víspera se puede preparar la llegada (#24)', async () => {
+    const manana = sumarDias(fechaHoy(), 1)
+    apiCon({ reserva: { estado: 'CONFIRMADA', entrada: manana, salida: sumarDias(manana, 2) } })
+    abrir()
+
+    expect(await screen.findByRole('button', { name: 'Preparar llegada' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toBeDisabled()
+  })
+
+  it('una pendiente que entra mañana también muestra «Registrar llegada» deshabilitado (#24)', async () => {
+    const manana = sumarDias(fechaHoy(), 1)
+    apiCon({ reserva: { ...PENDIENTE, entrada: manana, salida: sumarDias(manana, 2) } })
+    abrir()
+
+    expect(await screen.findByRole('button', { name: 'Preparar llegada' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toHaveAccessibleDescription(/ya confirmada/)
   })
 
   it('antes de la hora límite el no-show está deshabilitado y dice desde cuándo (RES-16)', async () => {

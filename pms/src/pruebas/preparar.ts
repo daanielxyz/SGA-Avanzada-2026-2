@@ -8,6 +8,7 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   localStorage.clear()
+  sessionStorage.clear()
 })
 
 // jsdom todavía no trae las ventanas modales del navegador

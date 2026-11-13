@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cantidad, dinero, edadEn, fechaCorta, hora, iniciales, noches } from './formato'
+import { cantidad, dinero, edadEn, fechaCorta, hora, horaEnPalabras, iniciales, noches, textoEdad } from './formato'
 
 describe('formatos del PMS', () => {
   it('la fecha no se corre un día con la zona horaria', () => {
@@ -39,6 +39,22 @@ describe('formatos del PMS', () => {
   it('la edad cambia el día del cumpleaños, no antes', () => {
     expect(edadEn('2000-11-14', '2026-11-13')).toBe(25)
     expect(edadEn('2000-11-14', '2026-11-14')).toBe(26)
+  })
+
+  it('antes del primer año la edad va en meses, como bebé', () => {
+    expect(textoEdad('2026-03-20', '2026-11-14')).toBe('7 meses (bebé)')
+    expect(textoEdad('2025-11-14', '2026-11-13')).toBe('11 meses (bebé)')
+    expect(textoEdad('2026-10-14', '2026-11-14')).toBe('1 mes (bebé)')
+    expect(textoEdad('2026-11-01', '2026-11-14')).toBe('Menos de un mes (bebé)')
+    expect(textoEdad('2025-11-14', '2026-11-14')).toBe('1 año')
+    expect(textoEdad('1988-03-14', '2026-11-14')).toBe('38 años')
+  })
+
+  it('la hora de un campo se dice en palabras, sin duda entre 24 horas y a. m./p. m.', () => {
+    expect(horaEnPalabras('15:00')).toBe('Queda a las 3:00 p. m., en la tarde.')
+    expect(horaEnPalabras('03:30')).toBe('Queda a las 3:30 a. m., en la madrugada.')
+    expect(horaEnPalabras('21:15')).toBe('Queda a las 9:15 p. m., en la noche.')
+    expect(horaEnPalabras('')).toContain('a. m. o p. m.')
   })
 
   it('el singular y el plural salen bien', () => {

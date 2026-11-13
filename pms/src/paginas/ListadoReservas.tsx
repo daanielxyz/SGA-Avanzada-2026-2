@@ -17,7 +17,7 @@ import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import Icono from '../componentes/Icono'
 import Paginador from '../componentes/Paginador'
 import { useTitulo } from '../componentes/useTitulo'
-import { cantidad, dinero, fechaCorta, noches } from '../formato'
+import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
 
 const FILTROS = ['desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
 type Filtro = (typeof FILTROS)[number]
@@ -286,6 +286,7 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
               id="filtro-desde"
               className="campo-control"
               type="date"
+              max={FECHA_MAXIMA}
               value={borrador.desde}
               aria-invalid={rangoInvalido}
               aria-describedby={rangoInvalido ? 'filtros-error' : undefined}
@@ -300,6 +301,7 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
               id="filtro-hasta"
               className="campo-control"
               type="date"
+              max={FECHA_MAXIMA}
               value={borrador.hasta}
               onChange={cambiar('hasta')}
             />

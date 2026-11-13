@@ -322,6 +322,24 @@ button {
   color: var(--error-campo);
 }
 
+/* El error se reconoce de un vistazo junto al campo, no solo por el color; el sello no se lee en voz alta */
+.campo-mensaje::before {
+  content: "!";
+  content: "!" / "";
+  display: inline-grid;
+  place-items: center;
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  background: var(--error);
+  color: var(--fondo-pagina);
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 0.1em;
+}
+
 .campo-clave {
   position: relative;
 }
@@ -791,6 +809,25 @@ button {
   flex-direction: column;
   gap: var(--espacio-3);
   padding-top: var(--espacio-4);
+}
+
+/* Salidas vencidas en la bienvenida de recepción: lo primero que hay que resolver en el turno */
+.salidas-vencidas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+  border-left: 4px solid var(--advertencia);
+}
+
+.salidas-vencidas h2 {
+  margin: 0;
+  font-size: var(--tamano-control);
+}
+
+.salidas-vencidas ul {
+  margin: 0;
+  padding-left: var(--espacio-4);
 }
 
 .bienvenida-saludo {
@@ -1278,6 +1315,17 @@ button {
   gap: var(--espacio-6);
 }
 
+/* En un detalle largo, volver al listado queda a la mano sin subir */
+.barra-volver {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  /* El hueco de .detalle ya separa: aquí se descuenta para que el título siga igual de cerca */
+  margin-bottom: calc(var(--espacio-6) * -1 + var(--espacio-1));
+  padding: var(--espacio-1) 0;
+  background: var(--fondo-pagina);
+}
+
 .volver {
   display: inline-flex;
   align-items: center;
@@ -1521,9 +1569,17 @@ button {
     height: 18px;
   }
 
+  /* El menú queda fijo y mide lo que su contenido: el fondo y la línea de su columna los pinta el panel, de arriba
+     abajo, para que no se corten donde termina el menú */
   .panel {
     grid-template-columns: 240px minmax(0, 1fr);
     grid-template-areas: 'cabecera cabecera' 'menu contenido';
+    background: linear-gradient(
+      to right,
+      var(--fondo-marco) 0 239px,
+      var(--borde) 239px 240px,
+      var(--fondo-pagina) 240px
+    );
   }
 
   .cabecera {
@@ -1597,8 +1653,12 @@ button {
     flex: none;
   }
 
+  /* El menú queda quieto mientras la página baja */
   .menu {
-    position: static;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100dvh;
     grid-area: menu;
     width: auto;
     padding: var(--espacio-3) var(--espacio-3) var(--espacio-6);
@@ -1948,6 +2008,11 @@ button {
   min-height: 0;
 }
 
+/* Un formulario que espera una pregunta (por ejemplo, descartar cambios) se oculta sin perder lo escrito */
+.dialogo-contenido[hidden] {
+  display: none;
+}
+
 .dialogo-cuerpo {
   flex: 1;
   display: flex;
@@ -2223,13 +2288,34 @@ button {
 
 .paso-pie {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   gap: var(--espacio-2);
   padding-top: var(--espacio-4);
   border-top: 1px solid var(--borde);
 }
 
-.paso-pie .boton {
+.paso-pie > .boton {
+  flex: 1;
+}
+
+/* Atrás y Siguiente se quedan a la vista al pie, sin bajar hasta el final del paso para volver */
+.paso-pie {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin: 0 calc(-1 * var(--espacio-4));
+  padding: var(--espacio-3) var(--espacio-4);
+  padding-bottom: max(var(--espacio-3), env(safe-area-inset-bottom));
+  background: var(--fondo-marco);
+}
+
+/* En el celular, el pie del resumen (total y botones de crear) taparía media pantalla: se queda al final */
+.paso-pie:has(.paso-total) {
+  position: static;
+  flex-direction: column-reverse;
+}
+
+.paso-pie:has(.paso-total) .boton {
   width: 100%;
 }
 
@@ -2516,10 +2602,18 @@ button {
     align-items: start;
   }
 
-  .paso-pie {
+  .paso-pie,
+  .paso-pie:has(.paso-total) {
+    position: sticky;
     flex-direction: row;
     align-items: flex-end;
     justify-content: space-between;
+  }
+
+  .paso-pie > .boton,
+  .paso-pie:has(.paso-total) .boton {
+    flex: 0 0 auto;
+    width: auto;
   }
 
   .paso-pie-final {
@@ -2581,6 +2675,23 @@ button {
 .ocupacion-apartamento,
 .ocupacion-mover {
   grid-column: 1 / -1;
+}
+
+/* El selector de fecha del celular tiene un ancho mínimo propio y se salía del recuadro: se le deja encoger */
+.ocupacion-controles > *,
+.campo-control[type="date"] {
+  min-width: 0;
+}
+
+.campo-control[type="date"] {
+  max-width: 100%;
+}
+
+/* En un celular angosto, cada fecha en su propia línea */
+@media (max-width: 26rem) {
+  .ocupacion-controles {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .ocupacion-mover {
@@ -2864,6 +2975,14 @@ button {
   line-height: var(--interlinea-rotulo);
   text-decoration: none;
   overflow: hidden;
+}
+
+/* La barra de una reserva abre su ventana (#23): es un botón que se ve igual que antes */
+button.barra {
+  font-family: inherit;
+  font-weight: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
 .barra.barra-bloqueo {
@@ -3990,6 +4109,8 @@ button {
   font-size: var(--tamano-control);
   line-height: var(--interlinea-control);
   overflow-wrap: anywhere;
+  /* Los saltos de línea de quien la escribió se respetan */
+  white-space: pre-line;
 }
 
 .nota-quien {

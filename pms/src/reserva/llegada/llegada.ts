@@ -50,6 +50,12 @@ export const TIPOS_DOCUMENTO: readonly (readonly [string, string])[] = [
   ['TI', 'Tarjeta de identidad'],
 ]
 
+/** Los de un huésped: además, el registro civil de un niño (DEC-110). El titular no lo usa. */
+export const TIPOS_DOCUMENTO_OCUPANTE: readonly (readonly [string, string])[] = [
+  ...TIPOS_DOCUMENTO,
+  ['RC', 'Registro civil'],
+]
+
 export const GENEROS: readonly (readonly [string, string])[] = [
   ['FEMENINO', 'Femenino'],
   ['MASCULINO', 'Masculino'],
@@ -107,11 +113,14 @@ export function titularSeAloja(titular: Pick<Titular, 'tipoDocumento' | 'numeroD
     ocupante.numeroDocumento === titular.numeroDocumento && ocupante.tipoDocumento === titular.tipoDocumento)
 }
 
-/** El siguiente huésped al que le falta algo, después de `actual` y dando la vuelta; nulo si ya no queda nadie. */
-export function siguienteConFaltantes(ocupantes: Ocupante[], actual: string): Ocupante | null {
+/**
+ * El siguiente huésped al que le falta algo, después de `actual` y dando la vuelta, sin repetir los que ya se vieron en
+ * este diálogo: así, guardar a medias no hace volver al mismo huésped una y otra vez. Nulo si ya no queda nadie.
+ */
+export function siguienteConFaltantes(ocupantes: Ocupante[], actual: string, vistos: readonly string[] = []): Ocupante | null {
   const posicion = ocupantes.findIndex((ocupante) => ocupante.id === actual)
   const orden = [...ocupantes.slice(posicion + 1), ...ocupantes.slice(0, Math.max(posicion, 0))]
-  return orden.find(tieneTraPendiente) ?? null
+  return orden.find((ocupante) => tieneTraPendiente(ocupante) && !vistos.includes(ocupante.id)) ?? null
 }
 
 /** Por qué no se puede registrar todavía, en el orden en que recepción lo resuelve. */

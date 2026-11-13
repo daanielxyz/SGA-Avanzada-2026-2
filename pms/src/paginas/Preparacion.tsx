@@ -11,6 +11,7 @@ import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
 import EstadoApartamento from '../componentes/EstadoApartamento'
 import { NOMBRE_ESTADO_OPERATIVO } from '../componentes/estadosApartamento'
+import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, hora } from '../formato'
 import { errorParaMostrar } from '../reserva/mensajes'
@@ -94,6 +95,24 @@ export default function Preparacion() {
     }
   }, [pedirDatos, aplicar, intento])
 
+  // Lo que otros mueven llega solo. No se relee con «Ver más» abierto, ni mientras se hace o se confirma un paso
+  const pulso = usePulso()
+  const relee = pulso > 0 && (pendientes?.pagina ?? 0) === 0 && !enviando && !confirmar
+  useEffect(() => {
+    if (!relee) return
+    let vigente = true
+    pedirDatos()
+      .then((datos) => {
+        if (vigente) aplicar(datos)
+      })
+      .catch(() => undefined)
+    return () => {
+      vigente = false
+    }
+    // Solo el pulso dispara la relectura
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pulso])
+
   async function verMas() {
     if (!pendientes) return
     setCargandoMas(true)
@@ -124,7 +143,7 @@ export default function Preparacion() {
       if (nuevo.estadoOperativo === 'PREPARADO') {
         setAviso(`${apartamento.codigo} quedó preparado. Recepción ya puede entregarlo.`)
       } else if (paso === 'declarar-fuera-de-servicio') {
-        setAviso(`${apartamento.codigo} quedó fuera de servicio. No se puede entregar hasta volverlo a preparación.`)
+        setAviso(`${apartamento.codigo} quedó fuera de servicio. No se entrega ni se vende hasta volverlo a preparación.`)
       } else if (paso === 'marcar-pendiente-preparacion') {
         setAviso(`${apartamento.codigo} volvió a preparación.`)
       }
@@ -348,9 +367,10 @@ export default function Preparacion() {
           <div className="dialogo-contenido">
             <div className="dialogo-cuerpo">
               <p className="dialogo-texto">
-                <span className="codigo">{confirmar.apartamento.codigo}</span> {confirmar.apartamento.nombre} no se podrá entregar hasta
-                que lo vuelvas a preparación.
+                <span className="codigo">{confirmar.apartamento.codigo}</span> {confirmar.apartamento.nombre} no se podrá entregar ni
+                vender en ninguna fecha hasta que lo vuelvas a preparación.
               </p>
+              <p className="suave">Las reservas que ya tiene no se mueven solas: revísalas en Reservas.</p>
               <p className="suave">
                 Hoy está {(NOMBRE_ESTADO_OPERATIVO[confirmar.apartamento.estadoOperativo] ?? confirmar.apartamento.estadoOperativo).toLowerCase()}.
               </p>

@@ -26,7 +26,9 @@ export default function NotasTurno({ codigo, activa, soloPendientes = false }: {
   const [faltaTexto, setFaltaTexto] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<ErrorMostrado | null>(null)
-  const [atendiendo, setAtendiendo] = useState<{ id: string; error: string | null } | null>(null)
+  const [atendiendo, setAtendiendo] = useState<string | null>(null)
+  // Si otro turno ya la atendió, la nota pasa a «Atendidas» al releer la lista: el aviso va arriba, no junto a ella
+  const [rechazo, setRechazo] = useState<{ texto: string; mensaje: string } | null>(null)
   const id = useId()
   const clave = `${codigo}#${intento}`
 
@@ -43,6 +45,18 @@ export default function NotasTurno({ codigo, activa, soloPendientes = false }: {
       vigente = false
     }
   }, [codigo, clave])
+
+  // Otro turno pudo escribir o atender notas desde otro equipo: al volver a esta pestaña se releen sin borrar la lista
+  useEffect(() => {
+    function alVolver() {
+      if (document.visibilityState !== 'visible') return
+      listarNotas(codigo)
+        .then((notas) => setCarga((actual) => (actual && 'notas' in actual ? { clave: actual.clave, notas } : actual)))
+        .catch(() => undefined)
+    }
+    document.addEventListener('visibilitychange', alVolver)
+    return () => document.removeEventListener('visibilitychange', alVolver)
+  }, [codigo])
 
   const actual = carga?.clave === clave ? carga : null
   const ponerNotas = (notas: Nota[]) => setCarga({ clave, notas })
@@ -66,14 +80,16 @@ export default function NotasTurno({ codigo, activa, soloPendientes = false }: {
   }
 
   async function atender(nota: Nota) {
-    setAtendiendo({ id: nota.id, error: null })
+    setAtendiendo(nota.id)
+    setRechazo(null)
     try {
       ponerNotas(await atenderNota(codigo, nota.id))
-      setAtendiendo(null)
     } catch (causa) {
-      setAtendiendo({ id: nota.id, error: errorParaMostrar(causa).mensaje })
+      setRechazo({ texto: nota.texto, mensaje: errorParaMostrar(causa).mensaje })
       // Otro turno pudo atenderla: se vuelve a leer para que la lista quede al día
       listarNotas(codigo).then(ponerNotas).catch(() => undefined)
+    } finally {
+      setAtendiendo(null)
     }
   }
 
@@ -106,6 +122,18 @@ export default function NotasTurno({ codigo, activa, soloPendientes = false }: {
         return (
           <>
             {error && <Aviso tipo="error" asunto="No se guardó la nota" mensaje={error.mensaje} detalles={error.detalles} />}
+            {rechazo && (
+              <Aviso
+                tipo="error"
+                asunto={`No se marcó «${resumen(rechazo.texto)}»`}
+                mensaje={`${rechazo.mensaje} La lista ya está al día.`}
+                accion={
+                  <button type="button" className="boton boton-secundario boton-chico" onClick={() => setRechazo(null)}>
+                    Entendido
+                  </button>
+                }
+              />
+            )}
             {actual.notas.length === 0 && !soloPendientes && <p className="suave">Todavía no hay notas.</p>}
             {pendientes.length === 0 && (actual.notas.length > 0 || soloPendientes) && (
               <p className="notas-sin-pendientes">
@@ -124,19 +152,16 @@ export default function NotasTurno({ codigo, activa, soloPendientes = false }: {
                       <div className="nota-cuerpo">
                         <p className="nota-texto">{nota.texto}</p>
                         <p className="nota-quien">{quien(nota.autorNombre, nota.escritaEn)}</p>
-                        {atendiendo?.id === nota.id && atendiendo.error && (
-                          <p className="campo-mensaje" role="alert">{atendiendo.error}</p>
-                        )}
                       </div>
                       {activa && (
                         <button
                           type="button"
                           className="boton boton-secundario boton-chico"
                           aria-label={`Marcar como atendida: ${nota.texto}`}
-                          disabled={Boolean(atendiendo && !atendiendo.error)}
+                          disabled={Boolean(atendiendo)}
                           onClick={() => atender(nota)}
                         >
-                          {atendiendo?.id === nota.id && !atendiendo.error ? 'Marcando…' : 'Marcar como atendida'}
+                          {atendiendo === nota.id ? 'Marcando…' : 'Marcar como atendida'}
                         </button>
                       )}
                     </li>
@@ -213,3 +238,8 @@ function quien(nombre: string | null, fecha: string, por = false): string {
   return `${por ? 'por ' : ''}${nombre} · ${cuando}`
 }
 
+/** Las primeras palabras de una nota, para nombrarla en un aviso sin repetirla entera. */
+function resumen(texto: string): string {
+  const limpio = texto.replace(/\s+/g, ' ').trim()
+  return limpio.length > 40 ? `${limpio.slice(0, 40).trimEnd()}…` : limpio
+}

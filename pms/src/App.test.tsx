@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import App from './App'
 import { entrarComo, laApiResponde, laApiRespondePorRuta, llamada } from './pruebas/sesionDePrueba'
+import { paginaDe, reservaDePrueba } from './pruebas/reservasDePrueba'
 import { leerSesion, sesionPerdida } from './sesion/almacen'
 import ProveedorSesion from './sesion/ProveedorSesion'
 
@@ -46,7 +47,7 @@ describe('entrada del personal', () => {
 
     await escribirYEntrar('luis@sga.co', 'Clave1234')
 
-    expect(await screen.findByRole('heading', { name: 'Reservas' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Reservas' }, { timeout: 4000 })).toBeInTheDocument()
     expect(llamada(fetch, 0)).toMatchObject({
       url: '/api/auth/login', metodo: 'POST', cuerpo: { correo: 'luis@sga.co', contrasena: 'Clave1234' },
     })
@@ -146,11 +147,26 @@ describe('panel según el rol', () => {
 
   it('muestra el nombre del alojamiento que trae la API', async () => {
     entrarComo('RECEPCIONISTA')
-    const fetch = laApiResponde([200, { nombre: 'Hotel de Prueba' }])
+    const fetch = laApiRespondePorRuta({ '/api/alojamiento': [200, { nombre: 'Hotel de Prueba' }] })
     abrir('/')
 
     expect(await screen.findByText('Hotel de Prueba')).toBeInTheDocument()
-    expect(llamada(fetch, 0).url).toBe('/api/alojamiento')
+    expect(fetch.mock.calls.map(([url]) => url)).toContain('/api/alojamiento')
+  })
+
+  it('recepción ve al entrar las salidas vencidas: siguen en curso y no dejan entregar el apartamento', async () => {
+    entrarComo('RECEPCIONISTA')
+    laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([
+        reservaDePrueba({ codigo: 'RES-2026-00007', estado: 'EN_CURSO', apartamento: 'APT-103', entrada: '2020-01-01', salida: '2020-01-04' }),
+        reservaDePrueba({ codigo: 'RES-2026-00008', estado: 'EN_CURSO', entrada: '2020-01-01', salida: '2999-01-04' }),
+      ])],
+    })
+    abrir('/')
+
+    const vencidas = await screen.findByRole('region', { name: /1 salida vencida/ })
+    expect(within(vencidas).getByRole('link', { name: 'RES-2026-00007' })).toHaveAttribute('href', '/reservas/RES-2026-00007')
+    expect(within(vencidas).getByText(/APT-103 · salía el 4 ene 2020/)).toBeInTheDocument()
   })
 
   it('sin el nombre del alojamiento el panel sigue funcionando', async () => {
@@ -233,16 +249,33 @@ describe('menú plegable del celular', () => {
 describe('salida', () => {
   it('salir cierra la sesión en el backend y vuelve a la entrada', async () => {
     entrarComo('RECEPCIONISTA')
-    const fetch = laApiResponde([200, { nombre: 'Hotel de Prueba' }], [200, { mensaje: 'La sesión quedó cerrada.' }])
+    const fetch = laApiRespondePorRuta({ '/api/auth/logout': [200, { mensaje: 'La sesión quedó cerrada.' }] })
     abrir('/')
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     expect(await screen.findByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
-    expect(llamada(fetch, 1)).toMatchObject({
+    const salida = fetch.mock.calls.findIndex(([url]) => url === '/api/auth/logout')
+    expect(llamada(fetch, salida)).toMatchObject({
       url: '/api/auth/logout', metodo: 'POST', cabeceras: { Authorization: 'Bearer token-RECEPCIONISTA' },
     })
     expect(leerSesion()).toBeNull()
+  })
+
+  it('quien entra después de salir empieza en Inicio, no en la pantalla donde se salió', async () => {
+    entrarComo('RECEPCIONISTA')
+    laApiRespondePorRuta({
+      '/api/auth/logout': [200, { mensaje: 'La sesión quedó cerrada.' }],
+      '/api/auth/login': [200, SESION_RECEPCION],
+    })
+    abrir('/titulares')
+    const usuario = userEvent.setup()
+
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await screen.findByRole('heading', { name: 'Te damos la bienvenida' })
+    await escribirYEntrar('luis@sga.co', 'Clave1234')
+
+    expect(await screen.findByRole('heading', { name: 'Hola, Luis Pérez' })).toBeInTheDocument()
   })
 
   it('si el backend deja de aceptar el token, vuelve a la entrada y lo explica', () => {

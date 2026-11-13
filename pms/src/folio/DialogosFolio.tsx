@@ -227,8 +227,9 @@ const ESTADO_OPERATIVO: Record<string, string> = {
  * @param alCambiarFolio un pago o una devolución hechos desde aquí
  * @param alTerminar     la salida quedó registrada: hay que volver a leer la reserva y el folio
  * @param alFallar       algo falló: la reserva o el folio pudieron cambiar
+ * @param alCompletarTra abre los datos del TRA de ese huésped; al cerrarlos se vuelve a la salida
  */
-export function DialogoSalida({ reserva, folio, esAdministrador, medios, alCerrar, alCambiarFolio, alTerminar, alFallar }: {
+export function DialogoSalida({ reserva, folio, esAdministrador, medios, alCerrar, alCambiarFolio, alTerminar, alFallar, alCompletarTra }: {
   reserva: Reserva
   folio: Folio
   esAdministrador: boolean
@@ -237,6 +238,7 @@ export function DialogoSalida({ reserva, folio, esAdministrador, medios, alCerra
   alCambiarFolio: (folio: Folio) => void
   alTerminar: () => unknown
   alFallar: () => void
+  alCompletarTra?: (ocupanteId: string) => void
 }) {
   const [motivo, setMotivo] = useState('')
   const [faltaMotivo, setFaltaMotivo] = useState(false)
@@ -338,6 +340,19 @@ export function DialogoSalida({ reserva, folio, esAdministrador, medios, alCerra
                     <li key={ocupante.id}>
                       <strong>{ocupante.nombre}:</strong>{' '}
                       {(ocupante.datosTraFaltantes ?? []).map(datoTraLegible).join(', ')}
+                      {alCompletarTra && (
+                        <>
+                          {' '}
+                          <button
+                            type="button"
+                            className="boton boton-secundario boton-chico"
+                            aria-label={`Completar datos de ${ocupante.nombre}`}
+                            onClick={() => alCompletarTra(ocupante.id)}
+                          >
+                            Completar datos
+                          </button>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -107,6 +107,7 @@ Hipótesis: recepción hace llegada, cobros y salida en el sistema; el huésped 
   - [x] Folio (Daniel, `feature/pms/folio`): cargos (con cantidad, BL-12), pagos, devoluciones y reversos; cierre del folio y salida, bloqueada si faltan datos del TRA (BL-07). Auditado (`pms/DISENO.md`, «Sprint 3: folio»).
   - [~] Tablero coloreado por la cuenta (BL-09) y notas en el detalle (BL-08) (Daniel, en `feature/pms/registro-llegada`), con la política legible y quién declaró el no-show (#7, DEC-103). Programado y con pruebas; falta probarlo contra el backend.
   - [~] Preparación de apartamentos para el personal de servicio (Daniel, en `feature/pms/registro-llegada`): no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS. Programada y con pruebas; falta probarla contra el backend y en un celular real.
+  - [~] Arreglos y decisiones de las pruebas en el navegador (12 nov, Daniel): en `feature/pms/registro-llegada` lo del PMS y en `feature/nucleo/decisiones-pruebas-sprint3` (DEC-110) el registro civil, confirmar a tiempo y fuera de servicio sin venta (`pms/DISENO.md`, «Pruebas en el navegador»). Falta volver a probarlo.
   - [ ] Probar en un celular real las pantallas del sprint 2 (Daniel).
 - **Cierre 3 (vie 13 nov)**: preguntar al cliente por el IVA según el documento del huésped y las retenciones de empresa (BL-13).
 
@@ -118,6 +119,9 @@ Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
 - **pms**
   - [ ] Apartamentos, temporadas y tarifas, política de cancelación, parámetros y medios de pago.
   - [ ] Núcleo, pasado del sprint 3: nombre de la temporada en el desglose y mensajes de los 409 pensados para recepción (`pms/DISENO.md`, #8 y #10).
+  - [ ] De las pruebas del sprint 3 (`pms/DISENO.md`, #22 y #23): filtros de varios valores en Reservas (la API recibe una lista por filtro, núcleo) y, si hace falta después de probar la ventana del tablero, ensanchar la columna de hoy.
+  - [ ] Decisiones del equipo del 12 nov (`pms/DISENO.md`), núcleo + pantalla: próxima entrada en la preparación (#16, primero), leer la llegada registrada (#13), quién validó la identidad (#15), motivo de fuera de servicio (#17), cambiar vehículos y mascotas sin recalcular las noches (R3), confirmar sin anticipo con autorización del administrador (R2) y, si cabe, corregir un documento mal escrito (#14).
+  - [ ] Escoger al huésped principal y apellidos del titular aparte en «Nueva reserva» (DEC-97/98), con mockup.
   - [ ] Usuarios del personal, novedades de mantenimiento y pantallas de canales (conflictos y bitácora, con la API del equipo web).
 - **Cierre 4 (vie 20 nov)**: decidir con el cliente qué parte de Channex es imprescindible para la entrega.
 

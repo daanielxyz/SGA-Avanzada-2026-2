@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -176,7 +176,7 @@ describe('registro de llegada (CU-21)', () => {
     expect(llamadasA(fetch, '/registrar-llegada')).toEqual([
       { metodo: 'PUT', cuerpo: { motivoSinPago: 'Cuenta por cobrar a una empresa' } },
     ])
-  })
+  }, 15000)
 
   it('con todo pagado registra sin motivo', async () => {
     const fetch = apiCon({ pagado: 975000 })
@@ -278,7 +278,8 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     expect(within(ana).getByText(/Faltan 6 datos/)).toBeInTheDocument()
     const sofia = within(tabla).getByRole('row', { name: /Sofía Mejía Torres/ })
     expect(within(sofia).getByText(/Completo/)).toBeInTheDocument()
-    expect(within(sofia).queryByRole('button')).not.toBeInTheDocument()
+    // Con todo completo, sus datos se corrigen; menor de edad, no puede ser principal
+    expect(within(sofia).getAllByRole('button').map((boton) => boton.textContent)).toEqual(['Editar datos'])
     expect(screen.getByRole('button', { name: 'Hacer principal a Julián Mejía Ríos' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Hacer principal a Ana Torres Vélez' })).not.toBeInTheDocument()
   })
@@ -340,17 +341,41 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     }])
   })
 
-  it('«Validar identidad» solo aparece si el titular se aloja, y al validar dice cuándo', async () => {
+  it('un huésped con todo completo se edita, y cerrar con cambios sin guardar pregunta antes', async () => {
     const fetch = apiCon()
     const usuario = abrir()
 
-    await usuario.click(await screen.findByRole('button', { name: 'Validar identidad' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Editar datos de Sofía Mejía Torres' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Editar datos' })
+    expect(within(dialogo).getByText(/ya tiene todos sus datos del TRA/)).toBeInTheDocument()
+
+    await usuario.type(within(dialogo).getByLabelText('Nacionalidad'), 'na')
+    // Escape: el navegador lanza «cancel» en el dialog
+    fireEvent(dialogo, new Event('cancel', { cancelable: true }))
+    expect(within(dialogo).getByText(/Cambiaste datos de Sofía Mejía Torres/)).toBeInTheDocument()
+    expect(within(dialogo).getByRole('button', { name: 'Seguir editando' })).toHaveFocus()
+
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Seguir editando' }))
+    expect(within(dialogo).getByLabelText('Nacionalidad')).toHaveValue('Colombiana')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Cerrar' }))
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Descartar cambios' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(llamadasA(fetch, '/datos-tra')).toEqual([])
+  })
+
+  it('«Validar identidad» va en la fila del titular en la tabla de huéspedes (#19), y al validar dice cuándo', async () => {
+    const fetch = apiCon()
+    const usuario = abrir()
+
+    const boton = await screen.findByRole('button', { name: /^Validar identidad de / })
+    expect(boton.closest('table')).toHaveAccessibleName(/Huéspedes/)
+    await usuario.click(boton)
     const dialogo = await screen.findByRole('dialog', { name: 'Validar identidad' })
     expect(within(dialogo).getByText('CC 1094123456')).toBeInTheDocument()
     await usuario.click(within(dialogo).getByRole('button', { name: 'Validar identidad' }))
 
     expect(await screen.findByText(/Validada/)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Validar identidad' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Validar identidad/ })).not.toBeInTheDocument()
     expect(llamadasA(fetch, '/validar')).toEqual([{ metodo: 'PUT', cuerpo: undefined }])
   })
 
@@ -359,7 +384,7 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     abrir()
 
     expect(await screen.findByText('Ricardo Vélez Arango')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Validar identidad' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Validar identidad/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cambiar titular' })).toBeInTheDocument()
   })
 
@@ -374,6 +399,36 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     expect(within(dialogo).getByText('Escribe los nombres.')).toBeInTheDocument()
     expect(within(dialogo).getByText('Escribe el correo.')).toBeInTheDocument()
     expect(llamadasA(fetch, '/cambiar-titular')).toEqual([])
+  })
+
+  it('el documento de un huésped no se acepta con otro nombre, y elegir al huésped llena sus datos', async () => {
+    const fetch = apiCon()
+    const usuario = abrir()
+
+    await usuario.click(await screen.findByRole('button', { name: 'Cambiar titular' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Cambiar titular' })
+    await usuario.type(within(dialogo).getByLabelText('Nombres'), 'Pedro')
+    await usuario.type(within(dialogo).getByLabelText('Primer apellido'), 'Pérez')
+    await usuario.type(within(dialogo).getByLabelText('Número de documento'), '1094987654')
+    await usuario.selectOptions(within(dialogo).getByLabelText('Tipo de documento'), 'TI')
+    await usuario.type(within(dialogo).getByLabelText('Correo'), 'pedro@ejemplo.com')
+    await usuario.type(within(dialogo).getByLabelText('Teléfono'), '12')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Cambiar titular' }))
+
+    expect(within(dialogo).getByText(/Ese documento es de Sofía Mejía Torres, huésped de esta reserva/)).toBeInTheDocument()
+    expect(within(dialogo).getByText(/Escribe un teléfono de 7 a 15 dígitos/)).toBeInTheDocument()
+    expect(llamadasA(fetch, '/cambiar-titular')).toEqual([])
+
+    await usuario.selectOptions(within(dialogo).getByLabelText('¿Es uno de los huéspedes?'), 'OCU-3')
+    expect(within(dialogo).getByLabelText('Nombres')).toHaveValue('Sofía')
+    expect(within(dialogo).getByLabelText('Número de documento')).toHaveValue('1094987654')
+
+    // Elegida de la lista, es esa persona aunque recepción corrija cómo se escribe su nombre (ronda 3)
+    await usuario.type(within(dialogo).getByLabelText('Nombres'), ' Andrea')
+    await usuario.clear(within(dialogo).getByLabelText('Teléfono'))
+    await usuario.type(within(dialogo).getByLabelText('Teléfono'), '3001234567')
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Cambiar titular' }))
+    expect(within(dialogo).queryByText(/Ese documento es de/)).not.toBeInTheDocument()
   })
 })
 

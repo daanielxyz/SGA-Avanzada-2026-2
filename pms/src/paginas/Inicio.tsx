@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { listarPendientesPreparacion } from '../api/apartamentos'
+import { listarSalidasVencidas, type Reserva } from '../api/reservas'
 import Icono from '../componentes/Icono'
+import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
-import { cantidad } from '../formato'
+import { cantidad, fechaCorta, fechaHoy } from '../formato'
 import { menuPara } from '../navegacion'
 import { useSesion } from '../sesion/contexto'
 
@@ -16,6 +18,23 @@ export default function Inicio() {
   useTitulo('Inicio')
   const [porPreparar, setPorPreparar] = useState<number | null>(null)
   const prepara = sesion?.rol === 'PERSONAL_SERVICIO' || sesion?.rol === 'ADMINISTRADOR'
+  const atiende = sesion?.rol === 'RECEPCIONISTA' || sesion?.rol === 'ADMINISTRADOR'
+  const [vencidas, setVencidas] = useState<Reserva[]>([])
+  const pulso = usePulso()
+
+  // Una salida que no se registró deja el apartamento ocupado: recepción lo ve apenas entra
+  useEffect(() => {
+    if (!atiende) return
+    let vigente = true
+    listarSalidasVencidas(fechaHoy())
+      .then((lista) => {
+        if (vigente) setVencidas(lista)
+      })
+      .catch(() => undefined)
+    return () => {
+      vigente = false
+    }
+  }, [atiende, pulso])
 
   useEffect(() => {
     if (!prepara) return
@@ -29,7 +48,7 @@ export default function Inicio() {
     return () => {
       vigente = false
     }
-  }, [prepara])
+  }, [prepara, pulso])
 
   if (!sesion) return null
   const servicio = sesion.rol === 'PERSONAL_SERVICIO'
@@ -43,6 +62,22 @@ export default function Inicio() {
         <h1>Hola, {sesion.nombre}</h1>
         <p className="suave">Estos son los accesos de tu rol.</p>
       </div>
+      {vencidas.length > 0 && (
+        <section className="tarjeta salidas-vencidas" aria-labelledby="titulo-vencidas">
+          <h2 id="titulo-vencidas">
+            <span aria-hidden="true">!</span> {cantidad(vencidas.length, 'salida vencida', 'salidas vencidas')}
+          </h2>
+          <p className="suave">Siguen en curso aunque su salida ya pasó: el apartamento no se puede entregar a la próxima reserva.</p>
+          <ul>
+            {vencidas.map((reserva) => (
+              <li key={reserva.codigo}>
+                <Link to={`/reservas/${encodeURIComponent(reserva.codigo)}`} className="codigo">{reserva.codigo}</Link>
+                {' · '}{reserva.apartamento} · salía el {fechaCorta(reserva.salida)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className="accesos">
         {menuPara(sesion.rol).flatMap(({ opciones }) =>
           opciones.map((opcion) => {

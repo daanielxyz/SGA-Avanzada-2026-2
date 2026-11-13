@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -125,13 +125,20 @@ describe('notas del turno (BL-08 · DEC-105)', () => {
     expect(within(notas).getByText('Sin notas pendientes.')).toBeInTheDocument()
   })
 
-  it('si otro turno ya la atendió, lo dice junto a la nota', async () => {
-    apiCon({ rechazar: { atender: RECHAZO('YA_ATENDIDA', 'La nota NOT-2 ya fue atendida') } })
+  it('si otro turno ya la atendió, lo dice arriba y el aviso queda hasta que se lee', async () => {
+    const fetch = apiCon({ rechazar: { atender: RECHAZO('YA_ATENDIDA', 'La nota NOT-2 ya fue atendida') } })
     const usuario = abrir()
 
     const notas = await screen.findByRole('region', { name: 'Notas del turno' })
     await usuario.click(await within(notas).findByRole('button', { name: /^Marcar como atendida/ }))
     expect(await within(notas).findByRole('alert')).toHaveTextContent('Otro turno ya la marcó como atendida.')
+    // La lista se vuelve a leer y el aviso sigue ahí
+    await waitFor(() => expect(fetch.mock.calls.filter(([url, opciones]) =>
+      String(url).endsWith('/notas') && (opciones?.method ?? 'GET') === 'GET')).toHaveLength(2))
+    expect(within(notas).getByRole('alert')).toBeInTheDocument()
+
+    await usuario.click(within(notas).getByRole('button', { name: 'Entendido' }))
+    expect(within(notas).queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('una reserva terminada muestra sus notas sin agregar ni atender', async () => {

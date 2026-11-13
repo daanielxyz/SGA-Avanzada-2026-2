@@ -83,12 +83,15 @@ export default function App() {
   )
 }
 
-/** Sin sesión, toda pantalla manda a entrar y recuerda adónde se quería ir. */
+/**
+ * Sin sesión, toda pantalla manda a entrar. Si la sesión se perdió, recuerda adónde se quería ir; si la persona salió a
+ * propósito, no: quien entre después, que puede ser otra persona, empieza en Inicio.
+ */
 function ConSesion() {
-  const { sesion } = useSesion()
+  const { sesion, motivo } = useSesion()
   const { pathname, search } = useLocation()
   if (!sesion) {
-    return <Navigate to="/ingresar" replace state={{ desde: pathname + search }} />
+    return <Navigate to="/ingresar" replace state={motivo === 'salio' ? null : { desde: pathname + search }} />
   }
   return <Panel sesion={sesion} />
 }

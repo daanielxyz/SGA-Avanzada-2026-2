@@ -11,7 +11,7 @@ import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import TablaDesglose from '../componentes/TablaDesglose'
 import { useTitulo } from '../componentes/useTitulo'
 import { DialogoSalida } from '../folio/DialogosFolio'
-import { cantidad, dinero, edadEn, fechaCorta, fechaHoy, hora, noches } from '../formato'
+import { cantidad, dinero, fechaCorta, fechaHoy, hora, noches, textoEdad } from '../formato'
 import AccionesReserva, { type Accion } from '../reserva/AccionesReserva'
 import DialogoTra from '../reserva/llegada/DialogoTra'
 import { DialogoCorregirRegistro, DialogoVehiculos } from '../reserva/llegada/DialogosLlegada'
@@ -35,7 +35,7 @@ interface ReservaRecienCreada {
   avisoCuenta: string | null
 }
 
-type DialogoAbierto = Exclude<Accion, 'llegada'> | 'pago' | 'vehiculos' | { tra: string }
+type DialogoAbierto = Exclude<Accion, 'llegada'> | 'pago' | 'vehiculos' | { tra: string; volverASalida?: boolean }
 
 /** Detalle de una reserva (CU-49): sus datos, su pago, su grupo, el valor por noche y lo que se puede hacer con ella. */
 export default function DetalleReserva() {
@@ -179,8 +179,11 @@ export default function DetalleReserva() {
 
   return (
     <div className="detalle">
-      <div>
+      {/* Fuera del bloque del título, para que quede fija al bajar por un detalle largo */}
+      <div className="barra-volver">
         <VolverAReservas listado={listado} />
+      </div>
+      <div>
         <div className="detalle-titulo">
           <div className="detalle-codigo">
             <h1 className="codigo" ref={titulo} tabIndex={-1}>
@@ -202,6 +205,13 @@ export default function DetalleReserva() {
       </div>
 
       {exito && <Aviso tipo="exito" asunto={exito.asunto} mensaje={exito.mensaje} />}
+      {reserva.estado === 'EN_CURSO' && reserva.salida < fechaHoy() && (
+        <Aviso
+          tipo="advertencia"
+          asunto="Salida vencida"
+          mensaje={`La salida era el ${fechaCorta(reserva.salida)} y no se ha registrado. Mientras siga en curso, ${reserva.apartamento} sigue ocupado y no se puede entregar a la próxima reserva.`}
+        />
+      )}
       {avisoCuenta && <Aviso tipo="info" asunto="Cuenta del titular" mensaje={avisoCuenta} />}
 
       <section aria-labelledby="titulo-datos" className="detalle-seccion">
@@ -290,16 +300,14 @@ export default function DetalleReserva() {
                   )}
                   {activa && (
                     <td className="ocupante-acciones">
-                      {tieneTraPendiente(ocupante) && (
-                        <button
-                          type="button"
-                          className="boton boton-secundario boton-chico"
-                          aria-label={`Completar datos de ${ocupante.nombre}`}
-                          onClick={() => setDialogo({ tra: ocupante.id })}
-                        >
-                          Completar datos
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="boton boton-secundario boton-chico"
+                        aria-label={`${tieneTraPendiente(ocupante) ? 'Completar' : 'Editar'} datos de ${ocupante.nombre}`}
+                        onClick={() => setDialogo({ tra: ocupante.id })}
+                      >
+                        {tieneTraPendiente(ocupante) ? 'Completar datos' : 'Editar datos'}
+                      </button>
                     </td>
                   )}
                 </tr>
@@ -347,6 +355,7 @@ export default function DetalleReserva() {
           alCambiarFolio={pago.ponerFolio}
           alTerminar={actualizar}
           alFallar={actualizar}
+          alCompletarTra={(ocupante) => setDialogo({ tra: ocupante, volverASalida: true })}
         />
       )}
       {dialogo === 'corregir' && (
@@ -364,7 +373,7 @@ export default function DetalleReserva() {
           reserva={reserva}
           ocupanteId={dialogo.tra}
           alCambiar={(nueva) => setResultado({ clave, reserva: nueva })}
-          alCerrar={() => setDialogo(null)}
+          alCerrar={() => setDialogo(dialogo.volverASalida ? 'salida' : null)}
         />
       )}
       {dialogo === 'vehiculos' && pago.datos && (
@@ -422,8 +431,7 @@ function documento({ tipoDocumento, numeroDocumento }: Ocupante): string {
 /** La edad se muestra a la fecha de entrada: es la que decide si el ocupante paga (OCU). */
 function nacimiento({ fechaNacimiento }: Ocupante, entrada: string): string {
   if (!fechaNacimiento) return 'Sin dato'
-  const edad = edadEn(fechaNacimiento, entrada)
-  return `${fechaCorta(fechaNacimiento)} · ${edad} ${edad === 1 ? 'año' : 'años'}`
+  return `${fechaCorta(fechaNacimiento)} · ${textoEdad(fechaNacimiento, entrada)}`
 }
 
 function Cargando() {

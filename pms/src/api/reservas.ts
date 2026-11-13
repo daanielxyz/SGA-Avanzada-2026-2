@@ -118,6 +118,16 @@ export function listarReservas(consulta: string): Promise<Pagina<Reserva>> {
 }
 
 /**
+ * Las reservas en curso cuya fecha de salida ya pasó sin registrarse. Mientras sigan en curso, su apartamento sigue
+ * ocupado y no se entrega a la siguiente. Un alojamiento tiene pocas a la vez, así que basta la primera página.
+ */
+export async function listarSalidasVencidas(hoy: string, apartamento?: string): Promise<Reserva[]> {
+  const consulta = new URLSearchParams({ estado: 'EN_CURSO', ...(apartamento ? { apartamento } : {}) })
+  const pagina = await listarReservas(consulta.toString())
+  return pagina.contenido.filter((reserva) => reserva.salida < hoy)
+}
+
+/**
  * `GET /api/reservas/{codigo}`.
  *
  * @throws ErrorApi 404 `NO_ENCONTRADO` si no existe

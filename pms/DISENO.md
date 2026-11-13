@@ -341,6 +341,90 @@ Decisiones que tomó Daniel con Claude y conviene ratificar: las del paso 3 de l
 
 **Pruebas pendientes** (no son decisiones, pero van antes de los PR): todo contra el backend de la rama en el navegador, `break-ui` a 1280, 1024 y 390 px, y la preparación en un celular real.
 
+## Pruebas en el navegador (12 nov)
+Daniel recorrió la lista de pruebas contra el backend de la rama y en un celular real. Pasó casi todo; lo que falló o pidió cambios quedó así.
+
+**Arreglado en el PMS** (con sus pruebas; 302 en total):
+- TRA: «Guardar y seguir» ya no vuelve una y otra vez al mismo huésped (no repite los que ya se vieron en el diálogo); un huésped con todo completo tiene «Editar datos»; cerrar con cambios sin guardar (Esc o ✕) pregunta antes de descartarlos.
+- Edad: antes del primer año sale en meses, «7 meses (bebé)», y no «0 años».
+- Notas: si otro turno ya atendió la nota, el aviso queda arriba hasta que se lee («Entendido»), no un instante junto a la nota; la lista se relee al volver a la pestaña; los saltos de línea se respetan.
+- Sesión: quien entra después de cerrar sesión empieza en Inicio; si otra pestaña cierra la sesión, esta vuelve a la entrada al instante (antes seguía abierta hasta la próxima petición, que salía sin token).
+- Nueva reserva: desmarcar «El titular también se aloja» deja en blanco el ocupante 1; el teléfono se revisa en el paso 3 con la regla del backend (7 a 15 dígitos); el error lleva un sello «!» junto al campo y, si falta un mayor de edad, se marcan las fechas; Atrás y Siguiente quedan fijos al pie (en el celular, el resumen no, para no tapar media pantalla); salir con algo escrito pregunta con un diálogo de la página (al recargar o cerrar la pestaña sigue el aviso del navegador, que no se puede cambiar).
+- Hora estimada de llegada: debajo del campo se lee en palabras, «Queda a las 3:00 p. m., en la tarde», porque el campo se ve en 24 horas o con a. m./p. m. según el equipo.
+- Cambiar titular: no acepta el documento de un huésped con otro nombre, y ofrece «¿Es uno de los huéspedes?» para llenar sus datos tal como están en la reserva.
+- Tablero en el celular: las fechas ya no se salen del recuadro (cada una en su línea si la pantalla es angosta).
+
+**No eran fallas** (la prueba se hizo en otro orden o la lista no lo explicó bien):
+- «Continuar llegada» solo sale en la reserva que entra hoy; la segunda reserva entraba mañana.
+- Pasos 6 a 8 de la llegada: «Se libera al registrar la salida» solo sale con el apartamento OCUPADO, o sea que la llegada ya estaba registrada. Repetirlos con una reserva que entre hoy, antes de registrar la llegada.
+- La llegada de una reserva que entra otro día no tiene botón a propósito: el detalle muestra «Registrar llegada» deshabilitado con «Disponible desde»; la prueba era abrir la dirección a mano. Ver #24.
+- TRA, pasos 1, 3, 6 y 7: todos los huéspedes tenían documento, así que el documento salía solo de lectura. Solo pasa con reservas de la web o de un canal que lleguen sin documento.
+
+**Decisiones nuevas para la reunión:**
+
+| # | Qué hay que decidir | De quién sería | Qué hace el PMS mientras tanto | Propuesta |
+|---|---|---|---|---|
+| 18 | Documento obligatorio para todos los huéspedes al reservar | pms; núcleo para el registro civil | Opcional, como permite el backend (el TRA lo exige antes de la salida) | Obligatorio en el PMS, pero antes agregar `RC` (registro civil) a `TipoDocumento`: un niño menor de 7 años no tiene tarjeta de identidad y no se podría reservar |
+| 19 | Dónde se valida la identidad | pms | Botón en el recuadro del titular, solo si se aloja (DEC-98) | DEC-98 ya dice que se valida el titular y solo cuando está presente. Pasar el botón a su fila en la tabla de huéspedes es solo de pantalla. Validar a cada huésped sería nuevo en el backend y no lo pide el TRA |
+| 20 | Una reserva pendiente que llega a su día después de la hora límite | Núcleo | Se puede confirmar y luego declarar no-show | Que el backend no deje confirmarla después de la hora límite del día de entrada, y que el PMS solo ofrezca cancelarla |
+| 21 | Un apartamento fuera de servicio se puede vender | Núcleo o pms | Sale en «Nueva reserva» si no tiene bloqueo ni reservas: estado operativo y bloqueo son independientes (CLAUDE.md) | Avisar en la tarjeta «Fuera de servicio ahora» si entra hoy o mañana; para no venderlo, el administrador lo bloquea |
+| 22 | Filtros de varios valores en Reservas (dos estados, dos canales…) | Núcleo (la API recibe un valor por filtro) y pms | Un valor por filtro | Sprint 4: la API acepta la lista (`estado=CANCELADA&estado=NO_SHOW`) y el PMS los muestra como chips |
+| 23 | Tablero: ventana con lo básico al tocar una reserva, rango que empiece donde empiezan las estancias en curso y columna de hoy más ancha | pms, con mockup (DEC-84) | Tocar lleva al detalle; el rango empieza hoy | Prompt a Claude Design para la ventana y el rango; la columna ancha quizá sobra si la ventana ya muestra los detalles |
+| 24 | Abrir la llegada antes del día de entrada | pms | Solo el día de entrada | Dejar «Preparar llegada» desde la víspera para adelantar el TRA, con «Registrar llegada» deshabilitado hasta el día |
+
+**Decididas el 12 nov** (Daniel con el equipo) y ya programadas, con sus pruebas:
+- **#18, sí**: el documento es obligatorio para todos los huéspedes al reservar. Núcleo: `RC` (registro civil) en `TipoDocumento`, solo para ocupantes; el titular no se identifica con él (DEC-110, `feature/nucleo/decisiones-pruebas-sprint3`). PMS: «Registro civil» en la lista del ocupante y del TRA, y un adulto no puede llevarlo; el cambio de titular no ofrece a un niño con registro civil.
+- **#19, sí** (ronda 2): «Validar identidad» pasó de la tarjeta del titular a su fila en la tabla de huéspedes de la llegada; solo sale si el titular se aloja y aún no está validado.
+- **#20, sí**: el backend no confirma una pendiente después de la hora límite de llegada (409 `LLEGADA_VENCIDA`), salvo la creada después de esa hora (mostrador tarde). El PMS solo ofrece «Cancelar» y dice por qué.
+- **#21, sí, y cambia una regla**: fuera de servicio (solo lo declara el administrador) no se vende en ninguna fecha; pendiente o en preparación sí. Una reserva que ya estaba ahí se puede seguir modificando. El diálogo de «Declarar fuera de servicio» lo dice.
+- **Salida vencida** (salió en la conversación del #21): una reserva en curso cuya salida ya pasó no impide vender las noches siguientes (la disponibilidad solo mira las fechas), pero deja el apartamento ocupado, así que la llegada siguiente no se puede registrar. No se cierra sola, porque la salida cierra el folio y exige el TRA. El PMS la muestra: aviso «Salida vencida» en el detalle, la lista en la bienvenida de recepción y, en la llegada que espera ese apartamento, quién lo ocupa con el enlace para registrar su salida.
+- **Salida y TRA**: el aviso «Faltan datos del TRA» de la salida tiene «Completar datos» por huésped; al cerrar los datos se vuelve a la salida.
+- **Fechas**: los campos de fecha no dejan escribir un año de más de 4 cifras.
+- **#22**: al sprint 4 (`docs/SPRINTS.md`).
+- **#23, en parte**: tocar una reserva del tablero abre una ventana con lo básico y «Ver detalle completo»; sin rango elegido, el tablero empieza un día antes de la estancia en curso que empezó primero. La columna de hoy más ancha queda para el sprint 4, si después de probar la ventana todavía hace falta. Se hizo sin mockup (excepción a DEC-84, a pedido del equipo).
+- **#24, sí**: «Preparar llegada» desde la víspera, en las pendientes y confirmadas; «Registrar llegada» sigue deshabilitado hasta el día.
+
+**Sobre la sesión cerrada**: el equipo propuso una ventana «Tu sesión terminó» con un botón para entrar. Hoy el PMS lleva directo a la pantalla de entrada con ese mismo mensaje, que además no deja ver nada de la aplicación detrás. Con el arreglo de las pestañas pasa al instante. Si igual se quiere la ventana, es solo de pantalla.
+
+**Para las pruebas finales**: modificar vehículos con una tarifa que cambió (se recalcula toda la estancia con la tarifa de hoy, una de las decisiones por ratificar), los pasos 6 a 8 de la llegada en el orden de la lista, los pasos 7 y 8 del cambio de titular, y volver a probar lo arreglado arriba.
+
+**Ronda 2 (12 nov)**. Bien casi todo. Lo que salió y cómo quedó:
+- **Documento según la edad**: un menor no tiene cédula de ciudadanía. La lista del ocupante (nueva reserva y TRA) ofrece solo los de su edad: menor, TI, registro civil, pasaporte o CE; adulto, todos menos registro civil. Si ya traía uno que no corresponde, se avisa junto al campo. Solo es del PMS: el backend no lo revisa (el equipo web puede hacer lo mismo).
+- **Menú lateral y «Volver a reservas» fijos**: en escritorio el menú no baja con la página, y en el detalle de una reserva el enlace de volver queda arriba al bajar.
+- **«Registrar llegada» deshabilitado** también en la pendiente que entra mañana, junto a «Preparar llegada», con «Disponible desde …, ya confirmada».
+- **Tablero**: «Anterior» y «Siguiente» corren una semana, no el rango entero; «Hoy» vuelve a la vista de entrada (hoy y las estancias en curso enteras), conservando el apartamento filtrado.
+- **Sin recargar**: la llegada (estado del apartamento), Preparación y la bienvenida se vuelven a leer cada 20 s y al volver a la pestaña. No es tiempo real: el backend no avisa; para eso haría falta un canal de eventos (núcleo, sprint 4).
+- **Salida vencida en la bienvenida (falla)**: no era el código; en la base ya no había ninguna reserva en curso con la salida pasada. Se vuelve a probar cuando una en curso pase su salida sin registrarla.
+- **Fuera de servicio en la llegada de mostrador (falla)**: el resultado esperado de la prueba estaba mal. Con #21 la reserva ya no se crea («El apartamento … está fuera de servicio»), así que no hay rechazo parcial.
+- **Sesión en otra pestaña**: abrir el PMS en otra pestaña entraba con la misma cuenta, a propósito. El equipo decidió después una sesión por pestaña (#28, abajo).
+
+**Ronda 3 (12 nov)**. Todo bien; salieron dos cosas, ya arregladas:
+- **Menú lateral**: al quedar fijo, su fondo y su línea se cortaban donde terminaba el menú. Ahora los pinta el panel en toda la columna.
+- **Cambiar titular por un huésped elegido de la lista**: decía «Ese documento es de David…» aunque se hubiera elegido a David, porque el nombre del formulario (separado o corregido por recepción) no era idéntico al de la reserva. Si se eligió de la lista, es esa persona; si se escribe a mano, el nombre se compara con el de la reserva y con el del TRA.
+- Quedan por probar cuando se den: salida vencida, pendiente vencida (#20) y los pasos 3 y 4 de «Sin recargar».
+
+## Decisiones del equipo sobre lo abierto (12 nov)
+Respuestas del equipo a la página de decisiones del sprint 3 (#13 a #17, #25 a #28, R1 a R9). Lo del núcleo va en el sprint 4, cada cosa en su rama `feature/nucleo/…`; el PR de DEC-110 no cambia.
+
+| # | Decisión | Dónde queda |
+|---|---|---|
+| 13 | A: `GET /api/reservas/{codigo}/estancia` (registros vigente y anulados, salida, saldo); el detalle muestra la llegada y el motivo de entrar sin pagar, y «Corregir registro» la hora vigente | Núcleo + pms, sprint 4 |
+| 14 | A: acción «Corregir documento» con motivo, que conserva los datos del TRA y deja quién y cuándo. Prioridad media: si el sprint 4 se llena, pasa al 5 | Núcleo + pms, sprint 4 |
+| 15 | A: `validadoPorNombre` en `TitularResponse`, nunca para la cuenta del huésped; avisar a la web | Núcleo + pms, sprint 4 |
+| 16 | A: la próxima entrada (fecha y hora estimada, sin datos del huésped) en `pendientes-preparacion`; el PMS ordena por eso. Prioridad alta | Núcleo + pms, sprint 4 |
+| 17 | **A** (no la recomendada): motivo opcional al declarar fuera de servicio, visible en el tablero y en la preparación | Núcleo + pms, sprint 4 |
+| 8 y 10 | Siguen en el sprint 4 | Núcleo |
+| DEC-97/98 | A: escoger al huésped principal y apellidos del titular aparte en «Nueva reserva», con mockup | pms, sprint 4 |
+| Ramas | A: un solo PR del PMS con commits por tema; el del núcleo (DEC-110) primero | Hecho al subir |
+| 25 | A: la web no ofrece pagar una pendiente que pasó su hora límite; se le avisa en el PR de DEC-110 | Web |
+| 26 | B: el documento según la edad lo revisan los frontends; la regla se le pasa a la web | Nada en el núcleo |
+| 27 | A: se queda la lectura cada 20 s; el canal de eventos sale del sprint 4 | Hecho |
+| 28 | **B** (no la recomendada): una sesión por pestaña. Hecho: la sesión va en `sessionStorage`; otra pestaña pide entrar, cerrar la pestaña cierra la sesión y la que quedó en `localStorage` se borra | Hecho (pms) |
+| R1, R4, R5, R6, R8, R9 | Se mantienen | — |
+| R2 | Confirmar sin el anticipo cubierto se permite, pero solo con autorización del administrador, porque toda reserva debe tener su anticipo. Hoy el backend no lo deja (RES-15); hace falta la excepción autorizada en el núcleo, como la del folio | Núcleo + pms, sprint 4 |
+| R3 | Cambiar vehículos o mascotas solo debe cambiar el valor de esos extras; las noches conservan la tarifa con la que se reservó. Hoy se recalcula todo con la tarifa vigente: hace falta en el núcleo un «modificar solo extras» que no toque las noches | Núcleo + pms, sprint 4 |
+| R7 | Los colores, tamaños y ubicaciones se deciden al final, en la fase de estilos | Fase de estilos |
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

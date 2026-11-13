@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -92,16 +92,21 @@ describe('tablero de ocupación (DEC-86)', () => {
     expect(within(cuadricula).getByText('Preparado')).toBeInTheDocument()
   })
 
-  it('la barra de una reserva dice qué es y lleva a su detalle', async () => {
+  it('la barra de una reserva dice qué es y abre una ventana con lo básico y el enlace al detalle (#23)', async () => {
     api()
     abrir()
+    const usuario = userEvent.setup()
 
     const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
-    const barra = within(cuadricula).getByRole('link', {
+    const barra = within(cuadricula).getByRole('button', {
       name: 'Titular TIT-7, del 14 nov al 16 nov, reserva RES-2026-00042, Confirmada',
     })
-    expect(barra).toHaveAttribute('href', '/reservas/RES-2026-00042')
     expect(barra).toHaveStyle({ gridColumn: '3 / span 2' })
+
+    await usuario.click(barra)
+    const ventana = screen.getByRole('dialog', { name: 'TIT-7' })
+    expect(within(ventana).getByText(/14 nov 2026 → 16 nov 2026 · 2 noches/)).toBeInTheDocument()
+    expect(within(ventana).getByRole('link', { name: /Ver detalle completo/ })).toHaveAttribute('href', '/reservas/RES-2026-00042')
   })
 
   it('con la cuenta, la barra lleva el titular, su color y la cuenta en palabras (BL-09 · DEC-101)', async () => {
@@ -114,7 +119,7 @@ describe('tablero de ocupación (DEC-86)', () => {
     abrir()
 
     const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
-    const barra = within(cuadricula).getByRole('link', {
+    const barra = within(cuadricula).getByRole('button', {
       name: 'Ana Torres Vélez, del 14 nov al 16 nov, reserva RES-2026-00042, Confirmada. Con saldo: debe $ 675.000',
     })
     expect(barra).toHaveClass('cuenta-con-saldo')
@@ -129,7 +134,16 @@ describe('tablero de ocupación (DEC-86)', () => {
     const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
     const bloqueo = within(cuadricula).getByRole('img', { name: /^Bloqueo: Mantenimiento: pintura/ })
     expect(bloqueo).toHaveStyle({ gridColumn: '7 / span 3' })
-    expect(within(cuadricula).getAllByRole('link')).toHaveLength(1)
+    expect(within(cuadricula).getAllByRole('button')).toHaveLength(1)
+  })
+
+  it('sin rango elegido empieza un día antes de la estancia en curso que empezó primero (#23)', async () => {
+    const hoy = fechaHoy()
+    const enCurso = { ...FILA.reservas[0], estado: 'EN_CURSO' as const, entrada: sumarDias(hoy, -5), salida: sumarDias(hoy, 2) }
+    const fetch = api([{ ...FILA, reservas: [enCurso] }, VACIO])
+    abrir('/ocupacion')
+
+    await waitFor(() => expect(consultasDeOcupacion(fetch).some((url) => url.includes(`desde=${sumarDias(hoy, -6)}`))).toBe(true))
   })
 
   it('un apartamento vacío también aparece y la lista lo dice', async () => {
@@ -139,31 +153,32 @@ describe('tablero de ocupación (DEC-86)', () => {
     expect(await screen.findByText('Sin reservas ni bloqueos en este rango.')).toBeInTheDocument()
   })
 
-  it('anterior y siguiente mueven el rango completo', async () => {
+  it('anterior y siguiente mueven el rango una semana, sin cambiar cuántas noches se ven', async () => {
     const fetch = api()
     abrir()
     const usuario = userEvent.setup()
     await screen.findByRole('group', { name: 'Ocupación por noche' })
 
     await usuario.click(screen.getAllByRole('button', { name: /Siguiente/ })[0])
-    await screen.findByText('26 nov 2026 → 10 dic 2026 · 14 noches')
-    expect(consultasDeOcupacion(fetch).at(-1)).toContain('desde=2026-11-26&hasta=2026-12-10')
+    await screen.findByText('19 nov 2026 → 3 dic 2026 · 14 noches')
+    expect(consultasDeOcupacion(fetch).at(-1)).toContain('desde=2026-11-19&hasta=2026-12-03')
 
     await usuario.click(screen.getAllByRole('button', { name: /Anterior/ })[0])
     await screen.findByText('12 nov 2026 → 26 nov 2026 · 14 noches')
   })
 
-  it('«Hoy» vuelve a hoy conservando cuántas noches se ven', async () => {
+  it('«Hoy» vuelve a la vista de entrada, con el apartamento filtrado', async () => {
     const fetch = api()
-    abrir('/ocupacion?desde=2020-01-01&ultima=2020-01-07')
+    abrir('/ocupacion?desde=2020-01-01&ultima=2020-01-07&apartamento=APT-101')
     const usuario = userEvent.setup()
     await screen.findByRole('group', { name: 'Ocupación por noche' })
 
     await usuario.click(screen.getByRole('button', { name: 'Hoy' }))
 
     const hoy = fechaHoy()
-    await screen.findByText(new RegExp('7 noches'))
-    expect(consultasDeOcupacion(fetch).at(-1)).toContain(`desde=${hoy}&hasta=${sumarDias(hoy, 7)}`)
+    await screen.findByText(new RegExp('14 noches'))
+    expect(consultasDeOcupacion(fetch).at(-1)).toContain(`desde=${hoy}&hasta=${sumarDias(hoy, 14)}`)
+    expect(consultasDeOcupacion(fetch).at(-1)).toContain('apartamento=APT-101')
   })
 
   it('filtra por apartamento', async () => {

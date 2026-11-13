@@ -6,6 +6,7 @@ import {
   cotizarEstancia,
   modificarReserva,
   type Estancia,
+  type Ocupante,
   type Reserva,
 } from '../../api/reservas'
 import { validarTitular, type Titular } from '../../api/titulares'
@@ -15,7 +16,7 @@ import CampoMotivo from '../../folio/CampoMotivo'
 import { cantidad, dinero, fechaCorta, fechaHoy, noches } from '../../formato'
 import { errorParaMostrar, type ErrorMostrado } from '../mensajes'
 import Campo from '../nueva/Campo'
-import { estimarExtras, textoCobroVehiculo } from '../nueva/formulario'
+import { estimarExtras, MENSAJE_TELEFONO, telefonoValido, textoCobroVehiculo } from '../nueva/formulario'
 import { documentoDe, fechaYHora, modificacionCon, MOTIVO_MAXIMO, TIPOS_DOCUMENTO } from './llegada'
 
 /** Solo dígitos, hasta tres, para los campos de cantidad. */
@@ -210,14 +211,39 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
 const TITULAR_VACIO = { nombres: '', primerApellido: '', segundoApellido: '', tipoDocumento: 'CC', numeroDocumento: '', correo: '', telefono: '' }
 type DatosTitular = typeof TITULAR_VACIO
 
-function erroresDeTitular(datos: DatosTitular): Partial<Record<keyof DatosTitular, string>> {
+/** Para comparar nombres escritos por personas distintas: sin tildes, mayúsculas ni espacios de más. */
+function comparable(texto: string): string {
+  return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * El huésped de la reserva con el mismo documento, si el nombre escrito no es el suyo: un mismo documento no puede ser
+ * de dos personas. Si se eligió de la lista «¿Es uno de los huéspedes?», es esa persona aunque recepción haya separado
+ * o corregido su nombre (ronda 3). El nombre se compara con el de la reserva y con el del TRA.
+ */
+function huespedConOtroNombre(datos: DatosTitular, ocupantes: Ocupante[], elegido = ''): Ocupante | null {
+  const numero = datos.numeroDocumento.trim()
+  const mismo = ocupantes.find((ocupante) => ocupante.tipoDocumento === datos.tipoDocumento && ocupante.numeroDocumento === numero)
+  if (!mismo || mismo.id === elegido) return null
+  const escrito = comparable([datos.nombres, datos.primerApellido, datos.segundoApellido].join(' '))
+  const delTra = comparable([mismo.nombres, mismo.primerApellido, mismo.segundoApellido].filter(Boolean).join(' '))
+  return escrito === comparable(mismo.nombre) || escrito === delTra ? null : mismo
+}
+
+function erroresDeTitular(datos: DatosTitular, ocupantes: Ocupante[] = [], elegido = ''): Partial<Record<keyof DatosTitular, string>> {
   const errores: Partial<Record<keyof DatosTitular, string>> = {}
+  const otro = datos.numeroDocumento.trim() ? huespedConOtroNombre(datos, ocupantes, elegido) : null
+  if (otro) {
+    errores.numeroDocumento = `Ese documento es de ${otro.nombre}, huésped de esta reserva. Si el titular es esa persona, `
+      + 'elígela arriba; si no, revisa el documento.'
+  }
   if (!datos.nombres.trim()) errores.nombres = 'Escribe los nombres.'
   if (!datos.primerApellido.trim()) errores.primerApellido = 'Escribe el primer apellido.'
   if (!datos.numeroDocumento.trim()) errores.numeroDocumento = 'Escribe el número de documento.'
   if (!datos.correo.trim()) errores.correo = 'Escribe el correo.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.correo.trim())) errores.correo = 'Revisa el correo: le falta algo, como la @.'
   if (!datos.telefono.trim()) errores.telefono = 'Escribe el teléfono.'
+  else if (!telefonoValido(datos.telefono)) errores.telefono = MENSAJE_TELEFONO
   return errores
 }
 
@@ -232,15 +258,36 @@ export function DialogoTitular({ reserva, alCerrar, alCambiar }: {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<ErrorMostrado | null>(null)
 
+  const [huesped, setHuesped] = useState('')
+  // Un niño con registro civil no puede ser el titular (DEC-110)
+  const conDocumento = reserva.ocupantes.filter((ocupante) => ocupante.numeroDocumento && ocupante.tipoDocumento !== 'RC')
+
   const cambiar = (campo: keyof DatosTitular, valor: string) => {
     setDatos({ ...datos, [campo]: valor })
     setErrores({ ...errores, [campo]: undefined })
   }
 
+  function elegirHuesped(id: string) {
+    setHuesped(id)
+    const elegido = conDocumento.find((ocupante) => ocupante.id === id)
+    // Antes de BL-07 el nombre llegaba entero: va todo en Nombres para que recepción lo separe
+    setDatos(elegido
+      ? {
+          ...datos,
+          nombres: elegido.nombres ?? (elegido.primerApellido ? '' : elegido.nombre),
+          primerApellido: elegido.primerApellido ?? '',
+          segundoApellido: elegido.segundoApellido ?? '',
+          tipoDocumento: elegido.tipoDocumento ?? datos.tipoDocumento,
+          numeroDocumento: elegido.numeroDocumento ?? '',
+        }
+      : { ...datos, nombres: '', primerApellido: '', segundoApellido: '', numeroDocumento: '' })
+    setErrores({})
+  }
+
   async function enviar(evento: FormEvent) {
     evento.preventDefault()
     setError(null)
-    const encontrados = erroresDeTitular(datos)
+    const encontrados = erroresDeTitular(datos, reserva.ocupantes, huesped)
     setErrores(encontrados)
     if (Object.keys(encontrados).length > 0) {
       const formulario = evento.currentTarget
@@ -275,6 +322,15 @@ export function DialogoTitular({ reserva, alCerrar, alCambiar }: {
           </p>
           <fieldset className="grupo-formulario" disabled={enviando}>
             <legend className="solo-lectores">Datos del titular nuevo</legend>
+            {conDocumento.length > 0 && (
+              <Campo
+                etiqueta="¿Es uno de los huéspedes?"
+                opciones={[['', 'No, es otra persona'], ...conDocumento.map((ocupante) => [ocupante.id, ocupante.nombre] as const)]}
+                value={huesped}
+                pista="Elegirlo llena su nombre y su documento tal como están en la reserva."
+                onChange={(evento) => elegirHuesped(evento.target.value)}
+              />
+            )}
             <Campo etiqueta="Nombres" autoComplete="off" data-foco-inicial value={datos.nombres} error={errores.nombres} maxLength={120} onChange={(evento) => cambiar('nombres', evento.target.value)} />
             <div className="campos-2">
               <Campo etiqueta="Primer apellido" autoComplete="off" value={datos.primerApellido} error={errores.primerApellido} maxLength={60} onChange={(evento) => cambiar('primerApellido', evento.target.value)} />

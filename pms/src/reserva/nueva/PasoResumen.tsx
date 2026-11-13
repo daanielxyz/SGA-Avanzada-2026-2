@@ -6,7 +6,7 @@ import { cotizarEstancia, crearReserva, type Cotizacion, type Reserva } from '..
 import Aviso from '../../componentes/Aviso'
 import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
-import { cantidad, dinero, fechaCorta, fechaHoy, noches } from '../../formato'
+import { cantidad, dinero, fechaCorta, fechaHoy, horaEnPalabras, noches } from '../../formato'
 import Campo from './Campo'
 import { estimarExtras, salidasDelRechazo, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
 
@@ -253,6 +253,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
             type="time"
             value={llegada.hora}
             disabled={enviando}
+            pista={llegada.hora ? horaEnPalabras(llegada.hora) : undefined}
             onChange={(evento) => alCambiarLlegada({ ...llegada, hora: evento.target.value })}
           />
           {aceptaMascotas && (!limiteListo || limite > 0) && (

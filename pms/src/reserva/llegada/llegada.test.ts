@@ -87,6 +87,15 @@ describe('registro de llegada (CU-21)', () => {
     expect(siguienteConFaltantes([ocupante({ id: 'A' }), ocupante({ id: 'B' })], 'A')).toBeNull()
   })
 
+  it('no vuelve a un huésped ya visto en el diálogo, aunque haya quedado a medias', () => {
+    const grupo = [
+      ocupante({ id: 'A', datosTraFaltantes: ['GENERO'] }),
+      ocupante({ id: 'B', datosTraFaltantes: ['GENERO'] }),
+    ]
+    expect(siguienteConFaltantes(grupo, 'A', ['A'])?.id).toBe('B')
+    expect(siguienteConFaltantes(grupo, 'B', ['A', 'B'])).toBeNull()
+  })
+
   it('al cambiar vehículos manda el mismo grupo, con nombres, apellidos, documento y principal (BL-07 · BL-23)', () => {
     const reserva = reservaDePrueba({
       ocupantes: [

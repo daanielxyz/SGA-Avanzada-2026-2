@@ -4,7 +4,7 @@ import type { Folio } from '../api/folio'
 import { confirmarReserva, indicarHoraLlegada, type Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
-import { dinero } from '../formato'
+import { dinero, horaEnPalabras } from '../formato'
 import FormularioPago from './FormularioPago'
 import { mensajeDeRechazo } from './mensajes'
 import { faltaParaAnticipo, mediosDeRecepcion } from './pago'
@@ -109,10 +109,12 @@ export default function DialogoConfirmar({ reserva, datos, alCerrar, alConfirmar
               data-foco-inicial
               value={hora}
               disabled={enviando}
-              aria-describedby={horaGuardada ? 'confirmar-hora-pista' : undefined}
+              aria-describedby="confirmar-hora-pista"
               onChange={(evento) => setHora(evento.target.value)}
             />
-            {horaGuardada && <p className="campo-pista" id="confirmar-hora-pista">Puedes cambiarla.</p>}
+            <p className="campo-pista" id="confirmar-hora-pista" aria-live="polite">
+              {horaEnPalabras(hora)}{horaGuardada && hora === horaGuardada ? ' Puedes cambiarla.' : ''}
+            </p>
           </div>
           {falta > 0 && (
             <Aviso

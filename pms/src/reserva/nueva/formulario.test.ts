@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  tiposPorEdad,
   ajustarGrupo,
   estimarExtras,
   mensajeDeCreada,
   OCUPANTE_VACIO,
   salidasDelRechazo,
+  telefonoValido,
   textoCobroVehiculo,
   validarEstancia,
   validarPersonas,
@@ -20,7 +22,9 @@ const TITULAR: DatosTitular = {
 const DE_TITULAR: DatosOcupante = {
   nombre: 'Ana Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481', nacionalidad: '',
 }
-const DE_TITULAR_ADULTO: DatosOcupante = { ...OCUPANTE_VACIO, nombre: 'Pedro Ríos', fechaNacimiento: '1985-01-01' }
+const DE_TITULAR_ADULTO: DatosOcupante = {
+  ...OCUPANTE_VACIO, nombre: 'Pedro Ríos', fechaNacimiento: '1985-01-01', tipoDocumento: 'CC', numeroDocumento: '71000',
+}
 const validar = (grupo: DatosOcupante[], titular = TITULAR) => validarPersonas(titular, grupo, ENTRADA, HOY)
 
 describe('validarEstancia (EST-01 · RN-02)', () => {
@@ -47,7 +51,7 @@ describe('validarPersonas', () => {
     expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15' }])['grupo.mayor']).toContain('mayor de edad')
     expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2008-11-15' }])['grupo.mayor']).toBeDefined()
     expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2008-11-14' }])).toEqual({})
-    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15' }, DE_TITULAR_ADULTO])).toEqual({})
+    expect(validar([{ ...DE_TITULAR, fechaNacimiento: '2016-11-15', tipoDocumento: 'TI' }, DE_TITULAR_ADULTO])).toEqual({})
   })
 
   it('sin todas las fechas no revisa la mayoría de edad: sale primero el error de la fecha', () => {
@@ -61,11 +65,28 @@ describe('validarPersonas', () => {
     expect(errores['ocupante.1.numeroDocumento']).toBe('Ya está en la lista (ocupante 1).')
   })
 
-  it('OCU-05: sin documento, se comparan el nombre y la fecha de nacimiento', () => {
+  it('#18: el documento de cada ocupante es obligatorio; el registro civil, solo para niños', () => {
     const sinDocumento = { ...OCUPANTE_VACIO, nombre: 'Luis', fechaNacimiento: '2010-01-01' }
-    expect(validar([DE_TITULAR, sinDocumento, { ...sinDocumento, nombre: 'LUIS' }])['ocupante.2.nombre'])
-      .toBe('Ya está en la lista (ocupante 2).')
-    expect(validar([DE_TITULAR, sinDocumento, { ...sinDocumento, fechaNacimiento: '2011-01-01' }])).toEqual({})
+    const errores = validar([DE_TITULAR, sinDocumento])
+    expect(errores['ocupante.1.tipoDocumento']).toBe('Elige el tipo.')
+    expect(errores['ocupante.1.numeroDocumento']).toBe('Escribe el número.')
+
+    const bebe = { ...OCUPANTE_VACIO, nombre: 'Sara', fechaNacimiento: '2025-05-01', tipoDocumento: 'RC', numeroDocumento: '1094' }
+    expect(validar([DE_TITULAR, bebe])).toEqual({})
+    expect(validar([DE_TITULAR, { ...bebe, fechaNacimiento: '1990-01-01' }])['ocupante.1.tipoDocumento']).toContain('registro civil es de niños')
+  })
+
+  it('#18: un menor no tiene cédula de ciudadanía, y la lista solo ofrece los documentos de su edad', () => {
+    const nino = { ...OCUPANTE_VACIO, nombre: 'Tomás', fechaNacimiento: '2015-03-01', tipoDocumento: 'CC', numeroDocumento: '1094' }
+    expect(validar([DE_TITULAR, nino])['ocupante.1.tipoDocumento']).toContain('menor de edad no tiene cédula')
+    expect(validar([DE_TITULAR, { ...nino, tipoDocumento: 'TI' }])).toEqual({})
+
+    const tipos = [['', 'Elige'], ['CC', 'CC'], ['TI', 'TI'], ['RC', 'Registro civil']] as const
+    expect(tiposPorEdad(tipos, '2015-03-01', '2026-11-20').map(([tipo]) => tipo)).toEqual(['', 'TI', 'RC'])
+    expect(tiposPorEdad(tipos, '1990-03-01', '2026-11-20').map(([tipo]) => tipo)).toEqual(['', 'CC', 'TI'])
+    expect(tiposPorEdad(tipos, '', '2026-11-20')).toHaveLength(4)
+    // El ya elegido se conserva para que se vea su error
+    expect(tiposPorEdad(tipos, '2015-03-01', '2026-11-20', 'CC').map(([tipo]) => tipo)).toContain('CC')
   })
 
   it('un documento incompleto se marca: tipo sin número o número sin tipo', () => {
@@ -88,6 +109,16 @@ describe('validarPersonas', () => {
     expect(errores['titular.nombre']).toBeDefined()
     expect(errores['titular.correo']).toContain('correo válido')
     expect(errores['titular.telefono']).toBeDefined()
+  })
+
+  it('el teléfono se revisa en el mismo paso, con la regla del backend', () => {
+    expect(telefonoValido('310 555 0142')).toBe(true)
+    expect(telefonoValido('+57 (310) 555-0142')).toBe(true)
+    expect(telefonoValido('123456')).toBe(false)
+    expect(telefonoValido('3105550142abc')).toBe(false)
+    expect(telefonoValido('57+3105550142')).toBe(false)
+    expect(telefonoValido('1234567890123456')).toBe(false)
+    expect(validar([DE_TITULAR], { ...TITULAR, telefono: '12' })['titular.telefono']).toContain('7 a 15 dígitos')
   })
 })
 
