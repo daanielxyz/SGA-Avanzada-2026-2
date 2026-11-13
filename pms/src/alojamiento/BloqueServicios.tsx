@@ -70,11 +70,11 @@ export default function BloqueServicios({ alojamiento, alGuardar }: AlBloque) {
             {servicios.map((servicio) => (
               <li key={servicio.id} className={servicio.activo ? 'servicio' : 'servicio servicio-inactivo'}>
                 <span className="servicio-nombre">{servicio.nombre}</span>
-                <span><Cobro servicio={servicio} /></span>
+                <span className="servicio-cobro"><Cobro servicio={servicio} /></span>
                 <span className="servicio-valor importe">
                   {servicio.generaCargo ? dinero(servicio.valor) : <span className="suave" aria-label="Sin valor">–</span>}
                 </span>
-                <span><EstadoServicio servicio={servicio} /></span>
+                <span className="servicio-estado"><EstadoServicio servicio={servicio} /></span>
                 <span className="servicio-acciones">
                   {servicio.activo && servicio.generaCargo && (
                     <button type="button" className="boton boton-secundario boton-chico" aria-label={`Cambiar valor: ${servicio.nombre}`}

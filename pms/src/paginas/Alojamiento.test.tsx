@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
@@ -102,6 +102,27 @@ describe('alojamiento (CU-50 · CU-51 · CU-53)', () => {
     expect(screen.getByLabelText('Descripción')).toHaveAttribute('aria-invalid', 'true')
     expect(within(screen.getByRole('alert')).getByText('Error · No se guardaron los datos')).toBeInTheDocument()
     expect(envios(fetch)).toEqual([])
+    await waitFor(() => expect(screen.getByLabelText('Descripción')).toHaveFocus())
+
+    // Al corregir el único campo marcado, el aviso de arriba se va
+    await usuario.type(screen.getByLabelText('Descripción'), 'Cabañas entre cafetales.')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('las pestañas se recorren con las flechas, con un solo punto de tabulación', async () => {
+    apiCon()
+    const usuario = abrir()
+    const datos = await screen.findByRole('tab', { name: 'Datos' })
+    expect(screen.getByRole('tab', { name: 'Marca' })).toHaveAttribute('tabindex', '-1')
+
+    datos.focus()
+    await usuario.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Reglas de la estancia' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Reglas de la estancia' })).toHaveFocus()
+    await usuario.keyboard('{End}')
+    expect(screen.getByRole('tab', { name: 'Marca' })).toHaveAttribute('aria-selected', 'true')
+    await usuario.keyboard('{ArrowRight}')
+    expect(screen.getByRole('tab', { name: 'Datos' })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('las reglas se envían todas, incluso con mascotas ocultas, y el 409 queda en el bloque', async () => {

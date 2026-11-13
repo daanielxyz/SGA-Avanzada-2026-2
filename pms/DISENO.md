@@ -470,7 +470,16 @@ Lo que el diseño dejó abierto, resuelto con el contrato:
 
 **Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40; falta la validación en el backend (400).
 
-Pendiente de probar en el navegador contra el backend local (paso 5 del LEEME): caso feliz, rechazos 400 y 409, y 1280, 1024 y 390 px. Después, la auditoría.
+**Probada en el navegador** (13 nov, Chromium contra el backend local con los datos demo, como administrador): guardar datos, marca y reglas; descripción vacía, latitud fuera de rango, anticipo de más de 100 y color mal escrito marcados junto al campo; pegar las coordenadas de Google Maps; la pregunta al cambiar de pestaña con cambios; el 409 por el mínimo de medios de pago junto al bloque, y volver a habilitar un medio escribiéndolo. Sin desbordes a 1280, 1024 y 390 px. Los datos demo quedaron como estaban (solo `normas` pasó de vacío a nulo, que es lo mismo).
+
+**Auditoría** (`impeccable` audit, harden y adapt; `break-ui` con el GET del alojamiento reemplazado por el peor caso: nombre de 120, dirección de 200, 14 servicios con nombres largos, 6 medios de pago, sin ubicación, sin marca, vacío y uno; a 1280, 820, 640 —200 % de zoom— y 320 px). El detector no encontró nada. Arreglado:
+- P1: tras un error de validación el foco va al primer campo marcado, y el aviso «Revisa los campos marcados» se quita al corregirlos (antes se quedaba).
+- P2: las pestañas se recorren con las flechas, Inicio y Fin, con un solo punto de tabulación; entre 800 y 900 px se desplazan en vez de salirse.
+- P2: en el celular, cada servicio muestra nombre y valor arriba, las dos etiquetas juntas y las acciones abajo (antes quedaban revueltas).
+- P2: la latitud y la longitud vacías ya no muestran un ejemplo en gris que parecía un dato guardado.
+- P3: el triángulo de «Avanzado» junto al título, los números sin unidad del mismo ancho que los que la tienen y el contraste en una sola fila (par a la izquierda, medida a la derecha) cuando cabe.
+
+Quedan, sin arreglar a propósito: el rótulo «Alojamiento» sobre el título viene del mockup; los nombres de los medios de pago salen sin tildes («Tarjeta credito») porque la API los guarda en mayúsculas sin ellas.
 
 ## Sprint 4: política de cancelación (`feature/pms/politica`)
 Mockups en `pms/diseno/mockups-meridian-sprint4-politica/`, revisados contra el contrato el 13 nov. Están bien; lo abierto se resuelve así:

@@ -74,9 +74,9 @@ export function BloqueUbicacion(props: AlBloque) {
     >
       <div className="campos-bloque">
         <CampoBloque etiqueta="Latitud" valor={form.latitud} error={errores.latitud}
-          placeholder="4.6372" onPaste={alPegar} alCambiar={(valor) => cambiar('latitud', valor)} />
+          onPaste={alPegar} alCambiar={(valor) => cambiar('latitud', valor)} />
         <CampoBloque etiqueta="Longitud" valor={form.longitud} error={errores.longitud}
-          placeholder="-75.5701" onPaste={alPegar} alCambiar={(valor) => cambiar('longitud', valor)} />
+          onPaste={alPegar} alCambiar={(valor) => cambiar('longitud', valor)} />
       </div>
     </Bloque>
   )

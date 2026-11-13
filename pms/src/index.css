@@ -4534,6 +4534,13 @@ button.barra {
   display: flex;
   gap: var(--espacio-2);
   border-bottom: 1px solid var(--borde);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.alojamiento-pestanas [role='tab']:focus-visible {
+  outline-offset: -3px;
 }
 
 .alojamiento-pestanas [role='tab'] {
@@ -4756,6 +4763,7 @@ button.barra {
   border-bottom-right-radius: 0;
 }
 
+.campos-bloque .campo > div:not(.campo-unidad) > input[inputmode='numeric'],
 .campo input[type='time'] {
   max-width: 260px;
   color-scheme: dark;
@@ -4766,6 +4774,10 @@ button.barra {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.opciones legend {
+  padding: 0;
 }
 
 .opciones-lista {
@@ -4816,10 +4828,12 @@ button.barra {
 }
 
 .avanzado summary {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--espacio-1) var(--espacio-3);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
   min-height: 44px;
+  padding-left: var(--espacio-6);
   cursor: pointer;
   list-style: none;
 }
@@ -4831,9 +4845,12 @@ button.barra {
 .avanzado summary::before {
   content: "\25B8";
   content: "\25B8" / "";
-  grid-row: 1 / span 2;
+  position: absolute;
+  top: 0;
+  left: var(--espacio-1);
   color: var(--texto-suave);
-  transition: transform 150ms ease;
+  line-height: var(--interlinea-base);
+  transition: transform 150ms ease-out;
 }
 
 .avanzado[open] summary::before {
@@ -4845,7 +4862,6 @@ button.barra {
 }
 
 .avanzado-pista {
-  grid-column: 2;
   color: var(--texto-suave);
   font-size: var(--tamano-pista);
   line-height: var(--interlinea-pista);
@@ -4873,11 +4889,31 @@ button.barra {
 
 .servicio {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--espacio-2) var(--espacio-3);
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "nombre nombre valor"
+    "cobro estado estado"
+    "acciones acciones acciones";
+  gap: var(--espacio-2);
   align-items: center;
   padding: var(--espacio-4);
   font-size: var(--tamano-chico);
+}
+
+.servicio-nombre {
+  grid-area: nombre;
+}
+
+.servicio-valor {
+  grid-area: valor;
+}
+
+.servicio-cobro {
+  grid-area: cobro;
+}
+
+.servicio-estado {
+  grid-area: estado;
 }
 
 .servicio + .servicio {
@@ -4896,8 +4932,9 @@ button.barra {
 .servicio-acciones {
   display: flex;
   flex-wrap: wrap;
-  grid-column: 1 / -1;
+  grid-area: acciones;
   gap: var(--espacio-2);
+  margin-top: var(--espacio-1);
 }
 
 .servicio-acciones:empty {
@@ -4922,6 +4959,7 @@ button.barra {
   .servicio {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 2.4fr);
+    grid-template-areas: "nombre cobro valor estado acciones";
     gap: var(--espacio-3);
     align-items: center;
   }
@@ -4949,8 +4987,8 @@ button.barra {
   .servicio-acciones,
   .servicio-acciones:empty {
     display: flex;
-    grid-column: auto;
     justify-content: flex-end;
+    margin-top: 0;
   }
 }
 
@@ -5083,6 +5121,20 @@ button.barra {
   border: 1px solid var(--borde);
   border-radius: var(--radio-chico);
   font-weight: 700;
+}
+
+.contrastes-lista {
+  container-type: inline-size;
+}
+
+@container (min-width: 480px) {
+  .contrastes-lista li {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .contraste-muestra {
+    grid-row: auto;
+  }
 }
 
 .contraste-valor {

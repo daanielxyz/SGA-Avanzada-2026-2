@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { avisarNombre, consultarAlojamiento, type Alojamiento as DatosAlojamiento } from '../api/alojamiento'
 import { ErrorApi } from '../api/cliente'
 import BloqueMarca from '../alojamiento/BloqueMarca'
@@ -97,6 +97,22 @@ export default function Alojamiento() {
     setElegida(destino === 'lista' ? null : destino)
   }
 
+  // Pestañas como las del sistema: un solo punto de tabulación y las flechas, Inicio y Fin para moverse entre ellas
+  function moverConFlechas(evento: KeyboardEvent<HTMLButtonElement>) {
+    const actual = PESTANAS.findIndex((p) => p.clave === abierta)
+    const destinos: Record<string, number> = {
+      ArrowRight: (actual + 1) % PESTANAS.length,
+      ArrowLeft: (actual - 1 + PESTANAS.length) % PESTANAS.length,
+      Home: 0,
+      End: PESTANAS.length - 1,
+    }
+    const destino = destinos[evento.key]
+    if (destino === undefined) return
+    evento.preventDefault()
+    ir(PESTANAS[destino].clave)
+    document.getElementById(`pestana-${PESTANAS[destino].clave}`)?.focus()
+  }
+
   if (errorCarga instanceof ErrorApi && errorCarga.estado === 403) return <SinPermiso />
 
   if (errorCarga) {
@@ -155,7 +171,8 @@ export default function Alojamiento() {
         <div className="alojamiento-pestanas" role="tablist" aria-label="Bloques del alojamiento">
           {PESTANAS.map((pestana) => (
             <button key={pestana.clave} type="button" role="tab" id={`pestana-${pestana.clave}`}
-              aria-selected={abierta === pestana.clave} aria-controls="panel-alojamiento" onClick={() => ir(pestana.clave)}>
+              aria-selected={abierta === pestana.clave} aria-controls="panel-alojamiento"
+              tabIndex={abierta === pestana.clave ? 0 : -1} onClick={() => ir(pestana.clave)} onKeyDown={moverConFlechas}>
               {pestana.titulo}
             </button>
           ))}

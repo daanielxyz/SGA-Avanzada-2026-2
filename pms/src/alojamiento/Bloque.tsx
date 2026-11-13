@@ -1,7 +1,6 @@
 import { useId, type ComponentProps, type FormEvent, type ReactNode } from 'react'
 import Aviso from '../componentes/Aviso'
-import type { ErrorMostrado } from '../reserva/mensajes'
-import type { Estado } from './useBloque'
+import type { Estado, Rechazo } from './useBloque'
 
 /**
  * Tarjeta de un bloque: título, contenido y un pie con el aviso (guardado o cambios sin guardar) a la izquierda y el
@@ -12,7 +11,7 @@ export function Bloque({ titulo, descripcion, estado, sucio, rechazo, guardado, 
   descripcion?: ReactNode
   estado: Estado
   sucio: boolean
-  rechazo: (ErrorMostrado & { asunto: string }) | null
+  rechazo: Rechazo | null
   /** «Datos guardados». */
   guardado: string
   /** «Guardar datos». */
