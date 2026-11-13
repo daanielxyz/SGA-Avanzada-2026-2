@@ -488,7 +488,10 @@ class CuentaHuespedTest extends PruebaRestDeReservas {
 
         mvc.perform(put("/api/titulares/" + id + "/validar")).andExpect(status().isOk());
 
-        cliente.perform(con(token, get("/api/mi-cuenta"))).andExpect(jsonPath("$.validado").value(true));
+        cliente.perform(con(token, get("/api/mi-cuenta")))
+                .andExpect(jsonPath("$.validado").value(true))
+                .andExpect(jsonPath("$.validadoPor").doesNotExist())
+                .andExpect(jsonPath("$.validadoPorNombre").doesNotExist());
         cliente.perform(con(token, put("/api/mi-cuenta")).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\": \"Ana Ríos\", \"telefono\": \"311 222 3333\"}"))
                 .andExpect(status().isOk())

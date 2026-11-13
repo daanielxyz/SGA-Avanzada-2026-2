@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.titular;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
@@ -15,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ActualizarTitularUseCase {
 
     private final TitularRepository titulares;
+    private final DirectorioPersonal personal;
 
-    public ActualizarTitularUseCase(TitularRepository titulares) {
+    public ActualizarTitularUseCase(TitularRepository titulares, DirectorioPersonal personal) {
         this.titulares = titulares;
+        this.personal = personal;
     }
 
     /**
@@ -35,6 +38,6 @@ public class ActualizarTitularUseCase {
                 RegistrarTitularUseCase.correo(comando.correo()), comando.telefono());
 
         titulares.guardar(titular);
-        return TitularResult.de(titular);
+        return TitularResult.de(titular, personal);
     }
 }

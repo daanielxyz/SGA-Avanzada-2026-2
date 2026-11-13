@@ -3377,6 +3377,8 @@ components:
           format: date-time
         validadoPor:
           type: string
+        validadoPorNombre:
+          type: string
     CambiarFechasTemporadaRequest:
       type: object
       properties:

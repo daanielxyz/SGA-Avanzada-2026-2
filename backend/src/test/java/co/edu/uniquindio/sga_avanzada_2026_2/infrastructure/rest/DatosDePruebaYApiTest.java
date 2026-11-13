@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -135,6 +136,24 @@ class DatosDePruebaYApiTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.registros[0].autorNombre").value("Recepción Demo"))
                 .andExpect(jsonPath("$.salida.autorNombre").value("Recepción Demo"));
+    }
+
+    @Test
+    @Tag("DEC-115")
+    void elTitularTraeElNombreDeQuienValidoSuIdentidad() throws Exception {
+        String id = JsonPath.read(como("recepcion.demo@example.com", post("/api/titulares"), """
+                {"nombres": "Lucía", "primerApellido": "Vélez", "tipoDocumento": "CC", "numeroDocumento": "71150",
+                 "correo": "lucia.velez@example.com"}""")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.validadoPorNombre").value(nullValue()))
+                .andReturn().getResponse().getContentAsString(), "$.id");
+
+        como("recepcion.demo@example.com", put("/api/titulares/" + id + "/validar"), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validadoPorNombre").value("Recepción Demo"));
+        admin(get("/api/titulares/" + id), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.validadoPorNombre").value("Recepción Demo"));
     }
 
     @Test

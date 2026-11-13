@@ -11,14 +11,16 @@ import java.time.LocalDateTime;
  * @param validado    si recepción validó su identidad en persona; entonces su nombre solo lo cambia el hotel (DEC-98)
  * @param validadoEn  cuándo; {@code null} si no está validado
  * @param validadoPor el usuario que la validó
+ * @param validadoPorNombre su nombre (#15 · DEC-115); {@code null} si no está validado o ese usuario ya no existe
  */
 public record TitularResponse(String id, String nombre, String tipoDocumento, String numeroDocumento, String correo,
                               String telefono, String nombres, String primerApellido, String segundoApellido,
-                              boolean validado, LocalDateTime validadoEn, String validadoPor) {
+                              boolean validado, LocalDateTime validadoEn, String validadoPor,
+                              String validadoPorNombre) {
 
     static TitularResponse de(TitularResult r) {
         return new TitularResponse(r.id(), r.nombre(), r.tipoDocumento(), r.numeroDocumento(), r.correo(),
                 r.telefono(), r.nombres(), r.primerApellido(), r.segundoApellido(), r.validado(), r.validadoEn(),
-                r.validadoPor());
+                r.validadoPor(), r.validadoPorNombre());
     }
 }
