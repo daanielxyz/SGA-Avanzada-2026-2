@@ -1,9 +1,12 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
+import { FECHA_MAXIMA } from '../../formato'
 
 /** Un campo con su etiqueta, su pista y su error, conectados para los lectores de pantalla. */
-export default function Campo({ etiqueta, nota, pista, error, invalido = false, opciones, ...control }: {
+export default function Campo({ etiqueta, nota, marca, pista, error, invalido = false, opciones, ...control }: {
   etiqueta: string
   nota?: string
+  /** Algo más junto al rótulo, como la marca de un valor propuesto. */
+  marca?: ReactNode
   pista?: ReactNode
   error?: string
   /** Inválido por un error que se muestra en otro lado, por ejemplo el de su grupo. */
@@ -12,12 +15,15 @@ export default function Campo({ etiqueta, nota, pista, error, invalido = false, 
   opciones?: readonly (readonly [string, string])[]
 } & ComponentProps<'input'>) {
   const id = useId()
+  // Escrita a mano, una fecha admite años de 5 o 6 cifras («20278»): con un máximo, el navegador deja solo 4
+  if (control.type === 'date' && control.max === undefined) control.max = FECHA_MAXIMA
   const descripcion = error ? `${id}-error` : pista ? `${id}-pista` : undefined
   const comunes = { id, 'aria-invalid': Boolean(error) || invalido, 'aria-describedby': descripcion, className: 'campo-control' }
   return (
     <div className="campo">
       <label className="campo-rotulo" htmlFor={id}>
         {etiqueta} {nota && <span className="campo-rotulo-nota">({nota})</span>}
+        {marca}
       </label>
       {opciones ? (
         <select

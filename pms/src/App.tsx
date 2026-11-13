@@ -7,11 +7,13 @@ import EnConstruccion from './paginas/EnConstruccion'
 import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
+import Llegada from './paginas/Llegada'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
+import Preparacion from './paginas/Preparacion'
 import SinPermiso from './paginas/SinPermiso'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
@@ -20,6 +22,7 @@ import type { Rol } from './sesion/roles'
 const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
   '/ocupacion': <Ocupacion />,
+  '/preparacion': <Preparacion />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
@@ -65,6 +68,14 @@ export default function App() {
             </SoloPara>
           }
         />
+        <Route
+          path="/reservas/:codigo/llegada"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <Llegada />
+            </SoloPara>
+          }
+        />
         <Route path="*" element={<NoEncontrada />} />
       </Route>
     </Routes>
@@ -72,12 +83,15 @@ export default function App() {
   )
 }
 
-/** Sin sesión, toda pantalla manda a entrar y recuerda adónde se quería ir. */
+/**
+ * Sin sesión, toda pantalla manda a entrar. Si la sesión se perdió, recuerda adónde se quería ir; si la persona salió a
+ * propósito, no: quien entre después, que puede ser otra persona, empieza en Inicio.
+ */
 function ConSesion() {
-  const { sesion } = useSesion()
+  const { sesion, motivo } = useSesion()
   const { pathname, search } = useLocation()
   if (!sesion) {
-    return <Navigate to="/ingresar" replace state={{ desde: pathname + search }} />
+    return <Navigate to="/ingresar" replace state={motivo === 'salio' ? null : { desde: pathname + search }} />
   }
   return <Panel sesion={sesion} />
 }

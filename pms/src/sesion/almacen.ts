@@ -1,5 +1,7 @@
-// Dónde queda la sesión del personal mientras el token vale. Se guarda en localStorage para que recepción pueda
-// abrir varias pestañas sin volver a entrar; el backend igual revisa el token en cada petición (DEC-71).
+// Dónde queda la sesión del personal mientras el token vale. Es de cada pestaña (sessionStorage, decisión #28 del
+// sprint 3): otra pestaña pide entrar, y cerrar la pestaña cierra la sesión en ese navegador, así que en el computador
+// compartido de recepción el turno que llega no hereda la cuenta del anterior. El backend igual revisa el token en cada
+// petición (DEC-71).
 import { esRolDelPersonal, type Rol } from './roles'
 
 /** Lo que el PMS necesita de `SesionResponse` (`POST /api/auth/login`). */
@@ -13,14 +15,21 @@ export interface Sesion {
 
 const CLAVE = 'sga.pms.sesion'
 
+// Antes la sesión se guardaba en localStorage y la compartían todas las pestañas: se borra la que haya quedado ahí
+try {
+  localStorage.removeItem(CLAVE)
+} catch {
+  // Sin almacenamiento no quedó nada
+}
+
 let alPerder: (() => void) | null = null
 
 /** La sesión guardada, o `null` si no hay, ya venció o no se puede leer. */
 export function leerSesion(ahora: Date = new Date()): Sesion | null {
   try {
-    const guardada: unknown = JSON.parse(localStorage.getItem(CLAVE) ?? 'null')
+    const guardada: unknown = JSON.parse(sessionStorage.getItem(CLAVE) ?? 'null')
     if (!esSesion(guardada) || new Date(guardada.expiraEn) <= ahora) {
-      localStorage.removeItem(CLAVE)
+      sessionStorage.removeItem(CLAVE)
       return null
     }
     return guardada
@@ -31,7 +40,7 @@ export function leerSesion(ahora: Date = new Date()): Sesion | null {
 
 export function guardarSesion(sesion: Sesion) {
   try {
-    localStorage.setItem(CLAVE, JSON.stringify(sesion))
+    sessionStorage.setItem(CLAVE, JSON.stringify(sesion))
   } catch {
     // Sin almacenamiento (navegación privada estricta) la sesión dura lo que dure la pestaña en memoria
   }
@@ -39,7 +48,7 @@ export function guardarSesion(sesion: Sesion) {
 
 export function borrarSesion() {
   try {
-    localStorage.removeItem(CLAVE)
+    sessionStorage.removeItem(CLAVE)
   } catch {
     // Nada que borrar
   }

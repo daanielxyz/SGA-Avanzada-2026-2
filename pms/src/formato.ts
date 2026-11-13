@@ -30,6 +30,17 @@ export function hora(valor: string): string {
   return `${horas % 12 || 12}:${String(minutos).padStart(2, '0')} ${sufijo}`
 }
 
+/**
+ * La hora de un campo de hora, dicha en palabras: según el equipo, el campo se ve en 24 horas o con a. m./p. m., y así
+ * no queda duda de cuál se eligió. «Queda a las 3:00 p. m., en la tarde.»
+ */
+export function horaEnPalabras(valor: string): string {
+  if (!/^\d{1,2}:\d{2}/.test(valor)) return 'Elige la hora y revisa si es a. m. o p. m.'
+  const horas = Number(valor.split(':')[0])
+  const momento = horas < 6 ? 'en la madrugada' : horas < 12 ? 'en la mañana' : horas < 19 ? 'en la tarde' : 'en la noche'
+  return `Queda a las ${hora(valor)}, ${momento}.`
+}
+
 /** Noches de la estancia: la de salida no se ocupa ni se cobra (EST-01). */
 export function noches(entrada: string, salida: string): number {
   const dia = (fecha: string) => {
@@ -45,6 +56,16 @@ export function edadEn(nacimiento: string, fecha: string): number {
   const [anio, mes, dia] = partes(fecha)
   const yaCumplio = mes > mesN || (mes === mesN && dia >= diaN)
   return anio - anioN - (yaCumplio ? 0 : 1)
+}
+
+/** «34 años», «1 año» o, antes del primer año, «8 meses (bebé)»: decir «0 años» no sirve para nada. */
+export function textoEdad(nacimiento: string, fecha: string): string {
+  const edad = edadEn(nacimiento, fecha)
+  if (edad >= 1) return cantidad(edad, 'año', 'años')
+  const [anioN, mesN, diaN] = partes(nacimiento)
+  const [anio, mes, dia] = partes(fecha)
+  const meses = Math.max((anio - anioN) * 12 + mes - mesN - (dia >= diaN ? 0 : 1), 0)
+  return meses === 0 ? 'Menos de un mes (bebé)' : `${cantidad(meses, 'mes', 'meses')} (bebé)`
 }
 
 /** Las primeras letras de las dos primeras palabras. Separa por caracteres completos: un emoji ocupa varias unidades. */
@@ -68,6 +89,9 @@ export function fechaSinAnio(fecha: string): string {
   const [, mes, dia] = partes(fecha)
   return `${dia} ${MESES[mes - 1]}`
 }
+
+/** La última fecha que se puede escribir en un campo de fecha: con ella, el navegador deja el año en 4 cifras. */
+export const FECHA_MAXIMA = '9999-12-31'
 
 /** La fecha de hoy como AAAA-MM-DD, en la zona del navegador. */
 export function fechaHoy(ahora: Date = new Date()): string {

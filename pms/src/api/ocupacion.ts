@@ -1,5 +1,6 @@
 // Tablero de ocupación de recepción (DEC-86): qué tiene cada apartamento en un rango de noches.
 import { pedir } from './cliente'
+import type { SituacionSaldo } from './folio'
 import type { CanalOrigen, EstadoReserva, Pagina } from './reservas'
 
 export interface ReservaOcupada {
@@ -10,6 +11,11 @@ export interface ReservaOcupada {
   estado: EstadoReserva
   canalOrigen: CanalOrigen
   titularId: string
+  /** DEC-101: el titular y la cuenta. Pueden faltar en respuestas de antes. */
+  titularNombre?: string | null
+  saldo?: number
+  situacionSaldo?: SituacionSaldo
+  totalPagado?: number
 }
 
 export interface BloqueoOcupado {
@@ -20,7 +26,10 @@ export interface BloqueoOcupado {
   motivo: string | null
 }
 
-/** `OcupacionResponse`: llegan solo las reservas activas y los bloqueos vigentes que tocan el rango. */
+/**
+ * `OcupacionResponse`: llegan las reservas activas, las finalizadas y las no-show que tocan el rango (DEC-101), y los
+ * bloqueos vigentes. Las canceladas no.
+ */
 export interface OcupacionApartamento {
   apartamento: string
   nombre: string

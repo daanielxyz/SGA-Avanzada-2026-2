@@ -10,18 +10,25 @@ describe('almacén de la sesión', () => {
     expect(leerSesion()).toEqual(sesion)
   })
 
+  it('es de la pestaña: no la comparten las demás pestañas del navegador (#28)', () => {
+    guardarSesion(sesionDe('RECEPCIONISTA'))
+
+    expect(sessionStorage.getItem('sga.pms.sesion')).not.toBeNull()
+    expect(localStorage.getItem('sga.pms.sesion')).toBeNull()
+  })
+
   it('olvida una sesión vencida', () => {
     guardarSesion(sesionDe('RECEPCIONISTA', { expiraEn: '2026-10-27T10:00:00Z' }))
 
     expect(leerSesion(new Date('2026-10-27T10:00:00Z'))).toBeNull()
-    expect(localStorage.getItem('sga.pms.sesion')).toBeNull()
+    expect(sessionStorage.getItem('sga.pms.sesion')).toBeNull()
   })
 
   it('no acepta lo que no es una sesión del personal', () => {
-    localStorage.setItem('sga.pms.sesion', JSON.stringify({ ...sesionDe('ADMINISTRADOR'), rol: 'HUESPED' }))
+    sessionStorage.setItem('sga.pms.sesion', JSON.stringify({ ...sesionDe('ADMINISTRADOR'), rol: 'HUESPED' }))
     expect(leerSesion()).toBeNull()
 
-    localStorage.setItem('sga.pms.sesion', '{no es json')
+    sessionStorage.setItem('sga.pms.sesion', '{no es json')
     expect(leerSesion()).toBeNull()
   })
 

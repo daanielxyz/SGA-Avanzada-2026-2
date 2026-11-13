@@ -6,6 +6,7 @@ import App from '../App'
 import type { Folio } from '../api/folio'
 import type { Reserva } from '../api/reservas'
 import { reservaDePrueba } from '../pruebas/reservasDePrueba'
+import { fechaHoy, sumarDias } from '../formato'
 import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
 import ProveedorSesion from '../sesion/ProveedorSesion'
 
@@ -92,7 +93,10 @@ function apiCon({ reserva, folio = folioDePrueba(), anticipoPct = 30, rechazar =
     }),
     [`${RUTA}/cancelacion`]: previa,
     [`${RUTA}/cancelar`]: accion('cancelar', liquidar('CANCELADA')),
-    [`${RUTA}/no-show`]: accion('no-show', liquidar('NO_SHOW')),
+    // DEC-102: el GET simula lo que se retendría; el PUT declara el no-show
+    [`${RUTA}/no-show`]: (metodo: string) => (metodo === 'GET'
+      ? [200, { retenido: 125000, saldo: 250000, situacionSaldo: 'A_FAVOR' }]
+      : accion('no-show', liquidar('NO_SHOW'))()),
     [`${RUTA}/folio/pagos`]: accion('pagos', () => {
       estado.folio = folioDePrueba({ totalPagado: ANTICIPO, saldo: TOTAL - ANTICIPO })
       return estado.folio
@@ -115,6 +119,34 @@ describe('botones según el estado (RN-08)', () => {
     expect(await screen.findByRole('button', { name: 'Confirmar' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Declarar no-show' })).not.toBeInTheDocument()
+  })
+
+  it('una pendiente que pasó su hora límite de llegada solo se cancela (DEC-110)', async () => {
+    apiCon({ reserva: { ...PENDIENTE, entrada: '2020-01-01', salida: '2020-01-03', creadaEn: '2019-12-20T10:00:00' } })
+    abrir()
+
+    const cancelar = await screen.findByRole('button', { name: 'Cancelar' })
+    expect(cancelar).toHaveAccessibleDescription(/No se confirmó antes de la hora límite de llegada \(1 ene, 10:00 p\. m\.\)/)
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).not.toBeInTheDocument()
+  })
+
+  it('desde la víspera se puede preparar la llegada (#24)', async () => {
+    const manana = sumarDias(fechaHoy(), 1)
+    apiCon({ reserva: { estado: 'CONFIRMADA', entrada: manana, salida: sumarDias(manana, 2) } })
+    abrir()
+
+    expect(await screen.findByRole('button', { name: 'Preparar llegada' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toBeDisabled()
+  })
+
+  it('una pendiente que entra mañana también muestra «Registrar llegada» deshabilitado (#24)', async () => {
+    const manana = sumarDias(fechaHoy(), 1)
+    apiCon({ reserva: { ...PENDIENTE, entrada: manana, salida: sumarDias(manana, 2) } })
+    abrir()
+
+    expect(await screen.findByRole('button', { name: 'Preparar llegada' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Registrar llegada' })).toHaveAccessibleDescription(/ya confirmada/)
   })
 
   it('antes de la hora límite el no-show está deshabilitado y dice desde cuándo (RES-16)', async () => {
@@ -574,12 +606,13 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
     await usuario.click(screen.getByRole('button', { name: 'Declarar no-show' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Declarar no-show' })
     expect(within(dialogo).getByText(/queda como «No se presentó»/)).toBeInTheDocument()
+    // DEC-102: antes de decidir dice cuánto se retiene, con el cálculo del no-show y no el de cancelar
+    expect(await within(dialogo).findByText('$ 125.000')).toBeInTheDocument()
+    expect(llamadasA(fetch, '/cancelacion')).toHaveLength(0)
     await usuario.click(within(dialogo).getByRole('button', { name: 'Declarar no-show' }))
 
     await screen.findByRole('dialog', { name: 'No-show declarado' })
     expect(screen.getAllByText('No se presentó').length).toBeGreaterThan(0)
-    // El no-show todavía no tiene su cálculo previo en la API (#1b): no se consulta el de cancelar
-    expect(llamadasA(fetch, '/cancelacion')).toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument()
   })
 
@@ -591,8 +624,25 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Declarar no-show' })).toBeEnabled())
     await usuario.click(screen.getByRole('button', { name: 'Declarar no-show' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Declarar no-show' })
+    await within(dialogo).findByText('$ 125.000')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Declarar no-show' }))
 
     expect(await within(dialogo).findByRole('alert')).toHaveTextContent('El no-show solo puede declararse')
+  })
+
+  it('si la simulación del no-show falla, no deja declararlo y ofrece reintentar (DEC-102)', async () => {
+    const fetch = apiCon({ reserva: CONFIRMADA_VENCIDA })
+    abrir()
+    const usuario = userEvent.setup()
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Declarar no-show' })).toBeEnabled())
+    fetch.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ estado: 500, codigo: 'ERROR', mensaje: 'Falla', detalles: [] }), { status: 500 })))
+    await usuario.click(screen.getByRole('button', { name: 'Declarar no-show' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Declarar no-show' })
+
+    expect(await within(dialogo).findByText('Error · No pudimos calcular la retención')).toBeInTheDocument()
+    expect(within(dialogo).getByRole('button', { name: 'Declarar no-show' })).toBeDisabled()
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Reintentar' }))
+    expect(await within(dialogo).findByText('$ 125.000')).toBeInTheDocument()
   })
 })

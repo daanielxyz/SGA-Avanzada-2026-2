@@ -10,6 +10,7 @@ import { useTitulo } from '../componentes/useTitulo'
 import { dinero, fechaCorta, hora } from '../formato'
 import { DialogoConsumo, DialogoCorregir, DialogoRevertirCargo } from '../folio/DialogosCargo'
 import { DialogoCerrar, DialogoMovimientoDePago, DialogoRevertirPago, DialogoSalida } from '../folio/DialogosFolio'
+import DialogoTra from '../reserva/llegada/DialogoTra'
 import { accionesDelFolio, cargosNetos, consumosDelCatalogo, type AccionFolio } from '../folio/movimientos'
 import { TablaCargos, TablaPagos } from '../folio/TablasMovimientos'
 import { mediosDeRecepcion } from '../reserva/pago'
@@ -22,6 +23,7 @@ type DialogoAbierto =
   | { tipo: AccionFolio }
   | { tipo: 'revertirCargo' | 'corregir'; cargo: Cargo }
   | { tipo: 'revertirPago'; pago: Pago }
+  | { tipo: 'tra'; ocupante: string }
 
 const TEXTO_DE_ACCION: Record<AccionFolio, string> = {
   pago: 'Registrar pago',
@@ -297,6 +299,15 @@ export default function Folio() {
           alCambiarFolio={pago.ponerFolio}
           alTerminar={actualizar}
           alFallar={actualizar}
+          alCompletarTra={(ocupante) => setDialogo({ tipo: 'tra', ocupante })}
+        />
+      )}
+      {dialogo?.tipo === 'tra' && (
+        <DialogoTra
+          reserva={reserva}
+          ocupanteId={dialogo.ocupante}
+          alCambiar={(nueva) => setResultado({ clave, reserva: nueva })}
+          alCerrar={() => setDialogo({ tipo: 'salida' })}
         />
       )}
     </div>

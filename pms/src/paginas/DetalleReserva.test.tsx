@@ -29,10 +29,8 @@ describe('detalle de una reserva (CU-49)', () => {
     expect(screen.getByText('No se presentó')).toBeInTheDocument()
     expect(screen.getByText('Titular').nextSibling).toHaveTextContent('Ana Ríos')
     expect(screen.getByText('Titular').nextSibling).toHaveTextContent('TIT-7')
-    expect(screen.getByText('POL-3')).toBeInTheDocument()
-    expect(screen.getByText('Carros').nextSibling).toHaveTextContent('2')
-    expect(screen.getByText('Motos').nextSibling).toHaveTextContent('1')
-    expect(screen.getByText('Mascotas').nextSibling).toHaveTextContent('2')
+    expect(await screen.findByText('No pudimos cargar la política.')).toBeInTheDocument()
+    expect(screen.getByText('Vehículos y mascotas').nextSibling).toHaveTextContent('Carros: 2 · Motos: 1 · Mascotas: 2')
     expect(screen.getByText('Noches').nextSibling).toHaveTextContent('3')
   })
 

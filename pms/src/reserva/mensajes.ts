@@ -20,6 +20,9 @@ const POR_MOTIVO: Record<string, string> = {
   FOLIO_CERRADO: 'El folio ya está cerrado y no admite movimientos; puede que otro turno lo haya cerrado.',
   YA_REVERTIDO: 'Este movimiento ya fue revertido; puede que otro turno lo haya hecho. Revisa el folio actualizado.',
   SALDO_PENDIENTE: 'El folio ya no está en cero; puede que otro turno haya registrado un movimiento. Revisa el saldo.',
+  YA_ATENDIDA: 'Otro turno ya la marcó como atendida.',
+  LLEGADA_VENCIDA:
+    'Ya pasó la hora límite de llegada y la reserva no se confirmó a tiempo. Si el huésped llegó, cancélala y haz una nueva.',
 }
 
 /**

@@ -2,27 +2,25 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { Link, useSearchParams } from 'react-router'
 import { listarCodigosDeApartamentos } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
-import { consultarOcupacion, type OcupacionApartamento } from '../api/ocupacion'
-import { NOMBRE_DEL_ESTADO, type Pagina } from '../api/reservas'
+import { consultarOcupacion, type OcupacionApartamento, type ReservaOcupada } from '../api/ocupacion'
+import { NOMBRE_DEL_CANAL, NOMBRE_DEL_ESTADO, type Pagina } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
+import Dialogo from '../componentes/Dialogo'
+import EstadoApartamento from '../componentes/EstadoApartamento'
 import { FormaEstado } from '../componentes/EtiquetaEstado'
 import { claseDeEstado } from '../componentes/estadosReserva'
 import Paginador from '../componentes/Paginador'
 import { useTitulo } from '../componentes/useTitulo'
-import { cantidad, fechaCorta, fechaHoy, fechaSinAnio, noches, sumarDias } from '../formato'
+import { cantidad, FECHA_MAXIMA, fechaCorta, fechaHoy, fechaSinAnio, noches, sumarDias } from '../formato'
 import { barrasDe, nochesDelRango, type Barra } from '../ocupacion/barras'
+import { CUENTAS, cuentaDe, NOMBRE_DE_LA_CUENTA, textoCortoDeCuenta, textoDeCuenta } from '../ocupacion/cuenta'
 
 const NOCHES_POR_DEFECTO = 14
-const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+/** Cuánto corren el rango «Anterior» y «Siguiente». */
+const DIAS_AL_MOVER = 7
 
-const ESTADO_OPERATIVO: Partial<Record<string, { nombre: string; forma: ReactNode }>> = {
-  PREPARADO: { nombre: 'Preparado', forma: <path d="M2 6.5 4.8 9.5 10 3" /> },
-  OCUPADO: { nombre: 'Ocupado', forma: <circle cx="6" cy="6" r="3" className="relleno" /> },
-  PENDIENTE_PREPARACION: { nombre: 'Pendiente de preparación', forma: <path d="M6 1a5 5 0 0 1 0 10z" className="relleno" /> },
-  EN_PREPARACION: { nombre: 'En preparación', forma: <path d="M6 2a4 4 0 1 1-4 4M6 3.5V6l1.8 1" /> },
-  FUERA_DE_SERVICIO: { nombre: 'Fuera de servicio', forma: <path d="M6 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM2.8 2.8l6.4 6.4" /> },
-}
+const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 
 const FORMA_BLOQUEO = <path d="M6 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM2.8 2.8l6.4 6.4" />
 
@@ -36,13 +34,16 @@ type Resultado = { clave: string; pagina: Pagina<OcupacionApartamento> } | { cla
 
 /**
  * Tablero de ocupación (DEC-86). El rango vive en la dirección, para volver desde el detalle al mismo sitio. Se elige la
- * última noche que se quiere ver; a la API se le pide un día más, porque su `hasta` es exclusiva (EST-01).
+ * última noche que se quiere ver; a la API se le pide un día más, porque su `hasta` es exclusiva (EST-01). Sin rango
+ * elegido, empieza un día antes de la estancia en curso que empezó primero, para verlas enteras (#23). Tocar una
+ * reserva abre una ventana con lo básico y el enlace al detalle.
  */
 export default function Ocupacion() {
   useTitulo('Ocupación')
   const [parametros, setParametros] = useSearchParams()
   const hoy = fechaHoy()
-  const desde = esFecha(parametros.get('desde')) ? (parametros.get('desde') as string) : hoy
+  const desdeElegido = esFecha(parametros.get('desde'))
+  const desde = desdeElegido ? (parametros.get('desde') as string) : hoy
   const ultima = esFecha(parametros.get('ultima'))
     ? (parametros.get('ultima') as string)
     : sumarDias(desde, NOCHES_POR_DEFECTO - 1)
@@ -55,6 +56,7 @@ export default function Ocupacion() {
   const [codigos, setCodigos] = useState<string[]>([])
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState<Resultado | null>(null)
+  const [abierta, setAbierta] = useState<ReservaOcupada | null>(null)
   const clave = `${desde}|${hasta}|${apartamento}|${numero}|${intento}`
 
   useEffect(() => {
@@ -75,7 +77,14 @@ export default function Ocupacion() {
     let vigente = true
     consultarOcupacion({ desde, hasta, apartamento, pagina: numero })
       .then((pagina) => {
-        if (vigente) setResultado({ clave, pagina })
+        if (!vigente) return
+        const antes = desdeElegido ? null : primeraEntradaAntesDe(pagina.contenido, desde)
+        if (antes) {
+          // Sin rango elegido, se corre al comienzo de lo que está en curso; la última noche no cambia
+          setParametros({ ...Object.fromEntries(parametros), desde: sumarDias(antes, -1), ultima }, { replace: true })
+          return
+        }
+        setResultado({ clave, pagina })
       })
       .catch((error: unknown) => {
         if (vigente) setResultado({ clave, error })
@@ -83,6 +92,8 @@ export default function Ocupacion() {
     return () => {
       vigente = false
     }
+    // Los parámetros solo se leen al llegar la respuesta: la consulta depende de la clave
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apartamento, clave, desde, hasta, numero, rangoInvalido])
 
   function cambiar(cambios: { desde?: string; ultima?: string; apartamento?: string; pagina?: number }) {
@@ -95,8 +106,10 @@ export default function Ocupacion() {
     })
   }
 
+  // De a una semana: correr el rango entero dejaba de ver lo que se estaba mirando (ronda 2)
   const moverRango = (dias: number) => cambiar({ desde: sumarDias(desde, dias), ultima: sumarDias(ultima, dias) })
-  const irAHoy = () => cambiar({ desde: hoy, ultima: sumarDias(hoy, Math.max(totalNoches, 1) - 1) })
+  // «Hoy» vuelve a la vista de entrada: hoy y las estancias en curso enteras
+  const irAHoy = () => setParametros(apartamento ? { apartamento } : {})
 
   const actual = resultado?.clave === clave ? resultado : null
 
@@ -139,13 +152,13 @@ export default function Ocupacion() {
           </select>
         </div>
         <div className="ocupacion-mover">
-          <button type="button" className="boton boton-secundario" disabled={rangoInvalido} onClick={() => moverRango(-totalNoches)}>
+          <button type="button" className="boton boton-secundario" disabled={rangoInvalido} onClick={() => moverRango(-DIAS_AL_MOVER)}>
             <span aria-hidden="true">←</span> Anterior
           </button>
           <button type="button" className="boton boton-secundario" onClick={irAHoy}>
             Hoy
           </button>
-          <button type="button" className="boton boton-secundario" disabled={rangoInvalido} onClick={() => moverRango(totalNoches)}>
+          <button type="button" className="boton boton-secundario" disabled={rangoInvalido} onClick={() => moverRango(DIAS_AL_MOVER)}>
             Siguiente <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -176,7 +189,7 @@ export default function Ocupacion() {
       )}
       {!rangoInvalido && actual && 'pagina' in actual && actual.pagina.contenido.length > 0 && (
         <>
-          <Cuadricula filas={actual.pagina.contenido} desde={desde} hasta={hasta} hoy={hoy} />
+          <Cuadricula filas={actual.pagina.contenido} desde={desde} hasta={hasta} hoy={hoy} alAbrir={setAbierta} />
           <ListaCelular filas={actual.pagina.contenido} desde={desde} hasta={hasta} />
           <Paginador
             numero={actual.pagina.numero}
@@ -187,6 +200,7 @@ export default function Ocupacion() {
           />
         </>
       )}
+      {abierta && <VentanaReserva reserva={abierta} alCerrar={() => setAbierta(null)} />}
     </div>
   )
 }
@@ -213,6 +227,7 @@ function CampoFecha({ etiqueta, valor, error, alCambiar }: {
       <input
         id={id}
         type="date"
+        max={FECHA_MAXIMA}
         className="campo-control"
         value={borrador}
         aria-invalid={Boolean(error)}
@@ -235,45 +250,77 @@ function Forma({ children }: { children: ReactNode }) {
   )
 }
 
-function EstadoOperativo({ estado }: { estado: string }) {
-  const conocido = ESTADO_OPERATIVO[estado]
-  return (
-    <span className="ocupacion-estado">
-      <Forma>{conocido?.forma ?? <circle cx="6" cy="6" r="2" className="relleno" />}</Forma>
-      {conocido?.nombre ?? estado}
-    </span>
-  )
-}
-
+/** Qué dice cada barra: el color es la cuenta y la forma, el estado (BL-09). En el celular va plegada. */
 function Leyenda() {
+  const contenido = (
+    <div className="ocupacion-leyenda">
+      <div>
+        <p className="ocupacion-leyenda-titulo">Color de la barra: la cuenta</p>
+        <ul>
+          {CUENTAS.map((cuenta) => (
+            <li key={cuenta}>
+              <span className={`ocupacion-muestra cuenta-${cuenta}`} />
+              {NOMBRE_DE_LA_CUENTA[cuenta]}
+              {cuenta === 'al-dia' && <span className="suave"> (incluye a favor)</span>}
+              {cuenta === 'no-show' && <span className="suave"> (apagada, último carril)</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p className="ocupacion-leyenda-titulo">Forma: el estado de la reserva</p>
+        <ul>
+          {(['PENDIENTE', 'CONFIRMADA', 'EN_CURSO', 'FINALIZADA', 'NO_SHOW'] as const).map((estado) => (
+            <li key={estado}>
+              <span className={`etiqueta-${claseDeEstado(estado)}`}><FormaEstado estado={estado} /></span>
+              {NOMBRE_DEL_ESTADO[estado]}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p className="ocupacion-leyenda-titulo">Otros</p>
+        <ul>
+          <li>
+            <span className="ocupacion-muestra ocupacion-muestra-hoy" />
+            Hoy
+          </li>
+          <li>
+            <span className="ocupacion-muestra barra-bloqueo" />
+            <Forma>{FORMA_BLOQUEO}</Forma>
+            Bloqueo
+          </li>
+          <li>
+            <span aria-hidden="true">›</span> Abre el detalle
+          </li>
+        </ul>
+      </div>
+    </div>
+  )
   return (
-    <ul className="ocupacion-leyenda" aria-label="Leyenda">
-      {(['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'] as const).map((estado) => (
-        <li key={estado}>
-          <span className={`ocupacion-muestra barra-${claseDeEstado(estado)}`} />
-          <span className={`etiqueta-${claseDeEstado(estado)}`}><FormaEstado estado={estado} /></span>
-          {NOMBRE_DEL_ESTADO[estado]}
-        </li>
-      ))}
-      <li>
-        <span className="ocupacion-muestra barra-bloqueo" />
-        <Forma>{FORMA_BLOQUEO}</Forma>
-        Bloqueo
-      </li>
-      <li>
-        <span className="ocupacion-muestra ocupacion-muestra-hoy" />
-        Hoy
-      </li>
-      <li>
-        <span aria-hidden="true">›</span> Abre el detalle
-      </li>
-    </ul>
+    <>
+      <section className="tarjeta ocupacion-leyenda-fija" aria-label="Leyenda">{contenido}</section>
+      <details className="tarjeta ocupacion-leyenda-plegable">
+        <summary>
+          Leyenda <span className="ocupacion-leyenda-flecha" aria-hidden="true">›</span>
+        </summary>
+        {contenido}
+      </details>
+    </>
   )
 }
 
-function descripcionReserva(barra: Extract<Barra, { tipo: 'reserva' }>): string {
-  const { codigo, estado, titularId, entrada, salida } = barra.reserva
-  return `Reserva ${codigo}, ${NOMBRE_DEL_ESTADO[estado] ?? estado}, titular ${titularId}, del ${fechaCorta(entrada)} al ${fechaCorta(salida)}`
+/** El color de la barra: el de la cuenta o, si la API no la manda, el del estado. */
+function claseDeBarra(reserva: ReservaOcupada): string {
+  const cuenta = cuentaDe(reserva)
+  return cuenta ? `cuenta-${cuenta}` : `barra-${claseDeEstado(reserva.estado)}`
+}
+
+/** «Ana Torres Vélez, del 12 nov al 15 nov, reserva RES-…, En curso. Con saldo: debe $ 675.000». */
+function descripcionReserva(reserva: ReservaOcupada): string {
+  const { codigo, estado, titularId, titularNombre, entrada, salida } = reserva
+  const cuenta = textoDeCuenta(reserva)
+  return `${titularNombre ?? `Titular ${titularId}`}, del ${fechaSinAnio(entrada)} al ${fechaSinAnio(salida)}, reserva ${codigo}, ${NOMBRE_DEL_ESTADO[estado] ?? estado}${cuenta ? `. ${cuenta}` : ''}`
 }
 
 function descripcionBloqueo(barra: Extract<Barra, { tipo: 'bloqueo' }>): string {
@@ -281,11 +328,12 @@ function descripcionBloqueo(barra: Extract<Barra, { tipo: 'bloqueo' }>): string 
   return `Bloqueo${motivo ? `: ${motivo}` : ''}, del ${fechaCorta(fechaInicio)} al ${fechaCorta(fechaFin)}`
 }
 
-function Cuadricula({ filas, desde, hasta, hoy }: {
+function Cuadricula({ filas, desde, hasta, hoy, alAbrir }: {
   filas: OcupacionApartamento[]
   desde: string
   hasta: string
   hoy: string
+  alAbrir: (reserva: ReservaOcupada) => void
 }) {
   const dias = useMemo(() => nochesDelRango(desde, hasta), [desde, hasta])
   const columnas = { '--noches': dias.length } as CSSProperties
@@ -308,7 +356,7 @@ function Cuadricula({ filas, desde, hasta, hoy }: {
           </div>
           <ul className="ocupacion-filas">
             {filas.map((fila) => (
-              <FilaApartamento key={fila.apartamento} fila={fila} dias={dias} desde={desde} hasta={hasta} hoy={hoy} />
+              <FilaApartamento key={fila.apartamento} fila={fila} dias={dias} desde={desde} hasta={hasta} hoy={hoy} alAbrir={alAbrir} />
             ))}
           </ul>
         </div>
@@ -317,11 +365,12 @@ function Cuadricula({ filas, desde, hasta, hoy }: {
   )
 }
 
-function FilaApartamento({ fila, dias, desde, hasta, hoy }: {
+function FilaApartamento({ fila, dias, desde, hasta, hoy, alAbrir }: {
   fila: OcupacionApartamento
   dias: string[]
   desde: string
   hasta: string
+  alAbrir: (reserva: ReservaOcupada) => void
   hoy: string
 }) {
   const barras = barrasDe(fila, desde, hasta)
@@ -331,7 +380,7 @@ function FilaApartamento({ fila, dias, desde, hasta, hoy }: {
       <div className="ocupacion-celda-apartamento">
         <span className="codigo">{fila.apartamento}</span>
         <strong title={fila.nombre}>{fila.nombre}</strong>
-        <EstadoOperativo estado={fila.estadoOperativo} />
+        <EstadoApartamento estado={fila.estadoOperativo} />
       </div>
       <div className="ocupacion-noches" style={{ '--carriles': carriles } as CSSProperties}>
         {dias.map((dia, indice) => (
@@ -341,13 +390,13 @@ function FilaApartamento({ fila, dias, desde, hasta, hoy }: {
             style={{ gridColumn: indice + 1 }}
           />
         ))}
-        {barras.map((barra) => <BarraTablero key={barra.clave} barra={barra} />)}
+        {barras.map((barra) => <BarraTablero key={barra.clave} barra={barra} alAbrir={alAbrir} />)}
       </div>
     </li>
   )
 }
 
-function BarraTablero({ barra }: { barra: Barra }) {
+function BarraTablero({ barra, alAbrir }: { barra: Barra; alAbrir: (reserva: ReservaOcupada) => void }) {
   const posicion = {
     gridColumn: `${barra.columna + 1} / span ${barra.ancho}`,
     gridRow: barra.carril + 1,
@@ -364,22 +413,70 @@ function BarraTablero({ barra }: { barra: Barra }) {
       </div>
     )
   }
-  const { codigo, estado, titularId } = barra.reserva
-  const descripcion = descripcionReserva(barra)
+  const { codigo, estado, titularId, titularNombre } = barra.reserva
+  const descripcion = descripcionReserva(barra.reserva)
   return (
-    <Link
-      to={`/reservas/${codigo}`}
-      className={`barra barra-${claseDeEstado(estado)} etiqueta-${claseDeEstado(estado)}${cortes}`}
+    <button
+      type="button"
+      className={`barra ${claseDeBarra(barra.reserva)} etiqueta-${claseDeEstado(estado)}${cortes}`}
       style={posicion}
       title={descripcion}
       aria-label={descripcion}
+      aria-haspopup="dialog"
+      onClick={() => alAbrir(barra.reserva)}
     >
       <span className="barra-textos">
-        <span className="barra-titulo"><FormaEstado estado={estado} /> <span className="codigo">{codigo}</span></span>
-        <span className="barra-detalle codigo">{titularId}</span>
+        <span className="barra-titulo">
+          <FormaEstado estado={estado} /> {titularNombre ?? <span className="codigo">{titularId}</span>}
+        </span>
+        <span className="barra-detalle">{textoCortoDeCuenta(barra.reserva) ?? codigo}</span>
       </span>
       {barra.ancho > 1 && <span className="barra-ir" aria-hidden="true">›</span>}
-    </Link>
+    </button>
+  )
+}
+
+/** La primera entrada anterior a `desde` entre lo que sigue en curso o pendiente de salir: desde ahí se ve entera. */
+function primeraEntradaAntesDe(filas: OcupacionApartamento[], desde: string): string | null {
+  const entradas = filas.flatMap((fila) => fila.reservas)
+    .filter((reserva) => reserva.estado === 'EN_CURSO' && reserva.entrada < desde)
+    .map((reserva) => reserva.entrada)
+    .sort()
+  return entradas[0] ?? null
+}
+
+/** Lo básico de una reserva del tablero, sin salir de él (#23). */
+function VentanaReserva({ reserva, alCerrar }: { reserva: ReservaOcupada; alCerrar: () => void }) {
+  const cuenta = textoDeCuenta(reserva)
+  return (
+    <Dialogo titulo={reserva.titularNombre ?? reserva.titularId} subtitulo={<span className="codigo">{reserva.codigo}</span>} alCerrar={alCerrar}>
+      <div className="dialogo-contenido">
+        <div className="dialogo-cuerpo">
+          <dl className="resumen-dialogo">
+            <dt>Estado</dt>
+            <dd><FormaEstado estado={reserva.estado} /> {NOMBRE_DEL_ESTADO[reserva.estado] ?? reserva.estado}</dd>
+            <dt>Fechas</dt>
+            <dd>
+              {fechaCorta(reserva.entrada)} → {fechaCorta(reserva.salida)} · {cantidad(noches(reserva.entrada, reserva.salida), 'noche', 'noches')}
+            </dd>
+            <dt>Canal</dt>
+            <dd>{NOMBRE_DEL_CANAL[reserva.canalOrigen] ?? reserva.canalOrigen}</dd>
+            {cuenta && (
+              <>
+                <dt>Cuenta</dt>
+                <dd>{cuenta}</dd>
+              </>
+            )}
+          </dl>
+        </div>
+        <div className="dialogo-pie">
+          <button type="button" className="boton boton-secundario" onClick={alCerrar}>Cerrar</button>
+          <Link to={`/reservas/${encodeURIComponent(reserva.codigo)}`} className="boton" data-foco-inicial>
+            Ver detalle completo <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </div>
+    </Dialogo>
   )
 }
 
@@ -393,20 +490,27 @@ function ListaCelular({ filas, desde, hasta }: { filas: OcupacionApartamento[]; 
           <li key={fila.apartamento} className="tarjeta ocupacion-lista-apartamento">
             <span className="codigo ocupacion-lista-codigo">{fila.apartamento}</span>
             <strong>{fila.nombre}</strong>
-            <EstadoOperativo estado={fila.estadoOperativo} />
+            <EstadoApartamento estado={fila.estadoOperativo} />
             {barras.length === 0 && <p className="suave ocupacion-lista-vacia">Sin reservas ni bloqueos en este rango.</p>}
             {barras.map((barra) =>
               barra.tipo === 'reserva' ? (
                 <Link
                   key={barra.clave}
                   to={`/reservas/${barra.reserva.codigo}`}
-                  className={`ocupacion-item barra-${claseDeEstado(barra.reserva.estado)} etiqueta-${claseDeEstado(barra.reserva.estado)}`}
+                  className={`ocupacion-item ${claseDeBarra(barra.reserva)} etiqueta-${claseDeEstado(barra.reserva.estado)}`}
+                  aria-label={descripcionReserva(barra.reserva)}
                 >
                   <FormaEstado estado={barra.reserva.estado} />
                   <span className="ocupacion-item-textos">
-                    <span><span className="codigo">{barra.reserva.codigo}</span> · {NOMBRE_DEL_ESTADO[barra.reserva.estado] ?? barra.reserva.estado}</span>
-                    <span className="codigo">{barra.reserva.titularId}</span>
-                    <span>{fechaSinAnio(barra.reserva.entrada)} → {fechaSinAnio(barra.reserva.salida)}</span>
+                    <strong>{barra.reserva.titularNombre ?? <span className="codigo">{barra.reserva.titularId}</span>}</strong>
+                    <span>
+                      {NOMBRE_DEL_ESTADO[barra.reserva.estado] ?? barra.reserva.estado}
+                      {textoDeCuenta(barra.reserva) && ` · ${textoDeCuenta(barra.reserva)}`}
+                    </span>
+                    <span>
+                      {fechaSinAnio(barra.reserva.entrada)} → {fechaSinAnio(barra.reserva.salida)} ·{' '}
+                      <span className="codigo">{barra.reserva.codigo}</span>
+                    </span>
                   </span>
                   <span aria-hidden="true">›</span>
                 </Link>

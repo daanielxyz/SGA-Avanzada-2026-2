@@ -367,6 +367,12 @@ describe('Registrar salida (CU-22 · CU-38 · SAL-03 · DEC-96)', () => {
     const boton = within(dialogo).getByRole('button', { name: 'Registrar salida' })
     expect(boton).toBeDisabled()
     expect(boton).toHaveAccessibleDescription(/Faltan datos del TRA/)
+
+    // Desde el aviso se abren los datos que faltan; al cerrarlos se vuelve a la salida
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Completar datos de Ana Ríos' }))
+    const tra = await screen.findByRole('dialog', { name: 'Completar datos' })
+    await usuario.click(within(tra).getByRole('button', { name: 'Cerrar' }))
+    expect(await screen.findByRole('dialog', { name: 'Registrar salida' })).toBeInTheDocument()
   })
 
   it('el administrador no ve el motivo de autorización mientras falten datos del TRA', async () => {

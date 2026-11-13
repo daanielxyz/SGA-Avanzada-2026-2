@@ -5,6 +5,7 @@ import type { ApartamentoEncontrado } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import type { Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
+import Dialogo from '../componentes/Dialogo'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, fechaCorta, noches } from '../formato'
 import {
@@ -60,7 +61,7 @@ export default function NuevaReserva() {
   const paso = Math.min(Math.max(pedido, 1), maximo)
 
   const hayAlgoEscrito = Boolean(estancia.entrada || estancia.salida || titular.nombre || estanciaLista)
-  useAvisoAlSalir(hayAlgoEscrito && !creada)
+  const aviso = useAvisoAlSalir(hayAlgoEscrito && !creada)
 
   useEffect(() => {
     let vigente = true
@@ -129,11 +130,27 @@ export default function NuevaReserva() {
   function cambiarSeAloja(seAloja: boolean) {
     setTitularSeAloja(seAloja)
     setPersonasListas(false)
-    if (seAloja) setGrupo((actual) => actual.map((o, i) => (i === 0 ? ocupanteDelTitular(titular, o) : o)))
+    // Al dejar de alojarse, el ocupante 1 queda en blanco: sus datos eran los del titular y ahora es otra persona
+    setGrupo((actual) => actual.map((o, i) => {
+      if (i !== 0) return o
+      return seAloja ? ocupanteDelTitular(titular, o) : { ...o, nombre: '', tipoDocumento: '', numeroDocumento: '' }
+    }))
   }
 
-  function alCrear(reserva: Reserva) {
+  function alCrear(reserva: Reserva, continuarLlegada: boolean) {
     setCreada(true)
+    if (continuarLlegada) {
+      navegar(`/reservas/${reserva.codigo}/llegada`, {
+        replace: true,
+        state: {
+          aviso: {
+            asunto: `Reserva creada · ${reserva.codigo}`,
+            mensaje: `Cobra y registra la llegada para terminar.${reserva.avisoCuenta ? ` ${reserva.avisoCuenta}` : ''}`,
+          },
+        },
+      })
+      return
+    }
     navegar(`/reservas/${reserva.codigo}`, {
       replace: true,
       state: {
@@ -178,6 +195,19 @@ export default function NuevaReserva() {
         <VolverAReservas />
         <h1>Nueva reserva</h1>
       </div>
+      {aviso.destino && (
+        <Dialogo titulo="¿Salir sin crear la reserva?" alCerrar={aviso.quedarse}>
+          <div className="dialogo-contenido">
+            <div className="dialogo-cuerpo">
+              <p className="dialogo-texto">Tienes una reserva a medio llenar. Si sales, se pierde lo escrito.</p>
+            </div>
+            <div className="dialogo-pie">
+              <button type="button" className="boton boton-secundario" onClick={aviso.salir}>Salir y perder lo escrito</button>
+              <button type="button" className="boton" data-foco-inicial onClick={aviso.quedarse}>Seguir con la reserva</button>
+            </div>
+          </div>
+        </Dialogo>
+      )}
 
       <Indicador paso={paso} />
 
@@ -214,7 +244,6 @@ export default function NuevaReserva() {
           grupo={grupo}
           titularSeAloja={titularSeAloja}
           entrada={estanciaLista.entrada}
-          umbral={alojamiento.parametros.umbralEdadFacturable}
           alCambiarTitular={cambiarTitular}
           alCambiarOcupante={cambiarOcupante}
           alCambiarSeAloja={cambiarSeAloja}

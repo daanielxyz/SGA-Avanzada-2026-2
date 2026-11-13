@@ -7,7 +7,6 @@ import { ContextoSesion, type MotivoSinSesion, type ValorSesion } from './contex
 export default function ProveedorSesion({ children }: { children: ReactNode }) {
   const [sesion, setSesion] = useState<Sesion | null>(() => leerSesion())
   const [motivo, setMotivo] = useState<MotivoSinSesion>('sin-entrar')
-
   useEffect(
     () =>
       alPerderSesion(() => {
@@ -27,7 +26,7 @@ export default function ProveedorSesion({ children }: { children: ReactNode }) {
         setSesion(nueva)
       },
       async salir() {
-        // Aunque el backend no responda, en este navegador la sesión se cierra igual
+        // Aunque el backend no responda, en esta pestaña la sesión se cierra igual
         await cerrarSesion().catch(() => undefined)
         borrarSesion()
         setSesion(null)

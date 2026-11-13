@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import type { Alojamiento } from '../../api/alojamiento'
 import { consultarApartamento, type ApartamentoEncontrado } from '../../api/apartamentos'
 import { ErrorApi } from '../../api/cliente'
@@ -6,7 +6,7 @@ import { cotizarEstancia, crearReserva, type Cotizacion, type Reserva } from '..
 import Aviso from '../../componentes/Aviso'
 import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
-import { cantidad, dinero, fechaCorta, noches } from '../../formato'
+import { cantidad, dinero, fechaCorta, fechaHoy, horaEnPalabras, noches } from '../../formato'
 import Campo from './Campo'
 import { estimarExtras, salidasDelRechazo, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
 
@@ -46,7 +46,8 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
   llegada: DatosLlegada
   alojamiento: Alojamiento
   alCambiarLlegada: (llegada: DatosLlegada) => void
-  alCrear: (reserva: Reserva) => void
+  /** @param continuarLlegada el huésped está en el mostrador: se sigue a cobrar y registrar su llegada */
+  alCrear: (reserva: Reserva, continuarLlegada: boolean) => void
   alElegirOtro: () => void
   alCambiarFechas: () => void
   alRevisarPersonas: () => void
@@ -61,6 +62,9 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
   const [cotizacion, setCotizacion] = useState<{ intento: number; valor: Cotizacion } | { intento: number; falla: Falla } | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [falla, setFalla] = useState<Falla | null>(null)
+  // Reserva de mostrador: el huésped llegó sin reserva y entra hoy
+  const entraHoy = estancia.entrada === fechaHoy()
+  const continuarLlegada = useRef(true)
 
   useEffect(() => {
     let vigente = true
@@ -132,6 +136,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
     }
 
     setEnviando(true)
+    const llegadaAhora = entraHoy && continuarLlegada.current
     try {
       alCrear(await crearReserva({
         apartamento: apartamento.codigo,
@@ -149,7 +154,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
         carros,
         motos,
         mascotas,
-      }))
+      }), llegadaAhora)
     } catch (causa) {
       setFalla(fallaDe(causa))
       setEnviando(false)
@@ -248,6 +253,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
             type="time"
             value={llegada.hora}
             disabled={enviando}
+            pista={llegada.hora ? horaEnPalabras(llegada.hora) : undefined}
             onChange={(evento) => alCambiarLlegada({ ...llegada, hora: evento.target.value })}
           />
           {aceptaMascotas && (!limiteListo || limite > 0) && (
@@ -330,9 +336,31 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
               )}
             </p>
           )}
-          <button type="submit" className="boton" disabled={enviando || !valor || !limiteListo}>
-            {enviando ? 'Creando reserva…' : 'Crear reserva'}
-          </button>
+          {entraHoy ? (
+            // La principal va primero: Enter en un campo envía con ella. El CSS la deja a la derecha en el computador
+            <div className="paso-pie-botones">
+              <button
+                type="submit"
+                className="boton"
+                disabled={enviando || !valor || !limiteListo}
+                onClick={() => { continuarLlegada.current = true }}
+              >
+                {enviando ? 'Creando reserva…' : 'Crear y continuar con la llegada'}
+              </button>
+              <button
+                type="submit"
+                className="boton boton-secundario"
+                disabled={enviando || !valor || !limiteListo}
+                onClick={() => { continuarLlegada.current = false }}
+              >
+                Crear reserva
+              </button>
+            </div>
+          ) : (
+            <button type="submit" className="boton" disabled={enviando || !valor || !limiteListo}>
+              {enviando ? 'Creando reserva…' : 'Crear reserva'}
+            </button>
+          )}
         </div>
       </div>
     </form>

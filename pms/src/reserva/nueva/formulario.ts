@@ -3,7 +3,13 @@
 import type { Alojamiento } from '../../api/alojamiento'
 import { dinero, edadEn, fechaCorta, fechaHoy } from '../../formato'
 
+/** Los del titular: quien responde por la reserva y entra a su cuenta no se identifica con registro civil (DEC-110). */
 export const TIPOS_DE_DOCUMENTO = ['CC', 'CE', 'PASAPORTE', 'TI'] as const
+
+/** Los de un ocupante: además, el registro civil de un niño menor de 7 años, que no tiene tarjeta de identidad. */
+export const TIPOS_DE_DOCUMENTO_OCUPANTE: readonly (readonly [string, string])[] = [
+  ['CC', 'CC'], ['CE', 'CE'], ['PASAPORTE', 'Pasaporte'], ['TI', 'TI'], ['RC', 'Registro civil'],
+]
 
 export interface DatosEstancia {
   entrada: string
@@ -83,18 +89,31 @@ function validarTitular(titular: DatosTitular): Errores {
     errores['titular.correo'] = 'Escribe un correo válido, por ejemplo nombre@dominio.com.'
   }
   if (!titular.telefono.trim()) errores['titular.telefono'] = 'Escribe el teléfono.'
+  else if (!telefonoValido(titular.telefono)) errores['titular.telefono'] = MENSAJE_TELEFONO
   return errores
 }
 
-function validarOcupantes(grupo: DatosOcupante[], hoy: string): Errores {
+export const MENSAJE_TELEFONO = 'Escribe un teléfono de 7 a 15 dígitos; puede llevar +, espacios, guiones o paréntesis.'
+
+/** La misma regla del backend (`Titular`): dígitos con separadores comunes, un «+» solo al inicio, de 7 a 15 dígitos. */
+export function telefonoValido(telefono: string): boolean {
+  const limpio = telefono.trim()
+  const digitos = limpio.replace(/\D/g, '').length
+  return /^[\d\s()+-]+$/.test(limpio) && limpio.lastIndexOf('+') <= 0 && digitos >= 7 && digitos <= 15
+}
+
+function validarOcupantes(grupo: DatosOcupante[], entrada: string, hoy: string): Errores {
   const errores: Errores = {}
   grupo.forEach((ocupante, indice) => {
     const campo = (nombre: string) => `ocupante.${indice}.${nombre}`
     if (!ocupante.nombre.trim()) errores[campo('nombre')] = 'Escribe el nombre.'
     if (!ocupante.fechaNacimiento) errores[campo('fechaNacimiento')] = 'Escribe la fecha de nacimiento.'
     else if (ocupante.fechaNacimiento > hoy) errores[campo('fechaNacimiento')] = 'No puede ser una fecha futura.'
-    if (ocupante.numeroDocumento.trim() && !ocupante.tipoDocumento) errores[campo('tipoDocumento')] = 'Elige el tipo.'
-    if (ocupante.tipoDocumento && !ocupante.numeroDocumento.trim()) errores[campo('numeroDocumento')] = 'Escribe el número.'
+    // El documento de cada huésped se pide desde la reserva: el TRA lo exige y recepción no lo persigue después (#18)
+    if (!ocupante.tipoDocumento) errores[campo('tipoDocumento')] = 'Elige el tipo.'
+    if (!ocupante.numeroDocumento.trim()) errores[campo('numeroDocumento')] = 'Escribe el número.'
+    const noAdmitido = mensajeDocumentoPorEdad(ocupante.tipoDocumento, ocupante.fechaNacimiento, entrada)
+    if (noAdmitido) errores[campo('tipoDocumento')] = noAdmitido
     const anterior = grupo.findIndex((otro, otroIndice) => otroIndice < indice && esRepetido(otro, ocupante))
     if (anterior >= 0) {
       const repetido = `Ya está en la lista (ocupante ${anterior + 1}).`
@@ -105,31 +124,51 @@ function validarOcupantes(grupo: DatosOcupante[], hoy: string): Errores {
   return errores
 }
 
+/** DEC-97: el huésped principal debe ser mayor de edad a la fecha de entrada (`Ocupante.MAYORIA_DE_EDAD`). */
+export const MAYORIA_DE_EDAD = 18
+
 /**
- * TIT-01 · OCU-02: el titular se reconoce entre los ocupantes por su documento y debe ser facturable a la fecha de
- * entrada. Si está pero no alcanza la edad, el error sale junto a él.
+ * #18: el documento que puede tener alguien según su edad al entrar. Un menor no tiene cédula de ciudadanía y un adulto
+ * no se identifica con registro civil; la tarjeta de identidad, el pasaporte y la cédula de extranjería no se limitan.
+ * Sin la fecha de nacimiento o la de entrada no se puede saber, y se admiten todos.
+ *
+ * @returns qué decirle a la persona si ese tipo no corresponde a la edad; nulo si sí
  */
-function validarTitularEntreOcupantes(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, umbral: number): Errores {
-  if (!titular.numeroDocumento.trim()) return {}
-  const indice = grupo.findIndex((ocupante) => tieneDocumento(ocupante) && mismoDocumento(ocupante, titular))
-  if (indice < 0) {
-    return { 'titular.alojamiento': 'El titular debe estar entre los ocupantes, con el mismo documento.' }
+export function mensajeDocumentoPorEdad(tipo: string | null | undefined, nacimiento: string | null | undefined,
+  entrada: string): string | null {
+  if (!tipo || !nacimiento || !entrada) return null
+  const mayor = edadEn(nacimiento, entrada) >= MAYORIA_DE_EDAD
+  if (mayor && tipo === 'RC') return 'El registro civil es de niños: un adulto se identifica con cédula o pasaporte.'
+  if (!mayor && tipo === 'CC') {
+    return 'Un menor de edad no tiene cédula de ciudadanía: usa tarjeta de identidad, registro civil, pasaporte o CE.'
   }
-  const { fechaNacimiento } = grupo[indice]
-  if (!fechaNacimiento) return {}
-  const edad = edadEn(fechaNacimiento, entrada)
-  if (edad >= umbral) return {}
-  return {
-    [`ocupante.${indice}.fechaNacimiento`]:
-      `Tendrá ${edad} ${edad === 1 ? 'año' : 'años'} al entrar. El titular debe ser un ocupante que paga: ${umbral} años o más.`,
-  }
+  return null
 }
 
-export function validarPersonas(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, umbral: number, hoy = fechaHoy()): Errores {
+/** Los tipos de documento que se ofrecen según la edad; el ya elegido se deja aunque no corresponda, con su error. */
+export function tiposPorEdad<T extends readonly [string, string]>(tipos: readonly T[], nacimiento: string | null | undefined,
+  entrada: string, elegido = ''): T[] {
+  return tipos.filter(([tipo]) => !tipo || tipo === elegido || !mensajeDocumentoPorEdad(tipo, nacimiento, entrada))
+}
+
+/**
+ * DEC-97: el titular ya no tiene que alojarse, pero el grupo debe traer un mayor de edad a la fecha de entrada, que
+ * será el huésped principal (el backend elige al primero). Solo se revisa cuando todas las fechas están escritas: si
+ * falta alguna, el error de esa fecha sale primero.
+ */
+function validarMayorDeEdad(grupo: DatosOcupante[], entrada: string): Errores {
+  if (!entrada || grupo.some((ocupante) => !ocupante.fechaNacimiento)) return {}
+  const hayMayor = grupo.some((ocupante) => edadEn(ocupante.fechaNacimiento, entrada) >= MAYORIA_DE_EDAD)
+  return hayMayor
+    ? {}
+    : { 'grupo.mayor': `El grupo necesita un mayor de edad (${MAYORIA_DE_EDAD} años o más al entrar): será el huésped principal.` }
+}
+
+export function validarPersonas(titular: DatosTitular, grupo: DatosOcupante[], entrada: string, hoy = fechaHoy()): Errores {
   return {
     ...validarTitular(titular),
-    ...validarTitularEntreOcupantes(titular, grupo, entrada, umbral),
-    ...validarOcupantes(grupo, hoy),
+    ...validarOcupantes(grupo, entrada, hoy),
+    ...validarMayorDeEdad(grupo, entrada),
   }
 }
 
