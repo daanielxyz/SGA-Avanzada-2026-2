@@ -19,6 +19,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -248,6 +249,35 @@ class DatosDePruebaYApiTest {
         mvc.perform(get("/api/apartamentos/pendientes-preparacion")).andExpect(status().isUnauthorized());
         como("recepcion.demo@example.com", get("/api/apartamentos/pendientes-preparacion"), null)
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Tag("CU-41")
+    @Tag("DEC-111")
+    void losPendientesDePreparacionVanPorLaOcupacionMasCercanaSinDatosDeLasReservas() throws Exception {
+        // Escenario: APT-101 tiene una pendiente en 30 días, APT-102 una confirmada en 10 y APT-107 una en 15
+        List<String> enOrden = List.of("APT-102", "APT-107", "APT-101");
+        for (String codigo : List.of("APT-101", "APT-102", "APT-107")) {
+            // Desde PREPARADO solo se llega a pendiente pasando por fuera de servicio (EOPE-02)
+            admin(put("/api/apartamentos/" + codigo + "/declarar-fuera-de-servicio"), null)
+                    .andExpect(status().isOk());
+            admin(put("/api/apartamentos/" + codigo + "/marcar-pendiente-preparacion"), null)
+                    .andExpect(status().isOk());
+        }
+        try {
+            como("servicio.demo@example.com", get("/api/apartamentos/pendientes-preparacion"), null)
+                    .andExpect(status().isOk())
+                    // Solo estos tres: otra prueba puede haber dejado un apartamento por preparar
+                    .andExpect(jsonPath("$.contenido[?(@.codigo in ['APT-101', 'APT-102', 'APT-107'])].codigo",
+                            contains(enOrden.toArray())))
+                    .andExpect(jsonPath("$.contenido[*].proximaEntrada").doesNotExist())
+                    .andExpect(jsonPath("$.contenido[*].reservas").doesNotExist());
+        } finally {
+            for (String codigo : enOrden) {
+                admin(put("/api/apartamentos/" + codigo + "/iniciar-preparacion"), null);
+                admin(put("/api/apartamentos/" + codigo + "/marcar-preparado"), null);
+            }
+        }
     }
 
     @Test
