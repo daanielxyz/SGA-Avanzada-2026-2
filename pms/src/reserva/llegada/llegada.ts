@@ -1,38 +1,13 @@
 // Cuentas y textos del registro de llegada (CU-21). Sirven para que recepción vea qué falta antes de intentar: quien
 // decide sigue siendo el backend, que responde 409 si algo cambió mientras tanto.
 import type { Folio } from '../../api/folio'
-import type { ModificacionReserva, Ocupante, Reserva } from '../../api/reservas'
+import type { Ocupante, Reserva } from '../../api/reservas'
 import type { Titular } from '../../api/titulares'
 import { edadEn, fechaCorta, fechaSinAnio, hora } from '../../formato'
 
 /** «12 nov 2026, 2:45 p. m.» a partir de AAAA-MM-DDTHH:mm. */
 export function fechaYHora(valor: string): string {
   return `${fechaCorta(valor)}, ${hora(valor.slice(11, 16))}`
-}
-
-/** La reserva completa como queda, con el mismo grupo: así cada huésped conserva sus datos del TRA (BL-07). */
-export function modificacionCon(reserva: Reserva, vehiculos: { carros: number; motos: number; mascotas: number }): ModificacionReserva {
-  return {
-    apartamento: reserva.apartamento,
-    entrada: reserva.entrada,
-    salida: reserva.salida,
-    ocupantes: reserva.ocupantes.map((ocupante) => ({
-      ...(ocupante.nombres
-        ? {
-            nombres: ocupante.nombres,
-            ...(ocupante.primerApellido ? { primerApellido: ocupante.primerApellido } : {}),
-            ...(ocupante.segundoApellido ? { segundoApellido: ocupante.segundoApellido } : {}),
-          }
-        : { nombre: ocupante.nombre }),
-      fechaNacimiento: ocupante.fechaNacimiento ?? '',
-      ...(ocupante.tipoDocumento && ocupante.numeroDocumento
-        ? { tipoDocumento: ocupante.tipoDocumento, numeroDocumento: ocupante.numeroDocumento }
-        : {}),
-      ...(ocupante.nacionalidad ? { nacionalidad: ocupante.nacionalidad } : {}),
-      ...(ocupante.principal ? { principal: true } : {}),
-    })),
-    ...vehiculos,
-  }
 }
 
 /** DEC-97: el huésped principal debe ser mayor de edad a la fecha de entrada (`Ocupante.MAYORIA_DE_EDAD`). */

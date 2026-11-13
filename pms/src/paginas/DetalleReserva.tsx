@@ -184,7 +184,8 @@ export default function DetalleReserva() {
   const apartamentoActual = apartamentoLeido?.codigo === reserva.apartamento ? apartamentoLeido : null
   const activa = reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA' || reserva.estado === 'EN_CURSO'
   // CU-17: solo se modifica antes de iniciar y hasta el día de la entrada
-  const modificable = (reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA') && reserva.entrada >= fechaHoy()
+  // DEC-116: vehículos y mascotas se cambian mientras esté pendiente o confirmada, también si llega después de su fecha
+  const modificable = reserva.estado === 'PENDIENTE' || reserva.estado === 'CONFIRMADA'
 
   async function alConfirmar() {
     await actualizar()

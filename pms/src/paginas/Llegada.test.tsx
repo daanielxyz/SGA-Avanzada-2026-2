@@ -105,7 +105,7 @@ function apiCon({ reserva = {}, pagado = 300000, estadoOperativo = 'PREPARADO', 
     '/api/apartamentos/APT-102': [200, { codigo: 'APT-102', nombre: 'Apartamento Jardín', limiteMascotas: null, estadoOperativo }],
     '/api/titulares/TIT-7': () => [200, estado.titular],
     '/api/titulares/TIT-7/validar': accion('validar', () => {
-      estado.titular = { ...estado.titular, validado: true, validadoEn: `${HOY}T15:24:00` }
+      estado.titular = { ...estado.titular, validado: true, validadoEn: `${HOY}T15:24:00`, validadoPorNombre: 'Ana Gómez' }
       return estado.titular
     }),
     '/api/cotizaciones': [200, { desglose: [], total: 900000 }],
@@ -131,7 +131,7 @@ function apiCon({ reserva = {}, pagado = 300000, estadoOperativo = 'PREPARADO', 
         { id: 'REG-2', fechaHora: `${HOY}T15:20:00`, autor: 'USR-1', autorNombre: 'Andrés Felipe Gómez', anulado: false, motivoCorreccion: 'Se registró tarde', motivoSinPago: 'Cuenta por cobrar a una empresa' },
       ],
     }],
-    [`${RUTA}/modificar`]: accion('modificar', conReserva(() => ({ mascotas: 0, extras: { parqueadero: 45000, mascotas: 0, total: 45000 } }))),
+    [`${RUTA}/extras`]: accion('extras', conReserva(() => ({ mascotas: 0, extras: { parqueadero: 45000, mascotas: 0, total: 45000 } }))),
   })
 }
 
@@ -392,6 +392,8 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     await usuario.click(within(dialogo).getByRole('button', { name: 'Validar identidad' }))
 
     expect(await screen.findByText(/Validada/)).toBeInTheDocument()
+    // DEC-115: dice también quién la validó
+    expect(screen.getByText(/, por Ana Gómez/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Validar identidad/ })).not.toBeInTheDocument()
     expect(llamadasA(fetch, '/validar')).toEqual([{ metodo: 'PUT', cuerpo: undefined }])
   })
@@ -449,8 +451,8 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
   })
 })
 
-describe('vehículos y mascotas en la llegada (BL-23 · TAR-06)', () => {
-  it('muestra la diferencia antes de guardar y manda la reserva completa', async () => {
+describe('vehículos y mascotas en la llegada (BL-23 · DEC-116)', () => {
+  it('muestra la diferencia de los extras, sin tocar las noches, y manda solo los extras', async () => {
     const fetch = apiCon()
     const usuario = abrir()
 
@@ -462,13 +464,14 @@ describe('vehículos y mascotas en la llegada (BL-23 · TAR-06)', () => {
     await usuario.type(within(dialogo).getByLabelText('Mascotas'), '0')
     expect(await within(dialogo).findByText('Se descuentan')).toBeInTheDocument()
     expect(within(dialogo).getByText('$ 30.000')).toBeInTheDocument()
+    expect(within(dialogo).getByText(/El valor de las noches no cambia/)).toBeInTheDocument()
+    expect(within(dialogo).queryByText('Cambiaron las tarifas')).not.toBeInTheDocument()
     await usuario.click(within(dialogo).getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByText('Vehículos y mascotas actualizados')).toBeInTheDocument()
-    const [llamada] = llamadasA(fetch, '/modificar')
-    expect(llamada.cuerpo).toMatchObject({ apartamento: 'APT-102', carros: 1, motos: 0, mascotas: 0 })
-    expect(llamada.cuerpo.ocupantes).toHaveLength(3)
-    expect(llamada.cuerpo.ocupantes[0]).toMatchObject({ nombres: 'Ana', primerApellido: 'Torres', principal: true })
+    expect(llamadasA(fetch, '/extras')).toEqual([{ metodo: 'PUT', cuerpo: { carros: 1, motos: 0, mascotas: 0 } }])
+    expect(llamadasA(fetch, '/modificar')).toEqual([])
+    expect(fetch.mock.calls.some(([url]) => String(url).startsWith('/api/cotizaciones'))).toBe(false)
   })
 
   it('el cupo del parqueadero se revisa junto al campo', async () => {

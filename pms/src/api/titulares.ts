@@ -12,8 +12,10 @@ export interface Titular {
   /** Recepción revisó el documento en persona (DEC-98). */
   validado: boolean
   validadoEn: string | null
-  /** El id del usuario que lo validó, no su nombre: por eso la pantalla solo muestra cuándo. */
+  /** El id del usuario que lo validó. */
   validadoPor: string | null
+  /** Su nombre vigente; nulo si no está validado o esa cuenta ya no existe (DEC-115). */
+  validadoPorNombre?: string | null
 }
 
 /**

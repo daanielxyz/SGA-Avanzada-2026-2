@@ -353,6 +353,16 @@ export interface ModificacionReserva {
 }
 
 /**
+ * `PUT /api/reservas/{codigo}/extras` (DEC-116): cambia solo vehículos y mascotas, como quedan; las noches conservan el
+ * valor con que se reservaron. La diferencia queda como ajuste en el folio.
+ *
+ * @throws ErrorApi 409 si no está pendiente ni confirmada, no hay cupo en el parqueadero o supera las mascotas
+ */
+export function cambiarExtras(codigo: string, extras: { carros: number; motos: number; mascotas: number }): Promise<Reserva> {
+  return accion(codigo, 'extras', extras)
+}
+
+/**
  * `PUT /api/reservas/{codigo}/modificar` (CU-17 · TAR-06 · BL-23): recalcula con las tarifas de hoy y deja la diferencia
  * como ajuste en el folio.
  *

@@ -437,7 +437,11 @@ export default function Llegada() {
                   {titularDatos.validado ? (
                     <>
                       <span className="etiqueta"><span aria-hidden="true">✓</span> Validada</span>
-                      {titularDatos.validadoEn && <span className="campo-pista"> El {fechaYHora(titularDatos.validadoEn)}</span>}
+                      {titularDatos.validadoEn && (
+                        <span className="campo-pista">
+                          {' '}El {fechaYHora(titularDatos.validadoEn)}{titularDatos.validadoPorNombre ? `, por ${titularDatos.validadoPorNombre}` : ''}
+                        </span>
+                      )}
                     </>
                   ) : (
                     <span className="etiqueta"><span aria-hidden="true">○</span> Sin validar</span>
