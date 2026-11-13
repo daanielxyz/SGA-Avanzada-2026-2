@@ -63,8 +63,8 @@ class ReservaTest {
     /** Cotización de 100.000 por ocupante y noche, con todos facturables. */
     private static Cotizacion cotizacion(Estancia estancia, int ocupantes) {
         List<LineaCotizacion> lineas = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), Dinero.de(100_000), ocupantes,
-                        Dinero.de(100_000L * ocupantes)))
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), "Temporada base",
+                        Dinero.de(100_000), ocupantes, Dinero.de(100_000L * ocupantes)))
                 .toList();
         return new Cotizacion(lineas, Dinero.de(100_000L * ocupantes * estancia.cantidadNoches()));
     }

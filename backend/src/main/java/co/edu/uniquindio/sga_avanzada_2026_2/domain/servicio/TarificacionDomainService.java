@@ -97,6 +97,7 @@ public class TarificacionDomainService {
                         "El apartamento " + apartamentoId.valor()
                         + " no tiene tarifa en la temporada " + temporada.nombre()));
         Dinero valor = tarifa.valorPorOcupante();
-        return new LineaCotizacion(noche, temporada.id(), valor, facturables, valor.multiplicar(facturables));
+        return new LineaCotizacion(noche, temporada.id(), temporada.nombre(), valor, facturables,
+                valor.multiplicar(facturables));
     }
 }

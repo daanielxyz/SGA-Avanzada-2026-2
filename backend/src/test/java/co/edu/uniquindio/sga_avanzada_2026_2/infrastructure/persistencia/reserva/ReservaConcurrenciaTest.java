@@ -50,7 +50,8 @@ class ReservaConcurrenciaTest {
     private static Reserva reserva() {
         Estancia estancia = new Estancia(LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 3));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), "Temporada base",
+                        Dinero.de(100_000), 1, Dinero.de(100_000)))
                 .toList();
         return new Reserva(CODIGO, new ApartamentoId("APT-101"), new TitularId("TIT-1"), estancia,
                 EstadoReserva.PENDIENTE, CanalOrigen.DIRECTO, null, null,

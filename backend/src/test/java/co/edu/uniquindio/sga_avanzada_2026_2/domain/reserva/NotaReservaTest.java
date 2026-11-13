@@ -49,7 +49,7 @@ class NotaReservaTest {
         Titular titular = new Titular(new TitularId("TIT-1"), new AlojamientoId("ALO-1"), "Ana", ana.documento(),
                 null, "3001234567");
         List<LineaCotizacion> lineas = ESTANCIA.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), Dinero.de(100_000), 1,
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-BASE"), "Temporada base", Dinero.de(100_000), 1,
                         Dinero.de(100_000)))
                 .toList();
         return Reserva.crear(new ReservaId("RES-2026-00001"), new ApartamentoId("APT-101"), titular, ESTANCIA,

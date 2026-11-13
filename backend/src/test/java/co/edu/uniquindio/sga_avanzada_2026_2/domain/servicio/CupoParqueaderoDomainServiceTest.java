@@ -34,7 +34,8 @@ class CupoParqueaderoDomainServiceTest {
     private static Reserva conVehiculos(String codigo, LocalDate entrada, LocalDate salida, int vehiculos) {
         Estancia estancia = new Estancia(entrada, salida);
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), "Temporada base",
+                        Dinero.de(100_000), 1, Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-101"), new TitularId("TIT-1"), estancia,
                 EstadoReserva.CONFIRMADA, CanalOrigen.DIRECTO, null, null,
