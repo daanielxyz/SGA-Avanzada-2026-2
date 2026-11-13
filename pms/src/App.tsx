@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import ProteccionErrores from './componentes/ProteccionErrores'
 import { OPCIONES, RECEPCION } from './navegacion'
+import Alojamiento from './paginas/Alojamiento'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
 import Folio from './paginas/Folio'
@@ -23,6 +24,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
   '/ocupacion': <Ocupacion />,
   '/preparacion': <Preparacion />,
+  '/alojamiento': <Alojamiento />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */

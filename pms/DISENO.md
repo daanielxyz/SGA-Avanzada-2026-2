@@ -454,6 +454,43 @@ Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimient
 8. **#8 · Mensajes de los 409 para recepción**: textos sin códigos internos ni palabras técnicas. Cambia textos que ve la web (el `motivo` de DEC-94 no cambia, solo `mensaje`): avisar a la web.
 9. Si cabe: **#22**, filtros de varios valores en `GET /api/reservas` (`estado=PENDIENTE&estado=CONFIRMADA`), y **#14**, «Corregir documento» con motivo, autor y fecha, que conserva los datos del TRA.
 
+## Sprint 4: alojamiento (`feature/pms/alojamiento`)
+Mockups en `pms/diseno/mockups-meridian-sprint4-alojamiento/` (segunda entrega, con los mínimos abiertos y un servicio desactivado). Revisados contra `docs/api/openapi.yaml` y el dominio el 13 nov. Pantalla en `src/paginas/Alojamiento.tsx`, bloques en `src/alojamiento/`.
+
+Lo que el diseño dejó abierto, resuelto con el contrato:
+- **Descripción** obligatoria (`minLength 1`), sin largo máximo: sin contador. Nombre y ciudad hasta 120, dirección hasta 200, normas opcional.
+- **Ubicación**: latitud de −90 a 90 y longitud de −180 a 180, las dos obligatorias. Se acepta la coma decimal, y si se pega «4.6372, -75.5701» (como lo copia Google Maps) se reparte entre los dos campos.
+- **Reglas**: siempre se envían los 21 parámetros, aunque mascotas esté oculto (si se oculta, sus campos no frenan el guardado). Los cinco mínimos se editan en «Avanzado», que se abre solo si uno tiene error. Plazos de confirmación y de pago en línea, y el mínimo de tramos, desde 1 (`ParametrosAlojamiento`). Los cupos son carros y motos (`Reserva.vehiculos()`), y el cargo de mascota es por cada una, una vez por estancia: los textos de efecto lo dicen así. Pago en línea y cobro del parqueadero, de lo que traiga la API.
+- **Servicios**: la API devuelve también los desactivados (`activo: false`): van al final, con «Desactivado» y sin acciones. Un servicio «Incluido» se crea con valor 0 y no ofrece «Cambiar valor». «Desactivar» también puede rechazarse por el mínimo de servicios activos (409): el mensaje sale en su diálogo.
+- **Medios de pago**: la API solo devuelve los habilitados, en mayúsculas; el que se deshabilita sale de la lista y se vuelve a habilitar escribiéndolo en «Agregar». El mensaje del 409 se muestra tal como llega, porque el mínimo es configurable. «Deshabilitar» no pide confirmación (el prompt no la pide).
+- **Marca**: fuentes escritas a mano (letras, números y espacios, hasta 60); radios de 0 a 99 px, enviados como «8px»; logo y portada opcionales. Contraste WCAG de siete pares, cortado (no redondeado) a un decimal; desde 4,5:1 «se lee bien». Si el alojamiento no tiene marca, el formulario parte de unos valores neutros, no de los de ningún hotel.
+- **Cambios sin guardar**: se pregunta al salir de la pantalla y también al cambiar de pestaña o volver a la lista en el celular, porque cada bloque se vuelve a cargar al abrirlo.
+- **Menú**: el de `src/navegacion.ts`; el del mockup era de ejemplo.
+- Al guardar otro nombre, la cabecera del panel se actualiza sin recargar.
+
+**Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40; falta la validación en el backend (400).
+
+**Probada en el navegador** (13 nov, Chromium contra el backend local con los datos demo, como administrador): guardar datos, marca y reglas; descripción vacía, latitud fuera de rango, anticipo de más de 100 y color mal escrito marcados junto al campo; pegar las coordenadas de Google Maps; la pregunta al cambiar de pestaña con cambios; el 409 por el mínimo de medios de pago junto al bloque, y volver a habilitar un medio escribiéndolo. Sin desbordes a 1280, 1024 y 390 px. Los datos demo quedaron como estaban (solo `normas` pasó de vacío a nulo, que es lo mismo).
+
+**Auditoría** (`impeccable` audit, harden y adapt; `break-ui` con el GET del alojamiento reemplazado por el peor caso: nombre de 120, dirección de 200, 14 servicios con nombres largos, 6 medios de pago, sin ubicación, sin marca, vacío y uno; a 1280, 820, 640 —200 % de zoom— y 320 px). El detector no encontró nada. Arreglado:
+- P1: tras un error de validación el foco va al primer campo marcado, y el aviso «Revisa los campos marcados» se quita al corregirlos (antes se quedaba).
+- P2: las pestañas se recorren con las flechas, Inicio y Fin, con un solo punto de tabulación; entre 800 y 900 px se desplazan en vez de salirse.
+- P2: en el celular, cada servicio muestra nombre y valor arriba, las dos etiquetas juntas y las acciones abajo (antes quedaban revueltas).
+- P2: la latitud y la longitud vacías ya no muestran un ejemplo en gris que parecía un dato guardado.
+- P3: el triángulo de «Avanzado» junto al título, los números sin unidad del mismo ancho que los que la tienen y el contraste en una sola fila (par a la izquierda, medida a la derecha) cuando cabe.
+
+Quedan, sin arreglar a propósito: el rótulo «Alojamiento» sobre el título viene del mockup; los nombres de los medios de pago salen sin tildes («Tarjeta credito») porque la API los guarda en mayúsculas sin ellas.
+
+## Sprint 4: política de cancelación (`feature/pms/politica`)
+Mockups en `pms/diseno/mockups-meridian-sprint4-politica/`, revisados contra el contrato el 13 nov. Están bien; lo abierto se resuelve así:
+- **Frase del tramo de en medio**: la de «Ver política» (`src/reserva/politica.ts`), «Entre 24 y 48 horas antes de la entrada», no la del mockup. Las dos pantallas cuentan los tramos con la misma función.
+- **Base «el anticipo exigido»**: falta en `politica.ts` (hoy dice «el 100 %» sin la base); se agrega con esta pantalla.
+- **Monto fijo**: la base es un tope (`Penalizacion.calcular`): «Se retienen $ 50.000, sin pasar del valor total». El renglón usa el selector [% / $] del mockup, así que «porcentaje y monto a la vez» no se puede escribir; si la API lo rechaza, el mensaje sale arriba.
+- **Versiones anteriores**: `GET /api/politicas` trae los tramos de cada versión (de la más alta a la más baja, con la vigente incluida): al abrir una se cuentan sus tramos. No hay fecha de publicación en el contrato: no se muestra.
+- **Sin política publicada**: el formulario parte de un tramo desde 0 horas y el no-show, los dos en 100 % del valor total, para que se ajusten.
+- **Validación**: tramo desde 0 horas, horas repetidas y mínimo de tramos (el de `parametros.minimoTramosCancelacion`) se revisan al escribir, como en el mockup; los renglones se muestran en el orden en que se escriben y la vista previa los ordena.
+- **Salir con cambios**: se pregunta, como en Alojamiento.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

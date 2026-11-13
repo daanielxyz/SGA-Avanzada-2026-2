@@ -123,7 +123,8 @@ Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
   - [ ] Arias: temporadas y tarifas (`feature/pms/temporadas-tarifas`, `temporadas-tarifas.md`).
   - [ ] Reyes, núcleo, una rama `feature/nucleo/…` por cosa y su PR a más tardar el miércoles 18: próxima entrada en la preparación (#16, primero), la llegada sin el pago completo solo con el administrador (R2), motivo de fuera de servicio (#17), leer la llegada registrada (#13), quién validó la identidad (#15), cambiar vehículos y mascotas sin recalcular las noches (R3), nombre de la temporada en el desglose (#10) y mensajes de los 409 para recepción (#8). Si cabe: filtros de varios valores en Reservas (#22) y corregir un documento mal escrito (#14).
   - [ ] Reyes: usuarios, mi perfil, activar la cuenta y recuperar la contraseña (`feature/pms/usuarios`, `usuarios-perfil.md`).
-  - [ ] Daniel: alojamiento (`feature/pms/alojamiento`, `alojamiento.md`) y política de cancelación (`feature/pms/politica`, `politica.md`).
+  - [x] Daniel: alojamiento (`feature/pms/alojamiento`, `alojamiento.md`): datos y ubicación, reglas de la estancia, servicios, medios de pago y marca; probada en el navegador y auditada.
+  - [ ] Daniel: política de cancelación (`feature/pms/politica`, `politica.md`).
   - [ ] Daniel: la pantalla de lo que entre del núcleo: orden y próxima entrada en la preparación, la llegada sin pago completo solo para el administrador, el motivo de fuera de servicio en la preparación y el tablero, la llegada registrada en el detalle y en «Corregir registro», quién validó, vehículos y mascotas sin recalcular, el nombre de la temporada y los mensajes nuevos.
   - [ ] Daniel: huésped principal y apellidos del titular aparte en «Nueva reserva» (DEC-97/98, `nueva-reserva-principal.md`).
   - [ ] Daniel: revisar los mockups y los PR de Arias y Reyes.

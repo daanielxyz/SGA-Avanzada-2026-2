@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
-import { consultarAlojamiento } from '../api/alojamiento'
+import { alCambiarNombre, consultarAlojamiento } from '../api/alojamiento'
 import Icono from '../componentes/Icono'
 import Logo from '../componentes/Logo'
 import ProteccionErrores from '../componentes/ProteccionErrores'
@@ -33,8 +33,10 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
         if (vigente) setAlojamiento(nombre)
       })
       .catch(() => undefined)
+    const dejarDeEscuchar = alCambiarNombre(setAlojamiento)
     return () => {
       vigente = false
+      dejarDeEscuchar()
     }
   }, [])
 
