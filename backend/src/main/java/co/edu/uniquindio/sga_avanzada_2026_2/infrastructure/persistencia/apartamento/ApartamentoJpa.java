@@ -47,6 +47,10 @@ public class ApartamentoJpa {
     /** Vacío: el del alojamiento (DEC-93). */
     private Integer limiteMascotas;
 
+    /** Solo mientras está fuera de servicio (DEC-113). */
+    @Column(name = "motivo_fuera_de_servicio", length = 500)
+    private String motivoFueraDeServicio;
+
     @Version
     private Long version;
 

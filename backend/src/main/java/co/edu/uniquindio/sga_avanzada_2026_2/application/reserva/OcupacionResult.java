@@ -6,8 +6,11 @@ import java.util.List;
 
 /**
  * Una fila del calendario de ocupación (CU-24): un apartamento, las reservas que dibuja en el rango y sus bloqueos.
+ *
+ * @param motivoFueraDeServicio solo mientras está FUERA_DE_SERVICIO, si se dio (DEC-113)
  */
-public record OcupacionResult(String apartamento, String nombre, String estadoOperativo, List<ReservaOcupada> reservas,
+public record OcupacionResult(String apartamento, String nombre, String estadoOperativo,
+                              String motivoFueraDeServicio, List<ReservaOcupada> reservas,
                               List<BloqueoOcupado> bloqueos) {
 
     /**

@@ -10,12 +10,14 @@ import java.util.List;
  * Salida de los casos de uso de Apartamento (DEC-31): una foto de datos simples, nunca la entidad, para que quien
  * la reciba no pueda saltarse el caso de uso.
  *
- * @param limiteMascotas las que admite por reserva; vacío, las del alojamiento (DEC-93)
+ * @param limiteMascotas        las que admite por reserva; vacío, las del alojamiento (DEC-93)
+ * @param motivoFueraDeServicio solo mientras está FUERA_DE_SERVICIO, si se dio (DEC-113)
  */
 public record ApartamentoResult(String codigo, String alojamientoId, String nombre, String descripcion,
                                 int capacidad, int dormitorios, String estadoOperativo, boolean activo,
                                 List<ImagenResult> imagenes, List<String> caracteristicas,
-                                List<BloqueoResult> bloqueos, Integer limiteMascotas) {
+                                List<BloqueoResult> bloqueos, Integer limiteMascotas,
+                                String motivoFueraDeServicio) {
 
     public record ImagenResult(String url, boolean principal) {
     }
@@ -40,6 +42,7 @@ public record ApartamentoResult(String codigo, String alojamientoId, String nomb
                         .map(b -> new BloqueoResult(b.id().valor(), b.fechaInicio(), b.fechaFin(), b.motivo(),
                                 b.vigente()))
                         .toList(),
-                apartamento.limiteMascotas().orElse(null));
+                apartamento.limiteMascotas().orElse(null),
+                apartamento.motivoFueraDeServicio().orElse(null));
     }
 }

@@ -9,6 +9,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainSe
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CargoServicioDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.NoShowDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PreparacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SalidaOperativaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SincronizacionCanalDomainService;
@@ -72,6 +73,11 @@ public class ServiciosDominioConfig {
     @Bean
     public PagoEnLineaDomainService pagoEnLineaDomainService() {
         return new PagoEnLineaDomainService();
+    }
+
+    @Bean
+    public PreparacionDomainService preparacionDomainService() {
+        return new PreparacionDomainService();
     }
 
     @Bean

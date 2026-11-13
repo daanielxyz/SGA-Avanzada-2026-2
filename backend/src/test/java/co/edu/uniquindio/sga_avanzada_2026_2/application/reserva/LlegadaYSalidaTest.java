@@ -45,11 +45,12 @@ class LlegadaYSalidaTest {
     private RegistrarSalidaUseCase registrarSalida(Clock reloj) {
         return new RegistrarSalidaUseCase(escenario.cargador, escenario.reservas, escenario.apartamentos,
                 escenario.folios,
-                new SalidaOperativaDomainService(), reloj);
+                new SalidaOperativaDomainService(), EscenarioEstancia.SIN_NOMBRES, reloj);
     }
 
     private CorregirRegistroUseCase corregirRegistro() {
-        return new CorregirRegistroUseCase(escenario.cargador, escenario.reservas, ALOJADO);
+        return new CorregirRegistroUseCase(escenario.cargador, escenario.reservas, EscenarioEstancia.SIN_NOMBRES,
+                ALOJADO);
     }
 
     private void ponerApartamentoEn(EstadoOperativo estado) {

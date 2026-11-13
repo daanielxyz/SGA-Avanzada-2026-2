@@ -14,6 +14,8 @@ import java.time.temporal.ChronoUnit;
 
 import static co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba.idDe;
 import static co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba.sinSesion;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -44,7 +46,12 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
     @Test
     @Tag("DEC-67")
     void sinSesionSoloSeEntraALoPublico() throws Exception {
-        mvc.perform(get("/api/apartamentos/APT-101").with(sinSesion())).andExpect(status().isOk());
+        mvc.perform(get("/api/apartamentos/disponibles").with(sinSesion()).param("entrada", HOY.plusDays(5).toString())
+                        .param("salida", HOY.plusDays(7).toString()).param("ocupantes", "2"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/apartamentos/APT-101").with(sinSesion()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo").value("NO_AUTENTICADO"));
         mvc.perform(get("/api/reservas/RES-2026-00001").with(sinSesion()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.codigo").value("NO_AUTENTICADO"));
@@ -169,6 +176,82 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("FINALIZADA"))
                 .andExpect(jsonPath("$.salida.autor").value(idDe(Rol.RECEPCIONISTA)));
+    }
+
+    @Test
+    @Tag("BL-22")
+    @Tag("DEC-112")
+    void soloElAdministradorAutorizaUnaLlegadaSinLaEstanciaPagada() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        String llegada = "/api/reservas/" + codigo + "/registrar-llegada";
+
+        como(Rol.RECEPCIONISTA, put(llegada), ENTRA_SIN_PAGAR)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("SIN_PERMISO"))
+                .andExpect(jsonPath("$.mensaje")
+                        .value("Solo el administrador puede autorizar una llegada sin la estancia pagada"));
+        como(Rol.RECEPCIONISTA, put(llegada))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("ESTANCIA_SIN_PAGAR"));
+        mvc.perform(get("/api/reservas/" + codigo)).andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+
+        enviar(put(llegada), ENTRA_SIN_PAGAR)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.registros[0].autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value("Cuenta por cobrar"));
+    }
+
+    @Test
+    @Tag("BL-22")
+    @Tag("DEC-112")
+    void recepcionRegistraLaLlegadaDeUnaEstanciaPagada() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        pagar(codigo, 280_000);
+
+        como(Rol.RECEPCIONISTA, put("/api/reservas/" + codigo + "/registrar-llegada"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.registros[0].autor").value(idDe(Rol.RECEPCIONISTA)))
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value(nullValue()));
+    }
+
+    @Test
+    @Tag("CU-40")
+    @Tag("DEC-113")
+    void elMotivoDeFueraDeServicioLoDaElAdministradorYLoVeElPersonal() throws Exception {
+        String apartamento = "/api/apartamentos/APT-101";
+        String conMotivo = "{\"motivo\": \"Fuga de agua en el baño\"}";
+
+        como(Rol.RECEPCIONISTA, put(apartamento + "/declarar-fuera-de-servicio"), conMotivo)
+                .andExpect(status().isForbidden());
+        enviar(put(apartamento + "/declarar-fuera-de-servicio"), "{\"motivo\": \"" + "x".repeat(501) + "\"}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
+        enviar(put(apartamento + "/declarar-fuera-de-servicio"), conMotivo)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estadoOperativo").value("FUERA_DE_SERVICIO"))
+                .andExpect(jsonPath("$.motivoFueraDeServicio").value("Fuga de agua en el baño"));
+        try {
+            como(Rol.RECEPCIONISTA, get(apartamento))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.motivoFueraDeServicio").value("Fuga de agua en el baño"));
+            como(Rol.PERSONAL_SERVICIO, get("/api/apartamentos"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.contenido[?(@.codigo == 'APT-101')].motivoFueraDeServicio")
+                            .value(hasItem("Fuga de agua en el baño")));
+            como(Rol.HUESPED, get(apartamento)).andExpect(status().isForbidden());
+            como(Rol.RECEPCIONISTA, get("/api/ocupacion").param("desde", HOY.toString())
+                    .param("hasta", HOY.plusDays(7).toString()).param("apartamento", "APT-101"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.contenido[0].motivoFueraDeServicio").value("Fuga de agua en el baño"));
+        } finally {
+            enviar(put(apartamento + "/marcar-pendiente-preparacion"), "")
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.motivoFueraDeServicio").value(nullValue()));
+            enviar(put(apartamento + "/iniciar-preparacion"), "").andExpect(status().isOk());
+            enviar(put(apartamento + "/marcar-preparado"), "").andExpect(status().isOk());
+        }
     }
 
     @Test

@@ -27,7 +27,7 @@ Fuera del dominio (infrastructure.seguridad): Usuario(id USR-n, nombre, correo �
 ## 2. Clases
 
 ### Apartamento
-- **R Apartamento**: codigo: ApartamentoId · alojamientoId · nombre · descripcion · capacidad: Capacidad · dormitorios: Dormitorio · estadoOperativo · imagenes: Imagen[] (1..10, una principal) · caracteristicas: Caracteristica[] (≥1) · bloqueos: Bloqueo[] · activo.
+- **R Apartamento**: codigo: ApartamentoId · alojamientoId · nombre · descripcion · capacidad: Capacidad · dormitorios: Dormitorio · estadoOperativo · imagenes: Imagen[] (1..10, una principal) · caracteristicas: Caracteristica[] (≥1) · bloqueos: Bloqueo[] · activo · motivoFueraDeServicio? (solo mientras está FUERA_DE_SERVICIO, DEC-113).
   `crear(…)` (inactivo, PENDIENTE_PREPARACION — DEC-34) · `activar(tarifasCompletas)` · `retirarDeVenta(hayReservasActivas)` · `cambiarCapacidad(c)` · `actualizarDatos(nombre, descripcion, dormitorios, caracteristicas)` · `agregarImagen(url)` · `quitarImagen(url)` · `marcarImagenPrincipal(url)` · `pendienteDePreparacion()` · `bloqueosVigentesEn(rango)` · `iniciarPreparacion()` · `marcarPreparado()` · `marcarPendientePreparacion()` · `ocupar()` · `declararFueraDeServicio()` · `registrarBloqueo(ini, fin, motivo)` · `levantarBloqueo(id)` · `tieneBloqueoEn(noche)` · `admite(nOcupantes)`
 - **E Bloqueo**: id · fechaInicio · fechaFin (exclusiva, como la Estancia) · motivo · vigente. `levantar()` · `cubre(noche)`
 - **VO Capacidad**(valor ≥1) `admite(n)` · `exigirVariedad(capacidadesActivas, minimo)` (CAP-05, DEC-51) · **VO Dormitorio**(cantidad ≥1) · **VO Imagen**(url, principal) · **VO Caracteristica**(nombre)

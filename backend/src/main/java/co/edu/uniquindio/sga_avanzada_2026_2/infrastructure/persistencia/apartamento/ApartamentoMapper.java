@@ -35,7 +35,8 @@ final class ApartamentoMapper {
                                 b.getMotivo(), b.isVigente()))
                         .toList(),
                 jpa.isActivo(),
-                jpa.getLimiteMascotas());
+                jpa.getLimiteMascotas(),
+                jpa.getMotivoFueraDeServicio());
     }
 
     /**
@@ -52,6 +53,7 @@ final class ApartamentoMapper {
         jpa.setEstadoOperativo(apartamento.estadoOperativo());
         jpa.setActivo(apartamento.activo());
         jpa.setLimiteMascotas(apartamento.limiteMascotas().orElse(null));
+        jpa.setMotivoFueraDeServicio(apartamento.motivoFueraDeServicio().orElse(null));
         jpa.getImagenes().clear();
         apartamento.imagenes().forEach(i -> jpa.getImagenes().add(new ImagenJpa(i.url(), i.principal())));
         jpa.getCaracteristicas().clear();
