@@ -394,6 +394,36 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/extras":
+    put:
+      tags:
+        - extras-reserva-controller
+      operationId: cambiarExtras
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CambiarExtrasRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/hora-llegada":
     put:
       tags:
@@ -3522,6 +3552,25 @@ components:
           type: number
         situacionSaldo:
           type: string
+    CambiarExtrasRequest:
+      type: object
+      properties:
+        carros:
+          type: integer
+          format: int32
+          minimum: 0
+        motos:
+          type: integer
+          format: int32
+          minimum: 0
+        mascotas:
+          type: integer
+          format: int32
+          minimum: 0
+      required:
+        - carros
+        - mascotas
+        - motos
     ModificarReservaRequest:
       type: object
       properties:

@@ -210,13 +210,28 @@ public class Folio {
      * @throws ReglaDominioException si el folio está cerrado (CAR-07)
      */
     public void ajustarPorModificacion(Dinero valorAnterior, Dinero valorNuevo, LocalDate fecha) {
+        ajustarDiferencia("Modificación de la reserva", valorAnterior, valorNuevo, fecha);
+    }
+
+    /**
+     * Registra como AJUSTE la diferencia de los extras al cambiar solo los vehículos y las mascotas, con su propio
+     * concepto para distinguirlo de una modificación de la reserva (R3 · DEC-116). Igual que ella, no registra nada
+     * si no cambia.
+     *
+     * @param extrasAnteriores total de los extras antes de {@code Reserva.cambiarExtras}
+     * @param extrasNuevos     total después
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07)
+     */
+    public void ajustarPorCambioDeExtras(Dinero extrasAnteriores, Dinero extrasNuevos, LocalDate fecha) {
+        ajustarDiferencia("Cambio de vehículos y mascotas", extrasAnteriores, extrasNuevos, fecha);
+    }
+
+    private void ajustarDiferencia(String concepto, Dinero anterior, Dinero nuevo, LocalDate fecha) {
         validarAbierto();
-        if (valorNuevo.esMenorQue(valorAnterior)) {
-            agregar(TipoCargo.AJUSTE, "Modificación de la reserva", valorAnterior.restar(valorNuevo),
-                    SentidoAjuste.DISMINUYE, fecha, null);
-        } else if (valorAnterior.esMenorQue(valorNuevo)) {
-            agregar(TipoCargo.AJUSTE, "Modificación de la reserva", valorNuevo.restar(valorAnterior),
-                    SentidoAjuste.AUMENTA, fecha, null);
+        if (nuevo.esMenorQue(anterior)) {
+            agregar(TipoCargo.AJUSTE, concepto, anterior.restar(nuevo), SentidoAjuste.DISMINUYE, fecha, null);
+        } else if (anterior.esMenorQue(nuevo)) {
+            agregar(TipoCargo.AJUSTE, concepto, nuevo.restar(anterior), SentidoAjuste.AUMENTA, fecha, null);
         }
     }
 
