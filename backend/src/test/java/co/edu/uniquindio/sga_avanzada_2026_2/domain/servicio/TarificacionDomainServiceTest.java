@@ -74,6 +74,29 @@ class TarificacionDomainServiceTest {
     }
 
     @Test
+    @Tag("DEC-117")
+    void cadaNocheLlevaElNombreDeSuTemporada() {
+        Estancia estancia = new Estancia(LocalDate.of(2026, 12, 14), LocalDate.of(2026, 12, 16));
+
+        Cotizacion cotizacion = servicio.calcularValorEstancia(APT, estancia,
+                List.of(ocupante("A", 30, estancia.entrada())), UMBRAL, CALENDARIO, TARIFAS);
+
+        assertEquals(List.of("Base", "Alta"),
+                cotizacion.desglose().stream().map(LineaCotizacion::temporadaNombre).toList());
+    }
+
+    @Test
+    @Tag("DEC-117")
+    void unaLineaSinElNombreDeLaTemporadaSeRechaza() {
+        Noche noche = new Noche(LocalDate.of(2026, 12, 14));
+
+        assertThrows(ReglaDominioException.class,
+                () -> new LineaCotizacion(noche, BASE, null, Dinero.de(100_000), 1, Dinero.de(100_000)));
+        assertThrows(ReglaDominioException.class,
+                () -> new LineaCotizacion(noche, BASE, " ", Dinero.de(100_000), 1, Dinero.de(100_000)));
+    }
+
+    @Test
     @Tag("RN-05")
     @Tag("TAR-04")
     void deberiaRechazarCotizacionSiFaltaTarifaEnUnaTemporada() {

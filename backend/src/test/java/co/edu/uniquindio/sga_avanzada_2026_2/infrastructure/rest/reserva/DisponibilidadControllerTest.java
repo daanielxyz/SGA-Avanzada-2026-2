@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -82,6 +83,8 @@ class DisponibilidadControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.desglose", hasSize(3)))
                 .andExpect(jsonPath("$.desglose[0].ocupantesFacturables").value(2))
                 .andExpect(jsonPath("$.desglose[0].tarifa").value(100000))
+                .andExpect(jsonPath("$.desglose[0].temporada").value(AlojamientoDePrueba.TEMPORADA_BASE))
+                .andExpect(jsonPath("$.desglose[0].temporadaNombre").value("Temporada base")) // DEC-117
                 .andExpect(jsonPath("$.total").value(600000));
         mvc.perform(get("/api/apartamentos/disponibles").param("entrada", ENTRADA.toString())
                         .param("salida", ENTRADA.plusDays(3).toString()).param("ocupantes", "3"))

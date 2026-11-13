@@ -3661,6 +3661,8 @@ components:
           format: date
         temporada:
           type: string
+        temporadaNombre:
+          type: string
         tarifa:
           type: number
         ocupantesFacturables:
