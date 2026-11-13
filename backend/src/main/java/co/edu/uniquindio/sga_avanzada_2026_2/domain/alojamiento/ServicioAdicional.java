@@ -47,7 +47,7 @@ public class ServicioAdicional {
      */
     void desactivar() {
         if (!activo) {
-            throw new ReglaDominioException("El servicio " + id.valor() + " ya está inactivo");
+            throw new ReglaDominioException("El servicio " + nombre + " ya está desactivado");
         }
         activo = false;
     }

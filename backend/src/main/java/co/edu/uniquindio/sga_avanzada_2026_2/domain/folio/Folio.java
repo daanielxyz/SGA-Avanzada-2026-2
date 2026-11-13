@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.folio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.FormatoTexto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -163,13 +164,13 @@ public class Folio {
         Pago original = pagos.stream()
                 .filter(p -> p.id().equals(pagoId))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("El folio no tiene el pago " + pagoId.valor()));
+                .orElseThrow(() -> new ReglaDominioException("Ese pago no está en el folio de la reserva"));
         if (original.esReverso()) {
             throw new ReglaDominioException("Un reverso no se revierte; registre un nuevo abono");
         }
         if (pagos.stream().anyMatch(p -> pagoId.equals(p.reversaDe()))) {
             throw new ReglaDominioException(MotivoRechazo.YA_REVERTIDO,
-                    "El pago " + pagoId.valor() + " ya fue revertido");
+                    "Ese pago ya fue revertido");
         }
         validarNoSuperaLoAbonado(original.monto());
         return agregarPago(original.medio(), original.monto(), TipoPago.REVERSO, fecha, pagoId, autor);
@@ -188,13 +189,13 @@ public class Folio {
         Cargo original = cargos.stream()
                 .filter(c -> c.id().equals(cargoId))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("El folio no tiene el cargo " + cargoId.valor()));
+                .orElseThrow(() -> new ReglaDominioException("Ese cargo no está en el folio de la reserva"));
         if (original.corrigeA() != null) {
             throw new ReglaDominioException("Una corrección no se revierte; registre un cargo nuevo");
         }
         if (cargos.stream().anyMatch(c -> cargoId.equals(c.corrigeA()))) {
             throw new ReglaDominioException(MotivoRechazo.YA_REVERTIDO,
-                    "El cargo " + cargoId.valor() + " ya fue corregido");
+                    "Ese cargo ya fue corregido");
         }
         SentidoAjuste contrario = original.aumentaSaldo() ? SentidoAjuste.DISMINUYE : SentidoAjuste.AUMENTA;
         return agregar(TipoCargo.AJUSTE, "Corrección de " + cargoId.valor() + ": " + motivo, original.valor(),
@@ -305,7 +306,7 @@ public class Folio {
         Saldo saldo = saldo();
         if (!saldo.alDia()) {
             throw new ReglaDominioException(MotivoRechazo.SALDO_PENDIENTE,
-                    "El folio tiene saldo " + saldo.situacion() + " de " + saldo.monto().monto()
+                    "El folio tiene un saldo " + saldo.situacion().texto() + " de " + saldo.monto().enPesos()
                     + ": solo se cierra con autorización del administrador");
         }
         cerrado = true;
@@ -360,7 +361,7 @@ public class Folio {
     private void validarAbierto() {
         if (cerrado) {
             throw new ReglaDominioException(MotivoRechazo.FOLIO_CERRADO,
-                    "El folio " + id.valor() + " está cerrado: no admite movimientos");
+                    "El folio ya está cerrado: no admite cargos ni pagos");
         }
     }
 
@@ -381,7 +382,8 @@ public class Folio {
     private static void validarFechaNoFutura(LocalDate fecha, LocalDate hoy) {
         Objects.requireNonNull(hoy, "hoy");
         if (fecha.isAfter(hoy)) {
-            throw new ReglaDominioException("La fecha del pago no puede ser posterior a hoy (" + hoy + ")");
+            throw new ReglaDominioException(
+                    "La fecha del pago no puede ser posterior a hoy (" + FormatoTexto.fecha(hoy) + ")");
         }
     }
 
@@ -389,8 +391,8 @@ public class Folio {
     private void validarNoSuperaLoAbonado(Dinero monto) {
         Objects.requireNonNull(monto, "monto");
         if (totalPagado().esMenorQue(monto)) {
-            throw new ReglaDominioException("El reverso (" + monto.monto() + ") supera lo abonado neto ("
-                    + totalPagado().monto() + ")");
+            throw new ReglaDominioException("El reverso (" + monto.enPesos() + ") supera lo pagado ("
+                    + totalPagado().enPesos() + ")");
         }
     }
 

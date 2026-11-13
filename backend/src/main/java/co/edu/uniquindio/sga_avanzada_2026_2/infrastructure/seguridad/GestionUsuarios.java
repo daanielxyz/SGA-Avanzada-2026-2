@@ -72,7 +72,7 @@ public class GestionUsuarios {
     public UsuarioResult modificar(String id, Rol rol, Usuario.DatosPersonales datos) {
         Usuario usuario = buscar(id);
         if (usuario.eliminado()) {
-            throw new ReglaDominioException("El usuario " + id + " está eliminado");
+            throw new ReglaDominioException("Ese usuario está eliminado");
         }
         if (rol != Rol.ADMINISTRADOR) {
             exigirOtroAdministrador(usuario);
@@ -94,7 +94,7 @@ public class GestionUsuarios {
     public UsuarioResult eliminar(String id) {
         Usuario usuario = buscar(id);
         if (usuario.eliminado()) {
-            throw new ReglaDominioException("El usuario " + id + " ya está eliminado");
+            throw new ReglaDominioException("Ese usuario ya está eliminado");
         }
         exigirOtroAdministrador(usuario);
         usuario.eliminar();

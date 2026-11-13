@@ -53,7 +53,7 @@ public class Registro {
      */
     void anular() {
         if (anulado) {
-            throw new ReglaDominioException("El registro " + id.valor() + " ya está anulado");
+            throw new ReglaDominioException("Ese registro de llegada ya está anulado");
         }
         anulado = true;
     }
