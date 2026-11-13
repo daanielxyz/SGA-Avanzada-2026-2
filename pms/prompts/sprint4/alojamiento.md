@@ -1,6 +1,6 @@
 # Prompt para Claude Design: alojamiento (sprint 4, Daniel)
 
-**Adjuntos**: los mismos de `apartamentos.md`, más la captura `portada-web.png` (la portada de la web de reservas, que usa la marca).
+**Adjuntos**: los mismos de `apartamentos.md`.
 
 Copia desde aquí:
 
@@ -43,7 +43,7 @@ Tabla: nombre, si genera cargo («Se cobra» o «Incluido»), valor y estado. Ac
 Lista de los habilitados (Efectivo, Tarjeta, Transferencia) con «Deshabilitar». Campo «Agregar medio de pago» con su botón. Rechazo al deshabilitar por debajo del mínimo: «El alojamiento debe tener al menos 2 medios de pago».
 
 ### 5. Marca
-Lo que usa la web de reservas para verse como el hotel: logo y foto de portada (dirección de una imagen ya publicada), los 10 colores (fondo, superficie, texto, texto suave, borde, borde de campo, acento, texto sobre acento, peligro, éxito; cada uno con su muestra y el código `#RRGGBB`), las dos fuentes (títulos y texto) y los tres radios de las esquinas (pequeño, mediano, grande, en px). A la derecha, una **vista previa** pequeña de la portada de la web con esos valores. Junto a cada par texto/fondo, el contraste medido («9,2:1 · se lee bien» o «2,7:1 · difícil de leer»), porque la API no lo revisa. Un solo «Guardar marca».
+Lo que usa la web de reservas para verse como el hotel: logo y foto de portada (dirección de una imagen ya publicada), los 10 colores (fondo, superficie, texto, texto suave, borde, borde de campo, acento, texto sobre acento, peligro, éxito; cada uno con su muestra y el código `#RRGGBB`), las dos fuentes (títulos y texto) y los tres radios de las esquinas (pequeño, mediano, grande, en px). A la derecha, una **vista previa** pequeña con esos valores: un título, un párrafo, un botón principal, un campo y una tarjeta. No dibujes la web de reservas: es de otro equipo. Junto a cada par texto/fondo, el contraste medido («9,2:1 · se lee bien» o «2,7:1 · difícil de leer»), porque la API no lo revisa. Un solo «Guardar marca».
 
 Hoja **S4AlojamientoEstados**: cargando; error con «Reintentar»; un bloque enviando; guardado; errores por campo (400); rechazo de negocio (409) junto al bloque; salir con cambios sin guardar.
 

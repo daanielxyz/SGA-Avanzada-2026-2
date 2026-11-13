@@ -21,7 +21,7 @@ Guía para quien hace por primera vez una pantalla del PMS. Este sprint son tres
    - `mockups-meridian-sprint3-preparacion/preparacion/`: el `base.css` más reciente (tiene todo lo de los sprints anteriores) y su `LEEME.md`.
    - `mockups-meridian-sprint3-llegada/llegada/`: `LEEME.md`, `S3Llegada.html`, `S3DialogoVehiculos.html`, `S3DialogoTra.html` y sus imágenes en `png/`.
    - `mockups-meridian-sprint2/mockups/`: `S2Ocupacion.html` y `S2Paso3Personas.html` con sus imágenes en `png/`.
-   - `capturas/`: capturas del PMS real a 1280 px: `reservas.png` (listado con filtros y paginación), `detalle.png` (detalle de una reserva), `ingresar.png` (iniciar sesión), `paso3.png` (paso 3 de «Nueva reserva»), `politica-detalle.png` («Ver política» en el detalle) y `portada-web.png` (la portada de la web de reservas). Mandan sobre los mockups viejos: el código ya corrigió cosas.
+   - `capturas/`: capturas del PMS real a 1280 px: `reservas.png` (listado con filtros y paginación), `detalle.png` (detalle de una reserva), `ingresar.png` (iniciar sesión), `paso3.png` (paso 3 de «Nueva reserva»), y `politica-detalle.png` («Ver política» en el detalle). Mandan sobre los mockups viejos: el código ya corrigió cosas.
 3. **La fuente Satoshi**: si `pms/public/fuentes/Satoshi-Variable.woff2` no está, se baja de Fontshare (`pms/DISENO.md`, «Marca del producto»).
 4. **Probar en local**: el backend con tu `backend/.env` (`cd backend && ./gradlew bootRun`) y el PMS con `cd pms && npm install && npm run dev`. Las cuentas de prueba están en `README.md`; para estas pantallas entra como administrador.
 
