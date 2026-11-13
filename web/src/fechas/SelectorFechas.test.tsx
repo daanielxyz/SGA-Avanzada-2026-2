@@ -65,8 +65,10 @@ describe('Selector de fechas', () => {
     laApi()
     abrir()
 
-    expect(llegada()).toHaveTextContent(fechaCorta(dia(1)))
-    expect(salida()).toHaveTextContent(fechaCorta(dia(2)))
+    // toHaveTextContent ve los espacios que no se parten como espacios normales: se compara igual
+    const comoTexto = (fecha: string) => fechaCorta(fecha).replace(/\u00a0/g, ' ')
+    expect(llegada()).toHaveTextContent(comoTexto(dia(1)))
+    expect(salida()).toHaveTextContent(comoTexto(dia(2)))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     await userEvent.click(salida())

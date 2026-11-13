@@ -8,7 +8,7 @@ import {
   type Grupo,
   type Pagina,
 } from '../api/apartamentos'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import FormularioBusqueda from '../busqueda/FormularioBusqueda'
 import Paginacion from '../busqueda/Paginacion'
 import TarjetaApartamento from '../busqueda/TarjetaApartamento'
@@ -22,7 +22,7 @@ type Vista =
   | { estado: 'filtrados'; estadia: Estadia; grupo: Grupo; pagina: Pagina<ApartamentoPublico> }
 
 function mensajeDe(error: unknown) {
-  return error instanceof ErrorApi ? error.message : 'Algo salió mal.'
+  return explicar(error, 'No pudimos cargar los apartamentos. Intenta de nuevo en un momento.')
 }
 
 /**

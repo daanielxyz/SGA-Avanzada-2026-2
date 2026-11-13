@@ -147,7 +147,7 @@ class ReservaRepositoryJpaTest {
         sincronizar();
 
         Reserva reserva = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, CREADA, LocalTime.of(22, 0));
         reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION, Dinero.CERO,
                 "Cuenta por cobrar");
         repositorio.guardar(reserva);
@@ -326,6 +326,30 @@ class ReservaRepositoryJpaTest {
         assertEquals(List.of(new ReservaId("RES-2026-80002"), new ReservaId("RES-2026-80001")),
                 segunda.contenido().stream().map(Reserva::codigo).toList());
         assertTrue(repositorio.listarPorTitular(new TitularId("TIT-2"), 0).contenido().isEmpty());
+    }
+
+    @Test
+    @Tag("USU-04")
+    @Tag("DEC-108")
+    void deberiaSepararLasVigentesDeLasTerminadasYOrdenarCadaGrupoPorLlegada() {
+        repositorio.guardar(reserva("RES-2026-80020", APT, 20, 22, EstadoReserva.CONFIRMADA, CanalOrigen.PORTAL, null,
+                null, null, null));
+        repositorio.guardar(pendiente("RES-2026-80010", 10, 12));
+        repositorio.guardar(reserva("RES-2026-80005", APT, 5, 7, EstadoReserva.CANCELADA, CanalOrigen.PORTAL, null,
+                null, null, null));
+        repositorio.guardar(reserva("RES-2026-80015", APT, 15, 17, EstadoReserva.CANCELADA, CanalOrigen.PORTAL, null,
+                null, null, null));
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(List.of(new ReservaId("RES-2026-80010"), new ReservaId("RES-2026-80020")),
+                repositorio.listarPorTitular(new TitularId("TIT-1"), true, 0).contenido().stream()
+                        .map(Reserva::codigo).toList());
+        Pagina<Reserva> terminadas = repositorio.listarPorTitular(new TitularId("TIT-1"), false, 0);
+        assertEquals(List.of(new ReservaId("RES-2026-80015"), new ReservaId("RES-2026-80005")),
+                terminadas.contenido().stream().map(Reserva::codigo).toList());
+        assertEquals(2, terminadas.totalElementos());
+        assertTrue(repositorio.listarPorTitular(new TitularId("TIT-2"), true, 0).contenido().isEmpty());
     }
 
     @Test

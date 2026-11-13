@@ -44,9 +44,15 @@ public class CuentaController {
         return CuentaResponse.de(actualizarCuenta.ejecutar(solicitud.aCommand(usuario.id())));
     }
 
+    /**
+     * Sin {@code vigentes}, todas de la más reciente a la más antigua. Con {@code vigentes=true}, las que siguen en
+     * curso o por llegar, de la más próxima a la más lejana; con {@code false}, las terminadas (DEC-108).
+     */
     @GetMapping("/api/mis-reservas")
     public PaginaResponse<ReservaResponse> misReservas(
-            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
-        return PaginaResponse.de(listarReservas.ejecutar(usuario.id(), pagina), ReservaResponse::de);
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina,
+            @RequestParam(required = false) Boolean vigentes) {
+        return PaginaResponse.de(vigentes == null ? listarReservas.ejecutar(usuario.id(), pagina)
+                : listarReservas.ejecutar(usuario.id(), vigentes, pagina), ReservaResponse::de);
     }
 }

@@ -6,6 +6,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
 /**
  * Caso de uso: recepción confirma una reserva PENDIENTE (CU-18). El folio solo se lee para saber cuánto se ha
  * pagado (RES-15); solo se guarda la reserva.
@@ -15,24 +18,28 @@ public class ConfirmarReservaUseCase {
 
     private final CargadorReserva cargador;
     private final ReservaRepository reservas;
+    private final Clock reloj;
 
-    public ConfirmarReservaUseCase(CargadorReserva cargador, ReservaRepository reservas) {
+    public ConfirmarReservaUseCase(CargadorReserva cargador, ReservaRepository reservas, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
+        this.reloj = reloj;
     }
 
     /**
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEncontradoException si no
      *         existe la reserva, su folio, su apartamento o su alojamiento
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si no está PENDIENTE
-     *         (RN-08), falta la hora estimada de llegada (RN-09) o lo pagado no cubre el anticipo (RES-15)
+     *         (RN-08), ya pasó la hora límite de llegada, falta la hora estimada de llegada (RN-09) o lo pagado no
+     *         cubre el anticipo (RES-15)
      */
     @Transactional
     public ReservaResult ejecutar(String codigo) {
         Reserva reserva = cargador.reserva(codigo);
         Alojamiento alojamiento = cargador.alojamientoDe(cargador.apartamento(reserva.apartamentoId()));
 
-        reserva.confirmar(alojamiento.parametros().anticipo(), cargador.folioDe(reserva).totalPagado());
+        reserva.confirmar(alojamiento.parametros().anticipo(), cargador.folioDe(reserva).totalPagado(),
+                LocalDateTime.now(reloj), alojamiento.parametros().horaLimiteNoShow());
 
         reservas.guardar(reserva);
         return ReservaResult.de(reserva);

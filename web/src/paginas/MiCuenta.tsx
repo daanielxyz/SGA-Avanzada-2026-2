@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
-import { ErrorApi } from '../api/cliente'
+import { explicar } from '../api/mensajes'
 import {
   actualizarCuenta,
   confirmarCambioCorreo,
@@ -20,7 +20,7 @@ const DOCUMENTOS: Record<TipoDocumento, string> = {
 
 // DEC-69: el PIN del cambio de correo vale 15 minutos; si esa regla cambia en el backend, cambia aquí
 const MINUTOS_PIN = 15
-const mensajeDe = (error: unknown, siNoResponde: string) => (error instanceof ErrorApi ? error.message : siNoResponde)
+const mensajeDe = explicar
 const opcional = (texto: string) => texto.trim() || undefined
 
 type Modo = 'ver' | 'editar' | 'correo'
@@ -76,6 +76,9 @@ export default function MiCuenta() {
             <dt>Teléfono</dt>
             <dd>{cuenta.telefono ?? 'Sin teléfono'}</dd>
           </dl>
+          {!cuenta.validado && !cuenta.primerApellido && (
+            <p className="suave">Tus nombres y apellidos están juntos: sepáralos en «Editar mis datos».</p>
+          )}
           {cuenta.validado && (
             <p className="suave">El hotel ya validó tu identidad. Para corregir tu nombre o tu documento, pídelo en
               recepción.</p>
@@ -145,6 +148,13 @@ function FormularioDatos({ cuenta, alGuardar, alCancelar }: PropsDatos) {
         </p>
       ) : (
         <>
+          {/* Las cuentas de antes de DEC-98 guardaron el nombre junto: no se separa solo, se le pide al huésped */}
+          {!cuenta.primerApellido && (
+            <p className="aviso-cambio" role="note">
+              Tu nombre quedó guardado todo junto. Deja en «Nombres» solo tus nombres y escribe tus apellidos en
+              «Apellidos».
+            </p>
+          )}
           <label>
             Nombres
             <input value={nombres} maxLength={120} pattern=".*\S.*" required autoComplete="given-name"

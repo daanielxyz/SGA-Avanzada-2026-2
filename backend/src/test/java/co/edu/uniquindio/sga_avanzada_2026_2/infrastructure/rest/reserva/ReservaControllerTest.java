@@ -83,6 +83,24 @@ class ReservaControllerTest extends PruebaRestDeReservas {
     }
 
     @Test
+    void unNinoSeIdentificaConRegistroCivilPeroElTitularNo() throws Exception {
+        String conNino = reservaJson("APT-101", ENTRADA, ENTRADA.plusDays(2)).replace(
+                "{\"nombre\": \"Luis Ríos\", \"fechaNacimiento\": \"1988-03-02\"}",
+                "{\"nombre\": \"Sara Ríos\", \"fechaNacimiento\": \"2023-01-15\", \"tipoDocumento\": \"RC\", "
+                        + "\"numeroDocumento\": \"1094555666\"}");
+        enviar(post("/api/reservas"), conNino)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ocupantes[1].tipoDocumento").value("RC"));
+
+        String titularConRegistroCivil = reservaJson("APT-102", ENTRADA, ENTRADA.plusDays(2))
+                .replace("\"titular\": {\"nombre\": \"Ana Ríos\", \"tipoDocumento\": \"CC\"",
+                        "\"titular\": {\"nombre\": \"Ana Ríos\", \"tipoDocumento\": \"RC\"");
+        enviar(post("/api/reservas"), titularConRegistroCivil)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem("titular.tipoDocumento: debe ser CC, CE, PASAPORTE o TI")));
+    }
+
+    @Test
     @Tag("RN-01")
     void noDeberiaVenderDosVecesLaMismaNoche() throws Exception {
         reservaPendiente(ENTRADA);

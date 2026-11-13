@@ -46,6 +46,16 @@ class TitularTest {
     }
 
     @Test
+    @Tag("TIT-01")
+    void noDeberiaIdentificarAlTitularConRegistroCivil() {
+        Documento registroCivil = new Documento(TipoDocumento.RC, "1094000111");
+
+        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO,
+                () -> new Titular(ID, ALO, "Ana", registroCivil, CORREO, null));
+        assertDoesNotThrow(() -> new Titular(ID, ALO, "Ana", new Documento(TipoDocumento.TI, "1094"), CORREO, null));
+    }
+
+    @Test
     @Tag("DEC-49")
     void deberiaRechazarTelefonosInvalidos() {
         assertThrows(ReglaDominioException.class, () -> new Titular(ID, ALO, "Ana", CC, null, "123"));
@@ -143,6 +153,22 @@ class TitularTest {
         assertEquals("Ana Gómez Ríos", titular.nombre());
         assertEquals("3119998888", titular.telefono());
         assertEquals(CORREO, titular.correo());
+    }
+
+    @Test
+    @Tag("DEC-109")
+    void unaCuentaDeAntesSeparaSusApellidosAunqueEsteValidada() {
+        Titular deAntes = new Titular(ID, ALO, "Ana María Gómez", CC, CORREO, "3001234567");
+        Titular validada = new Titular(ID, ALO, "Ana María Gómez", CC, CORREO, "3001234567");
+        validada.validarIdentidad(RECEPCION, AHORA);
+
+        deAntes.actualizarDesdeCuenta("Ana María", "Gómez", null, "3001234567");
+        validada.actualizarDesdeCuenta("ana maría", "GÓMEZ", null, "3001234567");
+
+        assertEquals("Ana María", deAntes.nombres());
+        assertEquals("Gómez", deAntes.primerApellido());
+        assertEquals("ana maría GÓMEZ", validada.nombre(), "es el mismo nombre, solo cambia cómo está escrito");
+        assertEquals("GÓMEZ", validada.primerApellido());
     }
 
     @Test

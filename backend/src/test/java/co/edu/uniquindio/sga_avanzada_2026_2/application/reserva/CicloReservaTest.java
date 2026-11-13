@@ -364,7 +364,7 @@ class CicloReservaTest {
     @Tag("RES-15")
     void confirmarExigeHoraDeLlegadaYElAnticipoPagado() {
         String codigo = reservaDeDosAdultosPorTresNoches().codigo();
-        ConfirmarReservaUseCase confirmar = new ConfirmarReservaUseCase(cargador, reservas);
+        ConfirmarReservaUseCase confirmar = new ConfirmarReservaUseCase(cargador, reservas, RepositoriosEnMemoria.RELOJ);
 
         assertThrows(ReglaDominioException.class, () -> confirmar.ejecutar(codigo));
         new IndicarHoraLlegadaUseCase(cargador, reservas).ejecutar(new IndicarHoraLlegadaCommand(codigo,
@@ -415,7 +415,7 @@ class CicloReservaTest {
                 LocalTime.of(16, 0)));
         folio(codigo).registrarPago(new MedioPago("EFECTIVO"), Dinero.de(180_000), HOY, HOY,
                 List.of(new MedioPago("EFECTIVO")));
-        new ConfirmarReservaUseCase(cargador, reservas).ejecutar(codigo);
+        new ConfirmarReservaUseCase(cargador, reservas, RepositoriosEnMemoria.RELOJ).ejecutar(codigo);
 
         DeclararNoShowCommand declarar = new DeclararNoShowCommand(codigo, "USR-1");
         assertThrows(ReglaDominioException.class, () -> noShowEn(ENTRADA.atTime(21, 0)).ejecutar(declarar));

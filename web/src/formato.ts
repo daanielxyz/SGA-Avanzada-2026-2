@@ -7,26 +7,43 @@ export function enPesos(valor: number) {
   return pesos.format(valor)
 }
 
+// Una fecha o una hora no se parte entre dos líneas («12 de» / «nov», «3:00 p.» / «m.»): sus espacios no se separan
+const sinPartir = (texto: string) => texto.replace(/\s/g, '\u00a0')
+
 /** «2026-12-20» → «dom, 20 dic». Se lee como fecha local para que no se corra un día por la zona horaria. */
 export function fechaCorta(fecha: string) {
   const [anio, mes, dia] = fecha.split('-').map(Number)
-  return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
+  return sinPartir(new Date(anio, mes - 1, dia)
+    .toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' }))
 }
 
-/** «2026-12-20T15:30:00» → «dom, 20 de dic a las 3:30 p. m.», sin mover la hora: ya viene en hora de Colombia. */
+/** «2026-12-20» → «dom»: el día de la semana, que una casilla angosta puede ocultar. */
+export function diaDeLaSemana(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { weekday: 'short' })
+}
+
+/** «2026-12-20» → «20 de dic»: lo que siempre se muestra de la fecha, sin partirse. */
+export function diaYMes(fecha: string) {
+  const [anio, mes, dia] = fecha.split('-').map(Number)
+  return sinPartir(new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }))
+}
+
+/** «2026-12-20T15:30:00» →«dom, 20 de dic a las 3:30 p. m.», sin mover la hora: ya viene en hora de Colombia. */
 export function fechaHora(momento: string) {
   const [fecha, hora] = momento.split('T')
   const [horas, minutos] = hora.split(':').map(Number)
   const [anio, mes, dia] = fecha.split('-').map(Number)
-  const textoHora = new Date(anio, mes - 1, dia, horas, minutos)
-    .toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+  const textoHora = sinPartir(new Date(anio, mes - 1, dia, horas, minutos)
+    .toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }))
   return `${fechaCorta(fecha)} a las ${textoHora}`
 }
 
 /** «15:00:00» → «3:00 p. m.». */
 export function horaDelDia(hora: string) {
   const [horas, minutos] = hora.split(':').map(Number)
-  return new Date(2000, 0, 1, horas, minutos).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+  return sinPartir(new Date(2000, 0, 1, horas, minutos)
+    .toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }))
 }
 
 /** La fecha de hoy, más los días dados, en el formato de los campos de fecha (`AAAA-MM-DD`). */

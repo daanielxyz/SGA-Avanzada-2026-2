@@ -53,6 +53,16 @@ public interface ReservaRepository {
     Pagina<Reserva> listarPorTitular(TitularId titularId, int numeroPagina);
 
     /**
+     * Las vigentes o las terminadas del titular, de 10 en 10 (USU-04 · DEC-108). Las vigentes (PENDIENTE, CONFIRMADA,
+     * EN_CURSO) van de la próxima llegada a la más lejana; las terminadas, de la estancia más reciente a la más
+     * antigua.
+     *
+     * @param vigentes     {@code true} para las que retienen noches (EDO-03); {@code false} para las terminadas
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Reserva> listarPorTitular(TitularId titularId, boolean vigentes, int numeroPagina);
+
+    /**
      * Las reservas que cumplen todos los filtros, de la más reciente a la más antigua, de 10 en 10
      * (CU-25 · DEC-18 · DEC-72).
      *

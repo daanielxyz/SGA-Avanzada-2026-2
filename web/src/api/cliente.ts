@@ -8,6 +8,8 @@ export interface ErrorRespuesta {
   codigo: string
   mensaje: string
   detalles: string[]
+  /** Por qué se rechazó una regla de negocio (`MotivoRechazo`, DEC-94); nulo en los demás errores. */
+  motivo?: string | null
 }
 
 /** Lo que falla al hablar con la API: un error del backend o que el backend no respondió. */
@@ -15,13 +17,15 @@ export class ErrorApi extends Error {
   readonly estado: number
   readonly codigo: string
   readonly detalles: string[]
+  readonly motivo: string | null
 
-  constructor({ estado, codigo, mensaje, detalles }: ErrorRespuesta) {
+  constructor({ estado, codigo, mensaje, detalles, motivo }: ErrorRespuesta) {
     super(mensaje)
     this.name = 'ErrorApi'
     this.estado = estado
     this.codigo = codigo
-    this.detalles = detalles
+    this.detalles = detalles ?? []
+    this.motivo = motivo ?? null
   }
 }
 

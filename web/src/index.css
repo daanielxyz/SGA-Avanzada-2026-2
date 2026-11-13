@@ -331,6 +331,12 @@ button.secundario {
   margin: 0 auto;
 }
 
+.portada-texto h1 {
+  font-size: clamp(1.75rem, 1rem + 4vw, 3.5rem);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
 .portada-texto p {
   max-width: 60ch;
   margin: 8px 0 0;
@@ -634,6 +640,18 @@ button.secundario {
   white-space: pre-line;
 }
 
+.descripcion-completa[data-plegada='true'] {
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+button.leer-mas {
+  margin: 0 0 24px;
+}
+
 /* Lo que incluye el apartamento, completo en su página */
 .dotacion {
   display: flex;
@@ -811,7 +829,9 @@ button.secundario {
 }
 
 .total-estancia strong {
+  min-width: 0;
   font-size: var(--texto-xl);
+  overflow-wrap: anywhere;
 }
 
 .por-noche {
@@ -886,6 +906,7 @@ button.secundario {
 /* Reservar: el formulario y, en pantallas anchas, el resumen fijo a la derecha */
 .reservar-columnas {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -945,6 +966,47 @@ fieldset p {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--borde);
+}
+
+/* Con sesión, quien reserva es la cuenta: sus datos se ven, no se editan aquí (DEC-69) */
+.cuenta-reserva {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: var(--relleno);
+  border-radius: var(--radio-pequeno);
+  font-size: var(--texto-sm);
+  overflow-wrap: anywhere;
+}
+
+.cuenta-reserva strong {
+  font-size: var(--texto-md);
+}
+
+.cuenta-reserva a {
+  margin-top: 6px;
+}
+
+/* Una casilla con su texto al lado; toda la fila se puede tocar */
+label.casilla {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 12px;
+  font-size: var(--texto-md);
+  cursor: pointer;
+}
+
+label.casilla input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: none;
+  accent-color: var(--acento);
 }
 
 .campo-telefono {
@@ -1130,6 +1192,23 @@ fieldset p {
 .cuentas dd {
   margin: 0;
   text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* En celular el monto grande no cabe al lado de su etiqueta: va debajo */
+@media (max-width: 419px) {
+  .cuentas {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .cuentas dd {
+    text-align: left;
+  }
+
+  .cuentas dd + dt {
+    margin-top: 8px;
+  }
 }
 
 .resumen .total-estancia {
@@ -1346,6 +1425,34 @@ fieldset p {
   overflow-wrap: anywhere;
 }
 
+@media (max-width: 419px) {
+  .datos:not(.datos-valores) {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+
+  .datos:not(.datos-valores) dd + dt {
+    margin-top: 10px;
+  }
+}
+
+/* Quienes viajan, uno por renglón */
+.lista-viajeros {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-viajeros li + li {
+  margin-top: 2px;
+}
+
+/* El valor de una reserva cancelada: se ve, pero no se cobra */
+.tachado {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
 /* Mi cuenta: la acción principal y, al lado o debajo en el celular, cambiar el correo */
 .acciones-cuenta {
   display: flex;
@@ -1360,7 +1467,7 @@ fieldset p {
 }
 
 .datos-valores {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(8ch, 1fr) minmax(0, auto);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1410,7 +1517,9 @@ fieldset p {
 
 .fila-reserva-total {
   grid-column: 2;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 @media (min-width: 720px) {
@@ -1481,18 +1590,41 @@ fieldset p {
 
 .detalle-cabeza {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 16px;
-  align-items: center;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
   margin-bottom: 16px;
+}
+
+.ficha .detalle-cabeza h1 {
+  font-size: var(--texto-lg);
+}
+
+@media (min-width: 720px) {
+  .detalle-cabeza {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .ficha .detalle-cabeza h1 {
+    font-size: var(--texto-xl);
+  }
 }
 
 .detalle-cabeza img,
 .detalle-cabeza .sin-foto {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
   border-radius: var(--radio-mediano);
+}
+
+@media (min-width: 720px) {
+  .detalle-cabeza img,
+  .detalle-cabeza .sin-foto {
+    width: 96px;
+    height: 96px;
+  }
 }
 
 .detalle-cabeza h1 {
@@ -1565,6 +1697,34 @@ button.boton-peligro {
 .cuenta h1,
 .mis-reservas h1 {
   margin-bottom: 16px;
+}
+
+/* Mis reservas: Próximas y Anteriores (DEC-108). Son enlaces, así la pestaña queda en la dirección y se puede volver */
+.pestanas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.pestanas a {
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  color: var(--texto-suave);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+
+.pestanas a[aria-current='page'] {
+  color: var(--texto);
+  font-weight: 600;
+  border-bottom-color: var(--acento);
+}
+
+@media (hover: hover) {
+  .pestanas a:hover {
+    color: var(--texto);
+  }
 }
 
 /* Calendario de noches libres en la página del apartamento */
@@ -1709,6 +1869,16 @@ button.boton-peligro {
 
 .fecha-disparador span {
   white-space: nowrap;
+}
+
+.fecha-disparador {
+  container-type: inline-size;
+}
+
+@container (max-width: 150px) {
+  .fecha-disparador .dia-semana {
+    display: none;
+  }
 }
 
 /* En el celular, el ícono le quita el espacio a la fecha: el botón ya dice qué es */

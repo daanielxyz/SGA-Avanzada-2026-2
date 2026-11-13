@@ -20,7 +20,7 @@ public record DatosOcupanteRequest(
         @Size(max = 60, message = "admite máximo 60 caracteres")
         String segundoApellido,
 
-        @Pattern(regexp = "CC|CE|PASAPORTE|TI", message = "debe ser CC, CE, PASAPORTE o TI")
+        @Pattern(regexp = "CC|CE|PASAPORTE|TI|RC", message = "debe ser CC, CE, PASAPORTE, TI o RC")
         String tipoDocumento,
 
         @Size(max = 30, message = "admite máximo 30 caracteres")
