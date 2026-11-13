@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { consultarPolitica, type Politica } from '../api/politicas'
 import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
-import { resumenPolitica, textoRetencion, textoTramo, tramosOrdenados } from './politica'
+import PoliticaContada from '../politica/PoliticaContada'
+import { resumenPolitica } from './politica'
 
 type Carga = { clave: string; politica: Politica } | { clave: string; error: true }
 
@@ -51,7 +52,6 @@ export default function PoliticaAplicada({ politicaId, codigo }: { politicaId: s
   }
 
   const { politica } = actual
-  const tramos = tramosOrdenados(politica)
   return (
     <>
       <span className="politica-resumen">{resumenPolitica(politica)}</span>
@@ -62,22 +62,7 @@ export default function PoliticaAplicada({ politicaId, codigo }: { politicaId: s
         <Dialogo titulo="Política de la reserva" subtitulo={<span className="codigo">{codigo}</span>} alCerrar={() => setAbierta(false)}>
           <div className="dialogo-contenido">
             <div className="dialogo-cuerpo">
-              <h3 className="notas-grupo">Si se cancela</h3>
-              <ul className="tramos">
-                {tramos.map((tramo, indice) => (
-                  <li key={tramo.antelacionMinHoras}>
-                    <span>{textoTramo(tramos, indice)}</span>
-                    <strong>{textoRetencion(tramo.penalizacion)}</strong>
-                  </li>
-                ))}
-              </ul>
-              <h3 className="notas-grupo">Si no se presenta</h3>
-              <ul className="tramos">
-                <li>
-                  <span>El huésped no llega</span>
-                  <strong>{textoRetencion(politica.penalizacionNoShow)}</strong>
-                </li>
-              </ul>
+              <PoliticaContada politica={politica} />
               <Aviso tipo="info" mensaje="Es la versión que tenía la política al crear la reserva." />
             </div>
             <div className="dialogo-pie">

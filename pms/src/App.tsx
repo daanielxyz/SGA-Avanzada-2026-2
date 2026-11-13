@@ -14,7 +14,9 @@ import NoEncontrada from './paginas/NoEncontrada'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
+import Politica from './paginas/Politica'
 import Preparacion from './paginas/Preparacion'
+import PublicarPolitica from './paginas/PublicarPolitica'
 import SinPermiso from './paginas/SinPermiso'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
@@ -25,6 +27,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/ocupacion': <Ocupacion />,
   '/preparacion': <Preparacion />,
   '/alojamiento': <Alojamiento />,
+  '/politica': <Politica />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
@@ -75,6 +78,14 @@ export default function App() {
           element={
             <SoloPara roles={RECEPCION}>
               <Llegada />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/politica/publicar"
+          element={
+            <SoloPara roles={['ADMINISTRADOR']}>
+              <PublicarPolitica />
             </SoloPara>
           }
         />

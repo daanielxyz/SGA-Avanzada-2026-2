@@ -31,6 +31,11 @@ describe('política de cancelación en palabras (RN-13 · DEC-104)', () => {
     expect(textoRetencion(tramos[1].penalizacion)).toBe('Se retiene el 30 % de lo pagado')
   })
 
+  it('dice la base del anticipo y el tope de un monto fijo', () => {
+    expect(textoRetencion({ base: 'ANTICIPO_EXIGIDO', porcentaje: 100, montoFijo: null })).toBe('Se retiene el 100 % del anticipo exigido')
+    expect(textoRetencion({ base: 'VALOR_TOTAL', porcentaje: null, montoFijo: 50000 })).toBe('Se retienen $ 50.000, sin pasar del valor total')
+  })
+
   it('resume la política con el primer tramo que retiene', () => {
     expect(resumenPolitica(POLITICA)).toBe('Retiene el 50 % del valor total si se cancela con menos de 48 horas')
     expect(resumenPolitica({ ...POLITICA, tramos: [POLITICA.tramos[1]] })).toBe('No retiene nada al cancelar')

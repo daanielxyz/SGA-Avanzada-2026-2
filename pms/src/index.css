@@ -5305,3 +5305,231 @@ button.barra {
     top: var(--espacio-4);
   }
 }
+
+/* Política de cancelación (sprint 4): la vigente contada como en «Ver política», las anteriores plegadas y el
+   formulario por renglones con su vista previa. */
+.politica-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-5);
+}
+
+.politica-pagina > .volver {
+  align-self: flex-start;
+}
+
+.politica-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.politica-cabecera .suave {
+  max-width: 68ch;
+  margin-top: var(--espacio-1);
+  font-size: var(--tamano-chico);
+}
+
+.politica-cabecera .boton {
+  align-self: flex-start;
+}
+
+.politica-vigente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-5) var(--espacio-4);
+}
+
+.politica-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+  margin-bottom: var(--espacio-2);
+}
+
+.politica-version .etiqueta {
+  font-family: var(--letra-interfaz);
+}
+
+.politica-anteriores {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.politica-anteriores .suave {
+  font-size: var(--tamano-chico);
+}
+
+.versiones {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  list-style: none;
+}
+
+.versiones li + li {
+  border-top: 1px solid var(--borde);
+}
+
+.versiones .version {
+  padding: var(--espacio-3) var(--espacio-4);
+  border-top: 0;
+}
+
+.versiones .version summary {
+  justify-content: center;
+}
+
+.versiones .version summary::before {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.versiones .version[open] summary::before {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.version-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin-top: var(--espacio-3);
+}
+
+/* Formulario por renglones: la frase se lee de corrido y los campos van dentro */
+.publicar-politica {
+  display: grid;
+  gap: var(--espacio-5);
+  align-items: start;
+}
+
+.bloque-campos-politica {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+}
+
+.bloque-campos-politica section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.politica-pista {
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.renglones {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  list-style: none;
+}
+
+.renglones .renglon + .renglon {
+  border-top: 1px solid var(--borde);
+}
+
+.renglon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+}
+
+.renglon-solo {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.renglon-error {
+  background: var(--error-fondo);
+}
+
+.renglones .renglon-error {
+  outline: 1px solid var(--error);
+  outline-offset: -1px;
+}
+
+.renglon-frase,
+.renglon-campos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.renglon-texto {
+  font-size: var(--tamano-chico);
+}
+
+.renglon .campo-control {
+  height: 40px;
+}
+
+.renglon-numero {
+  width: 5.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.renglon-unidad {
+  width: 4.5rem;
+}
+
+.renglon-base {
+  width: auto;
+  min-width: 11rem;
+  flex: 1 1 11rem;
+  max-width: 16rem;
+}
+
+.renglon-quitar {
+  margin-left: auto;
+}
+
+.agregar-tramo {
+  align-self: flex-start;
+}
+
+.vista-previa-politica {
+  gap: var(--espacio-2);
+}
+
+@media (min-width: 800px) {
+  .politica-cabecera {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .politica-cabecera .boton {
+    flex: none;
+  }
+
+  .politica-vigente {
+    padding: var(--espacio-5) var(--espacio-6);
+  }
+
+  .bloque-campos-politica {
+    padding: var(--espacio-5) var(--espacio-6);
+  }
+}
+
+@media (min-width: 1100px) {
+  .publicar-politica {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+
+  .vista-previa-politica {
+    position: sticky;
+    top: var(--espacio-4);
+  }
+}

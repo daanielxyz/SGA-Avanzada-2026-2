@@ -491,6 +491,12 @@ Mockups en `pms/diseno/mockups-meridian-sprint4-politica/`, revisados contra el 
 - **Validación**: tramo desde 0 horas, horas repetidas y mínimo de tramos (el de `parametros.minimoTramosCancelacion`) se revisan al escribir, como en el mockup; los renglones se muestran en el orden en que se escriben y la vista previa los ordena.
 - **Salir con cambios**: se pregunta, como en Alojamiento.
 
+Programada en `src/paginas/Politica.tsx` (`/politica`) y `src/paginas/PublicarPolitica.tsx` (`/politica/publicar`, solo el administrador); la lógica del formulario en `src/politica/formulario.ts`. Las frases salen de un solo componente, `src/politica/PoliticaContada.tsx`, que ahora usa también «Ver política» del detalle. La vigente se lee de `GET /api/politicas/vigente` (404 = todavía no hay) y las anteriores de la lista sin la vigente. Al publicar se vuelve a `/politica` con «Versión N publicada».
+
+**Probada en el navegador** (13 nov, contra el backend local): la vigente y las anteriores plegadas; horas repetidas marcadas en los dos renglones con «Publicar» deshabilitado; la pregunta al salir con cambios; publicar (201) y volver con el aviso. Sin desbordes a 1280, 1024 y 390 px. En la base local quedó una versión 2 igual a la 1.
+
+**Auditoría** (referencias de `impeccable` audit, harden y adapt leídas a mano, sin su ejecutable; `break-ui` sobre los datos de prueba): arreglados el triángulo de las versiones plegadas y el error de horas, que ahora está enlazado a su campo para los lectores de pantalla.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.
