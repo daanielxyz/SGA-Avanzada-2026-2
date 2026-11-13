@@ -192,12 +192,17 @@ class SesionControllerTest extends PruebaRestDeReservas {
     @Test
     @Tag("CU-07")
     @Tag("CU-50")
+    @Tag("DEC-113")
     void loPublicoSeConsultaSinToken() throws Exception {
         cliente.perform(get("/api/alojamiento")).andExpect(status().isOk());
-        cliente.perform(get("/api/apartamentos")).andExpect(status().isOk());
-        cliente.perform(get("/api/apartamentos/APT-101")).andExpect(status().isOk());
         cliente.perform(get("/api/apartamentos/disponibles").param("entrada", HOY.plusDays(5).toString())
                         .param("salida", HOY.plusDays(7).toString()).param("ocupantes", "2"))
                 .andExpect(status().isOk());
+        cliente.perform(get("/api/apartamentos/APT-101/calendario").param("desde", HOY.toString())
+                        .param("hasta", HOY.plusDays(7).toString()))
+                .andExpect(status().isOk());
+        // La ficha completa es del personal: el público ve /api/portal/apartamentos (DEC-80)
+        cliente.perform(get("/api/apartamentos")).andExpect(status().isUnauthorized());
+        cliente.perform(get("/api/apartamentos/APT-101")).andExpect(status().isUnauthorized());
     }
 }

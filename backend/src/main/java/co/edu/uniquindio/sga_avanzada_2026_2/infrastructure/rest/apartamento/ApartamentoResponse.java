@@ -9,12 +9,14 @@ import java.util.List;
  * JSON de un apartamento hacia el cliente (DEC-31). Hoy coincide con {@link ApartamentoResult}; existe aparte
  * para que el contrato HTTP pueda cambiar sin tocar los casos de uso.
  *
- * @param limiteMascotas las que admite por reserva; vacío, las del alojamiento (DEC-93)
+ * @param limiteMascotas        las que admite por reserva; vacío, las del alojamiento (DEC-93)
+ * @param motivoFueraDeServicio solo mientras está FUERA_DE_SERVICIO, si el administrador lo dio (DEC-113)
  */
 public record ApartamentoResponse(String codigo, String alojamientoId, String nombre, String descripcion,
                                   int capacidad, int dormitorios, String estadoOperativo, boolean activo,
                                   List<ImagenResponse> imagenes, List<String> caracteristicas,
-                                  List<BloqueoResponse> bloqueos, Integer limiteMascotas) {
+                                  List<BloqueoResponse> bloqueos, Integer limiteMascotas,
+                                  String motivoFueraDeServicio) {
 
     public record ImagenResponse(String url, boolean principal) {
     }
@@ -31,6 +33,6 @@ public record ApartamentoResponse(String codigo, String alojamientoId, String no
                 r.bloqueos().stream()
                         .map(b -> new BloqueoResponse(b.id(), b.fechaInicio(), b.fechaFin(), b.motivo(), b.vigente()))
                         .toList(),
-                r.limiteMascotas());
+                r.limiteMascotas(), r.motivoFueraDeServicio());
     }
 }

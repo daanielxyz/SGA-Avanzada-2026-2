@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -180,9 +181,12 @@ public class ApartamentoController {
     }
 
     @PutMapping("/{codigo}/declarar-fuera-de-servicio")
-    public ApartamentoResponse declararFueraDeServicio(@PathVariable String codigo) {
+    public ApartamentoResponse declararFueraDeServicio(
+            @PathVariable String codigo,
+            @Valid @RequestBody(required = false) DeclararFueraDeServicioRequest solicitud) {
         exigirPermiso(codigo, "FUERA_DE_SERVICIO");
-        return ApartamentoResponse.de(declararFueraDeServicio.ejecutar(codigo));
+        String motivo = Optional.ofNullable(solicitud).map(DeclararFueraDeServicioRequest::motivo).orElse(null);
+        return ApartamentoResponse.de(declararFueraDeServicio.ejecutar(codigo, motivo));
     }
 
     private void exigirPermiso(String codigo, String destino) {

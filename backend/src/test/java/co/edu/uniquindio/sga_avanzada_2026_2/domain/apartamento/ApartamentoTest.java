@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -217,6 +218,58 @@ class ApartamentoTest {
         assertThrows(ReglaDominioException.class, apartamento::ocupar);
         apartamento.marcarPendientePreparacion();
         assertEquals(EstadoOperativo.PENDIENTE_PREPARACION, apartamento.estadoOperativo());
+    }
+
+    @Test
+    @Tag("CU-40")
+    @Tag("DEC-113")
+    void deberiaGuardarElMotivoMientrasSigaFueraDeServicio() {
+        Apartamento apartamento = activo();
+
+        apartamento.declararFueraDeServicio("  Fuga de agua en el baño ");
+
+        assertEquals(Optional.of("Fuga de agua en el baño"), apartamento.motivoFueraDeServicio());
+        apartamento.marcarPendientePreparacion();
+        assertEquals(Optional.empty(), apartamento.motivoFueraDeServicio());
+    }
+
+    @Test
+    @Tag("CU-40")
+    @Tag("DEC-113")
+    void elMotivoEsOpcionalYEnBlancoNoCuenta() {
+        Apartamento sinMotivo = activo();
+        Apartamento enBlanco = activo();
+
+        sinMotivo.declararFueraDeServicio();
+        enBlanco.declararFueraDeServicio("   ");
+
+        assertEquals(EstadoOperativo.FUERA_DE_SERVICIO, sinMotivo.estadoOperativo());
+        assertEquals(Optional.empty(), sinMotivo.motivoFueraDeServicio());
+        assertEquals(Optional.empty(), enBlanco.motivoFueraDeServicio());
+    }
+
+    @Test
+    @Tag("EOPE-02")
+    @Tag("DEC-113")
+    void unApartamentoOcupadoNoQuedaConMotivoSiNoSaleDeServicio() {
+        Apartamento apartamento = apartamento(List.of(PRINCIPAL), CARACTERISTICAS, EstadoOperativo.OCUPADO, true);
+
+        assertThrows(ReglaDominioException.class, () -> apartamento.declararFueraDeServicio("Pintura"));
+        assertEquals(EstadoOperativo.OCUPADO, apartamento.estadoOperativo());
+        assertEquals(Optional.empty(), apartamento.motivoFueraDeServicio());
+    }
+
+    @Test
+    @Tag("DEC-113")
+    void soloUnApartamentoFueraDeServicioSeReconstruyeConMotivo() {
+        Apartamento fuera = new Apartamento(new ApartamentoId("APT-101"), new AlojamientoId("ALO-1"), "Apto 101", null,
+                new Capacidad(4), new Dormitorio(2), EstadoOperativo.FUERA_DE_SERVICIO, List.of(PRINCIPAL),
+                CARACTERISTICAS, List.of(), true, null, "Pintura");
+
+        assertEquals(Optional.of("Pintura"), fuera.motivoFueraDeServicio());
+        assertThrows(ReglaDominioException.class, () -> new Apartamento(new ApartamentoId("APT-101"),
+                new AlojamientoId("ALO-1"), "Apto 101", null, new Capacidad(4), new Dormitorio(2),
+                EstadoOperativo.PREPARADO, List.of(PRINCIPAL), CARACTERISTICAS, List.of(), true, null, "Pintura"));
     }
 
     // --- Bloqueos

@@ -272,7 +272,7 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
         Apartamento ocupado = apartamentos.buscarPorCodigo(new ApartamentoId("APT-103")).orElseThrow();
         ocupado.ocupar();
         apartamentos.guardar(ocupado);
-        declararFueraDeServicio.ejecutar(ULTIMO);
+        declararFueraDeServicio.ejecutar(ULTIMO, "Cambio de la tubería del baño");
         LocalDate hoy = LocalDate.now(reloj);
         registrarBloqueo.ejecutar(new RegistrarBloqueoCommand("APT-109", hoy.plusDays(20), hoy.plusDays(25),
                 "Mantenimiento de la cubierta"));

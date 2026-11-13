@@ -73,6 +73,7 @@ public class ConsultarOcupacionUseCase {
     private static OcupacionResult fila(Apartamento a, Estancia rango, List<Reserva> delTablero,
                                         Map<ReservaId, Folio> cuentas, Map<TitularId, String> nombres) {
         return new OcupacionResult(a.codigo().valor(), a.nombre(), a.estadoOperativo().name(),
+                a.motivoFueraDeServicio().orElse(null),
                 delTablero.stream()
                         .sorted(Comparator.comparing(r -> r.estancia().entrada()))
                         .map(r -> reservaOcupada(r, cuentas.get(r.codigo()), nombres.get(r.titularId())))

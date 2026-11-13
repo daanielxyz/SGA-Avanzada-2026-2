@@ -32,6 +32,7 @@ public class Apartamento {
     private final List<Bloqueo> bloqueos;
     private boolean activo;
     private Integer limiteMascotas;              // vacío: el del alojamiento (RP-03)
+    private String motivoFueraDeServicio;        // solo mientras está FUERA_DE_SERVICIO (DEC-113)
 
     // IMG-01 · IMG-02 · CARAC-01
     public Apartamento(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre, String descripcion,
@@ -51,6 +52,20 @@ public class Apartamento {
                        Capacidad capacidad, Dormitorio dormitorios, EstadoOperativo estadoOperativo,
                        List<Imagen> imagenes, List<Caracteristica> caracteristicas, List<Bloqueo> bloqueos,
                        boolean activo, Integer limiteMascotas) {
+        this(codigo, alojamientoId, nombre, descripcion, capacidad, dormitorios, estadoOperativo, imagenes,
+                caracteristicas, bloqueos, activo, limiteMascotas, null);
+    }
+
+    /**
+     * Reconstrucción completa, con el motivo por el que está fuera de servicio (DEC-113).
+     *
+     * @param limiteMascotas        las que admite este apartamento por reserva; vacío, las del alojamiento
+     * @param motivoFueraDeServicio solo si está FUERA_DE_SERVICIO; vacío si no se dio
+     */
+    public Apartamento(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre, String descripcion,
+                       Capacidad capacidad, Dormitorio dormitorios, EstadoOperativo estadoOperativo,
+                       List<Imagen> imagenes, List<Caracteristica> caracteristicas, List<Bloqueo> bloqueos,
+                       boolean activo, Integer limiteMascotas, String motivoFueraDeServicio) {
         if (codigo == null || alojamientoId == null || capacidad == null || dormitorios == null
                 || estadoOperativo == null || imagenes == null || caracteristicas == null || bloqueos == null) {
             throw new ReglaDominioException("Faltan datos obligatorios del apartamento");
@@ -80,6 +95,11 @@ public class Apartamento {
         this.activo = activo;
         exigirLimiteValido(limiteMascotas);
         this.limiteMascotas = limiteMascotas;
+        String motivo = sinBlancos(motivoFueraDeServicio);
+        if (motivo != null && estadoOperativo != EstadoOperativo.FUERA_DE_SERVICIO) { // DEC-113
+            throw new ReglaDominioException("Solo un apartamento fuera de servicio tiene motivo de fuera de servicio");
+        }
+        this.motivoFueraDeServicio = motivo;
     }
 
     /**
@@ -284,12 +304,24 @@ public class Apartamento {
     }
 
     /**
-     * Saca el apartamento de operación (CU-40). No impide venderlo a futuro: para eso está el bloqueo (sección 3.3).
+     * Saca el apartamento de operación sin decir por qué (CU-40). Mientras siga así no se vende (DEC-110).
      *
      * @throws ReglaDominioException si está OCUPADO o ya estaba fuera de servicio (EOPE-02)
      */
     public void declararFueraDeServicio() {
+        declararFueraDeServicio(null);
+    }
+
+    /**
+     * Saca el apartamento de operación (CU-40) con el motivo, que recepción y el personal ven mientras siga fuera de
+     * servicio (DEC-113). Mientras siga así no se vende (DEC-110).
+     *
+     * @param motivo opcional; en blanco cuenta como no dado
+     * @throws ReglaDominioException si está OCUPADO o ya estaba fuera de servicio (EOPE-02)
+     */
+    public void declararFueraDeServicio(String motivo) {
         transitarA(EstadoOperativo.FUERA_DE_SERVICIO);
+        motivoFueraDeServicio = sinBlancos(motivo);
     }
 
     // EOPE-02. No crea ni levanta bloqueos (BLO-05)
@@ -299,6 +331,11 @@ public class Apartamento {
                     "Transición de estado operativo no permitida: " + estadoOperativo + " → " + destino);
         }
         estadoOperativo = destino;
+        motivoFueraDeServicio = null; // DEC-113: el motivo no sobrevive al salir de fuera de servicio
+    }
+
+    private static String sinBlancos(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.trim();
     }
 
     /**
@@ -367,6 +404,11 @@ public class Apartamento {
     /** Las mascotas que admite por reserva, si tiene un límite propio; si no, rige el del alojamiento (RP-03). */
     public Optional<Integer> limiteMascotas() {
         return Optional.ofNullable(limiteMascotas);
+    }
+
+    /** Por qué está fuera de servicio, si se dijo; vacío en cualquier otro estado (DEC-113). */
+    public Optional<String> motivoFueraDeServicio() {
+        return Optional.ofNullable(motivoFueraDeServicio);
     }
 
     public Dormitorio dormitorios() {
