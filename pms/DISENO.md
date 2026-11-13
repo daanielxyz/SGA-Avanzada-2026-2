@@ -536,6 +536,42 @@ Queda, a propósito: una descripción de 2000 caracteres se lee completa en el d
 - Que `RegistrarBloqueoUseCase` rechace un bloqueo cuyo inicio ya pasó (409), con el reloj inyectado. Hoy solo lo cuida el PMS.
 - Subir las fotos desde el dispositivo (pedido por Arias el 13 nov): hoy la API solo recibe la dirección de una foto ya publicada. Hace falta un endpoint que reciba el archivo (multipart), lo valide (tipo, tamaño), lo guarde tras un puerto (`AlmacenImagenes`, con implementación local en disco y luego una nube) y devuelva su dirección. Es para después de la entrega universitaria; el PMS solo cambiaría el diálogo de foto.
 
+## Sprint 4: temporadas y tarifas (`feature/pms/temporadas-tarifas`, Arias)
+Mockups en `pms/diseno/mockups-meridian-sprint4-tarifas/S4Tarifas/` (7 pantallas, cada una a 1280 y 390 px, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el dominio (`CalendarioTemporadas`, `Temporada`, `Tarifa`, `ActivadorApartamentoService`). Lo resuelto, con el número de la duda del LEEME:
+- **Tarifas de la temporada nueva** (1, 3): la API exige la tarifa de cada apartamento **a la venta** (TAR-03: `buscarActivos` son los de `activo`, que es «A la venta»); la de los retirados es opcional. El diálogo trae todos los apartamentos (recorre las páginas de `GET /api/apartamentos`): los que están a la venta llevan el campo obligatorio y la marca «A la venta»; los retirados, «(opcional)». Por eso un apartamento a la venta nunca queda «Sin tarifa», y la pista «No se puede poner a la venta» solo sale en los retirados (APA-11 pide tarifa en todas las temporadas activas para activarlo).
+- **Fechas** (4, 5): la temporada incluye los dos días (`[desde, hasta]`, TEM-01), al revés del bloqueo. Dos temporadas activas no pueden compartir ni un día: si una termina el 15, la siguiente empieza el 16. El diálogo lo dice en la pista. Antes de enviar, la pantalla revisa el solapamiento con las temporadas activas que ya conoce y lo dice con el nombre y las fechas de la otra. El mensaje de la API trae ids (`La temporada TEM-5 se solapa con TEM-2`): si aun así llega, se cambian los ids por los nombres; nunca se muestra un id.
+- **Historial** (6): `GET …/tarifas/historial` ya viene de la más reciente a la más antigua (`vigenteDesde` y luego versión). La versión se cuenta por apartamento y temporada (`Tarifa.nuevaVersion`). «✓ Vigente» se queda: es la que está en `GET …/tarifas` (las vigentes). El nombre de cada temporada sale de `GET /api/temporadas`, también de las inactivas.
+- **Rechazos de la tarifa** (8): valor mayor que cero, revisado en la pantalla (TAR-02); el 409 de la API (temporada inactiva) sale en el diálogo con su mensaje.
+- **Textos y botones** (9, 11): se quedan los del mockup.
+- **Desactivar en rojo** (10): se queda, porque no se deshace.
+- **Ver inactivas** (12): plegado al entrar.
+- **Nombre repetido** (13): la API no lo impide; la pantalla tampoco. Nombre vacío: «Escribe el nombre de la temporada.».
+- **Menú y enlace** (14): ya están en `src/navegacion.ts` y en el diálogo de venta de apartamentos.
+- Las tarifas vigentes de un apartamento pueden traer las de temporadas inactivas. La tabla solo muestra las columnas de las activas, y el historial solo marca «✓ Vigente» las de temporadas activas.
+
+Programada en `src/paginas/Tarifas.tsx` (`/tarifas`, solo el administrador). Los diálogos y la lógica sin pantalla están en `src/tarifas/` (`Dialogos.tsx` y `logica.ts`, con sus pruebas), y la API en `src/api/tarifas.ts`. `Dialogo` tiene ahora la opción `ancho` (720 px en el computador) para el historial. `listarTodosLosApartamentos` devuelve la ficha completa (también la usa Preparación). Pruebas: `src/paginas/Tarifas.test.tsx` y `src/tarifas/logica.test.ts`.
+
+**Probada en el navegador** (13 nov, contra el backend local con los datos demo, como administrador):
+- La pantalla a 1280, 1024 y 390 px, sin desbordes.
+- Nueva temporada:
+  - vacía: un error junto a cada campo, también la tarifa de los 10 apartamentos a la venta (de 13);
+  - solapada: la pantalla nombra la otra temporada y sus fechas;
+  - válida: se creó.
+- La API, sin la revisión de la pantalla, responde `409 La temporada TEM-5 se solapa con TEM-4`, que la pantalla convierte en nombres.
+- Tarifa en 0 (error junto al campo) y una válida: la tabla cambia sin recargar.
+- Historial, cambiar fechas (al revés y válidas) y desactivar.
+- Quedó la temporada «Prueba del PMS 2035», inactiva, en la base local.
+
+**Auditoría** (`impeccable` detect: sin hallazgos en lo nuevo; los 4 que reporta son de secciones anteriores de `index.css`). Para `break-ui`, dos temporadas de peor caso en 2041, ya desactivadas: un nombre de 77 caracteres, 99 noches de estancia y $ 9.999.999 por noche.
+- P1: con 5 temporadas, a 1280 la página se ensanchaba a 1875 px. El texto para lectores de pantalla del encabezado «Historial» (posición absoluta) se salía de la caja que se desplaza. Los marcos de las tablas quedaron relativos.
+- P2: un nombre largo ensanchaba su columna a 624 px; ahora parte en renglones (de 120 a 200 px).
+- P2: las celdas de la tabla de temporadas tenían `display: flex` y desarmaban la tabla; el arreglo va en un `div` interno. El nombre del apartamento, que es el encabezado de su fila, se veía como encabezado de columna.
+- P3: con el dedo, cada valor de la tabla mide 44 px de alto.
+
+Queda, a propósito: con 5 o más temporadas, a 1280 la tabla de tarifas se desplaza de lado dentro de su caja, como las otras tablas anchas del PMS.
+
+**Para el núcleo (Reyes), sin urgencia**: que los rechazos de temporadas nombren la temporada y no su id (`CalendarioTemporadas.validarSinSolape` y `exigirTemporadaActiva`). Hoy el PMS cambia `TEM-n` por el nombre; otro cliente vería el id.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

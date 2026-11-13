@@ -77,13 +77,16 @@ export function listarPendientesPreparacion(pagina: number): Promise<Pagina<Apar
   return pedir(`/api/apartamentos/pendientes-preparacion?pagina=${pagina}`)
 }
 
-/** `GET /api/apartamentos` (público): todos, recorriendo las páginas, para la vista del administrador. */
-export async function listarTodosLosApartamentos(): Promise<ApartamentoOperativo[]> {
-  const todos: ApartamentoOperativo[] = []
+/**
+ * `GET /api/apartamentos` (público): todos, recorriendo las páginas, para la vista del administrador (preparación y
+ * las tarifas de una temporada nueva).
+ */
+export async function listarTodosLosApartamentos(): Promise<FichaApartamento[]> {
+  const todos: FichaApartamento[] = []
   let pagina = 0
   let totalPaginas = 1
   while (pagina < totalPaginas) {
-    const respuesta = await pedir<Pagina<ApartamentoOperativo>>(`/api/apartamentos?pagina=${pagina}`)
+    const respuesta = await pedir<Pagina<FichaApartamento>>(`/api/apartamentos?pagina=${pagina}`)
     todos.push(...respuesta.contenido)
     totalPaginas = respuesta.totalPaginas
     pagina += 1
