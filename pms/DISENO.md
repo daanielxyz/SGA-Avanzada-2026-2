@@ -180,7 +180,7 @@ Videos y fotos de una recepción real (otro hotel, con su PMS, el SIRE de Migrac
 | Daniel (pantallas) | 4. **Preparación de apartamentos** para el personal de servicio, pensada para el celular; no tenía sprint y sin ella un apartamento no se vuelve a entregar desde el PMS. Probar en un celular real las pantallas del sprint 2 | Nada |
 | Reyes (núcleo) | Hecho lo del reparto (DEC-99 a DEC-107) y los datos de demo | — |
 
-**Sprint 4 (17 – 20 nov), reparto propuesto** con la misma división: Reyes hace el núcleo, cada cosa en su rama `feature/nucleo/…` con su PR, y Daniel las pantallas. Núcleo: los mensajes de los 409 pensados para recepción (#8) y el nombre de la temporada en el desglose (#10). El #8 cambia textos que también ve la web (el `motivo` de DEC-94): avisarle al equipo web antes de empezar. Como el núcleo es corto, Reyes también puede tomar pantallas: usuarios del personal y novedades de mantenimiento. Daniel: la configuración del hotel (apartamentos, temporadas y tarifas, política de cancelación, parámetros y medios de pago). Las pantallas de canales esperan la API del equipo web.
+**Sprint 4 (17 – 20 nov)**: el reparto de esta sección se reemplazó por «Sprint 4: reparto», al final del archivo, con Arias en el equipo.
 
 **#9 en «Nueva reserva»** (11 nov, en `feature/pms/registro-llegada`): se quitó «El titular debe estar entre los ocupantes»; «El titular también se aloja» solo llena el ocupante 1. En su lugar se revisa lo que exige DEC-97: el grupo trae un mayor de edad a la entrada (si no, 409 `HUESPED_PRINCIPAL_INVALIDO`). **Queda de DEC-97 y DEC-98 para «Nueva reserva»**: escoger al huésped principal al reservar (hoy lo elige el backend, el primer adulto, y se cambia en la llegada) y enviar los apellidos del titular aparte. Cambian el formulario, así que van con mockup en una tarea propia.
 
@@ -421,9 +421,38 @@ Respuestas del equipo a la página de decisiones del sprint 3 (#13 a #17, #25 a 
 | 27 | A: se queda la lectura cada 20 s; el canal de eventos sale del sprint 4 | Hecho |
 | 28 | **B** (no la recomendada): una sesión por pestaña. Hecho: la sesión va en `sessionStorage`; otra pestaña pide entrar, cerrar la pestaña cierra la sesión y la que quedó en `localStorage` se borra | Hecho (pms) |
 | R1, R4, R5, R6, R8, R9 | Se mantienen | — |
-| R2 | Confirmar sin el anticipo cubierto se permite, pero solo con autorización del administrador, porque toda reserva debe tener su anticipo. Hoy el backend no lo deja (RES-15); hace falta la excepción autorizada en el núcleo, como la del folio | Núcleo + pms, sprint 4 |
+| R2 | El anticipo sigue siendo obligatorio para confirmar, sin excepción. Lo que cambia: registrar la llegada sin la estancia pagada completa («Confirmar y registrar llegada sin cobro» y la llegada con `motivoSinPago`) solo lo autoriza el administrador, como la salida con saldo. Cambia DEC-99, que se lo dejaba a recepción | Núcleo + pms, sprint 4 |
 | R3 | Cambiar vehículos o mascotas solo debe cambiar el valor de esos extras; las noches conservan la tarifa con la que se reservó. Hoy se recalcula todo con la tarifa vigente: hace falta en el núcleo un «modificar solo extras» que no toque las noches | Núcleo + pms, sprint 4 |
 | R7 | Los colores, tamaños y ubicaciones se deciden al final, en la fase de estilos | Fase de estilos |
+
+## Sprint 4: reparto (17 – 20 nov)
+Desde este sprint el PMS lo hacen tres personas: **Daniel**, **Reyes** y **Arias** (terminó lo del equipo web y se suma). La hipótesis del sprint es que el administrador deja el hotel listo para vender sin ayuda técnica, así que van primero las pantallas de configuración. El lunes 16 es festivo: el martes 17 se acuerdan los contratos del núcleo y se lanzan los prompts en Claude Design.
+
+**Para la sesión de Claude de cada uno**: leer `CLAUDE.md`, `CLAUDE.local.md` (debe decir equipo **pms**), la sección pms del sprint 4 en `docs/SPRINTS.md`, esta sección y `pms/prompts/sprint4/LEEME.md`. Cada pantalla tiene su prompt para Claude Design en esa carpeta, con lo que debe adjuntarse y una parte final «Para Claude Code». Las referencias de diseño (`pms/diseno/`) no van a git: Daniel las comparte en `referencias-sprint4.zip`.
+
+| Quién | Tarea, en orden | Rama | Depende de |
+|---|---|---|---|
+| Arias | 1. **Apartamentos** (`apartamentos.md`) | `feature/pms/apartamentos` | Nada: la API ya está |
+| Arias | 2. **Temporadas y tarifas** (`temporadas-tarifas.md`) | `feature/pms/temporadas-tarifas` | Nada |
+| Reyes | 3. **Núcleo** (abajo), una rama por cosa, PR a más tardar el miércoles 18 | `feature/nucleo/…` | Nada |
+| Reyes | 4. **Usuarios, mi perfil, activar y recuperar** (`usuarios-perfil.md`) | `feature/pms/usuarios` | Nada |
+| Daniel | 5. **Alojamiento** (`alojamiento.md`) y **política de cancelación** (`politica.md`) | `feature/pms/alojamiento`, `feature/pms/politica` | Nada |
+| Daniel | 6. **La pantalla de lo que entre del núcleo**, a medida que se integra | `feature/pms/decisiones-sprint4` | Cada PR de Reyes |
+| Daniel | 7. **Huésped principal y apellidos en «Nueva reserva»** (`nueva-reserva-principal.md`) | `feature/pms/nueva-reserva-principal` | Nada |
+| Daniel | Revisar los mockups (paso 3) y los PR de Arias y Reyes | — | — |
+
+Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimiento** (la API las lista por apartamento: o diez llamadas, o un listado general en el núcleo) y **titulares** (la API no tiene buscador por nombre ni documento). Las pantallas de **canales de venta** (conflictos y bitácora) van con Channex en el sprint 5.
+
+**Núcleo de Reyes**, en orden. Cada cosa con su `DEC-nn` (el siguiente libre al integrar), sus pruebas (caso feliz y violación), `docs/api/openapi.yaml` regenerado y, si cambia algo que lee la web, el aviso en el PR:
+1. **#16 · Próxima entrada en la preparación**: `GET /api/apartamentos/pendientes-preparacion` trae de cada apartamento la fecha de la próxima entrada de una reserva activa y su hora estimada, sin ningún dato del huésped (el personal de servicio no ve reservas). Ordenada por esa fecha (los sin próxima entrada al final). Solo agrega campos.
+2. **R2 · Llegada sin el pago completo, solo con el administrador**: `PUT /api/reservas/{codigo}/registrar-llegada` con `motivoSinPago` (la estancia no está pagada completa) responde 403 o 409 si quien lo hace no es administrador; recepción sí registra la llegada de una reserva pagada. El anticipo para confirmar sigue obligatorio (RES-15). Reemplaza «la autorización la da quien registra la llegada» de DEC-99.
+3. **#17 · Motivo al declarar fuera de servicio**: `PUT /api/apartamentos/{codigo}/declarar-fuera-de-servicio` acepta un cuerpo opcional con `motivo` (hasta 500), que llega en `ApartamentoResponse` y en el tablero (`GET /api/ocupacion`) mientras siga fuera de servicio. Lleva migración.
+4. **#13 · Leer la llegada registrada**: `GET /api/reservas/{codigo}/estancia` con los registros (vigente y anulados: hora, autor con su nombre, `motivoSinPago`), la salida si la hubo y el saldo. Solo para el personal: el huésped no lo ve (DEC-99).
+5. **#15 · Quién validó la identidad**: `validadoPorNombre` en `TitularResponse` para el personal; en `/api/mi-cuenta` del huésped va vacío (como DEC-103). Avisar a la web.
+6. **R3 · Vehículos y mascotas sin recalcular las noches**: cambiar carros, motos o mascotas de una reserva solo ajusta esos cargos; el valor de las noches queda como se congeló al reservar, aunque la tarifa haya cambiado. Hoy pasa por `PUT …/modificar` (DEC-106), que recalcula todo con la tarifa vigente: hace falta una acción propia, por ejemplo `PUT /api/reservas/{codigo}/extras`.
+7. **#10 · Nombre de la temporada en el desglose**: cada noche del valor trae el nombre de la temporada además del id. Solo agrega.
+8. **#8 · Mensajes de los 409 para recepción**: textos sin códigos internos ni palabras técnicas. Cambia textos que ve la web (el `motivo` de DEC-94 no cambia, solo `mensaje`): avisar a la web.
+9. Si cabe: **#22**, filtros de varios valores en `GET /api/reservas` (`estado=PENDIENTE&estado=CONFIRMADA`), y **#14**, «Corregir documento» con motivo, autor y fecha, que conserva los datos del TRA.
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
