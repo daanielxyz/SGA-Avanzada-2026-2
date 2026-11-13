@@ -123,6 +123,14 @@ function apiCon({ reserva = {}, pagado = 300000, estadoOperativo = 'PREPARADO', 
     [`${RUTA}/ocupantes/OCU-2/principal`]: accion('principal', conReserva((actual) => ({
       ocupantes: actual.ocupantes.map((o) => ({ ...o, principal: o.id === 'OCU-2' })),
     }))),
+    [`${RUTA}/estancia`]: [200, {
+      codigo: CODIGO, estado: 'EN_CURSO', apartamento: 'APT-102', estadoOperativo: 'OCUPADO', folioCerrado: false, saldo: 0,
+      situacionSaldo: 'AL_DIA', salida: null,
+      registros: [
+        { id: 'REG-1', fechaHora: `${HOY}T14:00:00`, autor: 'USR-2', autorNombre: 'Ana Gómez', anulado: true, motivoCorreccion: null, motivoSinPago: 'Cuenta por cobrar a una empresa' },
+        { id: 'REG-2', fechaHora: `${HOY}T15:20:00`, autor: 'USR-1', autorNombre: 'Andrés Felipe Gómez', anulado: false, motivoCorreccion: 'Se registró tarde', motivoSinPago: 'Cuenta por cobrar a una empresa' },
+      ],
+    }],
     [`${RUTA}/modificar`]: accion('modificar', conReserva(() => ({ mascotas: 0, extras: { parqueadero: 45000, mascotas: 0, total: 45000 } }))),
   })
 }
@@ -159,12 +167,21 @@ describe('registro de llegada (CU-21)', () => {
     expect(within(falta).getByText(/Faltan datos de 2 de 3 huéspedes/)).toBeInTheDocument()
     const boton = screen.getByRole('button', { name: 'Registrar llegada' })
     expect(boton).toBeDisabled()
+    expect(boton).toHaveAccessibleDescription('Falta cobrar la estancia. Solo el administrador puede dejar entrar sin pagarla.')
+    expect(screen.queryByRole('checkbox', { name: 'Entra sin pagar la estancia' })).not.toBeInTheDocument()
+  })
+
+  it('el administrador sí puede marcar que entra sin pagar (DEC-112)', async () => {
+    apiCon()
+    abrir(undefined, 'ADMINISTRADOR')
+    const boton = await screen.findByRole('button', { name: 'Registrar llegada' })
     expect(boton).toHaveAccessibleDescription('Falta cobrar la estancia, o marca que entra sin pagar.')
+    expect(screen.getByRole('checkbox', { name: 'Entra sin pagar la estancia' })).toBeInTheDocument()
   })
 
   it('con el motivo de entrar sin pagar registra la llegada y vuelve al detalle con el aviso', async () => {
     const fetch = apiCon()
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     await usuario.click(await screen.findByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
     expect(screen.getByRole('button', { name: 'Registrar llegada' })).toHaveAccessibleDescription('Escribe el motivo para registrar sin cobro.')
@@ -211,7 +228,7 @@ describe('registro de llegada (CU-21)', () => {
 
   it('un rechazo sale arriba y no se pierde el motivo escrito', async () => {
     apiCon({ rechazar: { llegada: RECHAZO('ESTADO_NO_PERMITIDO', 'El apartamento APT-102 no está preparado') } })
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     await usuario.click(await screen.findByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
     await usuario.type(screen.getByLabelText(/Motivo/), 'Empresa')
@@ -235,7 +252,7 @@ describe('registro de llegada (CU-21)', () => {
 
   it('en la de mostrador, sin el anticipo no se puede confirmar aunque entre sin pagar', async () => {
     apiCon({ pagado: 0, reserva: { estado: 'PENDIENTE' } })
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     expect(await screen.findByText('Cubrir el anticipo: $ 487.500')).toBeInTheDocument()
     await usuario.click(screen.getByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
@@ -512,11 +529,38 @@ describe('la llegada desde el detalle', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Corregir registro' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Corregir registro de llegada' })
     const campo = within(dialogo).getByLabelText('Fecha y hora real de llegada')
+    await usuario.clear(campo)
     await usuario.type(campo, `${sumarDias(HOY, -1)}T10:00`)
     await usuario.type(within(dialogo).getByLabelText(/Motivo/), 'Se registró tarde')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Corregir registro' }))
 
     expect(within(dialogo).getByText(/No puede ser anterior a la entrada/)).toBeInTheDocument()
+  })
+
+  it('el detalle dice quién registró la llegada, si se corrigió y por qué entró sin pagar (DEC-114)', async () => {
+    apiCon({ reserva: { estado: 'EN_CURSO' } })
+    abrir(`/reservas/${CODIGO}`)
+
+    const llegada = (await screen.findByText(/por Andrés Felipe Gómez/)).closest('.dato')!
+    expect(llegada).toHaveTextContent(/3:20 p\. m\. por Andrés Felipe Gómez/)
+    expect(llegada).toHaveTextContent(/Corregida: Se registró tarde \(antes decía .*2:00 p\. m\.\)/)
+    expect(screen.getByText('Entró sin pagar la estancia').closest('.dato')).toHaveTextContent('Cuenta por cobrar a una empresa')
+  })
+
+  it('«Corregir registro» parte de la hora vigente (DEC-114)', async () => {
+    apiCon({ reserva: { estado: 'EN_CURSO' } })
+    const usuario = abrir(`/reservas/${CODIGO}`, 'ADMINISTRADOR')
+    await screen.findByText(/por Andrés Felipe Gómez/)
+    await usuario.click(screen.getByRole('button', { name: 'Corregir registro' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Corregir registro de llegada' })
+    expect(within(dialogo).getByLabelText('Fecha y hora real de llegada')).toHaveValue(`${HOY}T15:20`)
+  })
+
+  it('una reserva confirmada no pide la llegada registrada', async () => {
+    const fetch = apiCon()
+    abrir(`/reservas/${CODIGO}`)
+    await screen.findByRole('heading', { level: 1, name: CODIGO })
+    expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/estancia'))).toBe(false)
   })
 
   it('recepción no ve «Corregir registro»', async () => {

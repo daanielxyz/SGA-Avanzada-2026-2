@@ -497,6 +497,13 @@ Programada en `src/paginas/Politica.tsx` (`/politica`) y `src/paginas/PublicarPo
 
 **Auditoría** (referencias de `impeccable` audit, harden y adapt leídas a mano, sin su ejecutable; `break-ui` sobre los datos de prueba): arreglados el triángulo de las versiones plegadas y el error de horas, que ahora está enlazado a su campo para los lectores de pantalla.
 
+## Sprint 4: lo que entró del núcleo (`feature/pms/decisiones-sprint4`)
+Cambios chicos sobre pantallas que ya existen, sin mockup nuevo: siguen los componentes de la base.
+- **DEC-111 · orden de la preparación**: el backend ya ordena por la entrada más cercana. El PMS solo separa «Ya empezados» y «Pendientes» con un orden estable, así que dentro de cada grupo se respeta el de la API; bajo «Pendientes» dice «Empieza por el de arriba: es el que recibe huéspedes primero».
+- **DEC-112 · llegada sin pago, solo el administrador**: recepción ya no ve «Entra sin pagar la estancia» ni el motivo; la pista del botón dice «Falta cobrar la estancia. Solo el administrador puede dejar entrar sin pagarla.» Si el backend responde 403, sale arriba como cualquier rechazo de la llegada.
+- **DEC-113 · motivo de fuera de servicio**: «Declarar fuera de servicio» pide un motivo opcional (hasta 500, `CampoMotivo` con `opcional`); sin motivo no se envía cuerpo. El motivo se ve en la tarjeta de la preparación y en el tablero (en la cuadrícula, dos renglones y el texto completo al pasar el puntero; en el celular, completo).
+- **DEC-114 · llegada registrada**: el detalle de una reserva en curso o finalizada lee `GET /api/reservas/{codigo}/estancia` y muestra la llegada con su hora y quién la registró, la corrección con su motivo y la hora anterior, el motivo de entrar sin pagar y la salida. «Corregir registro» parte de la hora vigente. Las demás reservas no la piden.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

@@ -152,8 +152,12 @@ export function textoDelBoton(reserva: Reserva, situacion: Situacion): string {
   return reserva.estado === 'PENDIENTE' ? `Confirmar y registrar llegada${sinCobro}` : `Registrar llegada${sinCobro}`
 }
 
-/** La pista bajo el botón cuando no se puede registrar. */
-export function pistaDelBloqueo(bloqueo: Bloqueo, sinCobro: boolean): string | null {
+/**
+ * La pista bajo el botón cuando no se puede registrar.
+ *
+ * @param autorizaSinCobro solo el administrador deja entrar sin la estancia pagada (DEC-112)
+ */
+export function pistaDelBloqueo(bloqueo: Bloqueo, sinCobro: boolean, autorizaSinCobro = true): string | null {
   switch (bloqueo) {
     case 'fecha':
       return 'Ya puedes cobrar y completar los datos de los huéspedes.'
@@ -162,6 +166,7 @@ export function pistaDelBloqueo(bloqueo: Bloqueo, sinCobro: boolean): string | n
     case 'anticipo':
       return 'Para confirmar la reserva hay que cubrir el anticipo, aunque entre sin pagar la estancia.'
     case 'pago':
+      if (!autorizaSinCobro) return 'Falta cobrar la estancia. Solo el administrador puede dejar entrar sin pagarla.'
       return sinCobro ? 'Escribe el motivo para registrar sin cobro.' : 'Falta cobrar la estancia, o marca que entra sin pagar.'
     default:
       return null

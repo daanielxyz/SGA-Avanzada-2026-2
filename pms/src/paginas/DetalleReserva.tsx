@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { consultarApartamento, type Apartamento } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
-import { consultarReserva, NOMBRE_DEL_CANAL, type Liquidacion, type Ocupante, type Reserva } from '../api/reservas'
+import { consultarEstancia, consultarReserva, NOMBRE_DEL_CANAL, type Estancia, type Liquidacion, type Ocupante, type Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
 import Dato from '../componentes/Dato'
@@ -16,6 +16,7 @@ import AccionesReserva, { type Accion } from '../reserva/AccionesReserva'
 import DialogoTra from '../reserva/llegada/DialogoTra'
 import { DialogoCorregirRegistro, DialogoVehiculos } from '../reserva/llegada/DialogosLlegada'
 import { fechaYHora, textoTra, tieneTraPendiente } from '../reserva/llegada/llegada'
+import LlegadaRegistrada from '../reserva/llegada/LlegadaRegistrada'
 import BloquePago from '../reserva/BloquePago'
 import NotasTurno from '../reserva/NotasTurno'
 import PoliticaAplicada from '../reserva/PoliticaAplicada'
@@ -94,6 +95,29 @@ export default function DetalleReserva() {
       vigente = false
     }
   }, [codigo, clave])
+
+  // DEC-114: la llegada registrada solo existe desde que la reserva está en curso
+  const conLlegada = resultado && 'reserva' in resultado && ['EN_CURSO', 'FINALIZADA'].includes(resultado.reserva.estado)
+  const estadoLeido = resultado && 'reserva' in resultado ? resultado.reserva.estado : null
+  const [estancia, setEstancia] = useState<{ clave: string; datos: Estancia | null; error: boolean } | null>(null)
+  const [intentoEstancia, setIntentoEstancia] = useState(0)
+  const claveEstancia = `${codigo}#${estadoLeido}#${intentoEstancia}`
+  useEffect(() => {
+    if (!conLlegada) return
+    let vigente = true
+    consultarEstancia(codigo)
+      .then((datos) => {
+        if (vigente) setEstancia({ clave: claveEstancia, datos, error: false })
+      })
+      .catch(() => {
+        if (vigente) setEstancia({ clave: claveEstancia, datos: null, error: true })
+      })
+    return () => {
+      vigente = false
+    }
+  }, [codigo, conLlegada, claveEstancia])
+  const estanciaActual = estancia?.clave === claveEstancia ? estancia : null
+  const registroVigente = estanciaActual?.datos?.registros?.find((registro) => !registro.anulado) ?? null
 
   const apartamento = resultado && 'reserva' in resultado ? resultado.reserva.apartamento : null
   useEffect(() => {
@@ -236,6 +260,10 @@ export default function DetalleReserva() {
               <span className="suave">Sin informar</span>
             )}
           </Dato>
+          {conLlegada && (
+            <LlegadaRegistrada estancia={estanciaActual?.datos ?? null} error={Boolean(estanciaActual?.error)}
+              alReintentar={() => setIntentoEstancia(intentoEstancia + 1)} />
+          )}
           <Dato nombre="Fecha de creación">{fechaCorta(reserva.creadaEn)}</Dato>
           <Dato nombre="Política aplicada">
             <PoliticaAplicada politicaId={reserva.politicaId} codigo={reserva.codigo} />
@@ -361,11 +389,15 @@ export default function DetalleReserva() {
       {dialogo === 'corregir' && (
         <DialogoCorregirRegistro
           reserva={reserva}
+          vigente={registroVigente?.fechaHora}
           alCerrar={() => {
             enfocarTitulo.current = true
             setDialogo(null)
           }}
-          alCorregir={() => setExito({ asunto: 'Registro de llegada corregido', mensaje: 'El registro anterior queda anulado como historial.' })}
+          alCorregir={(nueva) => {
+            setEstancia({ clave: claveEstancia, datos: nueva, error: false })
+            setExito({ asunto: 'Registro de llegada corregido', mensaje: 'El registro anterior queda anulado como historial.' })
+          }}
         />
       )}
       {typeof dialogo === 'object' && dialogo !== null && (

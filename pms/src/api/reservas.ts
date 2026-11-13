@@ -217,9 +217,20 @@ export interface RegistroLlegada {
   id: string
   fechaHora: string
   autor: string
+  /** Nombre vigente de quien lo registró; nulo si ya no existe (DEC-114). */
+  autorNombre?: string | null
   anulado: boolean
+  /** Solo en el registro que corrige a uno anulado. */
   motivoCorreccion: string | null
   motivoSinPago: string | null
+}
+
+/** La salida registrada (CU-22). */
+export interface SalidaRegistrada {
+  id: string
+  fechaHora: string
+  autor: string
+  autorNombre?: string | null
 }
 
 /** `EstanciaResponse` del backend: cómo quedaron la reserva, el apartamento y el folio. */
@@ -230,9 +241,18 @@ export interface Estancia {
   estadoOperativo: string
   /** Puede faltar en respuestas viejas. */
   registros?: RegistroLlegada[]
+  salida?: SalidaRegistrada | null
   folioCerrado: boolean
   saldo: number
   situacionSaldo: SituacionSaldo
+}
+
+/**
+ * `GET /api/reservas/{codigo}/estancia` (DEC-114, solo recepción y administración): los registros de llegada, el vigente
+ * y los anulados, y la salida si la hubo. Sin llegada responde con `registros` vacío, no 404.
+ */
+export function consultarEstancia(codigo: string): Promise<Estancia> {
+  return pedir<Estancia>(`/api/reservas/${encodeURIComponent(codigo)}/estancia`)
 }
 
 /**

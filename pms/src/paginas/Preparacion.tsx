@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   listarPendientesPreparacion,
+  LARGO_MOTIVO_FUERA,
   listarTodosLosApartamentos,
   moverApartamento,
   type ApartamentoOperativo,
@@ -10,6 +11,8 @@ import { ErrorApi } from '../api/cliente'
 import Aviso from '../componentes/Aviso'
 import Dialogo from '../componentes/Dialogo'
 import EstadoApartamento from '../componentes/EstadoApartamento'
+import MotivoFueraDeServicio from '../componentes/MotivoFueraDeServicio'
+import CampoMotivo from '../folio/CampoMotivo'
 import { NOMBRE_ESTADO_OPERATIVO } from '../componentes/estadosApartamento'
 import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
@@ -26,7 +29,10 @@ const PASO_PRINCIPAL: Partial<Record<string, { paso: PasoPreparacion; texto: str
   EN_PREPARACION: { paso: 'marcar-preparado', texto: 'Marcar como preparado' },
 }
 
-/** Los ya empezados primero: es lo que el personal de servicio tiene entre manos. */
+/**
+ * Los ya empezados primero: es lo que el personal de servicio tiene entre manos. Dentro de cada grupo se respeta el
+ * orden de la API, que empieza por el apartamento que recibe huéspedes antes (DEC-111); `sort` no lo altera.
+ */
 function ordenarPendientes(lista: ApartamentoOperativo[]): ApartamentoOperativo[] {
   const peso = (estado: string) => (estado === 'EN_PREPARACION' ? 0 : 1)
   return [...lista].sort((a, b) => peso(a.estadoOperativo) - peso(b.estadoOperativo))
@@ -55,7 +61,13 @@ export default function Preparacion() {
   const [enviando, setEnviando] = useState<string | null>(null)
   const [rechazo, setRechazo] = useState<{ codigo: string; mensaje: string } | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
-  const [confirmar, setConfirmar] = useState<Confirmar | null>(null)
+  const [confirmar, setConfirmarEstado] = useState<Confirmar | null>(null)
+  const [motivoFuera, setMotivoFuera] = useState('')
+  /** Cada vez que se abre «Declarar fuera de servicio», el motivo empieza vacío. */
+  const setConfirmar = (siguiente: Confirmar | null) => {
+    setConfirmarEstado(siguiente)
+    setMotivoFuera('')
+  }
   const titulo = useRef<HTMLHeadingElement>(null)
 
   const pedirDatos = useCallback(async () => {
@@ -133,12 +145,12 @@ export default function Preparacion() {
   }
 
   /** Hace el paso y vuelve a leer: otra persona pudo mover otros apartamentos mientras tanto. */
-  async function mover(apartamento: ApartamentoOperativo, paso: PasoPreparacion) {
+  async function mover(apartamento: ApartamentoOperativo, paso: PasoPreparacion, motivo?: string) {
     setEnviando(apartamento.codigo)
     setRechazo(null)
     setAviso(null)
     try {
-      const nuevo = await moverApartamento(apartamento.codigo, paso)
+      const nuevo = await moverApartamento(apartamento.codigo, paso, motivo)
       await cargar().catch(() => undefined)
       if (nuevo.estadoOperativo === 'PREPARADO') {
         setAviso(`${apartamento.codigo} quedó preparado. Recepción ya puede entregarlo.`)
@@ -175,6 +187,7 @@ export default function Preparacion() {
         <span className="codigo preparacion-codigo">{apartamento.codigo}</span>
         <h3 className="preparacion-nombre">{apartamento.nombre}</h3>
         <EstadoApartamento estado={apartamento.estadoOperativo} etiqueta />
+        <MotivoFueraDeServicio motivo={fueraDeServicio ? apartamento.motivoFueraDeServicio : null} />
         {principal && (
           <button
             type="button"
@@ -243,6 +256,7 @@ export default function Preparacion() {
         {porEmpezar.length > 0 && (
           <section aria-labelledby="titulo-por-empezar">
             <h2 id="titulo-por-empezar" className="preparacion-grupo">Pendientes ({porEmpezar.length})</h2>
+            {porEmpezar.length > 1 && <p className="campo-pista preparacion-orden">Empieza por el de arriba: es el que recibe huéspedes primero.</p>}
             <ul className="preparacion-lista">{porEmpezar.map((a) => tarjeta(a, 'pendientes'))}</ul>
           </section>
         )}
@@ -374,6 +388,17 @@ export default function Preparacion() {
               <p className="suave">
                 Hoy está {(NOMBRE_ESTADO_OPERATIVO[confirmar.apartamento.estadoOperativo] ?? confirmar.apartamento.estadoOperativo).toLowerCase()}.
               </p>
+              <CampoMotivo
+                id="motivo-fuera-de-servicio"
+                rotulo="Motivo"
+                opcional
+                valor={motivoFuera}
+                maximo={LARGO_MOTIVO_FUERA}
+                deshabilitado={Boolean(enviando)}
+                pista="Por ejemplo, fuga de agua en el baño: arreglo el jueves."
+                alCambiar={setMotivoFuera}
+              />
+              <p className="campo-pista">Lo ven recepción y el personal en el tablero y en la preparación mientras siga fuera de servicio.</p>
               {enviando && <p className="suave" role="status">Guardando…</p>}
             </div>
             <div className="dialogo-pie">
@@ -384,7 +409,7 @@ export default function Preparacion() {
                 type="button"
                 className="boton boton-peligro boton-grande"
                 disabled={Boolean(enviando)}
-                onClick={() => mover(confirmar.apartamento, 'declarar-fuera-de-servicio')}
+                onClick={() => mover(confirmar.apartamento, 'declarar-fuera-de-servicio', motivoFuera.trim() || undefined)}
               >
                 {enviando ? 'Guardando…' : 'Declarar fuera de servicio'}
               </button>

@@ -411,12 +411,14 @@ function ahoraLocal(ahora = new Date()): string {
  * Corregir la hora real de llegada (solo administración, reserva en curso). El registro actual no se borra: queda
  * anulado como historial (DEC-61).
  */
-export function DialogoCorregirRegistro({ reserva, alCerrar, alCorregir }: {
+export function DialogoCorregirRegistro({ reserva, vigente, alCerrar, alCorregir }: {
   reserva: Reserva
+  /** La hora del registro vigente, para partir de ella (DEC-114); vacía si no se pudo leer. */
+  vigente?: string | null
   alCerrar: () => void
   alCorregir: (estancia: Estancia) => void
 }) {
-  const [fechaHora, setFechaHora] = useState('')
+  const [fechaHora, setFechaHora] = useState(vigente ? vigente.slice(0, 16) : '')
   const [motivo, setMotivo] = useState('')
   const [errores, setErrores] = useState<{ fechaHora?: string; motivo?: string }>({})
   const [enviando, setEnviando] = useState(false)
@@ -475,7 +477,9 @@ export function DialogoCorregirRegistro({ reserva, alCerrar, alCorregir }: {
             min={`${reserva.entrada}T00:00`}
             max={ahoraLocal()}
             error={errores.fechaHora}
-            pista={`Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`}
+            pista={vigente
+              ? `Hoy dice ${fechaYHora(vigente)}. Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`
+              : `Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`}
             onChange={(evento) => {
               setFechaHora(evento.target.value)
               setErrores({ ...errores, fechaHora: undefined })

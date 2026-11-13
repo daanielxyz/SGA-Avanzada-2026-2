@@ -5533,3 +5533,37 @@ button.barra {
     top: var(--espacio-4);
   }
 }
+
+/* Decisiones del sprint 4: motivo de fuera de servicio (DEC-113), llegada registrada en el detalle (DEC-114) y el
+   orden de la preparación (DEC-111) */
+.motivo-fuera {
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+  overflow-wrap: anywhere;
+}
+
+.motivo-fuera-rotulo {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+.motivo-fuera-corto {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.dato-nota {
+  display: block;
+  margin-top: var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.preparacion-orden {
+  margin: calc(var(--espacio-2) * -1) 0 var(--espacio-3);
+}
