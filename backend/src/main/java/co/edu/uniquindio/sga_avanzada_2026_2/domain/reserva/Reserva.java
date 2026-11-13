@@ -154,6 +154,23 @@ public class Reserva {
         extras = nuevosExtras;
     }
 
+    /**
+     * Cambia solo los vehículos y las mascotas antes de la llegada (R3 · BL-23 · DEC-116): el valor de las noches y su
+     * desglose quedan como se congelaron al reservar. Durante la estancia, un vehículo o una mascota de más se carga
+     * como un consumo del folio.
+     *
+     * @param nuevosExtras de {@code ParametrosAlojamiento.calcularExtras}, con los cargos vigentes
+     * @throws ReglaDominioException si la reserva no está PENDIENTE ni CONFIRMADA, o si alguna cantidad es negativa
+     */
+    public void cambiarExtras(int nuevosCarros, int nuevasMotos, int nuevasMascotas, Extras nuevosExtras) {
+        if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "Los vehículos y las mascotas solo se cambian antes de la llegada; la reserva está " + estado
+                    + ". Durante la estancia, cárgalos como un consumo");
+        }
+        declararExtras(nuevosCarros, nuevasMotos, nuevasMascotas, nuevosExtras);
+    }
+
     private static void validarDeclarados(int carros, int motos, int mascotas, Extras extras) {
         if (carros < 0 || motos < 0 || mascotas < 0) {
             throw new ReglaDominioException("Los vehículos y las mascotas de la reserva no pueden ser negativos");
