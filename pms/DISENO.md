@@ -497,6 +497,36 @@ Programada en `src/paginas/Politica.tsx` (`/politica`) y `src/paginas/PublicarPo
 
 **Auditoría** (referencias de `impeccable` audit, harden y adapt leídas a mano, sin su ejecutable; `break-ui` sobre los datos de prueba): arreglados el triángulo de las versiones plegadas y el error de horas, que ahora está enlazado a su campo para los lectores de pantalla.
 
+## Sprint 4: apartamentos (`feature/pms/apartamentos`, Arias)
+Mockups en `pms/diseno/mockups-meridian-sprint4-apartamentos/S4Apartamentos/` (8 pantallas, cada una a 1280 y 390 px, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el dominio (`Apartamento`, `Bloqueo`). Lo resuelto, con el número de la duda del LEEME:
+- **Cantidad y paginador** (1): el título lleva `totalElementos` y el paginador es el de Reservas, con `GET /api/apartamentos?pagina=`. Trae también los retirados.
+- **Sin foto** (2): la miniatura punteada con el ícono sale cuando `imagenes` viene vacío o la imagen no carga.
+- **Bloqueos** (4): `fin` es exclusivo, como la estancia: «24 → 27 nov» deja libre la noche del 27. El diálogo dice «Desde» y «Hasta», con la pista «Esas noches no se venden en ningún canal. La noche de “Hasta” ya se vende». `vigente` = no levantado. Arriba van los vigentes que no han terminado (`fechaFin` > hoy), con «Levantar». En «Ver anteriores» van los levantados y los ya terminados, en gris y sin acción.
+- **Fotos al crear** (6): acordado el 13 nov, todo apartamento tiene al menos una foto, como dice el prompt. El formulario la exige («Agrega al menos una foto»), aunque la API hoy acepta crear sin fotos (`minItems: 0`). La primera que se agrega queda marcada como principal, y con botones de opción nunca hay dos. El rechazo «Exactamente una imagen debe ser la principal» queda solo por si llega de la API.
+- **Quitar fotos** (7): sin confirmación, porque se vuelve a agregar con la misma dirección. Se puede quitar la principal: la API pasa a principal la primera de las que quedan. La única foto no se puede quitar: su «Quitar» no aparece, y la pista dice «Agrega otra antes de quitar esta». La API solo lo rechaza si el apartamento está a la venta; si aun así llega el rechazo, sale junto a la foto.
+- **Vista previa** (8): solo en el diálogo de foto. Si no carga, «Agregar foto» sigue habilitado: puede ser una dirección que el navegador no muestra pero sí existe.
+- **Al crear** (9): nace en «Pendiente de preparación» y «Retirado» (`Apartamento.crear`); la cabecera muestra los dos.
+- **Mascotas** (10, 16): `limiteMascotas` vacío = usa el límite del hotel (`GET /api/alojamiento`, `parametros.limiteMascotas`). La sección dice «Hasta N mascotas (el límite del hotel)». Si `aceptaMascotas` está apagado, el texto del mockup sin acción. El rechazo del diálogo (número negativo) va junto al campo.
+- **Mensajes** (11, 12): los textos propios del mockup se quedan. Los rechazos salen con el `mensaje` de la API junto a la acción que los causó: código repetido (409 `DUPLICADO`, junto al código), foto repetida o más de 10 (junto a la dirección), fechas del bloqueo (junto a las fechas), venta (en el diálogo). Ningún texto se compara para decidir nada.
+- **Enlaces** (14): «Ir a temporadas y tarifas» lleva a `/tarifas` y cada reserva afectada a `/reservas/:codigo`.
+- **Menú** (15): ya está en `src/navegacion.ts`; no se cambia.
+
+**Para el núcleo (Reyes), sin urgencia**: que la API también exija al menos una foto (`minItems: 1` en `CrearApartamentoRequest` y que `quitarImagen` rechace la última aunque esté retirado). Hoy solo el PMS lo cuida, y otra pantalla o un canal podría crear uno sin fotos.
+
+Propuesta para el equipo (no está en el prompt, no se dibuja por ahora): DEC-113 ya trae `motivoFueraDeServicio` en `ApartamentoResponse`. Se podría mostrar bajo «⊘ Fuera de servicio» en el detalle.
+
+Programada en `src/paginas/Apartamentos.tsx` (`/apartamentos`) y `src/paginas/FichaApartamento.tsx` (`/apartamentos/:codigo`, solo el administrador); los diálogos y la lógica sin pantalla en `src/apartamentos/` (`formulario.ts` con sus pruebas) y la API en `src/api/apartamentos.ts`. Pruebas: `src/paginas/Apartamentos.test.tsx` y `src/apartamentos/formulario.test.ts`.
+
+**Probada en el navegador** (13 nov, contra el backend local con los datos demo, como administrador): lista y detalle a 1280, 1024 y 390 px sin desbordes; crear (errores por campo, código repetido junto al código, aviso de que nace retirado); poner a la venta sin tarifa (mensaje de la API y «Ir a temporadas y tarifas»); bloqueo con las fechas al revés y uno válido; agregar foto con vista previa, hacer principal y cambiar la capacidad. Las fotos de los datos demo (`picsum.photos`) no cargaban ese día (respondía 522): la pantalla las deja como recuadro vacío mientras esperan.
+
+**Auditoría** (`impeccable` audit, harden y adapt; su detector sin hallazgos. `break-ui` con un apartamento real de peor caso en la base local: código de 9 cifras, nombre de 120, descripción de 2000 con una dirección sin espacios, 10 fotos con 3 rotas, 15 características con una de 100 sin espacios, japonés y emoji, 6 bloqueos con un motivo de 500 y 3 levantados):
+- P2: en la lista, con un código largo se cortaba «Ver»: el nombre se queda con el ancho que sobra y se recorta (como el titular en Reservas).
+- P2: al levantar un bloqueo o quitar una foto, el botón usado desaparece; el foco vuelve al título y no al comienzo de la página.
+- P2: el ✕ de una característica mide 44 px con el dedo.
+- P3: el ✕ de las características es el ícono del PMS, no un carácter; sin la barra roja a la izquierda de las fotos con error (los campos ya se marcan).
+
+Queda, a propósito: una descripción de 2000 caracteres se lee completa en el detalle (es la pantalla del administrador); el rótulo «Apartamento» sobre el título viene del mockup.
+
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import ProteccionErrores from './componentes/ProteccionErrores'
-import { OPCIONES, RECEPCION } from './navegacion'
+import { ADMINISTRACION, OPCIONES, RECEPCION } from './navegacion'
 import Alojamiento from './paginas/Alojamiento'
+import Apartamentos from './paginas/Apartamentos'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
+import FichaApartamento from './paginas/FichaApartamento'
 import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
@@ -28,6 +30,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/preparacion': <Preparacion />,
   '/alojamiento': <Alojamiento />,
   '/politica': <Politica />,
+  '/apartamentos': <Apartamentos />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
@@ -86,6 +89,14 @@ export default function App() {
           element={
             <SoloPara roles={['ADMINISTRADOR']}>
               <PublicarPolitica />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/apartamentos/:codigo"
+          element={
+            <SoloPara roles={ADMINISTRACION}>
+              <FichaApartamento />
             </SoloPara>
           }
         />
