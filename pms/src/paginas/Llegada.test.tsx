@@ -59,7 +59,7 @@ function reservaDeLlegada(cambios: Partial<Reserva> = {}): Reserva {
     ocupantes: [ANA, JULIAN, SOFIA],
     valor: {
       desglose: [0, 1, 2].map((dia) => ({
-        noche: sumarDias(HOY, dia), temporada: 'TEM-1', tarifa: 150000, ocupantesFacturables: 2, subtotal: 300000,
+        noche: sumarDias(HOY, dia), temporada: 'TEM-1', temporadaNombre: 'Temporada base', tarifa: 150000, ocupantesFacturables: 2, subtotal: 300000,
       })),
       total: 900000,
     },
@@ -105,7 +105,7 @@ function apiCon({ reserva = {}, pagado = 300000, estadoOperativo = 'PREPARADO', 
     '/api/apartamentos/APT-102': [200, { codigo: 'APT-102', nombre: 'Apartamento Jardín', limiteMascotas: null, estadoOperativo }],
     '/api/titulares/TIT-7': () => [200, estado.titular],
     '/api/titulares/TIT-7/validar': accion('validar', () => {
-      estado.titular = { ...estado.titular, validado: true, validadoEn: `${HOY}T15:24:00` }
+      estado.titular = { ...estado.titular, validado: true, validadoEn: `${HOY}T15:24:00`, validadoPorNombre: 'Ana Gómez' }
       return estado.titular
     }),
     '/api/cotizaciones': [200, { desglose: [], total: 900000 }],
@@ -123,7 +123,15 @@ function apiCon({ reserva = {}, pagado = 300000, estadoOperativo = 'PREPARADO', 
     [`${RUTA}/ocupantes/OCU-2/principal`]: accion('principal', conReserva((actual) => ({
       ocupantes: actual.ocupantes.map((o) => ({ ...o, principal: o.id === 'OCU-2' })),
     }))),
-    [`${RUTA}/modificar`]: accion('modificar', conReserva(() => ({ mascotas: 0, extras: { parqueadero: 45000, mascotas: 0, total: 45000 } }))),
+    [`${RUTA}/estancia`]: [200, {
+      codigo: CODIGO, estado: 'EN_CURSO', apartamento: 'APT-102', estadoOperativo: 'OCUPADO', folioCerrado: false, saldo: 0,
+      situacionSaldo: 'AL_DIA', salida: null,
+      registros: [
+        { id: 'REG-1', fechaHora: `${HOY}T14:00:00`, autor: 'USR-2', autorNombre: 'Ana Gómez', anulado: true, motivoCorreccion: null, motivoSinPago: 'Cuenta por cobrar a una empresa' },
+        { id: 'REG-2', fechaHora: `${HOY}T15:20:00`, autor: 'USR-1', autorNombre: 'Andrés Felipe Gómez', anulado: false, motivoCorreccion: 'Se registró tarde', motivoSinPago: 'Cuenta por cobrar a una empresa' },
+      ],
+    }],
+    [`${RUTA}/extras`]: accion('extras', conReserva(() => ({ mascotas: 0, extras: { parqueadero: 45000, mascotas: 0, total: 45000 } }))),
   })
 }
 
@@ -159,12 +167,21 @@ describe('registro de llegada (CU-21)', () => {
     expect(within(falta).getByText(/Faltan datos de 2 de 3 huéspedes/)).toBeInTheDocument()
     const boton = screen.getByRole('button', { name: 'Registrar llegada' })
     expect(boton).toBeDisabled()
+    expect(boton).toHaveAccessibleDescription('Falta cobrar la estancia. Solo el administrador puede dejar entrar sin pagarla.')
+    expect(screen.queryByRole('checkbox', { name: 'Entra sin pagar la estancia' })).not.toBeInTheDocument()
+  })
+
+  it('el administrador sí puede marcar que entra sin pagar (DEC-112)', async () => {
+    apiCon()
+    abrir(undefined, 'ADMINISTRADOR')
+    const boton = await screen.findByRole('button', { name: 'Registrar llegada' })
     expect(boton).toHaveAccessibleDescription('Falta cobrar la estancia, o marca que entra sin pagar.')
+    expect(screen.getByRole('checkbox', { name: 'Entra sin pagar la estancia' })).toBeInTheDocument()
   })
 
   it('con el motivo de entrar sin pagar registra la llegada y vuelve al detalle con el aviso', async () => {
     const fetch = apiCon()
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     await usuario.click(await screen.findByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
     expect(screen.getByRole('button', { name: 'Registrar llegada' })).toHaveAccessibleDescription('Escribe el motivo para registrar sin cobro.')
@@ -211,7 +228,7 @@ describe('registro de llegada (CU-21)', () => {
 
   it('un rechazo sale arriba y no se pierde el motivo escrito', async () => {
     apiCon({ rechazar: { llegada: RECHAZO('ESTADO_NO_PERMITIDO', 'El apartamento APT-102 no está preparado') } })
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     await usuario.click(await screen.findByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
     await usuario.type(screen.getByLabelText(/Motivo/), 'Empresa')
@@ -235,7 +252,7 @@ describe('registro de llegada (CU-21)', () => {
 
   it('en la de mostrador, sin el anticipo no se puede confirmar aunque entre sin pagar', async () => {
     apiCon({ pagado: 0, reserva: { estado: 'PENDIENTE' } })
-    const usuario = abrir()
+    const usuario = abrir(undefined, 'ADMINISTRADOR')
 
     expect(await screen.findByText('Cubrir el anticipo: $ 487.500')).toBeInTheDocument()
     await usuario.click(screen.getByRole('checkbox', { name: 'Entra sin pagar la estancia' }))
@@ -375,6 +392,8 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     await usuario.click(within(dialogo).getByRole('button', { name: 'Validar identidad' }))
 
     expect(await screen.findByText(/Validada/)).toBeInTheDocument()
+    // DEC-115: dice también quién la validó
+    expect(screen.getByText(/, por Ana Gómez/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Validar identidad/ })).not.toBeInTheDocument()
     expect(llamadasA(fetch, '/validar')).toEqual([{ metodo: 'PUT', cuerpo: undefined }])
   })
@@ -432,8 +451,8 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
   })
 })
 
-describe('vehículos y mascotas en la llegada (BL-23 · TAR-06)', () => {
-  it('muestra la diferencia antes de guardar y manda la reserva completa', async () => {
+describe('vehículos y mascotas en la llegada (BL-23 · DEC-116)', () => {
+  it('muestra la diferencia de los extras, sin tocar las noches, y manda solo los extras', async () => {
     const fetch = apiCon()
     const usuario = abrir()
 
@@ -445,13 +464,14 @@ describe('vehículos y mascotas en la llegada (BL-23 · TAR-06)', () => {
     await usuario.type(within(dialogo).getByLabelText('Mascotas'), '0')
     expect(await within(dialogo).findByText('Se descuentan')).toBeInTheDocument()
     expect(within(dialogo).getByText('$ 30.000')).toBeInTheDocument()
+    expect(within(dialogo).getByText(/El valor de las noches no cambia/)).toBeInTheDocument()
+    expect(within(dialogo).queryByText('Cambiaron las tarifas')).not.toBeInTheDocument()
     await usuario.click(within(dialogo).getByRole('button', { name: 'Guardar cambios' }))
 
     expect(await screen.findByText('Vehículos y mascotas actualizados')).toBeInTheDocument()
-    const [llamada] = llamadasA(fetch, '/modificar')
-    expect(llamada.cuerpo).toMatchObject({ apartamento: 'APT-102', carros: 1, motos: 0, mascotas: 0 })
-    expect(llamada.cuerpo.ocupantes).toHaveLength(3)
-    expect(llamada.cuerpo.ocupantes[0]).toMatchObject({ nombres: 'Ana', primerApellido: 'Torres', principal: true })
+    expect(llamadasA(fetch, '/extras')).toEqual([{ metodo: 'PUT', cuerpo: { carros: 1, motos: 0, mascotas: 0 } }])
+    expect(llamadasA(fetch, '/modificar')).toEqual([])
+    expect(fetch.mock.calls.some(([url]) => String(url).startsWith('/api/cotizaciones'))).toBe(false)
   })
 
   it('el cupo del parqueadero se revisa junto al campo', async () => {
@@ -495,6 +515,14 @@ describe('la llegada desde el detalle', () => {
     expect(botones.map((boton) => boton.textContent)).toEqual(['Continuar llegada', 'Confirmar', 'Cancelar'])
   })
 
+  it('el desglose dice el nombre de la temporada, no su código (DEC-117)', async () => {
+    apiCon()
+    abrir(`/reservas/${CODIGO}`)
+    const tabla = await screen.findByRole('table', { name: 'Desglose por noche' })
+    expect(within(tabla).getAllByText('Temporada base').length).toBeGreaterThan(0)
+    expect(within(tabla).queryByText('TEM-1')).not.toBeInTheDocument()
+  })
+
   it('la tabla de ocupantes muestra el TRA y abre el mismo diálogo', async () => {
     apiCon()
     const usuario = abrir(`/reservas/${CODIGO}`)
@@ -512,11 +540,38 @@ describe('la llegada desde el detalle', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Corregir registro' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Corregir registro de llegada' })
     const campo = within(dialogo).getByLabelText('Fecha y hora real de llegada')
+    await usuario.clear(campo)
     await usuario.type(campo, `${sumarDias(HOY, -1)}T10:00`)
     await usuario.type(within(dialogo).getByLabelText(/Motivo/), 'Se registró tarde')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Corregir registro' }))
 
     expect(within(dialogo).getByText(/No puede ser anterior a la entrada/)).toBeInTheDocument()
+  })
+
+  it('el detalle dice quién registró la llegada, si se corrigió y por qué entró sin pagar (DEC-114)', async () => {
+    apiCon({ reserva: { estado: 'EN_CURSO' } })
+    abrir(`/reservas/${CODIGO}`)
+
+    const llegada = (await screen.findByText(/por Andrés Felipe Gómez/)).closest('.dato')!
+    expect(llegada).toHaveTextContent(/3:20 p\. m\. por Andrés Felipe Gómez/)
+    expect(llegada).toHaveTextContent(/Corregida: Se registró tarde \(antes decía .*2:00 p\. m\.\)/)
+    expect(screen.getByText('Entró sin pagar la estancia').closest('.dato')).toHaveTextContent('Cuenta por cobrar a una empresa')
+  })
+
+  it('«Corregir registro» parte de la hora vigente (DEC-114)', async () => {
+    apiCon({ reserva: { estado: 'EN_CURSO' } })
+    const usuario = abrir(`/reservas/${CODIGO}`, 'ADMINISTRADOR')
+    await screen.findByText(/por Andrés Felipe Gómez/)
+    await usuario.click(screen.getByRole('button', { name: 'Corregir registro' }))
+    const dialogo = await screen.findByRole('dialog', { name: 'Corregir registro de llegada' })
+    expect(within(dialogo).getByLabelText('Fecha y hora real de llegada')).toHaveValue(`${HOY}T15:20`)
+  })
+
+  it('una reserva confirmada no pide la llegada registrada', async () => {
+    const fetch = apiCon()
+    abrir(`/reservas/${CODIGO}`)
+    await screen.findByRole('heading', { level: 1, name: CODIGO })
+    expect(fetch.mock.calls.some(([url]) => String(url).endsWith('/estancia'))).toBe(false)
   })
 
   it('recepción no ve «Corregir registro»', async () => {

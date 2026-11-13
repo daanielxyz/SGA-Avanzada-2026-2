@@ -92,6 +92,13 @@ describe('tablero de ocupación (DEC-86)', () => {
     expect(within(cuadricula).getByText('Preparado')).toBeInTheDocument()
   })
 
+  it('un apartamento fuera de servicio muestra su motivo (DEC-113)', async () => {
+    api([{ ...VACIO, estadoOperativo: 'FUERA_DE_SERVICIO', motivoFueraDeServicio: 'Fuga de agua: arreglo el jueves' }])
+    abrir()
+    const cuadricula = await screen.findByRole('group', { name: 'Ocupación por noche' })
+    expect(within(cuadricula).getByText('Fuga de agua: arreglo el jueves')).toBeInTheDocument()
+  })
+
   it('la barra de una reserva dice qué es y abre una ventana con lo básico y el enlace al detalle (#23)', async () => {
     api()
     abrir()

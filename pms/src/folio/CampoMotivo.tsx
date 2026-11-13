@@ -1,8 +1,8 @@
 /**
- * Motivo obligatorio, con contador, para revertir un cargo (hasta 170) o autorizar un cierre con saldo (hasta 500). El
- * límite es el del Request: más no se puede escribir.
+ * Motivo con contador, para revertir un cargo (hasta 170), autorizar un cierre con saldo (hasta 500) o, opcional, decir
+ * por qué un apartamento queda fuera de servicio. El límite es el del Request: más no se puede escribir.
  */
-export default function CampoMotivo({ id, rotulo, valor, maximo, error, deshabilitado, pista, focoInicial, alCambiar }: {
+export default function CampoMotivo({ id, rotulo, valor, maximo, error, deshabilitado, pista, focoInicial, opcional = false, alCambiar }: {
   id: string
   rotulo: string
   valor: string
@@ -11,13 +11,14 @@ export default function CampoMotivo({ id, rotulo, valor, maximo, error, deshabil
   deshabilitado?: boolean
   pista?: string
   focoInicial?: boolean
+  opcional?: boolean
   alCambiar: (valor: string) => void
 }) {
   const descritoPor = [error ? `${id}-error` : null, `${id}-contador`].filter(Boolean).join(' ')
   return (
     <div>
       <label className="campo-rotulo" htmlFor={id}>
-        {rotulo} <span className="campo-rotulo-nota">(obligatorio)</span>
+        {rotulo} <span className="campo-rotulo-nota">({opcional ? 'opcional' : 'obligatorio'})</span>
       </label>
       <textarea
         id={id}

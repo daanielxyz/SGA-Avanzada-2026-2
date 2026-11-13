@@ -44,6 +44,7 @@ import {
 import { errorParaMostrar, type ErrorMostrado } from '../reserva/mensajes'
 import { faltaParaAnticipo, mediosDeRecepcion } from '../reserva/pago'
 import { useDatosDePago } from '../reserva/useDatosDePago'
+import { useSesion } from '../sesion/contexto'
 
 type Resultado = { clave: string; reserva: Reserva } | { clave: string; error: unknown }
 type DialogoAbierto = { tipo: 'tra'; ocupante: string } | { tipo: 'vehiculos' | 'titular' | 'validar' | 'pago' }
@@ -76,6 +77,8 @@ export default function Llegada() {
   const [enviandoPago, setEnviandoPago] = useState(false)
   const [exito, setExito] = useState<AvisoAlLlegar | null>(null)
   const [sinCobro, setSinCobro] = useState(false)
+  // DEC-112: entrar sin la estancia pagada solo lo autoriza el administrador, como la salida con saldo
+  const autorizaSinCobro = useSesion().sesion?.rol === 'ADMINISTRADOR'
   const [motivo, setMotivo] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [falla, setFalla] = useState<(ErrorMostrado & { confirmada: boolean }) | null>(null)
@@ -201,11 +204,11 @@ export default function Llegada() {
     falta,
     faltaAnticipo,
     antesDeEntrada: hoy < datosReserva.entrada,
-    sinCobro: falta > 0 && sinCobro,
+    sinCobro: autorizaSinCobro && falta > 0 && sinCobro,
     motivo,
   }
   const bloqueo = bloqueoDe(situacion)
-  const pista = pistaDelBloqueo(bloqueo, situacion.sinCobro)
+  const pista = pistaDelBloqueo(bloqueo, situacion.sinCobro, autorizaSinCobro)
   const pendientesTra = datosReserva.ocupantes.filter(tieneTraPendiente).length
   const totalNoches = noches(datosReserva.entrada, datosReserva.salida)
   const aFavor = folio.situacionSaldo === 'A_FAVOR' ? folio.saldo : 0
@@ -434,7 +437,11 @@ export default function Llegada() {
                   {titularDatos.validado ? (
                     <>
                       <span className="etiqueta"><span aria-hidden="true">✓</span> Validada</span>
-                      {titularDatos.validadoEn && <span className="campo-pista"> El {fechaYHora(titularDatos.validadoEn)}</span>}
+                      {titularDatos.validadoEn && (
+                        <span className="campo-pista">
+                          {' '}El {fechaYHora(titularDatos.validadoEn)}{titularDatos.validadoPorNombre ? `, por ${titularDatos.validadoPorNombre}` : ''}
+                        </span>
+                      )}
                     </>
                   ) : (
                     <span className="etiqueta"><span aria-hidden="true">○</span> Sin validar</span>
@@ -467,7 +474,7 @@ export default function Llegada() {
       </div>
 
       <div className={situacion.sinCobro ? 'pie-llegada pie-llegada-abierto' : 'pie-llegada'} role="region" aria-label="Registrar llegada">
-        {falta > 0 && (
+        {falta > 0 && autorizaSinCobro && (
           <div className="pie-llegada-sin-cobro">
             <label className="casilla">
               <input
