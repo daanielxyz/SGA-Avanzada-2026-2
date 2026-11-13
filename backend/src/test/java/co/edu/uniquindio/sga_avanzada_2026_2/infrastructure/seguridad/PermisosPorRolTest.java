@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit;
 
 import static co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba.idDe;
 import static co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba.sinSesion;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -169,6 +170,44 @@ class PermisosPorRolTest extends PruebaRestDeReservas {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("FINALIZADA"))
                 .andExpect(jsonPath("$.salida.autor").value(idDe(Rol.RECEPCIONISTA)));
+    }
+
+    @Test
+    @Tag("BL-22")
+    @Tag("DEC-112")
+    void soloElAdministradorAutorizaUnaLlegadaSinLaEstanciaPagada() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        String llegada = "/api/reservas/" + codigo + "/registrar-llegada";
+
+        como(Rol.RECEPCIONISTA, put(llegada), ENTRA_SIN_PAGAR)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("SIN_PERMISO"))
+                .andExpect(jsonPath("$.mensaje")
+                        .value("Solo el administrador puede autorizar una llegada sin la estancia pagada"));
+        como(Rol.RECEPCIONISTA, put(llegada))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.motivo").value("ESTANCIA_SIN_PAGAR"));
+        mvc.perform(get("/api/reservas/" + codigo)).andExpect(jsonPath("$.estado").value("CONFIRMADA"));
+
+        enviar(put(llegada), ENTRA_SIN_PAGAR)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.registros[0].autor").value(SesionDePrueba.ADMINISTRADOR))
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value("Cuenta por cobrar"));
+    }
+
+    @Test
+    @Tag("BL-22")
+    @Tag("DEC-112")
+    void recepcionRegistraLaLlegadaDeUnaEstanciaPagada() throws Exception {
+        String codigo = reservaConfirmada(HOY);
+        pagar(codigo, 280_000);
+
+        como(Rol.RECEPCIONISTA, put("/api/reservas/" + codigo + "/registrar-llegada"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("EN_CURSO"))
+                .andExpect(jsonPath("$.registros[0].autor").value(idDe(Rol.RECEPCIONISTA)))
+                .andExpect(jsonPath("$.registros[0].motivoSinPago").value(nullValue()));
     }
 
     @Test

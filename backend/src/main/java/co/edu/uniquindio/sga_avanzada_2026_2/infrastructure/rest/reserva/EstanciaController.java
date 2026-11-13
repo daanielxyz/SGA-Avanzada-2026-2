@@ -75,11 +75,17 @@ public class EstanciaController {
         return ReservaResponse.de(completarDatosOcupante.ejecutar(solicitud.aCommand(codigo, ocupanteId)));
     }
 
-    /** Sin cuerpo exige la estancia pagada; con motivo, recepción la deja entrar sin pagar y queda registrado (BL-22). */
+    /**
+     * Sin cuerpo exige la estancia pagada; con motivo, entra sin el pago completo y queda registrado (BL-22). Eso solo
+     * lo puede el administrador, como la salida con saldo (AUTC-01 · DEC-112).
+     */
     @PutMapping("/registrar-llegada")
     public EstanciaResponse registrarLlegada(@PathVariable String codigo,
                                              @Valid @RequestBody(required = false) RegistrarLlegadaRequest solicitud) {
         String motivo = Optional.ofNullable(solicitud).map(RegistrarLlegadaRequest::motivoSinPago).orElse(null);
+        if (motivo != null) {
+            usuario.exigirAdministrador("autorizar una llegada sin la estancia pagada");
+        }
         return EstanciaResponse.de(
                 registrarLlegada.ejecutar(new RegistrarLlegadaCommand(codigo, usuario.id(), motivo)));
     }
