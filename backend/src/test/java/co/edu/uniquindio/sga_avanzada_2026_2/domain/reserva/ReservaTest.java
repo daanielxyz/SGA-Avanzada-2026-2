@@ -82,7 +82,7 @@ class ReservaTest {
 
     private static Reserva confirmada() {
         Reserva reserva = pendiente();
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW);
         return reserva;
     }
 
@@ -131,7 +131,7 @@ class ReservaTest {
         Reserva reserva = pendiente();
         Dinero congelado = reserva.valorTotal();
 
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW);
         reserva.registrarLlegada(new RegistroId("REG-1"), ESTANCIA.entrada().atTime(15, 0), RECEPCION, reserva.valorConExtras(), null);
 
         assertEquals(congelado, reserva.valorTotal());
@@ -340,7 +340,7 @@ class ReservaTest {
     void deberiaConfirmarReservaConHoraEstimadaDeLlegada() {
         Reserva reserva = pendiente();
 
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW);
 
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
     }
@@ -350,10 +350,10 @@ class ReservaTest {
     void deberiaRechazarConfirmarSinHoraEstimadaDeLlegada() {
         Reserva reserva = crear(ESTANCIA, List.of(ANA), null, 0);
 
-        exigeMotivo(MotivoRechazo.FALTA_HORA_LLEGADA, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
+        exigeMotivo(MotivoRechazo.FALTA_HORA_LLEGADA, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW));
 
         reserva.indicarHoraEstimadaLlegada(LocalTime.of(18, 0));
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW);
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
     }
 
@@ -362,7 +362,7 @@ class ReservaTest {
     void deberiaRechazarConfirmarSiElAnticipoEsMenorAlPorcentaje() {
         Reserva reserva = pendiente(); // 400.000 → 30 % = 120.000
 
-        exigeMotivo(MotivoRechazo.ANTICIPO_INSUFICIENTE, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(119_999)));
+        exigeMotivo(MotivoRechazo.ANTICIPO_INSUFICIENTE, () -> reserva.confirmar(new Porcentaje(30), Dinero.de(119_999), AHORA, HORA_LIMITE_NO_SHOW));
         assertEquals(EstadoReserva.PENDIENTE, reserva.estado());
     }
 
@@ -371,9 +371,36 @@ class ReservaTest {
     void deberiaConfirmarSiElPagoCubreElAnticipo() {
         Reserva reserva = pendiente();
 
-        reserva.confirmar(new Porcentaje(30), Dinero.de(120_000));
+        reserva.confirmar(new Porcentaje(30), Dinero.de(120_000), AHORA, HORA_LIMITE_NO_SHOW);
 
         assertEquals(EstadoReserva.CONFIRMADA, reserva.estado());
+    }
+
+    @Test
+    @Tag("RES-16")
+    void noDeberiaConfirmarDespuesDeLaHoraLimiteDeLlegada() {
+        LocalDateTime limite = ESTANCIA.entrada().atTime(HORA_LIMITE_NO_SHOW);
+
+        exigeMotivo(MotivoRechazo.LLEGADA_VENCIDA, () -> pendiente().confirmar(new Porcentaje(0), Dinero.CERO,
+                limite.plusMinutes(1), HORA_LIMITE_NO_SHOW));
+        exigeMotivo(MotivoRechazo.LLEGADA_VENCIDA, () -> pendiente().confirmar(new Porcentaje(0), Dinero.CERO,
+                limite.plusDays(2), HORA_LIMITE_NO_SHOW));
+
+        Reserva aTiempo = pendiente();
+        aTiempo.confirmar(new Porcentaje(0), Dinero.CERO, limite, HORA_LIMITE_NO_SHOW);
+        assertEquals(EstadoReserva.CONFIRMADA, aTiempo.estado());
+    }
+
+    @Test
+    @Tag("RES-16")
+    void deberiaConfirmarLaQueSeCreoDespuesDeLaHoraLimiteComoLaDeMostradorTarde() {
+        LocalDateTime tarde = ESTANCIA.entrada().atTime(23, 0);
+        Reserva mostrador = Reserva.crear(new ReservaId("RES-2026-00002"), APT, TITULAR, ESTANCIA, CanalOrigen.DIRECTO,
+                null, null, List.of(ANA), LocalTime.of(23, 0), cotizacion(ESTANCIA, 1), POLITICA, CAPACIDAD, 0, tarde);
+
+        mostrador.confirmar(new Porcentaje(0), Dinero.CERO, tarde.plusMinutes(10), HORA_LIMITE_NO_SHOW);
+
+        assertEquals(EstadoReserva.CONFIRMADA, mostrador.estado());
     }
 
     // --- Ciclo de vida ---
@@ -396,7 +423,7 @@ class ReservaTest {
         Reserva reserva = pendiente();
         reserva.cancelar();
 
-        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO));
+        exigeMotivo(MotivoRechazo.ESTADO_NO_PERMITIDO, () -> reserva.confirmar(new Porcentaje(0), Dinero.CERO, AHORA, HORA_LIMITE_NO_SHOW));
         assertThrows(ReglaDominioException.class, reserva::cancelar);
         assertThrows(ReglaDominioException.class, () -> reserva.indicarHoraEstimadaLlegada(LocalTime.NOON));
         assertEquals(EstadoReserva.CANCELADA, reserva.estado());

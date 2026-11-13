@@ -47,7 +47,7 @@ Paquete raíz `co.edu.uniquindio.sga_avanzada_2026_2` (clase principal `SgaAvanz
 - **Estancia** = `[entrada, salida)`: la noche de salida no se ocupa ni se cobra. Solapan si `entradaA < salidaB && entradaB < salidaA`.
 - **Ocupante facturable** si a la fecha de entrada alcanza el umbral de edad; todos cuentan para capacidad. La edad se calcula, no se guarda.
 - **Reserva** (nace PENDIENTE): PENDIENTE→CONFIRMADA | CANCELADA · CONFIRMADA→EN_CURSO | CANCELADA | NO_SHOW · EN_CURSO→FINALIZADA. Terminales: FINALIZADA, CANCELADA, NO_SHOW. Activas: PENDIENTE, CONFIRMADA, EN_CURSO. Cualquier otra transición se rechaza.
-- **Apartamento (estado operativo)**: PREPARADO→OCUPADO→PENDIENTE_PREPARACION→EN_PREPARACION→PREPARADO; FUERA_DE_SERVICIO desde cualquier estado no ocupado (solo admin). Bloqueo y estado operativo son independientes.
+- **Apartamento (estado operativo)**: PREPARADO→OCUPADO→PENDIENTE_PREPARACION→EN_PREPARACION→PREPARADO; FUERA_DE_SERVICIO desde cualquier estado no ocupado (solo admin). Bloqueo y estado operativo son independientes, pero fuera de servicio tampoco se vende (DEC-110).
 - Al crear se **congelan** el valor (desglose por noche) y la versión de la política de cancelación; solo una modificación explícita recalcula (diferencia = ajuste en el folio).
 - Folio: saldo = cargos − pagos (calculado). Cargos y pagos no se editan ni borran: se corrigen con movimiento inverso. No cierra con saldo ≠ 0 sin autorización registrada.
 - Canal externo: canal + idExterno único (idempotencia); colisión → se rechaza y se registra `ConflictoCanal`, nunca sobrescribe.

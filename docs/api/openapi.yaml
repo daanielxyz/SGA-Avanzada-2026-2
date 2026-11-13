@@ -3528,7 +3528,7 @@ components:
           format: date
         tipoDocumento:
           type: string
-          pattern: "CC|CE|PASAPORTE|TI"
+          pattern: "CC|CE|PASAPORTE|TI|RC"
         numeroDocumento:
           type: string
           maxLength: 30
@@ -3833,7 +3833,7 @@ components:
           minLength: 0
         tipoDocumento:
           type: string
-          pattern: "CC|CE|PASAPORTE|TI"
+          pattern: "CC|CE|PASAPORTE|TI|RC"
         numeroDocumento:
           type: string
           maxLength: 30

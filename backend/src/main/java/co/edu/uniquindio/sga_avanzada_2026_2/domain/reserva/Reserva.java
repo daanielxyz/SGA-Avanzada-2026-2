@@ -299,15 +299,29 @@ public class Reserva {
      * Pasa de PENDIENTE a CONFIRMADA (RN-08). Exige la hora estimada de llegada (RN-09) y, si el alojamiento pide
      * anticipo, que los pagos cubran ese porcentaje del valor congelado con sus extras (RES-15 · DEC-89).
      *
-     * @param anticipo {@code ParametrosAlojamiento.anticipo}; 0 = no se exige
-     * @param pagado   total pagado en el folio de la reserva
-     * @throws ReglaDominioException si no está PENDIENTE (RN-08), falta la hora estimada (RN-09) o el pago no cubre
-     *                               el anticipo (RES-15)
+     * Tampoco se confirma una reserva cuya hora límite de llegada ya pasó (la del no-show, RES-16): confirmarla solo
+     * serviría para declararla no-show enseguida. Se exceptúa la que se creó después de esa hora, como la de quien
+     * llega tarde al mostrador ese mismo día (pruebas del sprint 3).
+     *
+     * @param anticipo   {@code ParametrosAlojamiento.anticipo}; 0 = no se exige
+     * @param pagado     total pagado en el folio de la reserva
+     * @param ahora      fecha y hora actuales en Colombia, inyectadas
+     * @param horaLimite {@code ParametrosAlojamiento.horaLimiteNoShow}
+     * @throws ReglaDominioException si no está PENDIENTE (RN-08), ya pasó la hora límite de llegada, falta la hora
+     *                               estimada (RN-09) o el pago no cubre el anticipo (RES-15)
      */
-    public void confirmar(Porcentaje anticipo, Dinero pagado) {
+    public void confirmar(Porcentaje anticipo, Dinero pagado, LocalDateTime ahora, LocalTime horaLimite) {
         Objects.requireNonNull(anticipo, "anticipo");
         Objects.requireNonNull(pagado, "pagado");
+        Objects.requireNonNull(ahora, "ahora");
+        Objects.requireNonNull(horaLimite, "horaLimite");
         validarTransicion(EstadoReserva.CONFIRMADA);
+        LocalDateTime limite = estancia.entrada().atTime(horaLimite);
+        if (ahora.isAfter(limite) && creadaEn.isBefore(limite)) {
+            throw new ReglaDominioException(MotivoRechazo.LLEGADA_VENCIDA,
+                    "Ya pasó la hora límite de llegada (" + limite + "): la reserva no se confirma; se cancela o se "
+                    + "hace una nueva");
+        }
         if (horaEstimadaLlegada == null) {
             throw new ReglaDominioException(MotivoRechazo.FALTA_HORA_LLEGADA,
                     "La reserva necesita hora estimada de llegada para confirmarse");

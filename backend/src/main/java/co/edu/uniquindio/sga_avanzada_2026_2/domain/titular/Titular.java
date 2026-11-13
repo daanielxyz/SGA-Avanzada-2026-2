@@ -43,6 +43,10 @@ public class Titular {
         if (id == null || alojamientoId == null || documento == null) {
             throw new ReglaDominioException("El titular requiere id, alojamiento y documento");
         }
+        if (!documento.tipo().identificaTitular()) {
+            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO,
+                    "El titular no se identifica con registro civil: ese documento es de un niño");
+        }
         this.id = id;
         this.alojamientoId = alojamientoId;
         this.documento = documento;

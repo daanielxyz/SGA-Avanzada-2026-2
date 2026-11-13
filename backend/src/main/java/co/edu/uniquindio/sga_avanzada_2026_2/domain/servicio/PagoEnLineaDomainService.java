@@ -79,6 +79,7 @@ public class PagoEnLineaDomainService {
      */
     public void registrar(Reserva reserva, Folio folio, Alojamiento alojamiento, Dinero monto, LocalDateTime ahora) {
         folio.registrarPago(MEDIO, monto, ahora.toLocalDate(), ahora.toLocalDate(), alojamiento.mediosPago());
-        reserva.confirmar(alojamiento.parametros().anticipo(), folio.totalPagado());
+        reserva.confirmar(alojamiento.parametros().anticipo(), folio.totalPagado(), ahora,
+                alojamiento.parametros().horaLimiteNoShow());
     }
 }

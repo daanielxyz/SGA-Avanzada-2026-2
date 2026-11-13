@@ -147,7 +147,7 @@ class ReservaRepositoryJpaTest {
         sincronizar();
 
         Reserva reserva = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00001")).orElseThrow();
-        reserva.confirmar(new Porcentaje(0), Dinero.CERO);
+        reserva.confirmar(new Porcentaje(0), Dinero.CERO, CREADA, LocalTime.of(22, 0));
         reserva.registrarLlegada(new RegistroId("REG-1"), LocalDateTime.of(2026, 12, 10, 16, 0), RECEPCION, Dinero.CERO,
                 "Cuenta por cobrar");
         repositorio.guardar(reserva);
