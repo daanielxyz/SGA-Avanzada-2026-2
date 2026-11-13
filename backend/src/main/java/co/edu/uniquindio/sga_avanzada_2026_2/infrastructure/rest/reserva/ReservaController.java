@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * Endpoints del ciclo de la reserva antes de la llegada: crear, consultar, modificar, confirmar, cancelar y no-show.
@@ -91,19 +92,24 @@ public class ReservaController {
                 .body(ReservaResponse.de(creada));
     }
 
-    /** El huésped solo ve las suyas (USU-04). */
-    /** Solo recepción y administración; el huésped ve las suyas en {@code /api/mis-reservas} (DEC-72). */
+    /**
+     * Solo recepción y administración; el huésped ve las suyas en {@code /api/mis-reservas} (DEC-72). Estado,
+     * apartamento y canal admiten varios valores, repitiendo el parámetro o separados por comas
+     * ({@code estado=PENDIENTE&estado=CONFIRMADA} o {@code estado=PENDIENTE,CONFIRMADA}): dentro de uno es «cualquiera
+     * de ellos» y entre filtros distintos, «y» (#22 · DEC-119).
+     */
     @GetMapping
     public PaginaResponse<ReservaResponse> listar(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @RequestParam(required = false)
-            @Pattern(regexp = "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW",
+            List<@Pattern(regexp = "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW",
                     message = "debe ser PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA o NO_SHOW")
-            String estado,
-            @RequestParam(required = false) String apartamento,
+                    String> estado,
+            @RequestParam(required = false) List<String> apartamento,
             @RequestParam(required = false)
-            @Pattern(regexp = "PORTAL|DIRECTO|EXTERNO", message = "debe ser PORTAL, DIRECTO o EXTERNO") String canal,
+            List<@Pattern(regexp = "PORTAL|DIRECTO|EXTERNO", message = "debe ser PORTAL, DIRECTO o EXTERNO")
+                    String> canal,
             @RequestParam(required = false) String titular,
             @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
         return PaginaResponse.de(listarReservas.ejecutar(new ListarReservasCommand(desde, hasta, estado, apartamento,

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,10 +129,10 @@ public class ReservaRepositoryJpa implements ReservaRepository {
     @Transactional(readOnly = true)
     public Pagina<Reserva> buscar(FiltroReservas filtro, int numeroPagina) {
         Specification<ReservaJpa> condiciones = Specification.allOf(
-                igual("estado", filtro.estado()),
-                igual("apartamentoCodigo", Optional.ofNullable(filtro.apartamento()).map(ApartamentoId::valor)
-                        .orElse(null)),
-                igual("canalOrigen", filtro.canal()),
+                // #22 · DEC-119: dentro de un filtro, cualquiera de sus valores
+                algunoDe("estado", filtro.estados()),
+                algunoDe("apartamentoCodigo", filtro.apartamentos().stream().map(ApartamentoId::valor).toList()),
+                algunoDe("canalOrigen", filtro.canales()),
                 igual("titularId", Optional.ofNullable(filtro.titular()).map(TitularId::valor).orElse(null)),
                 // EST-03: la estancia [entrada, salida) se cruza con [desde, hasta)
                 (fila, consulta, cb) -> filtro.hasta() == null ? null
@@ -146,5 +147,9 @@ public class ReservaRepositoryJpa implements ReservaRepository {
 
     private static Specification<ReservaJpa> igual(String campo, Object valor) {
         return (fila, consulta, cb) -> valor == null ? null : cb.equal(fila.get(campo), valor);
+    }
+
+    private static Specification<ReservaJpa> algunoDe(String campo, Collection<?> valores) {
+        return (fila, consulta, cb) -> valores.isEmpty() ? null : fila.get(campo).in(valores);
     }
 }
