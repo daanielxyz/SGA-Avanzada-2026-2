@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosTraDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.folio.RegistrarPagoUseCase;
@@ -48,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Escenario común de las pruebas del folio, la llegada y la salida: el APT-101 de Puerta al Sol y una reserva de dos
@@ -140,8 +142,12 @@ public final class EscenarioEstancia {
         reservas.guardar(reserva);
     }
 
+    /** Las pruebas de aplicación no revisan nombres del personal: el directorio no conoce a nadie. */
+    public static final DirectorioPersonal SIN_NOMBRES = id -> Optional.empty();
+
     public RegistrarLlegadaUseCase registrarLlegada(Clock reloj) {
-        return new RegistrarLlegadaUseCase(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(), reloj);
+        return new RegistrarLlegadaUseCase(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(),
+                SIN_NOMBRES, reloj);
     }
 
     /** Abona en efectivo con la fecha del reloj. */

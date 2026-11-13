@@ -2403,6 +2403,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/estancia":
+    get:
+      tags:
+        - estancia-controller
+      operationId: consultarEstancia
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EstanciaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/folio":
     get:
       tags:
@@ -3446,6 +3470,8 @@ components:
           format: date-time
         autor:
           type: string
+        autorNombre:
+          type: string
         anulado:
           type: boolean
         motivoCorreccion:
@@ -3461,6 +3487,8 @@ components:
           type: string
           format: date-time
         autor:
+          type: string
+        autorNombre:
           type: string
     SimulacionCancelacionResponse:
       type: object

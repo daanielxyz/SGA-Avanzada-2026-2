@@ -126,6 +126,18 @@ class DatosDePruebaYApiTest {
     }
 
     @Test
+    @Tag("DEC-114")
+    void laEstanciaTraeElNombreDeQuienRegistroLaLlegadaYLaSalida() throws Exception {
+        como("recepcion.demo@example.com", get(RESERVAS + "/" + codigoDe("EN_CURSO", "APT-103") + "/estancia"), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registros[0].autorNombre").value("Recepción Demo"));
+        admin(get(RESERVAS + "/" + codigoDe("FINALIZADA", "APT-104") + "/estancia"), null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registros[0].autorNombre").value("Recepción Demo"))
+                .andExpect(jsonPath("$.salida.autorNombre").value("Recepción Demo"));
+    }
+
+    @Test
     @Tag("BL-12")
     @Tag("BL-23")
     void elHotelCobraServiciosYAdmiteParqueaderoYMascotasParaProbarElFolio() throws Exception {

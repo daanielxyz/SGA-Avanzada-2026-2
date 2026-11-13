@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
@@ -18,10 +19,13 @@ public class CorregirRegistroUseCase {
 
     private final CargadorReserva cargador;
     private final ReservaRepository reservas;
+    private final DirectorioPersonal personal;
     private final Clock reloj;
 
-    public CorregirRegistroUseCase(CargadorReserva cargador, ReservaRepository reservas, Clock reloj) {
+    public CorregirRegistroUseCase(CargadorReserva cargador, ReservaRepository reservas, DirectorioPersonal personal,
+                                   Clock reloj) {
         this.cargador = cargador;
+        this.personal = personal;
         this.reservas = reservas;
         this.reloj = reloj;
     }
@@ -40,6 +44,7 @@ public class CorregirRegistroUseCase {
                 new UsuarioId(comando.autor()), comando.motivo(), LocalDateTime.now(reloj));
 
         reservas.guardar(reserva);
-        return EstanciaResult.de(reserva, cargador.apartamento(reserva.apartamentoId()), cargador.folioDe(reserva));
+        return EstanciaResult.de(reserva, cargador.apartamento(reserva.apartamentoId()), cargador.folioDe(reserva),
+                personal);
     }
 }

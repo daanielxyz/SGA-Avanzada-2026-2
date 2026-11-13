@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarEstanciaUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DesignarHuespedPrincipalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
@@ -11,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalida
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarSalidaCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,12 +36,14 @@ public class EstanciaController {
     private final CompletarDatosOcupanteUseCase completarDatosOcupante;
     private final CambiarTitularUseCase cambiarTitular;
     private final DesignarHuespedPrincipalUseCase designarHuespedPrincipal;
+    private final ConsultarEstanciaUseCase consultarEstancia;
 
     public EstanciaController(UsuarioActual usuario, RegistrarLlegadaUseCase registrarLlegada,
                               CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida,
                               CompletarDatosOcupanteUseCase completarDatosOcupante,
                               CambiarTitularUseCase cambiarTitular,
-                              DesignarHuespedPrincipalUseCase designarHuespedPrincipal) {
+                              DesignarHuespedPrincipalUseCase designarHuespedPrincipal,
+                              ConsultarEstanciaUseCase consultarEstancia) {
         this.usuario = usuario;
         this.registrarLlegada = registrarLlegada;
         this.corregirRegistro = corregirRegistro;
@@ -47,6 +51,17 @@ public class EstanciaController {
         this.completarDatosOcupante = completarDatosOcupante;
         this.cambiarTitular = cambiarTitular;
         this.designarHuespedPrincipal = designarHuespedPrincipal;
+        this.consultarEstancia = consultarEstancia;
+    }
+
+    /**
+     * La llegada registrada (la vigente y las anuladas por una corrección, con su autor y el motivo sin pago), la
+     * salida y el saldo (#13 · DEC-114). Recepción y administración, por la regla de {@code /api/reservas/**}: el
+     * huésped y el personal de servicio reciben 403 (DEC-99).
+     */
+    @GetMapping("/estancia")
+    public EstanciaResponse consultarEstancia(@PathVariable String codigo) {
+        return EstanciaResponse.de(consultarEstancia.ejecutar(codigo));
     }
 
     /** Otro ocupante pasa a ser el huésped principal del TRA; debe ser mayor de edad (DEC-97). */
