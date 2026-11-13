@@ -1576,19 +1576,25 @@ paths:
           in: query
           required: false
           schema:
-            type: string
-            pattern: "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW"
+            type: array
+            items:
+              type: string
+              pattern: "PENDIENTE|CONFIRMADA|EN_CURSO|FINALIZADA|CANCELADA|NO_SHOW"
         - name: apartamento
           in: query
           required: false
           schema:
-            type: string
+            type: array
+            items:
+              type: string
         - name: canal
           in: query
           required: false
           schema:
-            type: string
-            pattern: "PORTAL|DIRECTO|EXTERNO"
+            type: array
+            items:
+              type: string
+              pattern: "PORTAL|DIRECTO|EXTERNO"
         - name: titular
           in: query
           required: false

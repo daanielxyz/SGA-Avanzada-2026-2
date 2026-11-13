@@ -39,6 +39,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -365,10 +366,18 @@ class ReservaRepositoryJpaTest {
         assertEquals(List.of("RES-2026-70003", "RES-2026-70002", "RES-2026-70001"),
                 codigos(new FiltroReservas(null, null, null, null, null, null)));
         assertEquals(List.of("RES-2026-70003"),
-                codigos(new FiltroReservas(null, null, null, null, CanalOrigen.EXTERNO, null)));
+                codigos(new FiltroReservas(null, null, null, null, Set.of(CanalOrigen.EXTERNO), null)));
         assertEquals(List.of("RES-2026-70002"), codigos(new FiltroReservas(LocalDate.of(2026, 12, 11),
-                LocalDate.of(2026, 12, 20), EstadoReserva.PENDIENTE, APT, null, new TitularId("TIT-1"))));
-        assertTrue(codigos(new FiltroReservas(null, null, EstadoReserva.CANCELADA, null, null, null)).isEmpty());
+                LocalDate.of(2026, 12, 20), Set.of(EstadoReserva.PENDIENTE), Set.of(APT), null,
+                new TitularId("TIT-1"))));
+        assertTrue(codigos(new FiltroReservas(null, null, Set.of(EstadoReserva.CANCELADA), null, null, null))
+                .isEmpty());
+        // #22 · DEC-119: varios valores en un filtro son «cualquiera de ellos»
+        assertEquals(List.of("RES-2026-70003", "RES-2026-70002", "RES-2026-70001"), codigos(new FiltroReservas(
+                null, null, Set.of(EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA), null,
+                Set.of(CanalOrigen.EXTERNO, CanalOrigen.PORTAL), null)));
+        assertEquals(List.of("RES-2026-70003"), codigos(new FiltroReservas(null, null, null, null,
+                Set.of(CanalOrigen.EXTERNO, CanalOrigen.DIRECTO), null)));
     }
 
     private List<String> codigos(FiltroReservas filtro) {
