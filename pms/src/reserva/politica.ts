@@ -3,7 +3,18 @@
 import type { Penalizacion, Politica, Tramo } from '../api/politicas'
 import { cantidad, dinero } from '../formato'
 
-const BASE: Record<string, string> = { VALOR_TOTAL: 'del valor total', PAGADO: 'de lo pagado' }
+const BASE: Record<string, string> = {
+  VALOR_TOTAL: 'del valor total',
+  PAGADO: 'de lo pagado',
+  ANTICIPO_EXIGIDO: 'del anticipo exigido',
+}
+
+// Un monto fijo nunca pasa de su base (Penalizacion.calcular)
+const TOPE: Record<string, string> = {
+  VALOR_TOTAL: 'sin pasar del valor total',
+  PAGADO: 'sin pasar de lo pagado',
+  ANTICIPO_EXIGIDO: 'sin pasar del anticipo exigido',
+}
 
 function retiene({ porcentaje, montoFijo }: Penalizacion): boolean {
   return (porcentaje ?? 0) > 0 || (montoFijo ?? 0) > 0
@@ -15,9 +26,14 @@ function cuanto(penalizacion: Penalizacion): string {
   return `el ${penalizacion.porcentaje ?? 0} % ${BASE[penalizacion.base] ?? ''}`.trim()
 }
 
-/** «Se retiene el 50 % del valor total» o «No se retiene nada». */
+/** «Se retiene el 50 % del valor total», «Se retienen $ 50.000, sin pasar del valor total» o «No se retiene nada». */
 export function textoRetencion(penalizacion: Penalizacion): string {
-  return retiene(penalizacion) ? `Se retiene ${cuanto(penalizacion)}` : 'No se retiene nada'
+  if (!retiene(penalizacion)) return 'No se retiene nada'
+  if (penalizacion.montoFijo !== null && penalizacion.montoFijo !== undefined) {
+    const tope = TOPE[penalizacion.base]
+    return `Se retienen ${dinero(penalizacion.montoFijo)}${tope ? `, ${tope}` : ''}`
+  }
+  return `Se retiene ${cuanto(penalizacion)}`
 }
 
 /** Los tramos de mayor a menor antelación, que es como se leen. */
