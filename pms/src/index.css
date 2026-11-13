@@ -5533,3 +5533,585 @@ button.barra {
     top: var(--espacio-4);
   }
 }
+
+/* Apartamentos (sprint 4): lista con miniatura (tarjetas en lo angosto, tabla desde 960 px de contenido) y un detalle
+   por secciones, cada una con su acción */
+.apartamentos,
+.ficha-apartamento {
+  container-type: inline-size;
+}
+
+.apartamentos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.apartamentos-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.apartamentos-cantidad {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.texto-largo {
+  overflow-wrap: anywhere;
+}
+
+/* Miniatura: una foto que no carga se ve como un recuadro punteado con su ícono, nunca como una imagen rota */
+.miniatura {
+  display: block;
+  flex: none;
+  width: 64px;
+  height: 48px;
+  border-radius: var(--radio-chico);
+  object-fit: cover;
+  background: var(--superficie-2);
+}
+
+.miniatura-grande {
+  width: 96px;
+  height: 72px;
+}
+
+.foto-vacia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--borde-fuerte);
+  background: var(--fondo-pagina);
+  color: var(--texto-suave);
+}
+
+.venta-activa .etiqueta-forma {
+  color: var(--exito);
+}
+
+.venta-retirada .etiqueta-forma {
+  color: var(--texto-suave);
+}
+
+.apartamentos-tabla {
+  display: none;
+  overflow: hidden;
+}
+
+.tabla-apartamentos {
+  min-width: 900px;
+}
+
+.tabla-apartamentos td {
+  padding-top: var(--espacio-2);
+  padding-bottom: var(--espacio-2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* El nombre se queda con el ancho que sobra y se recorta, para que «Ver» siempre se vea (como el titular en Reservas) */
+.tabla-apartamentos .celda-nombre {
+  width: 100%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apartamentos-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apartamento-tarjeta {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3-medio);
+  padding: var(--espacio-3-medio);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 160ms ease-out;
+}
+
+.apartamento-tarjeta > .icono {
+  color: var(--texto-suave);
+  transform: rotate(-90deg);
+}
+
+.apartamento-tarjeta-datos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  min-width: 0;
+  font-size: var(--tamano-chico);
+}
+
+.apartamento-tarjeta-codigo {
+  color: var(--acento);
+  font-weight: 600;
+}
+
+.apartamento-tarjeta-nombre {
+  font-size: var(--tamano-control);
+  overflow-wrap: anywhere;
+}
+
+.apartamento-tarjeta-estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-1-medio);
+  margin-top: var(--espacio-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .apartamento-tarjeta:hover {
+    background: var(--superficie-fila);
+  }
+}
+
+@container (min-width: 640px) {
+  .apartamentos-encabezado {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espacio-4) var(--espacio-5);
+  }
+
+  .apartamentos-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 960px) {
+  .apartamentos-tarjetas {
+    display: none;
+  }
+
+  .apartamentos-tabla {
+    display: block;
+  }
+}
+
+/* Detalle: cabecera con los dos estados y secciones con su título y su acción a la derecha */
+.ficha-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.ficha-cabecera h1 {
+  overflow-wrap: anywhere;
+}
+
+.ficha-rotulo {
+  color: var(--texto-suave);
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ficha-estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.ficha-seccion-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2) var(--espacio-3);
+}
+
+.ficha-seccion-cuenta {
+  color: var(--texto-suave);
+  font-family: var(--letra-interfaz);
+  font-size: var(--tamano-chico);
+  font-weight: 400;
+}
+
+.ficha-datos {
+  display: grid;
+  gap: var(--espacio-4);
+  margin: 0;
+  padding: var(--espacio-4);
+}
+
+.ficha-datos dt {
+  margin-bottom: var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ficha-datos dd {
+  margin: 0;
+}
+
+.ficha-descripcion {
+  white-space: pre-line;
+}
+
+.fichas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ficha-quitar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  margin: calc(var(--espacio-1) * -1) calc(var(--espacio-2) * -1) calc(var(--espacio-1) * -1) 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--texto-suave);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ficha-quitar:hover {
+  color: var(--texto);
+}
+
+.ficha-quitar .icono {
+  width: 14px;
+  height: 14px;
+}
+
+/* Con el dedo, el ✕ de una característica mide 44 px aunque se vea igual de pequeño */
+@media (pointer: coarse) {
+  .ficha-quitar {
+    min-width: 44px;
+    min-height: 44px;
+    margin: calc(var(--espacio-3) * -1) calc(var(--espacio-3) * -1) calc(var(--espacio-3) * -1) 0;
+  }
+}
+
+.ficha-cabecera h1:focus {
+  outline: none;
+}
+
+.ficha-pareja {
+  display: grid;
+  gap: var(--espacio-6);
+}
+
+.ficha-valor {
+  padding: var(--espacio-4);
+  font-size: var(--tamano-medio);
+  font-weight: 600;
+}
+
+.ficha-valor-suave {
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+  font-weight: 400;
+}
+
+/* Fotos: la principal con borde Arena y su sello; los botones debajo de cada una */
+.fotos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+.fotos-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  min-width: 0;
+}
+
+.foto[aria-busy="true"] {
+  opacity: 0.6;
+}
+
+.foto-marco {
+  position: relative;
+}
+
+.foto-imagen {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 2px solid transparent;
+  border-radius: var(--radio-chico);
+  object-fit: cover;
+  background: var(--superficie-2);
+}
+
+.foto-imagen .icono {
+  width: 32px;
+  height: 32px;
+}
+
+.foto-principal .foto-imagen {
+  border-color: var(--acento);
+}
+
+.foto-sello {
+  position: absolute;
+  top: var(--espacio-2);
+  left: var(--espacio-2);
+  background: var(--fondo-pagina);
+}
+
+.foto-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+/* Bloqueos: los vigentes con su acción; los anteriores plegados y apagados */
+.bloqueos {
+  overflow: hidden;
+}
+
+.bloqueos-vacio {
+  padding: var(--espacio-4);
+  font-size: var(--tamano-chico);
+}
+
+.bloqueos-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bloqueo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2) var(--espacio-4);
+  padding: var(--espacio-3-medio) var(--espacio-4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.bloqueo-datos {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: var(--espacio-minimo);
+  min-width: 0;
+  font-size: var(--tamano-chico);
+}
+
+.bloqueo-anterior {
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+}
+
+.bloqueos-anteriores summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 var(--espacio-4);
+  font-size: var(--tamano-chico);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.bloqueos-anteriores .bloqueo:last-child {
+  border-bottom: 0;
+}
+
+.ficha-venta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+.ficha-venta p {
+  margin-top: var(--espacio-2);
+  font-size: var(--tamano-chico);
+}
+
+@container (min-width: 640px) {
+  .fotos-cuadricula {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .foto-acciones {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .ficha-datos {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .ficha-datos-ancho {
+    grid-column: 1 / -1;
+  }
+
+  .ficha-pareja {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ficha-venta {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Diálogos de apartamentos */
+.formulario-apartamento,
+.bloqueo-fechas,
+.fotos-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3-medio);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-apartamento-pareja {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--espacio-3);
+}
+
+.agregar-en-linea {
+  display: flex;
+  gap: var(--espacio-2);
+}
+
+.agregar-en-linea .campo-control {
+  flex: 1;
+  min-width: 0;
+}
+
+.agregar-en-linea + .fichas {
+  margin-top: var(--espacio-2-medio);
+}
+
+.fotos-formulario legend {
+  padding: 0;
+}
+
+.fotos-renglones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2-medio);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.foto-renglon {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-pagina);
+}
+
+.foto-renglon-campos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  min-width: 0;
+}
+
+.opcion-principal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 44px;
+  font-size: var(--tamano-chico);
+  cursor: pointer;
+}
+
+.opcion-principal input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--acento);
+}
+
+.fotos-formulario > .boton {
+  align-self: flex-start;
+}
+
+.vista-previa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.vista-previa img,
+.vista-previa-vacia {
+  display: flex;
+  width: 100%;
+  max-height: 260px;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radio-chico);
+  object-fit: cover;
+}
+
+.vista-previa-vacia .icono {
+  width: 32px;
+  height: 32px;
+}
+
+.reservas-afectadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-4);
+  margin-top: var(--espacio-2);
+  padding: 0;
+  list-style: none;
+}
+
+.reservas-afectadas a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
