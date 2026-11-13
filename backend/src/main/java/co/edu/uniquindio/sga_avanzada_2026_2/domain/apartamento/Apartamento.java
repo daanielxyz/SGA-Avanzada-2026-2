@@ -328,7 +328,8 @@ public class Apartamento {
     private void transitarA(EstadoOperativo destino) {
         if (!estadoOperativo.puedePasarA(destino)) {
             throw new ReglaDominioException(
-                    "Transición de estado operativo no permitida: " + estadoOperativo + " → " + destino);
+                    "El apartamento " + codigo.valor() + " está " + estadoOperativo.texto() + " y no puede quedar "
+                    + destino.texto());
         }
         estadoOperativo = destino;
         motivoFueraDeServicio = null; // DEC-113: el motivo no sobrevive al salir de fuera de servicio
@@ -347,7 +348,7 @@ public class Apartamento {
     public void registrarBloqueo(BloqueoId id, LocalDate inicio, LocalDate fin, String motivo) {
         Bloqueo nuevo = new Bloqueo(id, inicio, fin, motivo, true);
         if (bloqueos.contains(nuevo)) {
-            throw new ReglaDominioException("Ya existe el bloqueo " + id.valor());
+            throw new ReglaDominioException("Ese bloqueo ya existe");
         }
         bloqueos.add(nuevo);
     }
@@ -361,7 +362,8 @@ public class Apartamento {
         bloqueos.stream()
                 .filter(b -> b.id().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("El apartamento no tiene el bloqueo " + id.valor()))
+                .orElseThrow(() -> new ReglaDominioException(
+                        "El apartamento " + codigo.valor() + " no tiene ese bloqueo"))
                 .levantar();
     }
 

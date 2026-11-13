@@ -165,7 +165,7 @@ public class Alojamiento {
     public void agregarServicioAdicional(ServicioAdicional servicio) {
         Objects.requireNonNull(servicio, "servicio");
         if (serviciosAdicionales.contains(servicio)) {
-            throw new ReglaDominioException("Ya existe el servicio adicional " + servicio.id().valor());
+            throw new ReglaDominioException("Ya existe el servicio adicional " + servicio.nombre());
         }
         serviciosAdicionales.add(servicio);
     }
@@ -213,7 +213,7 @@ public class Alojamiento {
         return serviciosAdicionales.stream()
                 .filter(s -> s.id().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("El alojamiento no tiene el servicio " + id.valor()));
+                .orElseThrow(() -> new ReglaDominioException("Ese servicio no es del alojamiento"));
     }
 
     private long serviciosActivos() {

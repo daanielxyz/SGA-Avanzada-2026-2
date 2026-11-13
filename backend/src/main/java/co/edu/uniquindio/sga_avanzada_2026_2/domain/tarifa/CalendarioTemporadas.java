@@ -33,8 +33,8 @@ public class CalendarioTemporadas {
         for (int i = 0; i < temporadas.size(); i++) {
             for (int j = i + 1; j < temporadas.size(); j++) {
                 if (temporadas.get(i).seSolapaCon(temporadas.get(j))) {
-                    throw new ReglaDominioException("Las temporadas " + temporadas.get(i).id().valor() + " y "
-                            + temporadas.get(j).id().valor() + " se solapan");
+                    throw new ReglaDominioException("Las temporadas " + temporadas.get(i).nombre() + " y "
+                            + temporadas.get(j).nombre() + " se solapan");
                 }
             }
         }
@@ -60,7 +60,7 @@ public class CalendarioTemporadas {
      */
     public void exigirTemporadaActiva(TemporadaId id) {
         if (!temporada(id).activa()) {
-            throw new ReglaDominioException("La temporada " + id.valor() + " está inactiva");
+            throw new ReglaDominioException("La temporada " + temporada(id).nombre() + " está inactiva");
         }
     }
 
@@ -75,7 +75,7 @@ public class CalendarioTemporadas {
                                  int estanciaMinimaNoches) {
         Temporada nueva = new Temporada(id, nombre, inicio, fin, false, estanciaMinimaNoches, true);
         if (temporadas.contains(nueva)) {
-            throw new ReglaDominioException("Ya existe la temporada " + id.valor());
+            throw new ReglaDominioException("Ya existe la temporada " + nueva.nombre());
         }
         validarSinSolape(nueva);
         temporadas.add(nueva);
@@ -147,8 +147,8 @@ public class CalendarioTemporadas {
                 .filter(t -> !t.equals(candidata) && t.seSolapaCon(candidata))
                 .findFirst()
                 .ifPresent(t -> {
-                    throw new ReglaDominioException("La temporada " + candidata.id().valor()
-                            + " se solapa con " + t.id().valor());
+                    throw new ReglaDominioException("La temporada " + candidata.nombre()
+                            + " se solapa con " + t.nombre());
                 });
     }
 
@@ -161,7 +161,7 @@ public class CalendarioTemporadas {
         return temporadas.stream()
                 .filter(t -> t.id().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new ReglaDominioException("El calendario no tiene la temporada " + id.valor()));
+                .orElseThrow(() -> new ReglaDominioException("Esa temporada no está en el calendario"));
     }
 
     public AlojamientoId alojamientoId() {

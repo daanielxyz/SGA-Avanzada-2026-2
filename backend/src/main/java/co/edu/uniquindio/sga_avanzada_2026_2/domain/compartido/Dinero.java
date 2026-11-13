@@ -79,6 +79,21 @@ public record Dinero(BigDecimal monto) {
         return monto.signum() > 0;
     }
 
+    /**
+     * Como lo lee una persona en un mensaje: «$ 476.000», pesos sin decimales con punto de miles (#8 · DEC-118).
+     */
+    public String enPesos() {
+        String digitos = monto.toBigInteger().toString();
+        StringBuilder conPuntos = new StringBuilder();
+        for (int i = 0; i < digitos.length(); i++) {
+            if (i > 0 && (digitos.length() - i) % 3 == 0) {
+                conPuntos.append('.');
+            }
+            conPuntos.append(digitos.charAt(i));
+        }
+        return "$ " + conPuntos;
+    }
+
     public boolean esCero() {
         return monto.signum() == 0;
     }

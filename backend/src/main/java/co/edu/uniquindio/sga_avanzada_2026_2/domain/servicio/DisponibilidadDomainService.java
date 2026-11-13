@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.FormatoTexto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ParametrosAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
@@ -118,7 +119,8 @@ public class DisponibilidadDomainService {
         }
         Optional<Noche> bloqueada = estancia.noches().stream().filter(apartamento::tieneBloqueoEn).findFirst();
         if (bloqueada.isPresent()) {
-            return Optional.of("El apartamento " + codigo + " está bloqueado la noche " + bloqueada.get().fecha());
+            return Optional.of("El apartamento " + codigo + " está bloqueado la noche del "
+                    + FormatoTexto.fecha(bloqueada.get().fecha()));
         }
         Optional<Reserva> solapada = activas.stream().filter(r -> r.retieneNochesDe(estancia)).findFirst();
         if (solapada.isPresent()) {

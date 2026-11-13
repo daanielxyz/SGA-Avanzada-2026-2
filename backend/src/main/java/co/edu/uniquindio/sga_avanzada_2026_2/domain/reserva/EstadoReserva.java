@@ -7,12 +7,23 @@ import java.util.Objects;
  * PENDIENTE → CONFIRMADA | CANCELADA · CONFIRMADA → EN_CURSO | CANCELADA | NO_SHOW · EN_CURSO → FINALIZADA.
  */
 public enum EstadoReserva {
-    PENDIENTE,
-    CONFIRMADA,
-    EN_CURSO,
-    FINALIZADA,
-    CANCELADA,
-    NO_SHOW;
+    PENDIENTE("pendiente"),
+    CONFIRMADA("confirmada"),
+    EN_CURSO("en curso"),
+    FINALIZADA("finalizada"),
+    CANCELADA("cancelada"),
+    NO_SHOW("en no-show");
+
+    private final String texto;
+
+    EstadoReserva(String texto) {
+        this.texto = texto;
+    }
+
+    /** Cómo se nombra en un mensaje para recepción: «La reserva está en curso» (#8 · DEC-118). */
+    public String texto() {
+        return texto;
+    }
 
     /**
      * Transiciones del ciclo de vida; los terminales (FINALIZADA, CANCELADA, NO_SHOW) no tienen salida

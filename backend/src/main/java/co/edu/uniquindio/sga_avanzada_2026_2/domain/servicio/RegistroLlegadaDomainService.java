@@ -36,7 +36,7 @@ public class RegistroLlegadaDomainService {
         if (!apartamento.estadoOperativo().permiteRegistro()) {
             throw new ReglaDominioException(MotivoRechazo.APARTAMENTO_NO_PREPARADO,
                     "El apartamento " + apartamento.codigo().valor() + " está "
-                    + apartamento.estadoOperativo() + ": solo se entrega PREPARADO");
+                    + apartamento.estadoOperativo().texto() + ": solo se entrega cuando está preparado");
         }
         reserva.registrarLlegada(registroId, ahora, autor, pagado, motivoSinPago);
         apartamento.ocupar();

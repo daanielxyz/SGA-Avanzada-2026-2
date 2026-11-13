@@ -94,7 +94,7 @@ public class Temporada {
             throw new ReglaDominioException("La temporada base no puede desactivarse");
         }
         if (!activa) {
-            throw new ReglaDominioException("La temporada " + id.valor() + " ya está inactiva");
+            throw new ReglaDominioException("La temporada " + nombre + " ya está inactiva");
         }
         activa = false;
     }
