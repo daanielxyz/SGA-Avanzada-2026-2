@@ -6280,6 +6280,349 @@ button.barra {
   }
 }
 
+/* Temporadas y tarifas (sprint 4): temporadas y una tabla de tarifas con una columna por temporada activa. En lo
+   angosto, una tarjeta por temporada y por apartamento; las tablas desde 760 px de contenido */
+.tarifas {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+}
+
+.tarifas h1:focus {
+  outline: none;
+}
+
+/* Relativo: el texto para lectores de pantalla de un encabezado no se sale de la caja que se desplaza */
+.tabla-temporadas-marco,
+.tabla-tarifas-marco {
+  display: none;
+  position: relative;
+}
+
+/* Un nombre de temporada largo parte en renglones en vez de ensanchar su columna */
+.tabla-tarifas thead th {
+  min-width: 120px;
+  max-width: 200px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  vertical-align: bottom;
+}
+
+.tabla-temporadas td,
+.tabla-tarifas td,
+.tabla-tarifas th {
+  vertical-align: middle;
+}
+
+.celda-temporada {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  max-width: 280px;
+}
+
+.sin-cortar {
+  white-space: nowrap;
+}
+
+.temporada-acciones {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+/* Inactiva: en gris y además con «○ Inactiva», no solo por el color */
+.temporada-apagada,
+.temporada-apagada strong {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.temporada-activa .etiqueta-forma {
+  color: var(--exito);
+}
+
+.temporada-inactiva .etiqueta-forma {
+  color: var(--texto-suave);
+}
+
+.temporadas-tarjetas,
+.tarifas-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.temporada-tarjeta,
+.tarifa-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+}
+
+.temporada-tarjeta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.temporada-tarjeta .temporada-acciones {
+  flex-wrap: wrap;
+  justify-content: stretch;
+}
+
+.temporada-tarjeta .temporada-acciones .boton {
+  flex: 1;
+}
+
+.temporadas-inactivas {
+  margin-top: var(--espacio-1);
+}
+
+.temporadas-inactivas summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--tamano-chico);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.temporadas-inactivas[open] summary {
+  margin-bottom: var(--espacio-2);
+}
+
+/* Celda de tarifa: el valor es un botón con su lápiz; «Sin tarifa» lleva «!» y borde punteado, no solo color */
+/* El apartamento es el encabezado de su fila (para los lectores de pantalla), pero se ve como una celda */
+.tabla .celda-apartamento {
+  min-width: 200px;
+  max-width: 280px;
+  padding: var(--espacio-2) var(--espacio-3);
+  background: none;
+  color: var(--texto);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.tabla-tarifas td {
+  padding-top: var(--espacio-2);
+  padding-bottom: var(--espacio-2);
+}
+
+.celda-apartamento > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+}
+
+.celda-tarifa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 40px;
+  padding: var(--espacio-1) var(--espacio-2);
+  border: 1px solid transparent;
+  border-radius: var(--radio-chico);
+  background: none;
+  color: var(--texto);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 160ms ease-out, background-color 160ms ease-out;
+}
+
+.celda-tarifa .icono-lapiz {
+  width: 14px;
+  height: 14px;
+  color: var(--texto-suave);
+}
+
+.celda-tarifa.sin-tarifa {
+  border: 1px dashed var(--borde-fuerte);
+}
+
+/* Con el dedo, cada valor mide 44 px de alto */
+@media (pointer: coarse) {
+  .celda-tarifa {
+    min-height: 44px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .celda-tarifa:hover {
+    border-color: var(--acento);
+    background: var(--superficie-fila);
+  }
+}
+
+.sello-sin-tarifa {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--marca-terracota);
+  color: var(--marca-medianoche);
+  font-size: var(--tamano-mini);
+  font-weight: 700;
+}
+
+.no-se-vende {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1-medio);
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.tarifa-renglones {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.tarifa-renglones > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-1) 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.tarifa-renglones dt {
+  min-width: 0;
+  font-size: var(--tamano-chico);
+  overflow-wrap: anywhere;
+}
+
+.tarifa-renglones dd {
+  margin: 0;
+}
+
+.tarifa-tarjeta > .boton {
+  align-self: flex-start;
+}
+
+/* Diálogos: estancia en noches, una tarifa por apartamento y el historial */
+.campo-unidad-corta {
+  max-width: 200px;
+}
+
+.campo-pesos .campo-unidad {
+  max-width: 220px;
+}
+
+.tarifas-nuevas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tarifas-nuevas-titulo {
+  padding: 0;
+  color: var(--texto-suave);
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tarifas-nuevas-lista {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  list-style: none;
+}
+
+.tarifas-nuevas-lista li {
+  padding: var(--espacio-3);
+  border-bottom: 1px solid var(--borde);
+  overflow-wrap: anywhere;
+}
+
+.tarifas-nuevas-lista li:last-child {
+  border-bottom: 0;
+}
+
+.fechas-temporada {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.historial-tarifas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.tabla-historial {
+  min-width: 520px;
+}
+
+.marca-vigente {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  margin-left: var(--espacio-2);
+  font-size: var(--tamano-pista);
+  white-space: nowrap;
+}
+
+.marca-vigente .etiqueta-forma {
+  color: var(--exito);
+}
+
+@container (min-width: 760px) {
+  .tabla-temporadas-marco,
+  .tabla-tarifas-marco {
+    display: block;
+  }
+
+  .temporadas-tarjetas,
+  .tarifas-tarjetas {
+    display: none;
+  }
+}
+
+@media (min-width: 800px) {
+  .dialogo.dialogo-ancho {
+    width: 720px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celda-tarifa {
+    transition: none;
+  }
+}
+
 /* Decisiones del sprint 4: motivo de fuera de servicio (DEC-113), llegada registrada en el detalle (DEC-114) y el
    orden de la preparación (DEC-111) */
 .motivo-fuera {

@@ -37,7 +37,8 @@ public class PagoEnLineaDomainService {
                     + reserva.codigo().valor());
         }
         if (reserva.estado() != EstadoReserva.PENDIENTE) {
-            throw new ReglaDominioException("Solo se paga en línea una reserva PENDIENTE; está " + reserva.estado());
+            throw new ReglaDominioException("La reserva está " + reserva.estado().texto()
+                    + ": solo se paga en línea una reserva pendiente");
         }
         if (reserva.horaEstimadaLlegada() == null) {
             throw new ReglaDominioException("Esta reserva todavía no tiene hora de llegada: comunícate con el hotel"

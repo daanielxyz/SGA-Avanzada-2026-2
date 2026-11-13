@@ -74,10 +74,10 @@ public class NotaReserva {
         Objects.requireNonNull(reserva, "reserva");
         if (!reserva.codigo().equals(reservaId)) {
             throw new ReglaDominioException(
-                    "La nota " + id.valor() + " no es de la reserva " + reserva.codigo().valor());
+                    "Esa nota no es de la reserva " + reserva.codigo().valor());
         }
         if (atendida()) {
-            throw new ReglaDominioException(MotivoRechazo.YA_ATENDIDA, "La nota " + id.valor() + " ya fue atendida");
+            throw new ReglaDominioException(MotivoRechazo.YA_ATENDIDA, "Esa nota ya fue atendida");
         }
         exigirActiva(reserva, "Las notas solo se atienden en una reserva activa");
         if (ahora == null || ahora.isBefore(escritaEn)) {
@@ -88,7 +88,8 @@ public class NotaReserva {
 
     private static void exigirActiva(Reserva reserva, String mensaje) {
         if (!reserva.estaActiva()) {
-            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO, mensaje + "; está " + reserva.estado());
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    mensaje + ": la reserva está " + reserva.estado().texto());
         }
     }
 

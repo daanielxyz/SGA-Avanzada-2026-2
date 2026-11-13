@@ -53,7 +53,7 @@ final class ReservaMapper {
                 new Dinero(jpa.getValorTotal()),
                 jpa.getDesglose().stream()
                         .map(n -> new LineaCotizacion(new Noche(n.getNoche()), new TemporadaId(n.getTemporadaId()),
-                                new Dinero(n.getTarifa()), n.getOcupantesFacturables(), new Dinero(n.getSubtotal())))
+                                n.getTemporadaNombre(), new Dinero(n.getTarifa()), n.getOcupantesFacturables(), new Dinero(n.getSubtotal())))
                         .toList(),
                 new PoliticaId(jpa.getPoliticaVersionId()),
                 jpa.getCreadaEn(),
@@ -107,7 +107,8 @@ final class ReservaMapper {
                 o.viaje().ciudadDestino(), o.viaje().motivoViaje(), o.principal())));
         jpa.getDesglose().clear();
         reserva.desglose().forEach(l -> jpa.getDesglose().add(new NocheReservaJpa(l.noche().fecha(),
-                l.temporadaId().valor(), l.tarifa().monto(), l.ocupantesFacturables(), l.subtotal().monto())));
+                l.temporadaId().valor(), l.temporadaNombre(), l.tarifa().monto(), l.ocupantesFacturables(),
+                l.subtotal().monto())));
     }
 
     private static Ocupante ocupante(OcupanteJpa jpa) {

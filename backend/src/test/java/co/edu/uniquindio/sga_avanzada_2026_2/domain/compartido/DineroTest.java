@@ -68,4 +68,14 @@ class DineroTest {
         assertTrue(resultado.esCero());
         assertTrue(Dinero.de(1).esPositivo());
     }
+
+    @Test
+    @Tag("DEC-118")
+    void enLosMensajesSeLeeEnPesosConPuntoDeMiles() {
+        assertEquals("$ 0", Dinero.CERO.enPesos());
+        assertEquals("$ 999", Dinero.de(999).enPesos());
+        assertEquals("$ 1.000", Dinero.de(1_000).enPesos());
+        assertEquals("$ 142.800", Dinero.de(142_800).enPesos());
+        assertEquals("$ 1.234.567", Dinero.de(1_234_567).enPesos());
+    }
 }

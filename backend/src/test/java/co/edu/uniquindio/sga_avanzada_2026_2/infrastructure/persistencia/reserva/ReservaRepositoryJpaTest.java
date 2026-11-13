@@ -75,7 +75,7 @@ class ReservaRepositoryJpaTest {
                                    List<Registro> registros, Salida salidaReal) {
         Estancia estancia = new Estancia(LocalDate.of(2026, 12, entrada), LocalDate.of(2026, 12, salida));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-ALTA"), Dinero.de(150_000), 1,
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-ALTA"), "Temporada alta", Dinero.de(150_000), 1,
                         Dinero.de(150_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), apartamento, new TitularId("TIT-1"), estancia, estado, canal,
@@ -124,7 +124,7 @@ class ReservaRepositoryJpaTest {
         assertEquals(Dinero.de(450_000), cargada.valorTotal());
         assertEquals(3, cargada.desglose().size());
         assertEquals(new LineaCotizacion(new Noche(LocalDate.of(2026, 12, 10)), new TemporadaId("TEM-ALTA"),
-                Dinero.de(150_000), 1, Dinero.de(150_000)), cargada.desglose().getFirst());
+                "Temporada alta", Dinero.de(150_000), 1, Dinero.de(150_000)), cargada.desglose().getFirst());
         assertEquals(new PoliticaId("POL-1"), cargada.politicaVersionId());
         assertEquals(CREADA, cargada.creadaEn());
         assertEquals(registro.fechaHora(), cargada.registro().fechaHora());
@@ -213,7 +213,8 @@ class ReservaRepositoryJpaTest {
     private static Reserva reservaNoShow(String codigo, DeclaracionNoShow declaracion) {
         Estancia estancia = new Estancia(LocalDate.of(2026, 12, 12), LocalDate.of(2026, 12, 13));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), "Temporada base",
+                        Dinero.de(100_000), 1, Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-301"), new TitularId("TIT-1"), estancia,
                 EstadoReserva.NO_SHOW, CanalOrigen.DIRECTO, null, null,
@@ -377,7 +378,8 @@ class ReservaRepositoryJpaTest {
     private static Reserva reservaCreadaEn(String codigo, LocalDateTime creadaEn) {
         Estancia estancia = new Estancia(LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 2));
         List<LineaCotizacion> desglose = estancia.noches().stream()
-                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), Dinero.de(100_000), 1, Dinero.de(100_000)))
+                .map(n -> new LineaCotizacion(n, new TemporadaId("TEM-1"), "Temporada base",
+                        Dinero.de(100_000), 1, Dinero.de(100_000)))
                 .toList();
         return new Reserva(new ReservaId(codigo), new ApartamentoId("APT-301"), new TitularId("TIT-1"), estancia,
                 EstadoReserva.PENDIENTE, CanalOrigen.DIRECTO, null, null,

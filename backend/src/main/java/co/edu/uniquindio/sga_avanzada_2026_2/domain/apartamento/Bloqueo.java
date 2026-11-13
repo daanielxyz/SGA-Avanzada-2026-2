@@ -57,7 +57,7 @@ public class Bloqueo {
      */
     void levantar() {
         if (!vigente) {
-            throw new ReglaDominioException("El bloqueo " + id.valor() + " ya fue levantado");
+            throw new ReglaDominioException("Ese bloqueo ya fue levantado");
         }
         vigente = false;
     }

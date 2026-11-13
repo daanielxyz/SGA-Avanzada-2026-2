@@ -13,16 +13,19 @@ import java.util.List;
 public record CotizacionResponse(List<NocheResponse> desglose, BigDecimal total) {
 
     /**
-     * @param tarifa valor por ocupante facturable esa noche
+     * @param temporada       id de la temporada de esa noche
+     * @param temporadaNombre su nombre, para que recepción no lea solo el id (#10 · DEC-117)
+     * @param tarifa          valor por ocupante facturable esa noche
      */
-    public record NocheResponse(LocalDate noche, String temporada, BigDecimal tarifa, int ocupantesFacturables,
-                                BigDecimal subtotal) {
+    public record NocheResponse(LocalDate noche, String temporada, String temporadaNombre, BigDecimal tarifa,
+                                int ocupantesFacturables, BigDecimal subtotal) {
     }
 
     static CotizacionResponse de(CotizacionResult r) {
         return new CotizacionResponse(
                 r.desglose().stream()
-                        .map(n -> new NocheResponse(n.noche(), n.temporada(), n.tarifa(), n.ocupantesFacturables(),
+                        .map(n -> new NocheResponse(n.noche(), n.temporada(), n.temporadaNombre(), n.tarifa(),
+                                n.ocupantesFacturables(),
                                 n.subtotal()))
                         .toList(),
                 r.total());

@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.FormatoTexto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
@@ -106,7 +107,8 @@ public class Titular {
     public void validarIdentidad(UsuarioId autor, LocalDateTime ahora) {
         if (estaValidado()) {
             throw new ReglaDominioException(MotivoRechazo.IDENTIDAD_VALIDADA,
-                    "La identidad de " + nombre() + " ya está validada desde " + validacion.fechaHora());
+                    "La identidad de " + nombre() + " ya está validada desde el "
+                    + FormatoTexto.fechaHora(validacion.fechaHora()));
         }
         validacion = new ValidacionIdentidad(autor, ahora);
     }

@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.FormatoTexto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
@@ -165,8 +166,8 @@ public class Reserva {
     public void cambiarExtras(int nuevosCarros, int nuevasMotos, int nuevasMascotas, Extras nuevosExtras) {
         if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Los vehículos y las mascotas solo se cambian antes de la llegada; la reserva está " + estado
-                    + ". Durante la estancia, cárgalos como un consumo");
+                    "La reserva está " + estado.texto() + ": los vehículos y las mascotas solo se cambian antes de "
+                    + "la llegada. Durante la estancia, cárgalos como un consumo");
         }
         declararExtras(nuevosCarros, nuevasMotos, nuevasMascotas, nuevosExtras);
     }
@@ -282,7 +283,8 @@ public class Reserva {
                           LocalDate hoy) {
         if (estado != EstadoReserva.PENDIENTE && estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Solo se modifica una reserva PENDIENTE o CONFIRMADA; está " + estado);
+                    "La reserva está " + estado.texto() + ": solo se modifica antes de la llegada, mientras está "
+                    + "pendiente o confirmada");
         }
         Objects.requireNonNull(nuevoApartamentoId, "nuevoApartamentoId");
         Objects.requireNonNull(hoy, "hoy");
@@ -335,7 +337,8 @@ public class Reserva {
         validarTransicion(EstadoReserva.CONFIRMADA);
         if (llegadaVencidaParaConfirmar(ahora, horaLimite)) {
             throw new ReglaDominioException(MotivoRechazo.LLEGADA_VENCIDA,
-                    "Ya pasó la hora límite de llegada (" + estancia.entrada().atTime(horaLimite)
+                    "Ya pasó la hora límite de llegada ("
+                    + FormatoTexto.fechaHora(estancia.entrada().atTime(horaLimite))
                     + "): la reserva no se confirma; se cancela o se hace una nueva");
         }
         if (horaEstimadaLlegada == null) {
@@ -345,8 +348,7 @@ public class Reserva {
         Dinero exigido = anticipoExigido(anticipo);
         if (pagado.esMenorQue(exigido)) {
             throw new ReglaDominioException(MotivoRechazo.ANTICIPO_INSUFICIENTE,
-                    "El pago (" + pagado.monto() + ") no cubre el anticipo exigido ("
-                    + exigido.monto() + ")");
+                    "Lo pagado (" + pagado.enPesos() + ") no cubre el anticipo exigido (" + exigido.enPesos() + ")");
         }
         estado = EstadoReserva.CONFIRMADA;
     }
@@ -395,7 +397,8 @@ public class Reserva {
      */
     public void liberar() {
         if (estado != EstadoReserva.PENDIENTE) {
-            throw new ReglaDominioException("Solo se libera una reserva PENDIENTE; está " + estado);
+            throw new ReglaDominioException(
+                    "La reserva está " + estado.texto() + ": solo se libera una reserva pendiente");
         }
         estado = EstadoReserva.CANCELADA;
     }
@@ -439,7 +442,7 @@ public class Reserva {
         LocalDateTime limite = estancia.entrada().atTime(horaLimite);
         if (ahora.isBefore(limite)) {
             throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
-                    "El no-show solo puede declararse desde " + limite);
+                    "El no-show solo puede declararse desde el " + FormatoTexto.fechaHora(limite));
         }
     }
 
@@ -455,7 +458,8 @@ public class Reserva {
         Objects.requireNonNull(ahora, "ahora");
         Objects.requireNonNull(plazo, "plazo");
         if (estado != EstadoReserva.PENDIENTE) {
-            throw new ReglaDominioException("Solo vence una reserva PENDIENTE; está " + estado);
+            throw new ReglaDominioException(
+                    "La reserva está " + estado.texto() + ": solo vence una reserva pendiente");
         }
         if (!vencio(ahora, plazo)) {
             throw new ReglaDominioException("La reserva " + codigo.valor()
@@ -496,18 +500,18 @@ public class Reserva {
         Objects.requireNonNull(pagado, "pagado");
         if (estado != EstadoReserva.CONFIRMADA) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Solo se registra la llegada de una reserva CONFIRMADA; está " + estado);
+                    "La reserva está " + estado.texto() + ": solo se registra la llegada de una reserva confirmada");
         }
         if (ahora.toLocalDate().isBefore(estancia.entrada())) {
             throw new ReglaDominioException(MotivoRechazo.ANTES_DE_TIEMPO,
-                    "No se puede registrar la llegada antes de la fecha de entrada "
-                    + estancia.entrada());
+                    "No se puede registrar la llegada antes de la fecha de entrada ("
+                    + FormatoTexto.fecha(estancia.entrada()) + ")");
         }
         boolean pagada = !pagado.esMenorQue(valorConExtras());
         if (!pagada && (motivoSinPago == null || motivoSinPago.isBlank())) { // BL-22
             throw new ReglaDominioException(MotivoRechazo.ESTANCIA_SIN_PAGAR,
-                    "La estancia y sus extras valen " + valorConExtras().monto() + " y hay pagado " + pagado.monto()
-                    + ": cóbrela o registre por qué entra sin pagar");
+                    "La estancia y sus extras valen " + valorConExtras().enPesos() + " y hay pagado "
+                    + pagado.enPesos() + ": cóbrela o registre por qué entra sin pagar");
         }
         registros.add(new Registro(id, ahora, autor, false, null, pagada ? null : motivoSinPago));
         estado = EstadoReserva.EN_CURSO;
@@ -529,7 +533,7 @@ public class Reserva {
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.EN_CURSO) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Solo se corrige el registro de una reserva EN_CURSO; está " + estado);
+                    "La reserva está " + estado.texto() + ": solo se corrige el registro de una reserva en curso");
         }
         if (motivo == null || motivo.isBlank()) {
             throw new ReglaDominioException("La corrección del registro requiere un motivo");
@@ -569,7 +573,7 @@ public class Reserva {
         Objects.requireNonNull(nuevo, "nuevo");
         if (!estaActiva()) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "El titular solo se cambia en una reserva activa; está " + estado);
+                    "La reserva está " + estado.texto() + ": el titular solo se cambia en una reserva activa");
         }
         if (nuevo.id().equals(titularId)) {
             throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO,
@@ -589,7 +593,8 @@ public class Reserva {
         Objects.requireNonNull(ocupanteId, "ocupanteId");
         if (!estaActiva()) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "El huésped principal solo se cambia en una reserva activa; está " + estado);
+                    "La reserva está " + estado.texto() + ": el huésped principal solo se cambia en una reserva "
+                    + "activa");
         }
         Ocupante nuevo = ocupante(ocupanteId);
         if (nuevo.principal()) {
@@ -613,7 +618,8 @@ public class Reserva {
         Objects.requireNonNull(ocupanteId, "ocupanteId");
         if (!estaActiva()) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Los datos de los ocupantes solo se completan en una reserva activa; está " + estado);
+                    "La reserva está " + estado.texto() + ": los datos de los ocupantes solo se completan en una "
+                    + "reserva activa");
         }
         Ocupante actual = ocupante(ocupanteId);
         Ocupante completo = actual.completar(nombres, primerApellido, segundoApellido, documento, nacionalidad, viaje);
@@ -647,7 +653,7 @@ public class Reserva {
         Objects.requireNonNull(ahora, "ahora");
         if (estado != EstadoReserva.EN_CURSO) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Solo se registra la salida de una reserva EN_CURSO; está " + estado);
+                    "La reserva está " + estado.texto() + ": solo se registra la salida de una reserva en curso");
         }
         if (ahora.isBefore(registro().fechaHora())) {
             throw new ReglaDominioException("La salida no puede ser anterior al registro de llegada");
@@ -686,7 +692,7 @@ public class Reserva {
     private void validarTransicion(EstadoReserva destino) {
         if (!estado.puedePasarA(destino)) {
             throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
-                    "Transición de reserva no permitida: " + estado + " → " + destino);
+                    "La reserva está " + estado.texto() + " y ya no puede quedar " + destino.texto());
         }
     }
 
@@ -698,7 +704,7 @@ public class Reserva {
         Objects.requireNonNull(capacidad, "capacidad");
         if (estancia.entrada().isBefore(hoy)) {
             throw new ReglaDominioException(MotivoRechazo.FECHAS_INVALIDAS,
-                    "La fecha de entrada no puede ser anterior a hoy (" + hoy + ")");
+                    "La fecha de entrada no puede ser anterior a hoy (" + FormatoTexto.fecha(hoy) + ")");
         }
         validarGrupo(ocupantes);
         if (!capacidad.admite(ocupantes.size())) {
@@ -726,7 +732,7 @@ public class Reserva {
                 .filter(o -> o.id().equals(ocupanteId))
                 .findFirst()
                 .orElseThrow(() -> new ReglaDominioException(
-                        "El ocupante " + ocupanteId.valor() + " no es de la reserva " + codigo.valor()));
+                        "Ese ocupante no es de la reserva " + codigo.valor()));
     }
 
     // DEC-97 · Resolución 700 de 2021: un solo huésped principal, que se aloja y es mayor de edad. Si nadie viene

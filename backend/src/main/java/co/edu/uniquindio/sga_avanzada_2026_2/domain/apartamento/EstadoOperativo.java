@@ -7,11 +7,22 @@ import java.util.Objects;
  * Quién puede hacer cada cambio (EOPE-04) se controla en la aplicación, no aquí.
  */
 public enum EstadoOperativo {
-    PREPARADO,
-    OCUPADO,
-    PENDIENTE_PREPARACION,
-    EN_PREPARACION,
-    FUERA_DE_SERVICIO;
+    PREPARADO("preparado"),
+    OCUPADO("ocupado"),
+    PENDIENTE_PREPARACION("pendiente de preparación"),
+    EN_PREPARACION("en preparación"),
+    FUERA_DE_SERVICIO("fuera de servicio");
+
+    private final String texto;
+
+    EstadoOperativo(String texto) {
+        this.texto = texto;
+    }
+
+    /** Cómo se nombra en un mensaje: «El apartamento está en preparación» (#8 · DEC-118). */
+    public String texto() {
+        return texto;
+    }
 
     /**
      * Transiciones válidas (EOPE-02): PREPARADO→OCUPADO (registro), OCUPADO→PENDIENTE_PREPARACION (salida),
