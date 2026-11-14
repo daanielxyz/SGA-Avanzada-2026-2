@@ -546,7 +546,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint4-apartamentos/S4Apartamentos/` (8
 - **Sin foto** (2): la miniatura punteada con el ícono sale cuando `imagenes` viene vacío o la imagen no carga.
 - **Bloqueos** (4): `fin` es exclusivo, como la estancia: «24 → 27 nov» deja libre la noche del 27. El diálogo dice «Desde» y «Hasta», con la pista «Esas noches no se venden en ningún canal. La noche de “Hasta” ya se vende». `vigente` = no levantado. Arriba van los vigentes que no han terminado (`fechaFin` > hoy), con «Levantar». En «Ver anteriores» van los levantados y los ya terminados, en gris y sin acción.
 - **Fotos al crear** (6): acordado el 13 nov, todo apartamento tiene al menos una foto, como dice el prompt. El formulario la exige («Agrega al menos una foto»), aunque la API hoy acepta crear sin fotos (`minItems: 0`). La primera que se agrega queda marcada como principal, y con botones de opción nunca hay dos. El rechazo «Exactamente una imagen debe ser la principal» queda solo por si llega de la API.
-- **Quitar fotos** (7): sin confirmación, porque se vuelve a agregar con la misma dirección. Se puede quitar la principal: la API pasa a principal la primera de las que quedan. La única foto no se puede quitar: su «Quitar» no aparece, y la pista dice «Agrega otra antes de quitar esta». La API solo lo rechaza si el apartamento está a la venta; si aun así llega el rechazo, sale junto a la foto.
+- **Quitar fotos** (7): sin confirmación, porque se vuelve a agregar con la misma dirección. Se puede quitar la principal: la API pasa a principal la primera de las que quedan. La única foto no se puede quitar: su «Quitar» no aparece, y la pista dice «Agrega otra antes de quitar esta». Desde DEC-123 la API también lo rechaza, esté a la venta o retirado; si llega el rechazo, sale junto a la foto.
 - **Vista previa** (8): solo en el diálogo de foto. Si no carga, «Agregar foto» sigue habilitado: puede ser una dirección que el navegador no muestra pero sí existe.
 - **Al crear** (9): nace en «Pendiente de preparación» y «Retirado» (`Apartamento.crear`); la cabecera muestra los dos.
 - **Mascotas** (10, 16): `limiteMascotas` vacío = usa el límite del hotel (`GET /api/alojamiento`, `parametros.limiteMascotas`). La sección dice «Hasta N mascotas (el límite del hotel)». Si `aceptaMascotas` está apagado, el texto del mockup sin acción. El rechazo del diálogo (número negativo) va junto al campo.
@@ -554,7 +554,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint4-apartamentos/S4Apartamentos/` (8
 - **Enlaces** (14): «Ir a temporadas y tarifas» lleva a `/tarifas` y cada reserva afectada a `/reservas/:codigo`.
 - **Menú** (15): ya está en `src/navegacion.ts`; no se cambia.
 
-**Para el núcleo (Reyes), sin urgencia**: que la API también exija al menos una foto (`minItems: 1` en `CrearApartamentoRequest` y que `quitarImagen` rechace la última aunque esté retirado). Hoy solo el PMS lo cuida, y otra pantalla o un canal podría crear uno sin fotos.
+**Para el núcleo, hecho** en DEC-123 (`feature/nucleo/al-menos-una-foto`): la API exige al menos una foto al crear y `quitarImagen` rechaza la última aunque esté retirado. Va en el dominio (409), no como `minItems: 1` en el Request.
 
 Propuesta para el equipo (no está en el prompt, no se dibuja por ahora): DEC-113 ya trae `motivoFueraDeServicio` en `ApartamentoResponse`. Se podría mostrar bajo «⊘ Fuera de servicio» en el detalle.
 
