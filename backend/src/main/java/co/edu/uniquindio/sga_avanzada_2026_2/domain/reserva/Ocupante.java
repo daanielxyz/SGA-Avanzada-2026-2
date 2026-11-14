@@ -112,8 +112,8 @@ public class Ocupante {
 
     /**
      * Completa los datos del TRA con los que llegan; el que no llega se conserva. La fecha de nacimiento no cambia,
-     * porque decide quién paga (RN-06), y un documento ya registrado tampoco: se corrige modificando la reserva
-     * (BL-07).
+     * porque decide quién paga (RN-06), y un documento ya registrado tampoco: si está mal escrito, se corrige con
+     * {@code Reserva.corregirDocumento} (BL-07 · DEC-120).
      *
      * @return el mismo ocupante, con sus datos completados
      * @throws ReglaDominioException si llega un documento distinto del que ya tenía
@@ -121,8 +121,8 @@ public class Ocupante {
     Ocupante completar(String nuevosNombres, String nuevoPrimerApellido, String nuevoSegundoApellido,
                        Documento nuevoDocumento, String nuevaNacionalidad, DatosViaje nuevoViaje) {
         if (documento != null && nuevoDocumento != null && !documento.equals(nuevoDocumento)) {
-            throw new ReglaDominioException("El documento de " + nombre() + " ya está registrado; si está mal, se "
-                    + "corrige modificando la reserva");
+            throw new ReglaDominioException("El documento de " + nombre() + " ya está registrado; si está mal "
+                    + "escrito, usa «Corregir documento»");
         }
         return new Ocupante(id,
                 DatosViaje.limpio(nuevosNombres) != null ? nuevosNombres : nombres,
@@ -132,6 +132,12 @@ public class Ocupante {
                 documento != null ? documento : nuevoDocumento,
                 DatosViaje.limpio(nuevaNacionalidad) != null ? nuevaNacionalidad : nacionalidad,
                 viaje.completarCon(nuevoViaje), principal);
+    }
+
+    /** El mismo ocupante con otro documento; todo lo demás, también los datos del TRA, se conserva (DEC-120). */
+    Ocupante conDocumento(Documento nuevo) {
+        return new Ocupante(id, nombres, primerApellido, segundoApellido, fechaNacimiento, nuevo, nacionalidad, viaje,
+                principal);
     }
 
     /**

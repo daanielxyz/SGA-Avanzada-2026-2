@@ -23,6 +23,8 @@ import java.util.Optional;
  *                        detalle, nulo en las demás respuestas
  * @param noShow     quién lo declaró y cuándo (BL-25 · DEC-103); solo en el detalle para el personal; nulo si no
  *                   aplica o si se declaró antes de guardarse este dato
+ * @param correccionesDocumento los documentos corregidos, del más antiguo al más reciente (DEC-120); solo en el
+ *                              detalle para el personal y al corregir; nulo en las demás respuestas
  */
 public record ReservaResponse(String codigo, String apartamento, String titularId, LocalDate entrada,
                               LocalDate salida, String estado, String canalOrigen,
@@ -30,7 +32,8 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                               CotizacionResponse valor, String politicaId, LocalDateTime creadaEn,
                               String avisoCuenta, int vehiculos, int mascotas, String titularNombre, int carros,
                               int motos, ExtrasResponse extras, BigDecimal anticipoExigido,
-                              DeclaracionNoShowResponse noShow) {
+                              DeclaracionNoShowResponse noShow,
+                              List<CorreccionDocumentoResponse> correccionesDocumento) {
 
     /**
      * @param autor       id del usuario
@@ -40,6 +43,17 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
     }
 
     public record ExtrasResponse(BigDecimal parqueadero, BigDecimal mascotas, BigDecimal total) {
+    }
+
+    /**
+     * @param ocupante    nombre de la persona cuando se corrigió
+     * @param autor       id del usuario que corrigió
+     * @param autorNombre el nombre vigente de esa persona; nulo si ya no existe
+     * @param titular     si fue el documento del titular (y, si se aloja, el de su ocupante con él)
+     */
+    public record CorreccionDocumentoResponse(String ocupante, String tipoAnterior, String numeroAnterior,
+                                              String tipoNuevo, String numeroNuevo, String motivo, String autor,
+                                              String autorNombre, LocalDateTime fechaHora, boolean titular) {
     }
 
     /**
@@ -56,18 +70,26 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
     }
 
     public static ReservaResponse de(ReservaResult r) {
-        return de(r, null, null, null);
+        return de(r, null, null, null, null);
     }
 
     public static ReservaResponse de(ReservaConTitularResult r) {
         return de(r.reserva(), r.titularNombre(), r.anticipoExigido(),
                 Optional.ofNullable(r.noShow())
                         .map(n -> new DeclaracionNoShowResponse(n.autor(), n.autorNombre(), n.fechaHora()))
+                        .orElse(null),
+                Optional.ofNullable(r.correccionesDocumento())
+                        .map(lista -> lista.stream()
+                                .map(c -> new CorreccionDocumentoResponse(c.ocupante(), c.tipoAnterior(),
+                                        c.numeroAnterior(), c.tipoNuevo(), c.numeroNuevo(), c.motivo(), c.autor(),
+                                        c.autorNombre(), c.fechaHora(), c.titular()))
+                                .toList())
                         .orElse(null));
     }
 
     private static ReservaResponse de(ReservaResult r, String titularNombre, BigDecimal anticipoExigido,
-                                      DeclaracionNoShowResponse noShow) {
+                                      DeclaracionNoShowResponse noShow,
+                                      List<CorreccionDocumentoResponse> correccionesDocumento) {
         return new ReservaResponse(r.codigo(), r.apartamento(), r.titularId(), r.entrada(), r.salida(), r.estado(),
                 r.canalOrigen(),
                 r.ocupantes().stream()
@@ -80,6 +102,6 @@ public record ReservaResponse(String codigo, String apartamento, String titularI
                 r.horaEstimadaLlegada(), CotizacionResponse.de(r.valor()), r.politicaId(), r.creadaEn(),
                 r.avisoCuenta(), r.vehiculos(), r.mascotas(), titularNombre, r.carros(), r.motos(),
                 new ExtrasResponse(r.extras().parqueadero(), r.extras().mascotas(), r.extras().total()),
-                anticipoExigido, noShow);
+                anticipoExigido, noShow, correccionesDocumento);
     }
 }

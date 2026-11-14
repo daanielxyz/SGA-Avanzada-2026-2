@@ -57,6 +57,7 @@ public class Reserva {
     private int mascotas;                       // RP-03
     private Extras extras;                      // congelados; DEC-89
     private DeclaracionNoShow declaracionNoShow; // nula en los no-show anteriores a BL-25
+    private final List<CorreccionDocumento> correccionesDocumento; // historial (DEC-120)
 
     // OCU-02 · OCU-05 · CORI-03 · RN-22 · REG-01 · REG-06 · SAL-01
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
@@ -91,13 +92,26 @@ public class Reserva {
                 extras, null);
     }
 
-    // Reconstrucción completa: también quién declaró el no-show, que solo existe en ese estado (BL-25 · DEC-103)
+    // También quién declaró el no-show, que solo existe en ese estado (BL-25 · DEC-103)
     public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
                    EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
                    List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
                    LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
                    PoliticaId politicaVersionId, LocalDateTime creadaEn, int carros, int motos, int mascotas,
                    Extras extras, DeclaracionNoShow declaracionNoShow) {
+        this(codigo, apartamentoId, titularId, estancia, estado, canalOrigen, canalId, idExterno, ocupantes, registros,
+                salida, horaEstimadaLlegada, valorTotal, desglose, politicaVersionId, creadaEn, carros, motos, mascotas,
+                extras, declaracionNoShow, List.of());
+    }
+
+    // Reconstrucción completa: también los documentos corregidos (DEC-120)
+    public Reserva(ReservaId codigo, ApartamentoId apartamentoId, TitularId titularId, Estancia estancia,
+                   EstadoReserva estado, CanalOrigen canalOrigen, CanalId canalId, String idExterno,
+                   List<Ocupante> ocupantes, List<Registro> registros, Salida salida,
+                   LocalTime horaEstimadaLlegada, Dinero valorTotal, List<LineaCotizacion> desglose,
+                   PoliticaId politicaVersionId, LocalDateTime creadaEn, int carros, int motos, int mascotas,
+                   Extras extras, DeclaracionNoShow declaracionNoShow,
+                   List<CorreccionDocumento> correccionesDocumento) {
         if (codigo == null || apartamentoId == null || titularId == null || estancia == null || estado == null
                 || canalOrigen == null || ocupantes == null || registros == null || valorTotal == null
                 || desglose == null || politicaVersionId == null || creadaEn == null) {
@@ -116,6 +130,7 @@ public class Reserva {
             throw new ReglaDominioException("La declaración del no-show no corresponde al estado " + estado);
         }
         this.declaracionNoShow = declaracionNoShow;
+        this.correccionesDocumento = new ArrayList<>(correccionesDocumento == null ? List.of() : correccionesDocumento);
         this.codigo = codigo;
         this.apartamentoId = apartamentoId;
         this.titularId = titularId;
@@ -626,6 +641,89 @@ public class Reserva {
         List<Ocupante> grupo = ocupantes.stream().map(o -> o.equals(actual) ? completo : o).toList();
         validarGrupo(grupo);
         ocupantes = grupo;
+    }
+
+    /**
+     * Corrige el documento mal escrito de un ocupante (#14 · DEC-120). Solo cambia el documento: el nombre, la fecha
+     * de nacimiento y los datos del TRA se conservan, a diferencia de modificar, que lo tomaría como otra persona.
+     * Queda en el historial con el documento anterior, el motivo, quién y cuándo. Un ocupante sin documento lo
+     * completa con sus datos del TRA (BL-07). Si el ocupante es el titular, va por
+     * {@link #corregirDocumentoDelTitular}: lo decide {@code CorreccionDocumentoDomainService}.
+     *
+     * @param autor quien corrige, de la sesión (DEC-61)
+     * @throws ReglaDominioException si la reserva ya terminó, el ocupante no es suyo, todavía no tiene documento, el
+     *                               documento es el mismo, ya lo tiene otro del grupo (OCU-05) o falta el motivo
+     */
+    public void corregirDocumento(OcupanteId ocupanteId, Documento nuevo, String motivo, UsuarioId autor,
+                                  LocalDateTime ahora) {
+        Objects.requireNonNull(ocupanteId, "ocupanteId");
+        Objects.requireNonNull(nuevo, "nuevo");
+        exigirActivaParaCorregir();
+        Ocupante actual = ocupante(ocupanteId);
+        if (actual.documento() == null) {
+            throw new ReglaDominioException(actual.nombre() + " todavía no tiene documento: agrégalo con sus datos "
+                    + "del TRA");
+        }
+        if (actual.documento().equals(nuevo)) {
+            throw new ReglaDominioException("El documento de " + actual.nombre() + " ya es ese");
+        }
+        CorreccionDocumento correccion = new CorreccionDocumento(actual.nombre(), actual.documento(), nuevo, motivo,
+                autor, ahora);
+        Ocupante corregido = actual.conDocumento(nuevo);
+        List<Ocupante> grupo = ocupantes.stream().map(o -> o.equals(actual) ? corregido : o).toList();
+        validarGrupo(grupo); // OCU-05: el documento nuevo no puede ser el de otro del grupo
+        ocupantes = grupo;
+        correccionesDocumento.add(correccion);
+    }
+
+    /**
+     * Corrige el documento mal escrito del titular de la reserva (#14 · DEC-120). Si se aloja, su ocupante, el que
+     * tiene el documento anterior, se corrige con él y conserva sus datos del TRA. Queda en el historial con el nombre
+     * del titular, marcado como suyo. El Titular, que es otro agregado, lo corrige
+     * {@code CorreccionDocumentoDomainService}.
+     *
+     * @param autor quien corrige, de la sesión (DEC-61)
+     * @throws ReglaDominioException si el titular no es el de la reserva, la reserva ya terminó, el documento es el
+     *                               mismo, ya lo tiene otro del grupo (OCU-05) o falta el motivo
+     */
+    public void corregirDocumentoDelTitular(Titular titular, Documento nuevo, String motivo, UsuarioId autor,
+                                            LocalDateTime ahora) {
+        Objects.requireNonNull(titular, "titular");
+        Objects.requireNonNull(nuevo, "nuevo");
+        if (!titular.id().equals(titularId)) {
+            throw new ReglaDominioException("El titular " + titular.id().valor() + " no es el de la reserva");
+        }
+        exigirActivaParaCorregir();
+        Documento anterior = titular.documento();
+        if (anterior.equals(nuevo)) {
+            throw new ReglaDominioException("El documento de " + titular.nombre() + " ya es ese");
+        }
+        CorreccionDocumento correccion = new CorreccionDocumento(titular.nombre(), anterior, nuevo, motivo, autor,
+                ahora, true);
+        List<Ocupante> grupo = ocupantes.stream()
+                .map(o -> anterior.equals(o.documento()) ? o.conDocumento(nuevo) : o)
+                .toList();
+        validarGrupo(grupo); // OCU-05
+        ocupantes = grupo;
+        correccionesDocumento.add(correccion);
+    }
+
+    /** Si ese ocupante es el titular de la reserva que se aloja: tiene su documento (TIT-01 · DEC-120). */
+    public boolean esElTitular(OcupanteId ocupanteId, Titular titular) {
+        return titular.id().equals(titularId) && titular.documento().equals(ocupante(ocupanteId).documento());
+    }
+
+    // DEC-120: el documento solo se corrige mientras la reserva está activa
+    private void exigirActivaParaCorregir() {
+        if (!estaActiva()) {
+            throw new ReglaDominioException(MotivoRechazo.ESTADO_NO_PERMITIDO,
+                    "La reserva está " + estado.texto() + ": el documento solo se corrige en una reserva activa");
+        }
+    }
+
+    /** Historial de documentos corregidos, del más antiguo al más reciente (DEC-120). */
+    public List<CorreccionDocumento> correccionesDocumento() {
+        return List.copyOf(correccionesDocumento);
     }
 
     /**

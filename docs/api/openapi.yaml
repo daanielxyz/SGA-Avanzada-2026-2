@@ -483,6 +483,71 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/ocupantes/{ocupanteId}/documento":
+    put:
+      tags:
+        - estancia-controller
+      operationId: corregirDocumento
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: ocupanteId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CorregirDocumentoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/titular/documento":
+    put:
+      tags:
+        - estancia-controller
+      operationId: corregirDocumentoTitular
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CorregirDocumentoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ReservaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/reservas/{codigo}/ocupantes/{ocupanteId}/datos-tra":
     put:
       tags:
@@ -3771,6 +3836,10 @@ components:
           type: string
         noShow:
           "$ref": "#/components/schemas/DeclaracionNoShowResponse"
+        correccionesDocumento:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CorreccionDocumentoResponse"
     EscribirNotaRequest:
       type: object
       properties:
@@ -3808,6 +3877,48 @@ components:
         fechaHora:
           type: string
           format: date-time
+    CorreccionDocumentoResponse:
+      type: object
+      properties:
+        ocupante:
+          type: string
+        tipoAnterior:
+          type: string
+        numeroAnterior:
+          type: string
+        tipoNuevo:
+          type: string
+        numeroNuevo:
+          type: string
+        motivo:
+          type: string
+        autor:
+          type: string
+        autorNombre:
+          type: string
+        fechaHora:
+          type: string
+          format: date-time
+        titular:
+          type: boolean
+    CorregirDocumentoRequest:
+      type: object
+      properties:
+        tipoDocumento:
+          type: string
+          pattern: "CC|CE|PASAPORTE|TI|RC"
+        numeroDocumento:
+          type: string
+          maxLength: 30
+          minLength: 0
+        motivo:
+          type: string
+          maxLength: 500
+          minLength: 0
+      required:
+        - motivo
+        - numeroDocumento
+        - tipoDocumento
     DeclaracionNoShowResponse:
       type: object
       properties:

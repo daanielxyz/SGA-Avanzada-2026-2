@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosViaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DeclaracionNoShow;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.CorreccionDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
@@ -62,7 +63,13 @@ final class ReservaMapper {
                 jpa.getMascotas(),
                 new Extras(new Dinero(jpa.getExtrasParqueadero()), new Dinero(jpa.getExtrasMascotas())),
                 jpa.getNoShowAutor() == null ? null
-                        : new DeclaracionNoShow(new UsuarioId(jpa.getNoShowAutor()), jpa.getNoShowFechaHora()));
+                        : new DeclaracionNoShow(new UsuarioId(jpa.getNoShowAutor()), jpa.getNoShowFechaHora()),
+                jpa.getCorreccionesDocumento().stream()
+                        .map(c -> new CorreccionDocumento(c.getOcupante(),
+                                new Documento(c.getTipoAnterior(), c.getNumeroAnterior()),
+                                new Documento(c.getTipoNuevo(), c.getNumeroNuevo()), c.getMotivo(),
+                                new UsuarioId(c.getAutor()), c.getFechaHora(), c.isTitular()))
+                        .toList());
     }
 
     /**
@@ -98,6 +105,10 @@ final class ReservaMapper {
         DeclaracionNoShow noShow = reserva.declaracionNoShow();
         jpa.setNoShowAutor(noShow == null ? null : noShow.autor().valor());
         jpa.setNoShowFechaHora(noShow == null ? null : noShow.fechaHora());
+        jpa.getCorreccionesDocumento().clear();
+        reserva.correccionesDocumento().forEach(c -> jpa.getCorreccionesDocumento().add(new CorreccionDocumentoJpa(
+                c.ocupante(), c.anterior().tipo(), c.anterior().numero(), c.nuevo().tipo(), c.nuevo().numero(),
+                c.motivo(), c.autor().valor(), c.fechaHora(), c.titular())));
         jpa.getOcupantes().clear();
         reserva.ocupantes().forEach(o -> jpa.getOcupantes().add(new OcupanteJpa(o.id().valor(), o.nombres(),
                 o.primerApellido(), o.segundoApellido(), o.fechaNacimiento(),

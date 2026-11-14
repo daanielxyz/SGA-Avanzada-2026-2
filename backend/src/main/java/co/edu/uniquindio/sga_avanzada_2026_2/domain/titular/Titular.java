@@ -26,7 +26,7 @@ public class Titular {
     private String nombres;
     private String primerApellido;     // opcional: los titulares de antes lo traen dentro de nombres (DEC-98)
     private String segundoApellido;    // opcional: no todos tienen
-    private final Documento documento; // lo reconoce entre sus reservas (TIT-05); no cambia
+    private Documento documento;       // lo reconoce entre sus reservas (TIT-05); se corrige si se escribió mal
     private Correo correo;             // opcional si hay teléfono; con él, el titular tiene cuenta (DEC-68)
     private String telefono;           // opcional si hay correo
     private ValidacionIdentidad validacion; // null hasta que recepción la valida en persona (DEC-98)
@@ -44,10 +44,7 @@ public class Titular {
         if (id == null || alojamientoId == null || documento == null) {
             throw new ReglaDominioException("El titular requiere id, alojamiento y documento");
         }
-        if (!documento.tipo().identificaTitular()) {
-            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO,
-                    "El titular no se identifica con registro civil: ese documento es de un niño");
-        }
+        validarIdentifica(documento);
         this.id = id;
         this.alojamientoId = alojamientoId;
         this.documento = documento;
@@ -57,7 +54,8 @@ public class Titular {
 
     /**
      * Recepción o el administrador corrigen nombre y contacto, también de un titular validado: es el hotel. El
-     * documento no cambia: es lo que lo reconoce entre sus reservas (TIT-05).
+     * documento no cambia aquí: es lo que lo reconoce entre sus reservas (TIT-05); si se escribió mal, se corrige con
+     * {@link #corregirDocumento(Documento)}.
      *
      * @throws ReglaDominioException si falta el nombre, no queda ningún contacto o el teléfono es inválido (DEC-49)
      */
@@ -135,6 +133,32 @@ public class Titular {
             throw new ReglaDominioException("El correo nuevo es obligatorio");
         }
         asignarDatos(nombres, primerApellido, segundoApellido, nuevoCorreo, telefono);
+    }
+
+    /**
+     * Corrige su documento cuando se escribió mal (#14 · DEC-120). Sigue siendo el mismo titular, con sus reservas,
+     * su validación y su cuenta; desde ahora el huésped entra con el número corregido (DEC-68). Que el documento
+     * nuevo no sea de otro titular del alojamiento (TIT-05) lo revisa {@code CorreccionDocumentoDomainService}.
+     *
+     * @throws ReglaDominioException si el documento es el mismo o es un registro civil (TIT-01)
+     */
+    public void corregirDocumento(Documento nuevo) {
+        if (nuevo == null) {
+            throw new ReglaDominioException("El documento nuevo es obligatorio");
+        }
+        if (nuevo.equals(documento)) {
+            throw new ReglaDominioException("El documento de " + nombre() + " ya es ese");
+        }
+        validarIdentifica(nuevo);
+        documento = nuevo;
+    }
+
+    // TIT-01: el titular es responsable de la reserva; un registro civil es de un niño
+    private static void validarIdentifica(Documento documento) {
+        if (!documento.tipo().identificaTitular()) {
+            throw new ReglaDominioException(MotivoRechazo.TITULAR_INVALIDO,
+                    "El titular no se identifica con registro civil: ese documento es de un niño");
+        }
     }
 
     // DEC-49: nombre y documento obligatorios, y al menos un contacto (correo o teléfono)

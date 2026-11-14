@@ -200,4 +200,21 @@ class TitularTest {
 
         assertEquals(new Correo("ana.nueva@correo.co"), titular.correo());
     }
+
+    @Test
+    @Tag("DEC-120")
+    @Tag("TIT-01")
+    void elDocumentoMalEscritoSeCorrigeYSigueSiendoElMismoTitular() {
+        Titular titular = new Titular(ID, ALO, "Ana", CC, CORREO, null);
+
+        titular.corregirDocumento(new Documento(TipoDocumento.CC, "10940"));
+
+        assertEquals(new Documento(TipoDocumento.CC, "10940"), titular.documento());
+        assertEquals(ID, titular.id());
+        assertThrows(ReglaDominioException.class,
+                () -> titular.corregirDocumento(new Documento(TipoDocumento.CC, "10940")));
+        exigeMotivo(MotivoRechazo.TITULAR_INVALIDO,
+                () -> titular.corregirDocumento(new Documento(TipoDocumento.RC, "10940")));
+        assertEquals(new Documento(TipoDocumento.CC, "10940"), titular.documento());
+    }
 }
