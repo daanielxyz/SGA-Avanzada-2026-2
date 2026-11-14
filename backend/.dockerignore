@@ -1,0 +1,11 @@
+# Lo que nunca entra a la imagen: secretos locales y lo que se compila adentro (DEC-121)
+.env
+.env.*
+!.env.example
+build
+.gradle
+bin
+out
+.idea
+*.iml
+HELP.md

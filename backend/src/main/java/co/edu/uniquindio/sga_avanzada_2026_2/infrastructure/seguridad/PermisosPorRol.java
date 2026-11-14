@@ -8,7 +8,7 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 /**
  * Quién puede llamar cada endpoint (DEC-22 · DEC-67), según la hoja «APIs» del Excel. Las reglas se leen de arriba
  * abajo y gana la primera que coincide. El administrador puede todo lo de los roles internos. Lo que no esté aquí
- * queda solo para el administrador, y fuera de {@code /api} no se atiende nada.
+ * queda solo para el administrador, y fuera de {@code /api} no se atiende nada salvo la documentación y la salud.
  */
 final class PermisosPorRol {
 
@@ -28,6 +28,9 @@ final class PermisosPorRol {
                 // Documentación de la API (DEC-79): solo existe con SGA_DOCUMENTACION_API=true; si no, responde 404
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
                         "/swagger-ui/**").permitAll()
+
+                // Salud del servicio para el proveedor y el monitor de disponibilidad (DEC-121): solo dice UP o DOWN
+                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
 
                 // Sin sesión: entrar (personal con contraseña, huésped con PIN) y lo que muestra el portal (CU-02 ·
                 // CU-07 · CU-08 · CU-50 · DEC-68)
