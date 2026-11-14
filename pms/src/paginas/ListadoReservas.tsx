@@ -15,7 +15,9 @@ import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import Icono from '../componentes/Icono'
+import { textoDeEleccion, type Atajo } from '../componentes/eleccion'
 import Paginador from '../componentes/Paginador'
+import SeleccionVarios from '../componentes/SeleccionVarios'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
 
@@ -32,16 +34,41 @@ const ROTULOS: Record<Filtro, string> = {
   titular: 'Titular (id)',
 }
 
+// DEC-119: estos tres admiten varios valores, separados por comas en la dirección y en la consulta a la API
+const VARIOS = ['estado', 'apartamento', 'canal'] as const
+type FiltroVarios = (typeof VARIOS)[number]
+
+const OPCIONES_ESTADO = Object.entries(NOMBRE_DEL_ESTADO) as [EstadoReserva, string][]
+const OPCIONES_CANAL = Object.entries(NOMBRE_DEL_CANAL) as [CanalOrigen, string][]
+/** Las que todavía ocupan noches, que es lo que recepción más busca, y las que ya terminaron. */
+const ATAJOS_ESTADO: readonly Atajo[] = [
+  { nombre: 'Activas', valores: ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'] },
+  { nombre: 'Terminadas', valores: ['FINALIZADA', 'CANCELADA', 'NO_SHOW'] },
+]
+
+function esVarios(filtro: Filtro): filtro is FiltroVarios {
+  return (VARIOS as readonly string[]).includes(filtro)
+}
+
+/** «PENDIENTE,CONFIRMADA» → los dos, sin vacíos ni repetidos. */
+function listaDe(valor: string): string[] {
+  return [...new Set(valor.split(',').map((v) => v.trim()).filter(Boolean))]
+}
+
 /** El valor de un filtro como lo lee la persona. */
 function textoDelFiltro(filtro: Filtro, valor: string): string {
   if (filtro === 'desde' || filtro === 'hasta') return fechaCorta(valor)
-  if (filtro === 'estado') return NOMBRE_DEL_ESTADO[valor as EstadoReserva] ?? valor
-  if (filtro === 'canal') return NOMBRE_DEL_CANAL[valor as CanalOrigen] ?? valor
+  if (filtro === 'estado') return textoDeEleccion(listaDe(valor), OPCIONES_ESTADO, ATAJOS_ESTADO)
+  if (filtro === 'canal') return textoDeEleccion(listaDe(valor), OPCIONES_CANAL)
+  if (filtro === 'apartamento') return listaDe(valor).join(', ')
   return valor
 }
 
+// Una dirección vieja o pegada puede repetir el parámetro (estado=A&estado=B): se juntan con comas
 function valoresDe(parametros: URLSearchParams): ValoresFiltro {
-  return Object.fromEntries(FILTROS.map((filtro) => [filtro, parametros.get(filtro) ?? ''])) as ValoresFiltro
+  return Object.fromEntries(FILTROS.map((filtro) => [filtro, esVarios(filtro)
+    ? listaDe(parametros.getAll(filtro).join(',')).join(',')
+    : parametros.get(filtro) ?? ''])) as ValoresFiltro
 }
 
 function parametrosDe(valores: ValoresFiltro): URLSearchParams {
@@ -220,15 +247,15 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
 
   const cambiar = (filtro: Filtro) => (evento: { target: { value: string } }) =>
     setBorrador({ ...borrador, [filtro]: evento.target.value })
+  const elegir = (filtro: FiltroVarios) => (elegidos: string[]) => setBorrador({ ...borrador, [filtro]: elegidos.join(',') })
 
   function enviar(evento: FormEvent) {
     evento.preventDefault()
     alAplicar(borrador)
   }
 
-  const opcionesApartamento = valores.apartamento && !apartamentos.includes(valores.apartamento)
-    ? [valores.apartamento, ...apartamentos]
-    : apartamentos
+  // Un apartamento de la dirección que ya no está en la lista se conserva como opción
+  const opcionesApartamento = [...listaDe(valores.apartamento).filter((codigo) => !apartamentos.includes(codigo)), ...apartamentos]
 
   return (
     <div className="filtros">
@@ -306,50 +333,12 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
               onChange={cambiar('hasta')}
             />
           </div>
-          <div>
-            <label className="campo-rotulo" htmlFor="filtro-estado">
-              {ROTULOS.estado}
-            </label>
-            <select id="filtro-estado" className="campo-control" value={borrador.estado} onChange={cambiar('estado')}>
-              <option value="">Todos</option>
-              {Object.entries(NOMBRE_DEL_ESTADO).map(([valor, nombre]) => (
-                <option key={valor} value={valor}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="campo-rotulo" htmlFor="filtro-apartamento">
-              {ROTULOS.apartamento}
-            </label>
-            <select
-              id="filtro-apartamento"
-              className="campo-control"
-              value={borrador.apartamento}
-              onChange={cambiar('apartamento')}
-            >
-              <option value="">Todos</option>
-              {opcionesApartamento.map((codigo) => (
-                <option key={codigo} value={codigo}>
-                  {codigo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="campo-rotulo" htmlFor="filtro-canal">
-              {ROTULOS.canal}
-            </label>
-            <select id="filtro-canal" className="campo-control" value={borrador.canal} onChange={cambiar('canal')}>
-              <option value="">Todos</option>
-              {Object.entries(NOMBRE_DEL_CANAL).map(([valor, nombre]) => (
-                <option key={valor} value={valor}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SeleccionVarios rotulo={ROTULOS.estado} opciones={OPCIONES_ESTADO} atajos={ATAJOS_ESTADO}
+            elegidos={listaDe(borrador.estado)} alCambiar={elegir('estado')} />
+          <SeleccionVarios rotulo={ROTULOS.apartamento} opciones={opcionesApartamento.map((codigo) => [codigo, codigo] as const)}
+            elegidos={listaDe(borrador.apartamento)} alCambiar={elegir('apartamento')} />
+          <SeleccionVarios rotulo={ROTULOS.canal} opciones={OPCIONES_CANAL}
+            elegidos={listaDe(borrador.canal)} alCambiar={elegir('canal')} />
           <div>
             <label className="campo-rotulo" htmlFor="filtro-titular">
               {ROTULOS.titular}

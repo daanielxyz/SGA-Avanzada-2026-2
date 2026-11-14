@@ -107,16 +107,49 @@ describe('listado de reservas (CU-25)', () => {
     abrir()
     const usuario = userEvent.setup()
     const filtros = screen.getByRole('search', { name: 'Filtros' })
-    await within(filtros).findByRole('option', { name: 'APT-102' })
+    await within(filtros).findByRole('checkbox', { name: 'APT-102' })
 
-    await usuario.selectOptions(within(filtros).getByLabelText('Estado'), 'Confirmada')
-    await usuario.selectOptions(within(filtros).getByLabelText('Apartamento'), 'APT-102')
+    await usuario.click(within(filtros).getByText('Estado', { selector: '.campo-rotulo' }).nextElementSibling?.querySelector('summary') as HTMLElement)
+    await usuario.click(within(filtros).getByRole('checkbox', { name: 'Confirmada' }))
+    await usuario.click(within(filtros).getByRole('checkbox', { name: 'APT-102' }))
     await usuario.click(within(filtros).getByRole('button', { name: 'Filtrar' }))
 
     await waitFor(() =>
       expect(consultasAlListado(fetch)).toContain('/api/reservas?estado=CONFIRMADA&apartamento=APT-102'),
     )
     expect(screen.getByRole('button', { name: 'Quitar filtro Estado: Confirmada' })).toBeInTheDocument()
+  })
+
+  it('un filtro admite varios valores: «Activas» junta pendiente, confirmada y en curso (DEC-119)', async () => {
+    const fetch = laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([reservaDePrueba()])],
+      '/api/apartamentos': [200, paginaDe([{ codigo: 'APT-101' }, { codigo: 'APT-102' }])],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    const filtros = screen.getByRole('search', { name: 'Filtros' })
+    await within(filtros).findByRole('checkbox', { name: 'APT-102' })
+
+    await usuario.click(within(filtros).getByRole('button', { name: 'Activas' }))
+    await usuario.click(within(filtros).getByRole('checkbox', { name: 'APT-101' }))
+    await usuario.click(within(filtros).getByRole('checkbox', { name: 'APT-102' }))
+    await usuario.click(within(filtros).getByRole('checkbox', { name: 'Directo' }))
+    await usuario.click(within(filtros).getByRole('button', { name: 'Filtrar' }))
+
+    await waitFor(() => expect(consultasAlListado(fetch)).toContain(
+      '/api/reservas?estado=PENDIENTE%2CCONFIRMADA%2CEN_CURSO&apartamento=APT-101%2CAPT-102&canal=DIRECTO'))
+    expect(screen.getByRole('button', { name: 'Quitar filtro Estado: Activas' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Quitar filtro Apartamento: APT-101, APT-102' })).toBeInTheDocument()
+    // Al aplicar, el formulario vuelve a empezar desde los filtros aplicados
+    expect(within(screen.getByRole('search', { name: 'Filtros' })).getByRole('checkbox', { name: 'En curso' })).toBeChecked()
+  })
+
+  it('una dirección con el estado repetido se lee como varios valores', async () => {
+    const fetch = laApiRespondePorRuta({ '/api/reservas': [200, paginaDe([reservaDePrueba()])] })
+    abrir('/reservas?estado=CANCELADA&estado=NO_SHOW')
+
+    expect(await screen.findByRole('button', { name: 'Quitar filtro Estado: Cancelada, No se presentó' })).toBeInTheDocument()
+    expect(consultasAlListado(fetch)).toEqual(['/api/reservas?estado=CANCELADA&estado=NO_SHOW'])
   })
 
   it('quitar un filtro deja los demás', async () => {
