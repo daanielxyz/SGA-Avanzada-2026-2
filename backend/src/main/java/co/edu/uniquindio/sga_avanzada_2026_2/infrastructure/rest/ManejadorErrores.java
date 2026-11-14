@@ -12,6 +12,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.RecursoNoEnc
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.AccesoDenegadoException;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CanalNoAutenticadoException;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.ContrasenaActualIncorrectaException;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.CredencialesInvalidasException;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -75,6 +76,16 @@ public class ManejadorErrores {
     ResponseEntity<ErrorResponse> cuerpoIlegible(HttpMessageNotReadableException e) {
         return responder(HttpStatus.BAD_REQUEST, "VALIDACION", "El cuerpo de la solicitud no es un JSON válido",
                 List.of());
+    }
+
+    /**
+     * La contraseña actual mal escrita al cambiarla (DEC-124): 400 con el campo, no 401, que haría creer al cliente
+     * que perdió la sesión. El código es el mismo de antes, así que quien decidía por él no cambia.
+     */
+    @ExceptionHandler(ContrasenaActualIncorrectaException.class)
+    ResponseEntity<ErrorResponse> contrasenaActualIncorrecta(ContrasenaActualIncorrectaException e) {
+        return responder(HttpStatus.BAD_REQUEST, "CREDENCIALES_INVALIDAS", e.getMessage(),
+                List.of("actual: no es la contraseña actual"));
     }
 
     @ExceptionHandler(CredencialesInvalidasException.class)

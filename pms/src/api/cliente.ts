@@ -70,7 +70,8 @@ export async function pedir<T>(ruta: string, opciones: RequestInit & { cuerpo?: 
     return undefined as T
   }
   const json: unknown = await respuesta.json().catch(() => undefined)
-  // Un 401 por una contraseña mal escrita (la actual, en «Mi perfil») no dice nada del token: la sesión sigue
+  // Un 401 por un código mal escrito (activar o recuperar con una sesión abierta en la pestaña) no dice nada del
+  // token: la sesión sigue. La contraseña actual errada de «Mi perfil» ya responde 400 (DEC-124)
   if (respuesta.status === 401 && token && !(esErrorRespuesta(json) && json.codigo === 'CREDENCIALES_INVALIDAS')) {
     sesionPerdida()
   }

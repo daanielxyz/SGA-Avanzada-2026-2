@@ -676,7 +676,7 @@ Programada en `src/paginas/Usuarios.tsx` (`/usuarios`, solo el administrador), `
 - P3: entre 760 y 1024 px la tabla partía los nombres; ahí se ve en tarjetas, como Temporadas y tarifas.
 
 **Para el núcleo (sin urgencia, se suma a la tarea 3 de «Para Arias»)**:
-- Que una contraseña actual errada en `PUT /api/usuarios/perfil/contrasena` no responda 401 (es el estado de «no hay sesión»): un 409 o un 400 en el campo `actual`. El PMS ya lo maneja, pero cualquier otro cliente cerraría la sesión.
+- Que una contraseña actual errada en `PUT /api/usuarios/perfil/contrasena` no responda 401 (es el estado de «no hay sesión»): un 409 o un 400 en el campo `actual`. El PMS ya lo maneja, pero cualquier otro cliente cerraría la sesión. **Hecho** en DEC-124: 400 con el código `CREDENCIALES_INVALIDAS` y el detalle en `actual`.
 - El correo de activación dice el rol crudo (`RECEPCIONISTA`) en `CodigosDelPersonal.texto`: que diga «Recepción».
 - Que el administrador no pueda eliminarse a sí mismo (hoy solo lo impide si es el último administrador). La pantalla no lo ofrece.
 - Reenviar el código de activación desde Usuarios: hoy se resuelve con «Olvidé mi contraseña».
