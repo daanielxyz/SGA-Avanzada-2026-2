@@ -4,6 +4,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularC
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CambiarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CompletarDatosOcupanteUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarEstanciaUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.ConsultarReservaConTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirDocumentoTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirDocumentoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.DesignarHuespedPrincipalUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.CorregirRegistroUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.reserva.RegistrarLlegadaUseCase;
@@ -37,13 +40,19 @@ public class EstanciaController {
     private final CambiarTitularUseCase cambiarTitular;
     private final DesignarHuespedPrincipalUseCase designarHuespedPrincipal;
     private final ConsultarEstanciaUseCase consultarEstancia;
+    private final CorregirDocumentoUseCase corregirDocumento;
+    private final CorregirDocumentoTitularUseCase corregirDocumentoTitular;
+    private final ConsultarReservaConTitularUseCase consultarDetalle;
 
     public EstanciaController(UsuarioActual usuario, RegistrarLlegadaUseCase registrarLlegada,
                               CorregirRegistroUseCase corregirRegistro, RegistrarSalidaUseCase registrarSalida,
                               CompletarDatosOcupanteUseCase completarDatosOcupante,
                               CambiarTitularUseCase cambiarTitular,
                               DesignarHuespedPrincipalUseCase designarHuespedPrincipal,
-                              ConsultarEstanciaUseCase consultarEstancia) {
+                              ConsultarEstanciaUseCase consultarEstancia,
+                              CorregirDocumentoUseCase corregirDocumento,
+                              CorregirDocumentoTitularUseCase corregirDocumentoTitular,
+                              ConsultarReservaConTitularUseCase consultarDetalle) {
         this.usuario = usuario;
         this.registrarLlegada = registrarLlegada;
         this.corregirRegistro = corregirRegistro;
@@ -52,6 +61,33 @@ public class EstanciaController {
         this.cambiarTitular = cambiarTitular;
         this.designarHuespedPrincipal = designarHuespedPrincipal;
         this.consultarEstancia = consultarEstancia;
+        this.corregirDocumento = corregirDocumento;
+        this.corregirDocumentoTitular = corregirDocumentoTitular;
+        this.consultarDetalle = consultarDetalle;
+    }
+
+    /**
+     * Corrige el documento mal escrito de un ocupante sin perder sus datos del TRA (#14 · DEC-120); si es el titular
+     * que se aloja, se corrige también el titular. Responde el detalle de la reserva, con el historial de
+     * correcciones; recepción y administración, por la regla de {@code /api/reservas/**}.
+     */
+    @PutMapping("/ocupantes/{ocupanteId}/documento")
+    public ReservaResponse corregirDocumento(@PathVariable String codigo, @PathVariable String ocupanteId,
+                                             @Valid @RequestBody CorregirDocumentoRequest solicitud) {
+        corregirDocumento.ejecutar(solicitud.aCommand(codigo, ocupanteId, usuario.id()));
+        return ReservaResponse.de(consultarDetalle.ejecutar(codigo));
+    }
+
+    /**
+     * Corrige el documento mal escrito del titular de la reserva, también si no se aloja (#14 · DEC-120). Sigue
+     * siendo el mismo titular, con sus reservas y su cuenta; si se aloja, su ocupante se corrige con él. Responde el
+     * detalle de la reserva, como {@link #corregirDocumento}.
+     */
+    @PutMapping("/titular/documento")
+    public ReservaResponse corregirDocumentoTitular(@PathVariable String codigo,
+                                                    @Valid @RequestBody CorregirDocumentoRequest solicitud) {
+        corregirDocumentoTitular.ejecutar(solicitud.aCommandDelTitular(codigo, usuario.id()));
+        return ReservaResponse.de(consultarDetalle.ejecutar(codigo));
     }
 
     /**

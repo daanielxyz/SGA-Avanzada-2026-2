@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.CorreccionDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
@@ -99,6 +100,25 @@ class ReservaRepositoryJpaTest {
     private void sincronizar() {
         entityManager.flush();
         entityManager.clear();
+    }
+
+    @Test
+    @Tag("DEC-120")
+    void elHistorialDeDocumentosCorregidosSeGuardaYSeVuelveACargar() {
+        Reserva reserva = reserva("RES-2026-00009", APT, 10, 12, EstadoReserva.CONFIRMADA, CanalOrigen.DIRECTO, null,
+                null, null, null);
+        reserva.corregirDocumento(new OcupanteId("OCU-1"), new Documento(TipoDocumento.CC, "10940"),
+                "Faltaba un cero", RECEPCION, LocalDateTime.of(2026, 12, 2, 8, 15));
+        repositorio.guardar(reserva);
+        sincronizar();
+
+        Reserva cargada = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00009")).orElseThrow();
+
+        assertEquals(new Documento(TipoDocumento.CC, "10940"), cargada.ocupantes().getFirst().documento());
+        assertEquals(List.of(new CorreccionDocumento("Ana", new Documento(TipoDocumento.CC, "1094"),
+                        new Documento(TipoDocumento.CC, "10940"), "Faltaba un cero", RECEPCION,
+                        LocalDateTime.of(2026, 12, 2, 8, 15))),
+                cargada.correccionesDocumento());
     }
 
     @Test
