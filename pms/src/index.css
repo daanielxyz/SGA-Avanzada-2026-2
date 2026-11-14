@@ -2294,8 +2294,10 @@ button {
   border-top: 1px solid var(--borde);
 }
 
+/* En el celular cada botón toma su ancho y reparte el que sobra; con menos relleno, «Siguiente: resumen →» cabe a 320 px */
 .paso-pie > .boton {
-  flex: 1;
+  flex: 1 1 auto;
+  padding: 0 var(--espacio-3);
 }
 
 /* Atrás y Siguiente se quedan a la vista al pie, sin bajar hasta el final del paso para volver */
@@ -2614,6 +2616,7 @@ button {
   .paso-pie:has(.paso-total) .boton {
     flex: 0 0 auto;
     width: auto;
+    padding: 0 var(--espacio-5);
   }
 
   .paso-pie-final {
@@ -6655,4 +6658,27 @@ button.barra {
 
 .preparacion-orden {
   margin: calc(var(--espacio-2) * -1) 0 var(--espacio-3);
+}
+
+/* Sprint 4 · nueva reserva: el huésped principal al pie del recuadro de cada adulto (DEC-97). El elegido lleva
+   borde Arena, como la foto principal; también lo dicen el botón marcado y su palabra */
+.ocupante-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--espacio-4);
+  margin-top: var(--espacio-3);
+  border-top: 1px solid var(--borde);
+}
+
+.ocupante-opcion {
+  font-weight: 600;
+}
+
+.ocupante-pie .campo-pista {
+  margin: 0;
+}
+
+.ocupante.ocupante-elegido {
+  border-color: var(--acento);
 }

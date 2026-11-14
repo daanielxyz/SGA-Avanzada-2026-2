@@ -412,13 +412,28 @@ export interface NuevaReserva {
   entrada: string
   salida: string
   canalOrigen: 'DIRECTO'
-  titular: { nombre: string; tipoDocumento: string; numeroDocumento: string; correo: string; telefono: string }
+  /** DEC-98: `nombres` y los apellidos aparte; `nombre`, el de antes, mientras la API lo acepte. */
+  titular: {
+    nombre?: string
+    nombres: string
+    primerApellido: string
+    segundoApellido?: string
+    tipoDocumento: string
+    numeroDocumento: string
+    correo: string
+    telefono: string
+  }
   ocupantes: {
-    nombre: string
+    nombre?: string
+    nombres?: string
+    primerApellido?: string
+    segundoApellido?: string
     fechaNacimiento: string
     tipoDocumento?: string
     numeroDocumento?: string
     nacionalidad?: string
+    /** DEC-97: el huésped principal del TRA, uno solo y mayor de edad. */
+    principal?: boolean
   }[]
   horaEstimadaLlegada?: string
   carros: number

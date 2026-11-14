@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   tiposPorEdad,
   ajustarGrupo,
+  nombreDelTitular,
+  ocupanteDelTitular,
+  ocupantesParaEnviar,
+  principalDelGrupo,
+  titularParaEnviar,
   estimarExtras,
   mensajeDeCreada,
   OCUPANTE_VACIO,
@@ -17,7 +22,7 @@ import {
 const HOY = '2026-11-12'
 const ENTRADA = '2026-11-14'
 const TITULAR: DatosTitular = {
-  nombre: 'Ana Ríos', tipoDocumento: 'CC', numeroDocumento: '52481', correo: 'ana@correo.test', telefono: '3105550142',
+  nombres: 'Ana', primerApellido: 'Ríos', segundoApellido: '', tipoDocumento: 'CC', numeroDocumento: '52481', correo: 'ana@correo.test', telefono: '3105550142',
 }
 const DE_TITULAR: DatosOcupante = {
   nombre: 'Ana Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481', nacionalidad: '',
@@ -105,10 +110,15 @@ describe('validarPersonas', () => {
   })
 
   it('el titular necesita todos sus datos y un correo válido', () => {
-    const errores = validar([DE_TITULAR], { ...TITULAR, nombre: ' ', correo: 'ana@', telefono: '' })
-    expect(errores['titular.nombre']).toBeDefined()
+    const errores = validar([DE_TITULAR], { ...TITULAR, nombres: ' ', correo: 'ana@', telefono: '' })
+    expect(errores['titular.nombres']).toBe('Escribe los nombres.')
     expect(errores['titular.correo']).toContain('correo válido')
     expect(errores['titular.telefono']).toBeDefined()
+  })
+
+  it('DEC-98: el primer apellido es obligatorio y el segundo no', () => {
+    expect(validar([DE_TITULAR], { ...TITULAR, primerApellido: '  ' })['titular.primerApellido']).toBe('Escribe el primer apellido.')
+    expect(validar([DE_TITULAR], { ...TITULAR, segundoApellido: '' })).toEqual({})
   })
 
   it('el teléfono se revisa en el mismo paso, con la regla del backend', () => {
@@ -173,5 +183,62 @@ describe('salidasDelRechazo (DEC-94)', () => {
   it('sin motivo, o con uno que no conoce, ofrece todas', () => {
     expect(salidasDelRechazo(null)).toEqual(['apartamento', 'fechas', 'personas'])
     expect(salidasDelRechazo('OTRO_NUEVO')).toEqual(['apartamento', 'fechas', 'personas'])
+  })
+})
+
+describe('nombres y apellidos del titular (DEC-98)', () => {
+  const ANA: DatosTitular = { ...TITULAR, nombres: ' Ana María ', primerApellido: 'Ríos', segundoApellido: 'Gómez ' }
+
+  it('arma el nombre completo como el backend, sin el segundo apellido si no lo tiene', () => {
+    expect(nombreDelTitular(ANA)).toBe('Ana María Ríos Gómez')
+    expect(nombreDelTitular({ ...ANA, segundoApellido: ' ' })).toBe('Ana María Ríos')
+    expect(ocupanteDelTitular(ANA, OCUPANTE_VACIO).nombre).toBe('Ana María Ríos Gómez')
+  })
+
+  it('envía las partes recortadas y también el nombre completo mientras quepa en 120', () => {
+    expect(titularParaEnviar(ANA)).toEqual({
+      nombre: 'Ana María Ríos Gómez', nombres: 'Ana María', primerApellido: 'Ríos', segundoApellido: 'Gómez',
+      tipoDocumento: 'CC', numeroDocumento: '52481', correo: 'ana@correo.test', telefono: '3105550142',
+    })
+    expect(titularParaEnviar({ ...ANA, segundoApellido: '' })).not.toHaveProperty('segundoApellido')
+    const largo = titularParaEnviar({ ...ANA, nombres: 'A'.repeat(100), primerApellido: 'B'.repeat(30) })
+    expect(largo).not.toHaveProperty('nombre')
+    expect(largo.nombres).toHaveLength(100)
+  })
+
+  it('el ocupante del titular lleva sus partes; los demás, su nombre completo', () => {
+    const grupo = [ocupanteDelTitular(ANA, { ...OCUPANTE_VACIO, fechaNacimiento: '1989-04-14' }), DE_TITULAR_ADULTO]
+    const [titular, otro] = ocupantesParaEnviar(grupo, ANA, true, 1)
+    expect(titular).toMatchObject({ nombres: 'Ana María', primerApellido: 'Ríos', segundoApellido: 'Gómez', principal: false })
+    expect(otro).toEqual({
+      nombre: 'Pedro Ríos', fechaNacimiento: '1985-01-01', tipoDocumento: 'CC', numeroDocumento: '71000', principal: true,
+    })
+    expect(ocupantesParaEnviar(grupo, ANA, false, 0)[0]).not.toHaveProperty('nombres')
+  })
+})
+
+describe('principalDelGrupo (DEC-97)', () => {
+  const NINA: DatosOcupante = { ...OCUPANTE_VACIO, nombre: 'Sofía', fechaNacimiento: '2017-06-05', tipoDocumento: 'TI' }
+  const SIN_FECHA: DatosOcupante = { ...OCUPANTE_VACIO, nombre: 'Luis' }
+
+  it('sin elección, el primer adulto al entrar (el titular cuando se aloja)', () => {
+    expect(principalDelGrupo([DE_TITULAR, DE_TITULAR_ADULTO], ENTRADA, null)).toBe(0)
+    expect(principalDelGrupo([NINA, SIN_FECHA, DE_TITULAR_ADULTO], ENTRADA, null)).toBe(2)
+  })
+
+  it('respeta el adulto que eligió recepción', () => {
+    expect(principalDelGrupo([DE_TITULAR, NINA, DE_TITULAR_ADULTO], ENTRADA, 2)).toBe(2)
+  })
+
+  it('un menor, alguien sin fecha o uno que ya no está no pueden serlo: pasa al primer adulto', () => {
+    expect(principalDelGrupo([DE_TITULAR, NINA], ENTRADA, 1)).toBe(0)
+    expect(principalDelGrupo([SIN_FECHA, DE_TITULAR], ENTRADA, 0)).toBe(1)
+    expect(principalDelGrupo([DE_TITULAR], ENTRADA, 3)).toBe(0)
+  })
+
+  it('cuenta la edad el día de entrada: quien cumple 18 ese día ya puede', () => {
+    expect(principalDelGrupo([{ ...DE_TITULAR, fechaNacimiento: '2008-11-14' }], ENTRADA, null)).toBe(0)
+    expect(principalDelGrupo([{ ...DE_TITULAR, fechaNacimiento: '2008-11-15' }], ENTRADA, null)).toBeNull()
+    expect(principalDelGrupo([NINA, SIN_FECHA], ENTRADA, null)).toBeNull()
   })
 })

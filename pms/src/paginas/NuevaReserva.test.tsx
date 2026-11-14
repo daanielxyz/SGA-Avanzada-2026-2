@@ -73,7 +73,8 @@ async function completarEstancia(usuario: UserEvent, ocupantes = 1) {
 
 async function completarTitular(usuario: UserEvent) {
   const titular = screen.getByRole('region', { name: 'Titular' })
-  await usuario.type(within(titular).getByLabelText('Nombre completo'), 'Ana Ríos')
+  await usuario.type(within(titular).getByLabelText('Nombres'), 'Ana')
+  await usuario.type(within(titular).getByLabelText('Primer apellido'), 'Ríos')
   await usuario.type(within(titular).getByLabelText('Número de documento'), '52481')
   await usuario.type(within(titular).getByLabelText('Correo electrónico'), 'ana@correo.test')
   await usuario.type(within(titular).getByLabelText('Teléfono'), '3105550142')
@@ -246,6 +247,8 @@ describe('paso 3: personas (TIT-01 · OCU-02 · OCU-05)', () => {
     expect(screen.getByText(/Revisa \d+ campos marcados/)).toBeInTheDocument()
     expect(screen.getByText('Escribe el correo.')).toBeInTheDocument()
     expect(screen.getByText('Escribe la fecha de nacimiento.')).toBeInTheDocument()
+    // El foco va al primer campo marcado, no se queda en el botón
+    expect(within(screen.getByRole('region', { name: 'Titular' })).getByLabelText('Nombres')).toHaveFocus()
     expect(screen.queryByRole('heading', { name: 'Resumen' })).not.toBeInTheDocument()
   })
 
@@ -298,6 +301,75 @@ describe('paso 3: personas (TIT-01 · OCU-02 · OCU-05)', () => {
     await usuario.click(screen.getByRole('button', { name: /Siguiente: resumen/ }))
     expect(await screen.findByRole('heading', { name: 'Resumen' })).toBeInTheDocument()
   })
+
+  it('DEC-98: el titular lleva nombres y apellidos aparte, con su contador; falta el primer apellido', async () => {
+    apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso3(usuario)
+    const titular = screen.getByRole('region', { name: 'Titular' })
+    await usuario.type(within(titular).getByLabelText('Nombres'), 'Ana María')
+    await usuario.type(within(titular).getByLabelText(/Segundo apellido/), 'Gómez')
+
+    expect(within(titular).getByText('9 / 120')).toBeInTheDocument()
+    expect(within(titular).getByLabelText('Primer apellido')).toHaveAttribute('maxLength', '60')
+    await usuario.click(screen.getByRole('button', { name: /Siguiente: resumen/ }))
+    expect(within(titular).getByLabelText('Primer apellido')).toHaveAccessibleDescription(/Escribe el primer apellido\./)
+
+    await usuario.type(within(titular).getByLabelText('Primer apellido'), 'Ríos')
+    const primero = screen.getByRole('group', { name: 'Ocupante 1 · titular' })
+    expect(within(primero).getByLabelText('Nombre completo')).toHaveValue('Ana María Ríos Gómez')
+  })
+
+  it('DEC-97: el titular que se aloja queda de huésped principal y se puede elegir otro adulto', async () => {
+    const fetch = apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso3(usuario, 2)
+    await completarTitular(usuario)
+    const [primero, segundo] = screen.getAllByRole('group', { name: /^Ocupante \d/ })
+    // Sin fecha de nacimiento no se sabe si es adulto: todavía no hay opción
+    expect(screen.queryByRole('radio', { name: 'Huésped principal' })).not.toBeInTheDocument()
+
+    escribirFecha('Fecha de nacimiento', '1990-03-02', primero)
+    expect(within(primero).getByRole('radio', { name: 'Huésped principal' })).toBeChecked()
+    expect(within(primero).getByText('Es el único mayor de edad del grupo, así que no se puede cambiar.')).toBeInTheDocument()
+
+    await usuario.type(within(segundo).getByLabelText('Nombre completo'), 'Julián Pérez')
+    escribirFecha('Fecha de nacimiento', '1987-09-02', segundo)
+    await usuario.selectOptions(within(segundo).getByLabelText(/Documento/), 'CC')
+    await usuario.type(within(segundo).getByLabelText(/Número/), '71000')
+    expect(screen.queryByText(/Es el único mayor de edad/)).not.toBeInTheDocument()
+    await usuario.click(within(segundo).getByRole('radio', { name: 'Huésped principal' }))
+    expect(within(primero).getByRole('radio', { name: 'Huésped principal' })).not.toBeChecked()
+
+    await usuario.click(screen.getByRole('button', { name: /Siguiente: resumen/ }))
+    await usuario.click(await screen.findByRole('button', { name: 'Crear reserva' }))
+    await screen.findByText('Reserva creada · RES-2026-00099')
+    const llamada = fetch.mock.calls.find(([url, opciones]) => url === '/api/reservas' && opciones?.method === 'POST')
+    const { ocupantes } = JSON.parse(String(llamada?.[1]?.body))
+    expect(ocupantes.map((o: { principal: boolean }) => o.principal)).toEqual([false, true])
+  })
+
+  it('DEC-97: un menor no tiene la opción, y volver a alojar al titular lo deja de principal', async () => {
+    apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso3(usuario, 2)
+    await completarTitular(usuario)
+    const [primero, segundo] = screen.getAllByRole('group', { name: /^Ocupante \d/ })
+    escribirFecha('Fecha de nacimiento', '1990-03-02', primero)
+    // Tendrá 9 años al entrar (la entrada de las pruebas es de 2099)
+    escribirFecha('Fecha de nacimiento', '2090-01-01', segundo)
+    expect(within(segundo).queryByRole('radio')).not.toBeInTheDocument()
+
+    escribirFecha('Fecha de nacimiento', '1987-09-02', segundo)
+    await usuario.click(within(segundo).getByRole('radio', { name: 'Huésped principal' }))
+    const casilla = screen.getByRole('checkbox', { name: 'El titular también se aloja' })
+    await usuario.click(casilla)
+    await usuario.click(casilla)
+    expect(within(primero).getByRole('radio', { name: 'Huésped principal' })).toBeChecked()
+  })
 })
 
 describe('paso 4: resumen', () => {
@@ -318,8 +390,11 @@ describe('paso 4: resumen', () => {
       canalOrigen: 'DIRECTO',
       entrada: '2099-03-10',
       salida: '2099-03-12',
-      titular: { nombre: 'Ana Ríos', numeroDocumento: '52481' },
-      ocupantes: [{ nombre: 'Ana Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481' }],
+      titular: { nombre: 'Ana Ríos', nombres: 'Ana', primerApellido: 'Ríos', numeroDocumento: '52481' },
+      ocupantes: [{
+        nombres: 'Ana', primerApellido: 'Ríos', fechaNacimiento: '1990-03-02', tipoDocumento: 'CC', numeroDocumento: '52481',
+        principal: true,
+      }],
       carros: 0,
       motos: 0,
       mascotas: 0,

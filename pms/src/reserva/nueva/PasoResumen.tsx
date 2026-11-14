@@ -8,7 +8,14 @@ import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
 import { cantidad, dinero, fechaCorta, fechaHoy, horaEnPalabras, noches } from '../../formato'
 import Campo from './Campo'
-import { estimarExtras, salidasDelRechazo, textoCobroVehiculo, type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
+import {
+  estimarExtras,
+  nombreDelTitular,
+  ocupantesParaEnviar,
+  salidasDelRechazo,
+  textoCobroVehiculo,
+  titularParaEnviar,
+  type DatosEstancia, type DatosOcupante, type DatosTitular } from './formulario'
 
 export interface DatosLlegada {
   hora: string
@@ -38,11 +45,14 @@ function fallaDe(causa: unknown): Falla {
  * persona pudo tomar esas noches mientras tanto. Sus 409 llegan solo con un texto, así que se muestran en un aviso
  * general con las salidas posibles (`pms/DISENO.md`, «Para hablar con el equipo»), sin perder nada de lo escrito.
  */
-export default function PasoResumen({ estancia, apartamento, titular, grupo, llegada, alojamiento, alCambiarLlegada, alCrear, alElegirOtro, alCambiarFechas, alRevisarPersonas, alVolver }: {
+export default function PasoResumen({ estancia, apartamento, titular, grupo, titularSeAloja, principal, llegada, alojamiento, alCambiarLlegada, alCrear, alElegirOtro, alCambiarFechas, alRevisarPersonas, alVolver }: {
   estancia: DatosEstancia
   apartamento: ApartamentoEncontrado
   titular: DatosTitular
   grupo: DatosOcupante[]
+  titularSeAloja: boolean
+  /** La posición del huésped principal en el grupo (DEC-97). */
+  principal: number | null
   llegada: DatosLlegada
   alojamiento: Alojamiento
   alCambiarLlegada: (llegada: DatosLlegada) => void
@@ -143,13 +153,8 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
         entrada: estancia.entrada,
         salida: estancia.salida,
         canalOrigen: 'DIRECTO',
-        titular: { ...titular, nombre: titular.nombre.trim(), correo: titular.correo.trim() },
-        ocupantes: grupo.map((ocupante) => ({
-          nombre: ocupante.nombre.trim(),
-          fechaNacimiento: ocupante.fechaNacimiento,
-          ...(ocupante.tipoDocumento ? { tipoDocumento: ocupante.tipoDocumento, numeroDocumento: ocupante.numeroDocumento.trim() } : {}),
-          ...(ocupante.nacionalidad.trim() ? { nacionalidad: ocupante.nacionalidad.trim() } : {}),
-        })),
+        titular: titularParaEnviar(titular),
+        ocupantes: ocupantesParaEnviar(grupo, titular, titularSeAloja, principal),
         ...(llegada.hora ? { horaEstimadaLlegada: llegada.hora } : {}),
         carros,
         motos,
@@ -211,7 +216,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, lle
           </Dato>
           <Dato nombre="Ocupantes">{grupo.length}</Dato>
           <Dato nombre="Titular">
-            {titular.nombre} · <span className="codigo">{titular.tipoDocumento} {titular.numeroDocumento}</span>
+            {nombreDelTitular(titular)} · <span className="codigo">{titular.tipoDocumento} {titular.numeroDocumento}</span>
           </Dato>
         </dl>
       </section>
