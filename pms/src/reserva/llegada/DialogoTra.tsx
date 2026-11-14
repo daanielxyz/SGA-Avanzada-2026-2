@@ -290,7 +290,12 @@ function FormularioTra({ reserva, ocupante, anterior, guardado, hayOtro, enfocar
               </>
             )}
           </div>
-          {documentoRegistrado && <p className="campo-pista">Un documento ya registrado no se cambia aquí.</p>}
+          {documentoRegistrado && (
+            <p className="campo-pista">
+              Un documento ya registrado no se cambia aquí. Si está mal escrito, usa «Corregir documento» en la tabla de
+              ocupantes del detalle.
+            </p>
+          )}
           <div className="campos-2">
             <Campo etiqueta="Nacionalidad" value={valores.nacionalidad} autoComplete="off" onChange={(evento) => cambiar('nacionalidad', evento.target.value)} />
             <Campo etiqueta="Género" opciones={[ELIGE, ...GENEROS]} value={valores.genero} onChange={(evento) => cambiar('genero', evento.target.value)} />

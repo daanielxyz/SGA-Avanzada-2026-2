@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -21,6 +22,13 @@ class DatosEImagenesApartamentoTest {
                 new Capacidad(2), new Dormitorio(1), imagenes, List.of(new Caracteristica("Wifi")));
     }
 
+    /** Uno guardado antes de DEC-123, sin imágenes: se reconstruye, porque crearlo así ya no se puede. */
+    private static Apartamento sinImagenes() {
+        return new Apartamento(new ApartamentoId("APT-101"), new AlojamientoId("ALO-1"), "Suite", null, new Capacidad(2),
+                new Dormitorio(1), EstadoOperativo.PENDIENTE_PREPARACION, List.of(), List.of(new Caracteristica("Wifi")),
+                List.of(), false);
+    }
+
     private static List<String> principales(Apartamento a) {
         return a.imagenes().stream().filter(Imagen::principal).map(Imagen::url).toList();
     }
@@ -28,7 +36,7 @@ class DatosEImagenesApartamentoTest {
     @Test
     @Tag("CARAC-01")
     void deberiaActualizarLosDatos() {
-        Apartamento a = apartamento(List.of());
+        Apartamento a = apartamento(List.of(new Imagen(A, true)));
 
         a.actualizarDatos(" Suite nueva ", "Con vista", new Dormitorio(2), List.of(new Caracteristica("Balcón")));
 
@@ -40,7 +48,7 @@ class DatosEImagenesApartamentoTest {
     @Test
     @Tag("CARAC-01")
     void noDeberiaQuedarSinNombreNiCaracteristicas() {
-        Apartamento a = apartamento(List.of());
+        Apartamento a = apartamento(List.of(new Imagen(A, true)));
 
         assertThrows(ReglaDominioException.class,
                 () -> a.actualizarDatos(" ", null, new Dormitorio(1), List.of(new Caracteristica("Wifi"))));
@@ -50,7 +58,7 @@ class DatosEImagenesApartamentoTest {
     @Test
     @Tag("IMG-02")
     void laPrimeraImagenQuedaComoPrincipal() {
-        Apartamento a = apartamento(List.of());
+        Apartamento a = sinImagenes();
 
         a.agregarImagen(A);
         a.agregarImagen(B);
@@ -69,7 +77,7 @@ class DatosEImagenesApartamentoTest {
     @Test
     @Tag("IMG-02")
     void noDeberiaPasarDeDiezImagenes() {
-        Apartamento a = apartamento(List.of());
+        Apartamento a = sinImagenes();
         for (int i = 0; i < 10; i++) {
             a.agregarImagen("https://cdn.sga.co/" + i + ".jpg");
         }
@@ -106,5 +114,26 @@ class DatosEImagenesApartamentoTest {
 
         assertThrows(ReglaDominioException.class, () -> a.quitarImagen(A));
         assertTrue(a.activo());
+    }
+
+    @Test
+    @Tag("IMG-01")
+    void unApartamentoNuevoNaceConAlMenosUnaImagen() {
+        // DEC-123
+        assertThrows(ReglaDominioException.class, () -> apartamento(List.of()));
+        assertEquals(List.of(A), principales(apartamento(List.of(new Imagen(A, true)))));
+    }
+
+    @Test
+    @Tag("IMG-01")
+    void unApartamentoRetiradoTampocoSeQuedaSinImagenes() {
+        // DEC-123: antes solo lo impedía si estaba a la venta
+        Apartamento a = apartamento(List.of(new Imagen(A, true), new Imagen(B, false)));
+
+        a.quitarImagen(B);
+
+        assertThrows(ReglaDominioException.class, () -> a.quitarImagen(A));
+        assertFalse(a.activo());
+        assertEquals(List.of(A), principales(a));
     }
 }

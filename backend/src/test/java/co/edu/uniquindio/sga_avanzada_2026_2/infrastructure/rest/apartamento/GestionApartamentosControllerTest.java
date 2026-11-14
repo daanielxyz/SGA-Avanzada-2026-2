@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasR
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoDePrueba;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -212,6 +213,55 @@ class GestionApartamentosControllerTest {
         mvc.perform(put(APT + "/bloqueos/BLO-99999/levantar"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("IMG-01")
+    void unApartamentoNuevoSinImagenesEs409() throws Exception {
+        // DEC-123
+        enviar(post("/api/apartamentos"), """
+                {
+                  "codigo": "APT-102",
+                  "nombre": "Apartamento",
+                  "capacidad": 4,
+                  "dormitorios": 2,
+                  "imagenes": [],
+                  "caracteristicas": ["Balcón"]
+                }
+                """).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("IMG-01")
+    void laUnicaImagenDeUnApartamentoRetiradoNoSeQuitaHastaQueHayaOtra() throws Exception {
+        String unica = "{\"url\": \"https://cdn.sga.co/apt.jpg\"}";
+
+        // DEC-123: el APT-101 nace retirado, con una sola imagen
+        enviar(put(APT + "/imagenes/quitar"), unica)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        enviar(post(APT + "/imagenes"), "{\"url\": \"https://cdn.sga.co/otra.jpg\"}")
+                .andExpect(status().isCreated());
+        enviar(put(APT + "/imagenes/quitar"), unica)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagenes", hasSize(1)))
+                .andExpect(jsonPath("$.imagenes[0].principal").value(true));
+    }
+
+    @Test
+    @Tag("BLO-02")
+    void unBloqueoQueEmpiezaHoySeRegistraYUnoQueEmpezoAyerEs409() throws Exception {
+        LocalDate hoy = LocalDate.now();
+        String bloqueo = "{\"inicio\": \"%s\", \"fin\": \"%s\", \"motivo\": \"Pintura\"}";
+
+        // DEC-122: el reloj de las pruebas es el del sistema, como LocalDate.now()
+        enviar(post(APT + "/bloqueos"), bloqueo.formatted(hoy.minusDays(1), hoy.plusDays(2)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        enviar(post(APT + "/bloqueos"), bloqueo.formatted(hoy, hoy.plusDays(2)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.bloqueos", hasSize(1)));
     }
 
     @Test

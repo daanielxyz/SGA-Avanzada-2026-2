@@ -66,8 +66,8 @@ describe('mi perfil', () => {
 
   it('si la actual no es correcta lo dice junto a ese campo y la sesión sigue abierta', async () => {
     const { persona } = abrir({
-      '/api/usuarios/perfil/contrasena': [401, { estado: 401, codigo: 'CREDENCIALES_INVALIDAS',
-        mensaje: 'La contraseña actual no es correcta', detalles: [] }],
+      '/api/usuarios/perfil/contrasena': [400, { estado: 400, codigo: 'CREDENCIALES_INVALIDAS',
+        mensaje: 'La contraseña actual no es correcta', detalles: ['actual: no es la contraseña actual'] }],
     })
     const clave = await bloque('Contraseña')
     await persona.type(within(clave).getByLabelText('Contraseña actual'), 'Errada2026')

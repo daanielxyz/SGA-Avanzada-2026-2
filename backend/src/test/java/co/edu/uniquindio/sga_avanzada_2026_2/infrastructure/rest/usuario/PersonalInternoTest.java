@@ -258,8 +258,11 @@ class PersonalInternoTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.rol").value("RECEPCIONISTA"));
         cliente.perform(con(token, put("/api/usuarios/perfil/contrasena")).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"actual\": \"Equivocada1\", \"nueva\": \"OtraClave2026\"}"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.codigo").value("CREDENCIALES_INVALIDAS"));
+                // DEC-124: 400 y no 401, que es «no hay sesión»; la sesión sigue valiendo
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("CREDENCIALES_INVALIDAS"))
+                .andExpect(jsonPath("$.detalles[0]").value("actual: no es la contraseña actual"));
+        cliente.perform(con(token, get("/api/usuarios/perfil"))).andExpect(status().isOk());
         cliente.perform(con(token, put("/api/usuarios/perfil/contrasena")).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"actual\": \"" + CLAVE + "\", \"nueva\": \"OtraClave2026\"}"))
                 .andExpect(status().isOk());

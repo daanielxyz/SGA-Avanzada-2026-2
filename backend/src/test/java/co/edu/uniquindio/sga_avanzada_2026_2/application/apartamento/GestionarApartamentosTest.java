@@ -199,7 +199,7 @@ class GestionarApartamentosTest {
     @Tag("EOPE-02")
     void deberiaAvanzarLaPreparacionYRechazarUnaTransicionInvalida() {
         apartamentos.guardar(Apartamento.crear(APT_101, ALO, "Apto 101", null, new Capacidad(4), new Dormitorio(2),
-                List.of(), List.of(new Caracteristica("Balcón"))));
+                List.of(new Imagen("https://cdn.sga.co/a.jpg", true)), List.of(new Caracteristica("Balcón"))));
         MarcarPreparadoUseCase marcarPreparado = new MarcarPreparadoUseCase(apartamentos);
 
         assertThrows(ReglaDominioException.class, () -> marcarPreparado.ejecutar("APT-101"));
@@ -213,7 +213,7 @@ class GestionarApartamentosTest {
     void deberiaBloquearFechasLibresYLevantarElBloqueo() {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
-                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
+                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos(), RepositoriosEnMemoria.RELOJ);
 
         ApartamentoResult bloqueado = registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
                 LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 12), "Pintura"));
@@ -230,7 +230,7 @@ class GestionarApartamentosTest {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         reservas.guardar(reserva("RES-2026-00001", APT_101, LocalDate.of(2026, 11, 1), 2));
         RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
-                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
+                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos(), RepositoriosEnMemoria.RELOJ);
 
         assertThrows(ReglaDominioException.class, () -> registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
                 LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 4), "Pintura")));
