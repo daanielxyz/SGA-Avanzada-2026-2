@@ -573,7 +573,7 @@ Queda, a propósito: una descripción de 2000 caracteres se lee completa en el d
 **Ajustes tras la prueba de Arias** (13 nov):
 - **Código repetido**: se avisa al salir del campo, sin esperar a «Crear» (`GET /api/apartamentos/APT-n`: 200 es que existe; 404, libre). Al crear, la API lo vuelve a revisar.
 - **Bloqueo en un calendario** (`src/apartamentos/CalendarioBloqueo.tsx`), como el de la web con la marca de Meridian: un clic elige la primera noche y el siguiente el día en que vuelve a venderse; un mes a la vez, hasta 12 meses adelante, con las flechas del teclado. Las noches pasadas no se eligen; las que tienen una reserva activa (de `GET /api/ocupacion` del apartamento) salen tachadas y las ya bloqueadas con las rayas del tablero. Como la API rechaza un bloqueo encima de una reserva activa, el rango no puede pasar por encima de una; el día en que vuelve a venderse sí puede ser la llegada de una reserva.
-- **Bloqueos en el pasado**: la API acepta uno que empezó antes de hoy (por ejemplo en marzo), que no tiene sentido. La pantalla ya no lo deja.
+- **Bloqueos en el pasado**: la API acepta uno que empezó antes de hoy (por ejemplo en marzo), que no tiene sentido. La pantalla ya no lo deja. **Hecho** en DEC-122 (`feature/nucleo/bloqueo-sin-pasado`): la API responde 409.
 
 **Para el núcleo (Reyes), sin urgencia**:
 - Que `RegistrarBloqueoUseCase` rechace un bloqueo cuyo inicio ya pasó (409), con el reloj inyectado. Hoy solo lo cuida el PMS.

@@ -213,7 +213,7 @@ class GestionarApartamentosTest {
     void deberiaBloquearFechasLibresYLevantarElBloqueo() {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
-                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
+                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos(), RepositoriosEnMemoria.RELOJ);
 
         ApartamentoResult bloqueado = registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
                 LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 12), "Pintura"));
@@ -230,7 +230,7 @@ class GestionarApartamentosTest {
         apartamentos.guardar(apartamento(APT_101, 4, true));
         reservas.guardar(reserva("RES-2026-00001", APT_101, LocalDate.of(2026, 11, 1), 2));
         RegistrarBloqueoUseCase registrar = new RegistrarBloqueoUseCase(apartamentos, reservas,
-                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos());
+                new BloqueoOperativoDomainService(), new RepositoriosEnMemoria.Codigos(), RepositoriosEnMemoria.RELOJ);
 
         assertThrows(ReglaDominioException.class, () -> registrar.ejecutar(new RegistrarBloqueoCommand("APT-101",
                 LocalDate.of(2026, 11, 2), LocalDate.of(2026, 11, 4), "Pintura")));
