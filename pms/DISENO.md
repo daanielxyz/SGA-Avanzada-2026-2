@@ -511,7 +511,7 @@ Lo que el diseño dejó abierto, resuelto con el contrato:
 - **Menú**: el de `src/navegacion.ts`; el del mockup era de ejemplo.
 - Al guardar otro nombre, la cabecera del panel se actualiza sin recargar.
 
-**Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40; falta la validación en el backend (400).
+**Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40. **Hecho** en DEC-121 (`feature/nucleo/largo-medio-pago`): el backend responde 400.
 
 **Probada en el navegador** (13 nov, Chromium contra el backend local con los datos demo, como administrador): guardar datos, marca y reglas; descripción vacía, latitud fuera de rango, anticipo de más de 100 y color mal escrito marcados junto al campo; pegar las coordenadas de Google Maps; la pregunta al cambiar de pestaña con cambios; el 409 por el mínimo de medios de pago junto al bloque, y volver a habilitar un medio escribiéndolo. Sin desbordes a 1280, 1024 y 390 px. Los datos demo quedaron como estaban (solo `normas` pasó de vacío a nulo, que es lo mismo).
 
