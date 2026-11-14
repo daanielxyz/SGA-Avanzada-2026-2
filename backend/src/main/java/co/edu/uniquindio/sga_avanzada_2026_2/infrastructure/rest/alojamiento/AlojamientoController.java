@@ -16,6 +16,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.HabilitarMe
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.MedioPagoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/alojamiento")
 public class AlojamientoController {
+
+    /** Largo de {@code alojamiento_medio_pago.nombre} y {@code pago.medio}, como en {@code RegistrarPagoRequest}. */
+    private static final int MAXIMO_MEDIO = 40;
 
     private final AlojamientoActual alojamiento;
     private final ConsultarAlojamientoUseCase consultarAlojamiento;
@@ -94,13 +98,16 @@ public class AlojamientoController {
         return AlojamientoResponse.de(cambiarUbicacion.ejecutar(solicitud.aCommand(alojamiento.id())));
     }
 
+    /** El nombre cabe en la columna del medio (40): uno más largo es un 400, no un error de la base (DEC-121). */
     @PutMapping("/medios-pago/{medio}/habilitar")
-    public AlojamientoResponse habilitarMedioPago(@PathVariable String medio) {
+    public AlojamientoResponse habilitarMedioPago(
+            @PathVariable @Size(max = MAXIMO_MEDIO, message = "admite máximo 40 caracteres") String medio) {
         return AlojamientoResponse.de(habilitarMedioPago.ejecutar(new MedioPagoCommand(alojamiento.id(), medio)));
     }
 
     @PutMapping("/medios-pago/{medio}/deshabilitar")
-    public AlojamientoResponse deshabilitarMedioPago(@PathVariable String medio) {
+    public AlojamientoResponse deshabilitarMedioPago(
+            @PathVariable @Size(max = MAXIMO_MEDIO, message = "admite máximo 40 caracteres") String medio) {
         return AlojamientoResponse.de(deshabilitarMedioPago.ejecutar(new MedioPagoCommand(alojamiento.id(), medio)));
     }
 
