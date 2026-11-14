@@ -1,4 +1,4 @@
-# Copia de respaldo diaria de la base publicada (DEC-121). Guía: docs/produccion/LEEME.md.
+# Copia de respaldo diaria de la base publicada (DEC-125). Guía: docs/produccion/LEEME.md.
 # 1. pg_dump del esquema public con el usuario de solo lectura (sga_respaldo).
 # 2. Restauración de prueba en un PostgreSQL temporal de la misma versión: si no restaura, el workflow falla.
 # 3. Cifrado con age (clave pública en la variable RESPALDO_AGE_PUBLICA; la privada nunca está en GitHub).
@@ -10,10 +10,6 @@ on:
   schedule:
     - cron: '0 8 * * *'   # 3:00 a. m. en Colombia. Solo corre desde la rama por defecto (develop)
   workflow_dispatch:      # a mano: Actions → Respaldo de la base → Run workflow
-  # TODO(pms): temporal, para probarlo antes del PR; se quita al integrar
-  push:
-    branches: [feature/nucleo/publicar-base]
-    paths: [.github/workflows/respaldo-base.yml]
 
 permissions:
   contents: read

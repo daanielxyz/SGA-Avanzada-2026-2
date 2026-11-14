@@ -1,9 +1,9 @@
--- Usuarios de la base publicada (DEC-121). Se ejecuta UNA vez por base nueva, como `postgres`, en el editor SQL de
+-- Usuarios de la base publicada (DEC-125). Se ejecuta UNA vez por base nueva, como `postgres`, en el editor SQL de
 -- Supabase o con psql. NO es una migración de Flyway: depende del proveedor y del ambiente.
 -- Sin contraseñas: cada usuario nace sin clave (no puede entrar) y la clave se pone después desde psql con
 -- \password <usuario>, para que no quede en el historial del editor SQL ni en git (guía en docs/produccion/LEEME.md).
 --
---   sga_migrador  dueño de las tablas; solo lo usa Flyway al arrancar (DB_MIGRACION_USER).
+--   sga_migrador  dueño de las tablas; solo lo usa Flyway al arrancar (SPRING_FLYWAY_USER).
 --   sga_app       la aplicación: lee y escribe datos, sin crear ni borrar tablas (DB_USER).
 --   sga_respaldo  solo lectura, para pg_dump en el workflow de respaldo.
 

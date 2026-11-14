@@ -1,4 +1,4 @@
-# Imagen del backend para publicarlo (DEC-121). Se construye desde backend/: docker build -t sga-backend .
+# Imagen del backend para publicarlo (DEC-125). Se construye desde backend/: docker build -t sga-backend .
 # Sin secretos: todo llega por variables de entorno del proveedor (ver backend/.env.example y docs/produccion/LEEME.md).
 
 # 1. Compilar el .jar con el wrapper de Gradle. Las pruebas corren en el PR, no aquí.

@@ -29,7 +29,7 @@ final class PermisosPorRol {
                 .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui.html",
                         "/swagger-ui/**").permitAll()
 
-                // Salud del servicio para el proveedor y el monitor de disponibilidad (DEC-121): solo dice UP o DOWN
+                // Salud del servicio para el proveedor y el monitor de disponibilidad (DEC-125): solo dice UP o DOWN
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
 
                 // Sin sesión: entrar (personal con contraseña, huésped con PIN) y lo que muestra el portal (CU-02 ·

@@ -1,4 +1,4 @@
-# Lo que nunca entra a la imagen: secretos locales y lo que se compila adentro (DEC-121)
+# Lo que nunca entra a la imagen: secretos locales y lo que se compila adentro (DEC-125)
 .env
 .env.*
 !.env.example

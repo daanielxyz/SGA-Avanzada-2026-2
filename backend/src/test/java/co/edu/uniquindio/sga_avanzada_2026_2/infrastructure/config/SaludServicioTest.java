@@ -13,12 +13,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * El proveedor y el monitor de disponibilidad preguntan por la salud del servicio sin token (DEC-121). Solo se
+ * El proveedor y el monitor de disponibilidad preguntan por la salud del servicio sin token (DEC-125). Solo se
  * publica {@code /actuator/health}, y sin detalles: no dice qué base usa ni qué versión corre.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Tag("DEC-121")
+@Tag("DEC-125")
 class SaludServicioTest {
 
     @Autowired
