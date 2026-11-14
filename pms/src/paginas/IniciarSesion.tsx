@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../api/cliente'
 import Aviso from '../componentes/Aviso'
 import Logo from '../componentes/Logo'
@@ -16,9 +16,12 @@ const AVISO_SESION_PERDIDA = 'Tu sesión terminó. Vuelve a entrar.'
 
 /** Entrada del personal con su correo y contraseña (CU-02). */
 export default function IniciarSesion() {
-  const { sesion, motivo, entrar } = useSesion()
+  const { sesion, motivo, aviso: avisoDeSesion, entrar } = useSesion()
   const navegar = useNavigate()
-  const desde = (useLocation().state as { desde?: string } | null)?.desde ?? '/'
+  const estado = useLocation().state as { desde?: string; aviso?: string } | null
+  const desde = estado?.desde ?? '/'
+  // Al volver de activar la cuenta o de cambiar la contraseña, se dice que salió bien
+  const exito = estado?.aviso ?? (motivo === 'cuenta-cambiada' ? avisoDeSesion : null)
   const [correo, setCorreo] = useState('')
   const [contrasena, setContrasena] = useState('')
   const [verContrasena, setVerContrasena] = useState(false)
@@ -75,7 +78,8 @@ export default function IniciarSesion() {
             <p className="suave">Todo listo para que tu operación fluya.</p>
           </div>
 
-          {motivo === 'perdida' && !problema && <Aviso tipo="info" mensaje={AVISO_SESION_PERDIDA} />}
+          {exito && !problema && <Aviso tipo="exito" mensaje={exito} />}
+          {motivo === 'perdida' && !exito && !problema && <Aviso tipo="info" mensaje={AVISO_SESION_PERDIDA} />}
           {problema && <Aviso tipo="error" mensaje={problema.mensaje} detalles={problema.detalles} />}
 
           <div>
@@ -146,6 +150,11 @@ export default function IniciarSesion() {
           <button type="submit" className="boton boton-bloque boton-grande" disabled={entrando}>
             {entrando ? 'Entrando…' : 'Entrar'}
           </button>
+
+          <p className="entrada-enlaces">
+            <Link to="/recuperar" state={{ correo: correo.trim() }} className="enlace">Olvidé mi contraseña</Link>
+            <Link to="/activar" className="enlace">Activar mi cuenta</Link>
+          </p>
         </form>
       </div>
     </main>

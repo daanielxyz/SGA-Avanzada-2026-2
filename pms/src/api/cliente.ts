@@ -48,7 +48,7 @@ const BASE = import.meta.env.VITE_API_URL ?? ''
  * @param ruta     empieza por /api, por ejemplo `/api/reservas?pagina=0`
  * @param opciones lo mismo que acepta `fetch`; si trae `cuerpo`, se envía como JSON
  * @throws ErrorApi con el error del backend, o con `SIN_CONEXION` si no respondió o no respondió JSON. Un 401 a una
- *         petición con token cierra además la sesión del PMS (DEC-71).
+ *         petición con token cierra además la sesión del PMS (DEC-71), salvo el de una contraseña mal escrita.
  */
 export async function pedir<T>(ruta: string, opciones: RequestInit & { cuerpo?: unknown } = {}): Promise<T> {
   const { cuerpo, headers, ...resto } = opciones
@@ -66,13 +66,14 @@ export async function pedir<T>(ruta: string, opciones: RequestInit & { cuerpo?: 
     throw new ErrorApi(SIN_CONEXION)
   }
 
-  if (respuesta.status === 401 && token) {
-    sesionPerdida()
-  }
   if (respuesta.status === 204) {
     return undefined as T
   }
   const json: unknown = await respuesta.json().catch(() => undefined)
+  // Un 401 por una contraseña mal escrita (la actual, en «Mi perfil») no dice nada del token: la sesión sigue
+  if (respuesta.status === 401 && token && !(esErrorRespuesta(json) && json.codigo === 'CREDENCIALES_INVALIDAS')) {
+    sesionPerdida()
+  }
   if (respuesta.ok && json !== undefined) {
     return json as T
   }
