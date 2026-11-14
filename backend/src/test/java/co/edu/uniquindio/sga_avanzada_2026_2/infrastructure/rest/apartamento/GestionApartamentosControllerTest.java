@@ -216,6 +216,40 @@ class GestionApartamentosControllerTest {
     }
 
     @Test
+    @Tag("IMG-01")
+    void unApartamentoNuevoSinImagenesEs409() throws Exception {
+        // DEC-123
+        enviar(post("/api/apartamentos"), """
+                {
+                  "codigo": "APT-102",
+                  "nombre": "Apartamento",
+                  "capacidad": 4,
+                  "dormitorios": 2,
+                  "imagenes": [],
+                  "caracteristicas": ["Balcón"]
+                }
+                """).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+    }
+
+    @Test
+    @Tag("IMG-01")
+    void laUnicaImagenDeUnApartamentoRetiradoNoSeQuitaHastaQueHayaOtra() throws Exception {
+        String unica = "{\"url\": \"https://cdn.sga.co/apt.jpg\"}";
+
+        // DEC-123: el APT-101 nace retirado, con una sola imagen
+        enviar(put(APT + "/imagenes/quitar"), unica)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
+        enviar(post(APT + "/imagenes"), "{\"url\": \"https://cdn.sga.co/otra.jpg\"}")
+                .andExpect(status().isCreated());
+        enviar(put(APT + "/imagenes/quitar"), unica)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagenes", hasSize(1)))
+                .andExpect(jsonPath("$.imagenes[0].principal").value(true));
+    }
+
+    @Test
     @Tag("BLO-02")
     void unBloqueoQueEmpiezaHoySeRegistraYUnoQueEmpezoAyerEs409() throws Exception {
         LocalDate hoy = LocalDate.now();

@@ -199,7 +199,7 @@ class GestionarApartamentosTest {
     @Tag("EOPE-02")
     void deberiaAvanzarLaPreparacionYRechazarUnaTransicionInvalida() {
         apartamentos.guardar(Apartamento.crear(APT_101, ALO, "Apto 101", null, new Capacidad(4), new Dormitorio(2),
-                List.of(), List.of(new Caracteristica("Balcón"))));
+                List.of(new Imagen("https://cdn.sga.co/a.jpg", true)), List.of(new Caracteristica("Balcón"))));
         MarcarPreparadoUseCase marcarPreparado = new MarcarPreparadoUseCase(apartamentos);
 
         assertThrows(ReglaDominioException.class, () -> marcarPreparado.ejecutar("APT-101"));
