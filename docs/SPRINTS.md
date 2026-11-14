@@ -121,14 +121,17 @@ Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
 - **pms** (tres personas: Daniel, Reyes y Arias, que terminó lo del equipo web y se suma al PMS en este sprint). Reparto, orden y el núcleo de cada cosa en `pms/DISENO.md`, «Sprint 4: reparto»; cómo se hace cada pantalla, con su prompt para Claude Design, en `pms/prompts/sprint4/`.
   - [x] Arias: apartamentos (`feature/pms/apartamentos`, `pms/prompts/sprint4/apartamentos.md`). Al crear se exige al menos una foto y la única no se quita (13 nov); que la API también lo exija queda para Reyes, sin urgencia (`pms/DISENO.md`, «Sprint 4: apartamentos»).
   - [x] Arias: temporadas y tarifas (`feature/pms/temporadas-tarifas`, `temporadas-tarifas.md`). Una temporada nueva pide la tarifa de cada apartamento a la venta (TAR-03), y la de los retirados es opcional; las fechas incluyen los dos días (`pms/DISENO.md`, «Sprint 4: temporadas y tarifas»).
-  - [ ] Reyes, núcleo, una rama `feature/nucleo/…` por cosa y su PR a más tardar el miércoles 18: próxima entrada en la preparación (#16, primero), la llegada sin el pago completo solo con el administrador (R2), motivo de fuera de servicio (#17), leer la llegada registrada (#13), quién validó la identidad (#15), cambiar vehículos y mascotas sin recalcular las noches (R3), nombre de la temporada en el desglose (#10) y mensajes de los 409 para recepción (#8). Si cabe: filtros de varios valores en Reservas (#22) y corregir un documento mal escrito (#14).
-  - [ ] Reyes: usuarios, mi perfil, activar la cuenta y recuperar la contraseña (`feature/pms/usuarios`, `usuarios-perfil.md`).
+  - [x] Reyes, núcleo, una rama `feature/nucleo/…` por cosa y su PR a más tardar el miércoles 18: próxima entrada en la preparación (#16, primero), la llegada sin el pago completo solo con el administrador (R2), motivo de fuera de servicio (#17), leer la llegada registrada (#13), quién validó la identidad (#15), cambiar vehículos y mascotas sin recalcular las noches (R3), nombre de la temporada en el desglose (#10) y mensajes de los 409 para recepción (#8). Si cabe: filtros de varios valores en Reservas (#22) y corregir un documento mal escrito (#14). Todo integrado: DEC-111 a DEC-120.
   - [x] Daniel: alojamiento (`feature/pms/alojamiento`, `alojamiento.md`): datos y ubicación, reglas de la estancia, servicios, medios de pago y marca; probada en el navegador y auditada.
   - [x] Daniel: política de cancelación (`feature/pms/politica`, `politica.md`): la vigente y las anteriores, y publicar una versión nueva con su vista previa; probada en el navegador y auditada.
   - [ ] Daniel: la pantalla de lo que entre del núcleo: orden y próxima entrada en la preparación, la llegada sin pago completo solo para el administrador, el motivo de fuera de servicio en la preparación y el tablero, la llegada registrada en el detalle y en «Corregir registro», quién validó, vehículos y mascotas sin recalcular, el nombre de la temporada y los mensajes nuevos.
-  - [ ] Daniel: huésped principal y apellidos del titular aparte en «Nueva reserva» (DEC-97/98, `nueva-reserva-principal.md`).
-  - [ ] Daniel: revisar los mockups y los PR de Arias y Reyes.
-  - Pasan al sprint 5, o los toma quien termine primero: novedades de mantenimiento (la API las lista por apartamento) y titulares (la API no tiene buscador). Las pantallas de canales de venta (conflictos y bitácora) van con Channex en el sprint 5.
+  - [x] Daniel: huésped principal y apellidos del titular aparte en «Nueva reserva» (DEC-97/98, `feature/pms/nueva-reserva-principal`, `nueva-reserva-principal.md`); probada en el navegador y auditada.
+  - **Nuevo reparto (13 nov)**: Arias termina lo que queda del sprint 4 del PMS y Daniel y Reyes adelantan el sprint 5 (`pms/DISENO.md`, «Sprint 4: nuevo reparto»).
+  - [ ] Arias: usuarios, mi perfil, activar la cuenta y recuperar la contraseña (`feature/pms/usuarios`, `usuarios-perfil.md`). Era de Reyes, que no la había empezado.
+  - [ ] Arias: las pantallas de DEC-119 (filtros de varios valores en Reservas) y DEC-120 («Corregir documento» con su historial).
+  - [ ] Arias: núcleo sin urgencia, una rama `feature/nucleo/…` por cosa: al menos una foto en la API, rechazar un bloqueo que ya empezó, largo del nombre de un medio de pago y el nombre de la temporada en sus rechazos.
+  - [ ] Arias: novedades de mantenimiento y titulares, con su núcleo antes (un listado general de novedades y un buscador de titulares). Las pantallas de canales de venta (conflictos y bitácora) van con Channex en el sprint 5.
+  - [ ] Todos: revisar los mockups y los PR de los demás, a medida que lleguen.
 - **Cierre 4 (vie 20 nov)**: decidir con el cliente qué parte de Channex es imprescindible para la entrega.
 
 ## Sprint 5 · 23 – 27 nov · «Vender en plataformas y cumplir»
@@ -137,8 +140,9 @@ Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el h
   - [ ] B4c Channex: cuenta sandbox, mapeo de apartamentos y tarifas (decisión con el cliente) y entrada de reservas desde Channex.
   - [ ] B4c Channex: publicar disponibilidad y tarifas, reintentos y bitácora; prueba de punta a punta en el sandbox. Si no alcanza, el cierre 4 decide si pasa al MVP2.
 - **pms**
+  - [ ] Reyes, adelantado desde el 13 nov: publicar la base de datos (BL-06), con copia de respaldo desde el principio y revisión de seguridad (`pms/DISENO.md`, «Sprint 4: nuevo reparto»). El plan, el proveedor y las herramientas se deciden en su sesión y quedan como `DEC-nn`.
   - [ ] B5 TRA: titular validado y envío del reporte (los datos del ocupante se piden en la llegada desde el sprint 3, BL-07); SIRE para extranjeros y adjuntos si hay capacidad (BL-18, BL-19).
-  - [ ] B4d IA no bloqueante, si queda capacidad (decidir el uso con el cliente).
+  - [ ] B4d IA no bloqueante (Daniel, adelantado desde el 13 nov): un asistente en el PMS que resuelve dudas de cómo hacer las cosas y qué hacer en cada caso, y lo que salga de la lluvia de ideas. El plan, las herramientas y las carpetas se deciden en su sesión; el uso se lleva al cliente en el cierre 4.
 - **Cierre final (vie 27 nov)**: entrega del MVP1.
 
 ## Registro de cierres

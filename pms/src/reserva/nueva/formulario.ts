@@ -1,6 +1,7 @@
 // Lo que se escribe al crear una reserva y sus validaciones de formato. Sirven para corregir antes de enviar: quien
 // decide es el backend, que sigue devolviendo sus 400 y 409.
 import type { Alojamiento } from '../../api/alojamiento'
+import type { NuevaReserva } from '../../api/reservas'
 import { dinero, edadEn, fechaCorta, fechaHoy } from '../../formato'
 
 /** Los del titular: quien responde por la reserva y entra a su cuenta no se identifica con registro civil (DEC-110). */
@@ -17,8 +18,11 @@ export interface DatosEstancia {
   ocupantes: string
 }
 
+/** DEC-98: los nombres y los apellidos aparte, como los pide el reporte a Migración (TRA). */
 export interface DatosTitular {
-  nombre: string
+  nombres: string
+  primerApellido: string
+  segundoApellido: string
   tipoDocumento: string
   numeroDocumento: string
   correo: string
@@ -37,7 +41,19 @@ export interface DatosOcupante {
 export type Errores = Record<string, string>
 
 export const ESTANCIA_VACIA: DatosEstancia = { entrada: '', salida: '', ocupantes: '1' }
-export const TITULAR_VACIO: DatosTitular = { nombre: '', tipoDocumento: 'CC', numeroDocumento: '', correo: '', telefono: '' }
+export const TITULAR_VACIO: DatosTitular = {
+  nombres: '', primerApellido: '', segundoApellido: '', tipoDocumento: 'CC', numeroDocumento: '', correo: '', telefono: '',
+}
+
+/** Largos de la API (`TitularReservaRequest`, DEC-98). */
+export const MAXIMO_NOMBRES = 120
+export const MAXIMO_APELLIDO = 60
+
+/** El nombre completo del titular, armado con sus partes como lo hace el backend (`Titular.nombreCompleto`). */
+export function nombreDelTitular({ nombres, primerApellido, segundoApellido }: DatosTitular): string {
+  return [nombres, primerApellido, segundoApellido].map((parte) => parte.trim()).filter(Boolean).join(' ')
+}
+
 export const OCUPANTE_VACIO: DatosOcupante = {
   nombre: '', fechaNacimiento: '', tipoDocumento: '', numeroDocumento: '', nacionalidad: '',
 }
@@ -82,7 +98,9 @@ function esRepetido(a: DatosOcupante, b: DatosOcupante): boolean {
 
 function validarTitular(titular: DatosTitular): Errores {
   const errores: Errores = {}
-  if (!titular.nombre.trim()) errores['titular.nombre'] = 'Escribe el nombre.'
+  // DEC-98: el TRA pide los nombres y el primer apellido; el segundo es opcional
+  if (!titular.nombres.trim()) errores['titular.nombres'] = 'Escribe los nombres.'
+  if (!titular.primerApellido.trim()) errores['titular.primerApellido'] = 'Escribe el primer apellido.'
   if (!titular.numeroDocumento.trim()) errores['titular.numeroDocumento'] = 'Escribe el número de documento.'
   if (!titular.correo.trim()) errores['titular.correo'] = 'Escribe el correo.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(titular.correo.trim())) {
@@ -151,9 +169,27 @@ export function tiposPorEdad<T extends readonly [string, string]>(tipos: readonl
   return tipos.filter(([tipo]) => !tipo || tipo === elegido || !mensajeDocumentoPorEdad(tipo, nacimiento, entrada))
 }
 
+/** DEC-97: si ya se sabe que el ocupante será mayor de edad el día de entrada; sin su fecha de nacimiento, no. */
+export function esAdultoAlEntrar(ocupante: DatosOcupante, entrada: string): boolean {
+  return Boolean(ocupante.fechaNacimiento && entrada) && edadEn(ocupante.fechaNacimiento, entrada) >= MAYORIA_DE_EDAD
+}
+
+/**
+ * DEC-97: el huésped principal, uno solo y mayor de edad el día de entrada. Vale el que eligió recepción mientras
+ * siga siendo adulto; si no eligió, o el elegido dejó de serlo (se corrigió su fecha o la de entrada), el primer
+ * adulto, que es el titular cuando se aloja.
+ *
+ * @returns la posición del principal en el grupo; nula si todavía no hay ningún adulto
+ */
+export function principalDelGrupo(grupo: DatosOcupante[], entrada: string, elegido: number | null): number | null {
+  if (elegido !== null && grupo[elegido] && esAdultoAlEntrar(grupo[elegido], entrada)) return elegido
+  const primero = grupo.findIndex((ocupante) => esAdultoAlEntrar(ocupante, entrada))
+  return primero >= 0 ? primero : null
+}
+
 /**
  * DEC-97: el titular ya no tiene que alojarse, pero el grupo debe traer un mayor de edad a la fecha de entrada, que
- * será el huésped principal (el backend elige al primero). Solo se revisa cuando todas las fechas están escritas: si
+ * será el huésped principal. Solo se revisa cuando todas las fechas están escritas: si
  * falta alguna, el error de esa fecha sale primero.
  */
 function validarMayorDeEdad(grupo: DatosOcupante[], entrada: string): Errores {
@@ -176,10 +212,52 @@ export function validarPersonas(titular: DatosTitular, grupo: DatosOcupante[], e
 export function ocupanteDelTitular(titular: DatosTitular, ocupante: DatosOcupante): DatosOcupante {
   return {
     ...ocupante,
-    nombre: titular.nombre,
+    nombre: nombreDelTitular(titular),
     tipoDocumento: titular.tipoDocumento,
     numeroDocumento: titular.numeroDocumento,
   }
+}
+
+/** El titular como lo recibe la API: las partes recortadas y el nombre completo mientras quepa en `nombre` (DEC-98). */
+export function titularParaEnviar(titular: DatosTitular): NuevaReserva['titular'] {
+  const completo = nombreDelTitular(titular)
+  const segundo = titular.segundoApellido.trim()
+  return {
+    ...(completo.length <= MAXIMO_NOMBRES ? { nombre: completo } : {}),
+    nombres: titular.nombres.trim(),
+    primerApellido: titular.primerApellido.trim(),
+    ...(segundo ? { segundoApellido: segundo } : {}),
+    tipoDocumento: titular.tipoDocumento,
+    numeroDocumento: titular.numeroDocumento.trim(),
+    correo: titular.correo.trim(),
+    telefono: titular.telefono.trim(),
+  }
+}
+
+/**
+ * El grupo como lo recibe la API. Si el titular se aloja, el ocupante 1 lleva sus nombres y apellidos aparte, que
+ * además pueden pasar de los 120 del nombre completo. Solo el principal va marcado (DEC-97).
+ */
+export function ocupantesParaEnviar(grupo: DatosOcupante[], titular: DatosTitular, titularSeAloja: boolean,
+  principal: number | null): NuevaReserva['ocupantes'] {
+  return grupo.map((ocupante, indice) => {
+    const delTitular = titularSeAloja && indice === 0 ? titularParaEnviar(titular) : null
+    const nombre = delTitular
+      ? {
+          ...(delTitular.nombre ? { nombre: delTitular.nombre } : {}),
+          nombres: delTitular.nombres,
+          primerApellido: delTitular.primerApellido,
+          ...(delTitular.segundoApellido ? { segundoApellido: delTitular.segundoApellido } : {}),
+        }
+      : { nombre: ocupante.nombre.trim() }
+    return {
+      ...nombre,
+      fechaNacimiento: ocupante.fechaNacimiento,
+      ...(ocupante.tipoDocumento ? { tipoDocumento: ocupante.tipoDocumento, numeroDocumento: ocupante.numeroDocumento.trim() } : {}),
+      ...(ocupante.nacionalidad.trim() ? { nacionalidad: ocupante.nacionalidad.trim() } : {}),
+      principal: indice === principal,
+    }
+  })
 }
 
 /** Qué le falta a la reserva para poder confirmarse después (RN-09 · RES-15). */

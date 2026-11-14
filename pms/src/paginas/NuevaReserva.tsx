@@ -14,6 +14,7 @@ import {
   mensajeDeCreada,
   OCUPANTE_VACIO,
   ocupanteDelTitular,
+  principalDelGrupo,
   TITULAR_VACIO,
   type DatosEstancia,
   type DatosOcupante,
@@ -46,6 +47,8 @@ export default function NuevaReserva() {
   const [titular, setTitular] = useState<DatosTitular>(TITULAR_VACIO)
   const [grupo, setGrupo] = useState<DatosOcupante[]>([OCUPANTE_VACIO])
   const [titularSeAloja, setTitularSeAloja] = useState(true)
+  // DEC-97: el que eligió recepción; nulo mientras siga el de siempre (el primer adulto)
+  const [principalElegido, setPrincipalElegido] = useState<number | null>(null)
   const [personasListas, setPersonasListas] = useState(false)
   const [llegada, setLlegada] = useState<DatosLlegada>({ hora: '', carros: '0', motos: '0', mascotas: '0' })
   const [otroApartamento, setOtroApartamento] = useState(false)
@@ -60,7 +63,7 @@ export default function NuevaReserva() {
   const pedido = Number(parametros.get('paso')) || 1
   const paso = Math.min(Math.max(pedido, 1), maximo)
 
-  const hayAlgoEscrito = Boolean(estancia.entrada || estancia.salida || titular.nombre || estanciaLista)
+  const hayAlgoEscrito = Boolean(estancia.entrada || estancia.salida || titular.nombres || estanciaLista)
   const aviso = useAvisoAlSalir(hayAlgoEscrito && !creada)
 
   useEffect(() => {
@@ -90,6 +93,8 @@ export default function NuevaReserva() {
     contenedor.current?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true })
     window.scrollTo?.({ top: 0 })
   }, [paso])
+
+  const principal = estanciaLista ? principalDelGrupo(grupo, estanciaLista.entrada, principalElegido) : null
 
   const irA = (destino: number) => setParametros(destino === 1 ? {} : { paso: String(destino) })
 
@@ -130,6 +135,8 @@ export default function NuevaReserva() {
   function cambiarSeAloja(seAloja: boolean) {
     setTitularSeAloja(seAloja)
     setPersonasListas(false)
+    // El principal vuelve a ser el de siempre: el titular si se aloja, o el primer adulto que quede
+    setPrincipalElegido(null)
     // Al dejar de alojarse, el ocupante 1 queda en blanco: sus datos eran los del titular y ahora es otra persona
     setGrupo((actual) => actual.map((o, i) => {
       if (i !== 0) return o
@@ -243,8 +250,13 @@ export default function NuevaReserva() {
           titular={titular}
           grupo={grupo}
           titularSeAloja={titularSeAloja}
+          principal={principal}
           entrada={estanciaLista.entrada}
           alCambiarTitular={cambiarTitular}
+          alElegirPrincipal={(indice) => {
+            setPrincipalElegido(indice)
+            setPersonasListas(false)
+          }}
           alCambiarOcupante={cambiarOcupante}
           alCambiarSeAloja={cambiarSeAloja}
           alSeguir={() => {
@@ -261,6 +273,8 @@ export default function NuevaReserva() {
           apartamento={apartamento}
           titular={titular}
           grupo={grupo}
+          titularSeAloja={titularSeAloja}
+          principal={principal}
           llegada={llegada}
           alojamiento={alojamiento}
           alCambiarLlegada={setLlegada}

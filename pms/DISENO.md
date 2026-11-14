@@ -454,6 +454,40 @@ Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimient
 8. **#8 · Mensajes de los 409 para recepción**: textos sin códigos internos ni palabras técnicas. Cambia textos que ve la web (el `motivo` de DEC-94 no cambia, solo `mensaje`): avisar a la web.
 9. Si cabe: **#22**, filtros de varios valores en `GET /api/reservas` (`estado=PENDIENTE&estado=CONFIRMADA`), y **#14**, «Corregir documento» con motivo, autor y fecha, que conserva los datos del TRA.
 
+## Sprint 4: nuevo reparto (13 nov)
+Al núcleo de Reyes no le falta nada (DEC-111 a DEC-120 integrados), Arias terminó sus dos pantallas y Daniel las suyas. Desde aquí **Arias termina lo que queda del sprint 4 del PMS**, y **Daniel y Reyes adelantan el sprint 5**. La tabla de «Sprint 4: reparto» queda como historia.
+
+### Para Arias
+Al empezar: `CLAUDE.md`, `CLAUDE.local.md` (equipo **pms**), la sección pms del sprint 4 en `docs/SPRINTS.md`, esta sección y `pms/prompts/sprint4/LEEME.md` (el paso a paso de cada pantalla). Cada tarea, en su rama desde develop y con su PR. En orden:
+1. **Usuarios, mi perfil, activar la cuenta y recuperar la contraseña** (`pms/prompts/sprint4/usuarios-perfil.md`, `feature/pms/usuarios`). Era de Reyes, que no la había empezado. Es la más grande: Claude Design con su prompt y sus adjuntos, la revisión contra el contrato (paso 3), el código, la prueba en el navegador y la auditoría, como en apartamentos. El backend ya existe.
+2. **Pantallas de DEC-119 y DEC-120** (`feature/pms/decisiones-119-120`). Sin mockup: siguen los componentes de la base, como en «Sprint 4: lo que entró del núcleo». Leer las dos en `docs/DECISIONES.md`.
+   - DEC-119: los filtros de Reservas pueden ser de selección múltiple (`estado`, `apartamento` y `canal` repetidos o con comas); por ejemplo «Activas» = pendiente, confirmada y en curso.
+   - DEC-120: «Corregir documento» con motivo (obligatorio, hasta 500) en el detalle del huésped (`PUT /api/reservas/{codigo}/ocupantes/{ocupanteId}/documento`) y en el del titular (`PUT /api/reservas/{codigo}/titular/documento`), y la lista de correcciones con quién y cuándo (`ReservaResponse.correccionesDocumento`, marcando las del titular). Sus 409 salen junto a la acción.
+3. **Núcleo sin urgencia**, una rama `feature/nucleo/…` por cosa, cada una con su `DEC-nn`, sus pruebas (caso feliz y violación) y `docs/api/openapi.yaml` regenerado. Los detalles están anotados en cada sección de este archivo:
+   - que la API exija al menos una foto y que `quitarImagen` rechace la última (Apartamentos);
+   - que `RegistrarBloqueoUseCase` rechace un bloqueo que ya empezó, con el reloj inyectado (Apartamentos);
+   - el largo del nombre de un medio de pago (400 y no 500; Alojamiento);
+   - que los rechazos de temporadas digan el nombre y no `TEM-n` (Temporadas y tarifas). Al integrarlo, el PMS ya no necesita cambiar los ids por nombres.
+
+   Subir fotos desde el equipo sigue para después de la entrega.
+4. **Novedades de mantenimiento y titulares**. Primero su núcleo: un listado general de novedades (hoy la API las lista por apartamento) y un buscador de titulares por nombre o documento. Luego las pantallas, con un prompt para Claude Design escrito como los de `pms/prompts/sprint4/`, que revisa Daniel antes de lanzarlo.
+
+Al terminar: el cierre 4 con el cliente (vie 20 nov). Revisar los PR de los demás es de todos, a medida que lleguen.
+
+### Daniel y Reyes: el sprint 5 adelantado
+- **Reyes · publicar la base de datos** (BL-06). Su sesión de Claude parte de cero y decide el plan, el proveedor y las herramientas; lo decidido queda como `DEC-nn`. Lo que ya se sabe:
+  - El backend lee la base de `DB_URL`, `DB_USER` y `DB_PASSWORD`, y Flyway crea las tablas al arrancar. Una base sola no se le puede mostrar al cliente: decidir si el alcance incluye publicar el backend y los frontends (DEC-82, DEC-83).
+  - **Copia de respaldo desde el principio**: automática y probada (restaurar una vez para saber que sirve), antes de que la base tenga datos que importen.
+  - **Seguridad**: ningún secreto en git (DEC-78). Claves, contraseñas y direcciones de la base van en variables de entorno o en el panel del proveedor, nunca en un archivo del repositorio ni en un mensaje del PR. Si el proveedor lo permite, la base no se abre a todo internet, y la aplicación no entra con el usuario administrador de la base. Antes de cada PR, revisión con la skill `/security-review` y con la que encuentre su sesión para auditar seguridad.
+  - `SGA_DATOS_DEMO`: en un servidor real va en `false`. Si la base es para mostrársela al cliente, decidir si lleva los datos de prueba y cambiar su clave (`SGA_DEMO_CLAVE`).
+  - Migraciones: la base publicada aplica las nuevas en cada despliegue; una migración ya aplicada nunca se edita. Si cambia `application.properties` o la configuración, es núcleo (`feature/nucleo/…`).
+- **Daniel · IA no bloqueante** (B4d): un asistente en el PMS que resuelve dudas de quien lo use (cómo hacer algo, qué hacer en un caso) y lo que salga de la lluvia de ideas. La planeación, las herramientas y las carpetas se deciden en su sesión. Lo que ya se sabe (`CLAUDE.md`): la IA va tras un puerto (núcleo, en `domain/`), con una implementación local para cuando no haya clave; nunca impide operar; la clave va por variable de entorno; el endpoint nuevo entra en `PermisosPorRol` y `openapi.yaml` se regenera. A un servicio externo no se le mandan datos personales de los huéspedes sin decidirlo a propósito. El uso se le presenta al cliente en el cierre 4.
+
+**Dónde se pueden cruzar**:
+- las migraciones de Arias con la base publicada de Reyes (número: el siguiente libre al integrar);
+- el panel del asistente de Daniel y las pantallas de usuarios de Arias en el marco del PMS (`App.tsx`, `navegacion.ts`): el asistente va en su propio componente, con una sola línea en el marco;
+- `application.properties`, que pueden tocar Reyes y Daniel, cada uno en su rama de núcleo con un PR pequeño.
+
 ## Sprint 4: alojamiento (`feature/pms/alojamiento`)
 Mockups en `pms/diseno/mockups-meridian-sprint4-alojamiento/` (segunda entrega, con los mínimos abiertos y un servicio desactivado). Revisados contra `docs/api/openapi.yaml` y el dominio el 13 nov. Pantalla en `src/paginas/Alojamiento.tsx`, bloques en `src/alojamiento/`.
 
@@ -571,6 +605,27 @@ Programada en `src/paginas/Tarifas.tsx` (`/tarifas`, solo el administrador). Los
 Queda, a propósito: con 5 o más temporadas, a 1280 la tabla de tarifas se desplaza de lado dentro de su caja, como las otras tablas anchas del PMS.
 
 **Para el núcleo (Reyes), sin urgencia**: que los rechazos de temporadas nombren la temporada y no su id (`CalendarioTemporadas.validarSinSolape` y `exigirTemporadaActiva`). Hoy el PMS cambia `TEM-n` por el nombre; otro cliente vería el id.
+
+## Sprint 4: huésped principal y apellidos en «Nueva reserva» (`feature/pms/nueva-reserva-principal`)
+Mockups en `pms/diseno/mockups-meridian-sprint4-nueva-reserva/S4Paso3/` (computador, celular y la hoja de estados, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el dominio (`TitularReservaRequest`, `OcupanteRequest`, `Reserva.marcarPrincipal`). Cuadran con el prompt; lo que el LEEME dejó dudoso, con su número:
+- **Datos de ejemplo** (1): las fechas de nacimiento inventadas solo son del mockup.
+- **Nombres aparte de los ocupantes** (2): no. El prompt solo separa los del titular. El ocupante del titular sí se envía con `nombres` y apellidos aparte (la API lo acepta, BL-07), así que su nombre completo puede pasar de 120. Los demás siguen con «Nombre completo»; separarlos va con el TRA del sprint 5.
+- **Cuándo sale la opción** (3, 4): solo en los ocupantes que tendrán 18 años o más el día de entrada; sin fecha de nacimiento, no. Vale el que eligió recepción mientras siga siendo adulto; si no eligió, o deja de serlo (se corrige su fecha o la de entrada, o se quita del grupo), el primer adulto, que es el titular cuando se aloja. Marcar o desmarcar «El titular también se aloja» vuelve a ese de siempre (`principalDelGrupo`).
+- **Error de «sin mayor de edad»** (5): se queda donde ya estaba en la app, bajo las pistas de «Ocupantes» y con las fechas marcadas.
+- **Aviso general** (6): el de la app, «Revisa 1 campo marcado» en singular.
+- **Textos** (7, 8): se quedan los del mockup. Los menores no llevan texto: la pista general lo explica.
+- **Tipos de documento y formato de fecha** (9, 10): los de la app.
+- **Un solo adulto**: su opción queda marcada, sin deshabilitar, con la pista «Es el único mayor de edad del grupo, así que no se puede cambiar».
+
+Programada en `src/reserva/nueva/PasoPersonas.tsx` y `formulario.ts` (`nombreDelTitular`, `principalDelGrupo`, `titularParaEnviar`, `ocupantesParaEnviar`, con sus pruebas). `Campo` tiene ahora la opción `contador` (lo escrito contra su `maxLength`, a la derecha del error). Al titular se le envían `nombres`, `primerApellido` y `segundoApellido`, y también `nombre` armado mientras quepa en 120 (la API usa las partes cuando llegan). Cada ocupante lleva `principal`, `true` solo en el elegido. Después de crear, «Hacer principal» de la llegada sigue sirviendo para cambiarlo.
+
+**Probada en el navegador** (13 nov, contra el backend local, como recepción): el titular sin primer apellido (error junto al campo, con el contador); Ana María por defecto y luego Julián, también con las flechas; Sofía, de 9 años, sin la opción; crear (RES-2026-00053): el detalle muestra a Julián como huésped principal y al titular «Ana María Ríos Gómez». La reserva quedó cancelada en la base local. Sin desbordes a 1280, 1024 y 390 px.
+
+**Auditoría** (referencias de `impeccable` audit, harden y adapt y `craft-floor` leídas a mano, sin su ejecutable; `break-ui` con 8 ocupantes, nombres de 120 y apellidos de 60 con tildes y guiones, un correo de 85 sin espacios, «Jo», «Ñ», japonés y emoji, a 1280, 820, 640, 320 px y con la letra al doble):
+- P1: al seguir con errores, el foco se quedaba en «Siguiente»; ahora va al primer campo marcado.
+- P2: a 320 px «Siguiente: resumen →» se salía 11 px del pie (venía de antes). En el celular los botones del pie toman su ancho con menos relleno.
+
+Queda, a propósito: el nombre largo del ocupante del titular se corta dentro de su campo de solo lectura (se lee completo en los campos del titular).
 
 ## Estado
 - [x] Flujo acordado (DEC-84).
