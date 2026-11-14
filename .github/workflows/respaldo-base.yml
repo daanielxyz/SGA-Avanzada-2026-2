@@ -64,6 +64,10 @@ jobs:
           PGSSLMODE: require
         run: |
           set -euo pipefail
+          # Un espacio o un salto de línea pegado por error en un secreto no debe romper la copia
+          PGHOST=$(printf '%s' "$PGHOST" | tr -d '[:space:]'); export PGHOST
+          PGUSER=$(printf '%s' "$PGUSER" | tr -d '[:space:]'); export PGUSER
+          PGPASSWORD=$(printf '%s' "$PGPASSWORD" | tr -d '[:space:]'); export PGPASSWORD
           version=$(psql -Atc "select current_setting('server_version_num')::int / 10000")
           tablas=$(psql -Atc "select count(*) from pg_tables where schemaname = 'public'")
           migraciones=$(psql -Atc "select count(*) from public.flyway_schema_history where success")
