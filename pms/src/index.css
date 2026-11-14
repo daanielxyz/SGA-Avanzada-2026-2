@@ -6682,3 +6682,327 @@ button.barra {
 .ocupante.ocupante-elegido {
   border-color: var(--acento);
 }
+
+/* Sprint 4 · usuarios: la lista del personal, «Mi perfil» y las páginas sin sesión (activar y recuperar). En lo
+   angosto, una tarjeta por persona; la tabla desde 760 px de contenido */
+.usuarios,
+.perfil {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+}
+
+.usuarios h1:focus {
+  outline: none;
+}
+
+.tabla-usuarios-marco {
+  display: none;
+  position: relative;
+}
+
+.tabla-usuarios td {
+  vertical-align: middle;
+}
+
+/* Un correo largo parte en la arroba o en un punto (<wbr>), nunca en mitad de una palabra */
+.correo {
+  overflow-wrap: break-word;
+}
+
+.celda-correo {
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.celda-nombre {
+  max-width: 260px;
+}
+
+.usuario-nombre {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  font-weight: 600;
+}
+
+/* «Tú»: una palabra con borde, no un color */
+.marca-tu {
+  padding: 0 var(--espacio-2);
+  border: 1px solid var(--texto);
+  border-radius: 999px;
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+  font-weight: 600;
+}
+
+.usuario-acciones {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+/* Eliminada: en gris, sin acciones y con «✕ Eliminada» */
+.usuario-eliminado,
+.usuario-eliminado .usuario-nombre {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.cuenta-activa > span:first-child {
+  color: var(--exito);
+}
+
+.cuenta-sin-activar > span:first-child {
+  color: var(--acento);
+}
+
+.usuarios-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.usuario-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  padding: var(--espacio-4);
+}
+
+.usuario-tarjeta p {
+  margin: 0;
+}
+
+.usuario-tarjeta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.usuario-tarjeta .usuario-acciones {
+  margin-top: var(--espacio-2);
+}
+
+.usuario-tarjeta .usuario-acciones .boton {
+  flex: 1;
+}
+
+@container (min-width: 760px) {
+  .tabla-usuarios-marco {
+    display: block;
+  }
+
+  .usuarios-tarjetas {
+    display: none;
+  }
+}
+
+/* Formulario de una persona: nombre, correo, teléfono, documento y fecha */
+.formulario-usuario,
+.campos-persona {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.formulario-usuario fieldset,
+.campos-persona fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-usuario legend,
+.campos-persona legend {
+  padding: 0;
+}
+
+.campo-documento-fila {
+  display: grid;
+  grid-template-columns: minmax(110px, 2fr) 3fr;
+  gap: var(--espacio-2);
+}
+
+.dato-solo-lectura {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3-medio);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  background: var(--superficie-2);
+}
+
+/* Roles: el botón de opción marcado, el borde Arena y la palabra; no solo el fondo */
+.roles {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+}
+
+.rol-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.rol-opcion + .rol-opcion {
+  border-top: 1px solid var(--borde);
+}
+
+.rol-opcion input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--acento);
+}
+
+.rol-opcion > span {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-minimo);
+}
+
+.rol-opcion .campo-pista {
+  margin: 0;
+}
+
+.rol-opcion.elegido {
+  border-left-color: var(--acento);
+  background: var(--superficie-2);
+}
+
+.resumen-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: var(--espacio-4) 0 0;
+}
+
+.resumen-usuario div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+}
+
+.resumen-usuario dt {
+  color: var(--texto-suave);
+}
+
+.resumen-usuario dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* Mi perfil: dos bloques, cada uno con su pie y su botón */
+.perfil-bloque {
+  max-width: 820px;
+}
+
+.perfil-bloque-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  padding: var(--espacio-5) var(--espacio-4);
+}
+
+.perfil-bloque-cuerpo h2 {
+  margin: 0;
+}
+
+.perfil-bloque-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-top: 1px solid var(--borde);
+  background: var(--superficie-2);
+  border-radius: 0 0 var(--radio) var(--radio);
+}
+
+.perfil-guardado {
+  margin: 0;
+  color: var(--exito-texto);
+  font-size: var(--tamano-chico);
+  font-weight: 500;
+}
+
+.perfil-contrasena .campo {
+  max-width: 420px;
+}
+
+@container (min-width: 640px) {
+  .perfil-bloque-cuerpo {
+    padding: var(--espacio-6);
+  }
+
+  .perfil-bloque-pie {
+    padding: var(--espacio-3) var(--espacio-6);
+  }
+
+  .campos-persona-rejilla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacio-4) var(--espacio-5);
+    align-items: start;
+  }
+}
+
+/* El «Mostrar» de una contraseña en un campo de 44 px (el de «Iniciar sesión» mide 48) */
+.campo > .campo-clave .ver-clave {
+  top: 0;
+}
+
+/* Páginas sin sesión: «Paso 1 de 2», el código de 6 dígitos y los enlaces de abajo */
+.paso-de {
+  margin: 0 0 var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+}
+
+.entrada-titulo h1:focus {
+  outline: none;
+}
+
+.campo-codigo {
+  max-width: 220px;
+  font-family: var(--letra-codigo);
+  font-size: var(--tamano-subtitulo);
+  letter-spacing: 0.4em;
+}
+
+.entrada-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--espacio-4);
+  margin: 0;
+}
+
+.formulario > .enlace {
+  align-self: center;
+}
+
+.codigo-vencido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
