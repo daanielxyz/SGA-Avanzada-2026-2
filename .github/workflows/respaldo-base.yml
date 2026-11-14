@@ -1,0 +1,117 @@
+# Copia de respaldo diaria de la base publicada (DEC-125). Guía: docs/produccion/LEEME.md.
+# 1. pg_dump del esquema public con el usuario de solo lectura (sga_respaldo).
+# 2. Restauración de prueba en un PostgreSQL temporal de la misma versión: si no restaura, el workflow falla.
+# 3. Cifrado con age (clave pública en la variable RESPALDO_AGE_PUBLICA; la privada nunca está en GitHub).
+# 4. Se guarda como archivo de la ejecución por 30 días. El repositorio es público: sin la clave privada no se lee.
+# Ninguna dirección, usuario ni clave va en este archivo: todo llega por secretos del repositorio.
+name: Respaldo de la base
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 3:00 a. m. en Colombia. Solo corre desde la rama por defecto (develop)
+  workflow_dispatch:      # a mano: Actions → Respaldo de la base → Run workflow
+
+permissions:
+  contents: read
+
+concurrency:
+  group: respaldo-base
+  cancel-in-progress: false
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Instalar el cliente de PostgreSQL 18 y age
+        run: |
+          set -euo pipefail
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y postgresql-common age > /dev/null
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y > /dev/null
+          sudo apt-get -qq install -y postgresql-client-18 > /dev/null
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
+
+      - name: Revisar la configuración
+        env:
+          AGE_PUBLICA: ${{ vars.RESPALDO_AGE_PUBLICA }}
+          HOST: ${{ secrets.RESPALDO_PGHOST }}
+          USUARIO: ${{ secrets.RESPALDO_PGUSER }}
+          CLAVE: ${{ secrets.RESPALDO_PGPASSWORD }}
+        run: |
+          falta=0
+          [ -n "$HOST" ]    || { echo "::error::Falta el secreto RESPALDO_PGHOST"; falta=1; }
+          [ -n "$USUARIO" ] || { echo "::error::Falta el secreto RESPALDO_PGUSER"; falta=1; }
+          [ -n "$CLAVE" ]   || { echo "::error::Falta el secreto RESPALDO_PGPASSWORD"; falta=1; }
+          case "$AGE_PUBLICA" in
+            age1*) ;;
+            *) echo "::error::La variable RESPALDO_AGE_PUBLICA no es una clave pública de age"; falta=1 ;;
+          esac
+          exit $falta
+
+      - name: Copiar la base (pg_dump)
+        id: copia
+        env:
+          PGHOST: ${{ secrets.RESPALDO_PGHOST }}
+          PGPORT: '5432'
+          PGDATABASE: postgres
+          PGUSER: ${{ secrets.RESPALDO_PGUSER }}
+          PGPASSWORD: ${{ secrets.RESPALDO_PGPASSWORD }}
+          PGSSLMODE: require
+        run: |
+          set -euo pipefail
+          # Un espacio o un salto de línea pegado por error en un secreto no debe romper la copia
+          PGHOST=$(printf '%s' "$PGHOST" | tr -d '[:space:]'); export PGHOST
+          PGUSER=$(printf '%s' "$PGUSER" | tr -d '[:space:]'); export PGUSER
+          PGPASSWORD=$(printf '%s' "$PGPASSWORD" | tr -d '[:space:]'); export PGPASSWORD
+          version=$(psql -Atc "select current_setting('server_version_num')::int / 10000")
+          tablas=$(psql -Atc "select count(*) from pg_tables where schemaname = 'public'")
+          migraciones=$(psql -Atc "select count(*) from public.flyway_schema_history where success")
+          echo "PostgreSQL $version · $tablas tablas · $migraciones migraciones aplicadas"
+          pg_dump --schema=public --format=custom --no-owner --no-privileges --file=respaldo.dump
+          { echo "version=$version"; echo "tablas=$tablas"; echo "migraciones=$migraciones"; } >> "$GITHUB_OUTPUT"
+
+      - name: Restaurar la copia en una base temporal y comprobarla
+        env:
+          VERSION: ${{ steps.copia.outputs.version }}
+          ORIGEN_TABLAS: ${{ steps.copia.outputs.tablas }}
+          ORIGEN_MIGRACIONES: ${{ steps.copia.outputs.migraciones }}
+        run: |
+          set -euo pipefail
+          docker run -d --name restauracion -e POSTGRES_HOST_AUTH_METHOD=trust -p 5433:5432 "postgres:$VERSION" > /dev/null
+          for _ in $(seq 1 30); do pg_isready -q -h localhost -p 5433 -U postgres && break; sleep 2; done
+          local_psql() { psql -h localhost -p 5433 -U postgres -d postgres -v ON_ERROR_STOP=1 "$@"; }
+          # La copia trae su propio CREATE SCHEMA public. btree_gist vive fuera de public (en Supabase, en
+          # extensions), como aquí: la restricción sin solape lo necesita
+          local_psql -qc "drop schema public cascade" -c "create schema extensions" \
+                     -c "create extension btree_gist with schema extensions"
+          pg_restore -h localhost -p 5433 -U postgres -d postgres --no-owner --no-privileges --exit-on-error respaldo.dump
+          tablas=$(local_psql -Atc "select count(*) from pg_tables where schemaname = 'public'")
+          migraciones=$(local_psql -Atc "select count(*) from public.flyway_schema_history where success")
+          sin_solape=$(local_psql -Atc "select count(*) from pg_constraint where conname = 'ex_reserva_sin_solape'")
+          echo "Restaurada: $tablas tablas · $migraciones migraciones · restricción sin solape: $sin_solape"
+          [ "$tablas" = "$ORIGEN_TABLAS" ] || { echo "::error::La copia tiene $tablas tablas y la base $ORIGEN_TABLAS"; exit 1; }
+          [ "$migraciones" = "$ORIGEN_MIGRACIONES" ] || { echo "::error::Faltan migraciones en la copia"; exit 1; }
+          [ "$sin_solape" = "1" ] || { echo "::error::La copia perdió la restricción que impide vender dos veces la misma noche"; exit 1; }
+          docker rm -f restauracion > /dev/null
+
+      - name: Cifrar la copia (age)
+        id: cifrado
+        env:
+          AGE_PUBLICA: ${{ vars.RESPALDO_AGE_PUBLICA }}
+        run: |
+          set -euo pipefail
+          nombre="sga-$(date -u +%Y%m%d-%H%M).dump.age"
+          age -r "$AGE_PUBLICA" -o "$nombre" respaldo.dump
+          shred -u respaldo.dump
+          echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
+          ls -l "$nombre"
+
+      - name: Guardar la copia cifrada
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.cifrado.outputs.nombre }}
+          path: ${{ steps.cifrado.outputs.nombre }}
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error

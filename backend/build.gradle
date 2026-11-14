@@ -27,6 +27,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+    // Solo /actuator/health, para el proveedor y el monitor de disponibilidad (DEC-125)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     // Documentación OpenAPI y Swagger UI (DEC-79); la 3.1.x es la línea para Spring Boot 4.1
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
     compileOnly 'org.projectlombok:lombok'
@@ -39,6 +41,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
