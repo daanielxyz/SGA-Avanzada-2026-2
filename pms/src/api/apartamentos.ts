@@ -67,7 +67,12 @@ export interface ApartamentoOperativo {
   codigo: string
   nombre: string
   estadoOperativo: string
+  /** Por qué está fuera de servicio, si se dijo; solo mientras siga así (DEC-113). */
+  motivoFueraDeServicio?: string | null
 }
+
+/** Límite de `DeclararFueraDeServicioRequest.motivo`. */
+export const LARGO_MOTIVO_FUERA = 500
 
 /**
  * `GET /api/apartamentos/pendientes-preparacion` (CU-41): los que están pendientes o en preparación, de 10 en 10.
@@ -78,8 +83,8 @@ export function listarPendientesPreparacion(pagina: number): Promise<Pagina<Apar
 }
 
 /**
- * `GET /api/apartamentos` (público): todos, recorriendo las páginas, para la vista del administrador (preparación y
- * las tarifas de una temporada nueva).
+ * `GET /api/apartamentos` (solo el personal, DEC-113): todos, recorriendo las páginas, para la vista del administrador
+ * (preparación y las tarifas de una temporada nueva).
  */
 export async function listarTodosLosApartamentos(): Promise<FichaApartamento[]> {
   const todos: FichaApartamento[] = []
@@ -105,10 +110,14 @@ export type PasoPreparacion =
  * `PUT /api/apartamentos/{codigo}/{paso}`. Iniciar y marcar preparado los puede hacer el personal de servicio;
  * declarar fuera de servicio, o devolverlo de ahí a pendiente, solo el administrador.
  *
+ * @param motivo solo al declarar fuera de servicio, opcional (DEC-113)
  * @throws ErrorApi 409 si el estado ya cambió (otra persona lo movió o se ocupó); 403 si el rol no puede
  */
-export function moverApartamento(codigo: string, paso: PasoPreparacion): Promise<ApartamentoOperativo> {
-  return pedir(`/api/apartamentos/${encodeURIComponent(codigo)}/${paso}`, { method: 'PUT' })
+export function moverApartamento(codigo: string, paso: PasoPreparacion, motivo?: string): Promise<ApartamentoOperativo> {
+  return pedir(`/api/apartamentos/${encodeURIComponent(codigo)}/${paso}`, {
+    method: 'PUT',
+    cuerpo: paso === 'declarar-fuera-de-servicio' && motivo ? { motivo } : undefined,
+  })
 }
 
 // ── Configuración de apartamentos (sprint 4): solo el administrador ──

@@ -1,10 +1,9 @@
-import { useEffect, useId, useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import type { Alojamiento } from '../../api/alojamiento'
 import {
   cambiarTitular,
   corregirRegistro,
-  cotizarEstancia,
-  modificarReserva,
+  cambiarExtras,
   type Estancia,
   type Ocupante,
   type Reserva,
@@ -17,14 +16,14 @@ import { cantidad, dinero, fechaCorta, fechaHoy, noches } from '../../formato'
 import { errorParaMostrar, type ErrorMostrado } from '../mensajes'
 import Campo from '../nueva/Campo'
 import { estimarExtras, MENSAJE_TELEFONO, telefonoValido, textoCobroVehiculo } from '../nueva/formulario'
-import { documentoDe, fechaYHora, modificacionCon, MOTIVO_MAXIMO, TIPOS_DOCUMENTO } from './llegada'
+import { documentoDe, fechaYHora, MOTIVO_MAXIMO, TIPOS_DOCUMENTO } from './llegada'
 
 /** Solo dígitos, hasta tres, para los campos de cantidad. */
 const soloCantidad = (texto: string) => texto.replace(/\D/g, '').slice(0, 3)
 
 /**
- * Cambiar vehículos y mascotas (BL-23 · TAR-06). El backend recalcula toda la estancia con las tarifas de hoy, así que
- * el total nuevo se cotiza antes de guardar; la diferencia queda como ajuste en el folio.
+ * Cambiar vehículos y mascotas (BL-23 · DEC-116). Solo cambian esos cargos, con los precios de hoy del hotel; el valor de
+ * las noches queda como se congeló al reservar. La diferencia queda como ajuste en el folio.
  *
  * @param limiteApartamento mascotas que admite este apartamento; nulo = las del alojamiento (DEC-93)
  */
@@ -37,41 +36,20 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
 }) {
   const { aceptaMascotas, limiteMascotas, cargoMascota, cupoParqueadero, cobroParqueadero, cargoCarro, cargoMoto } = alojamiento.parametros
   const [valores, setValores] = useState({ carros: String(reserva.carros), motos: String(reserva.motos), mascotas: String(reserva.mascotas) })
-  const [estancia, setEstancia] = useState<{ total: number } | 'error' | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<ErrorMostrado | null>(null)
   const idParqueadero = useId()
-  const yaEntro = reserva.entrada < fechaHoy()
 
-  useEffect(() => {
-    if (yaEntro) return
-    let vigente = true
-    cotizarEstancia({
-      apartamento: reserva.apartamento,
-      entrada: reserva.entrada,
-      salida: reserva.salida,
-      fechasNacimiento: reserva.ocupantes.map((ocupante) => ocupante.fechaNacimiento ?? ''),
-    })
-      .then((cotizacion) => {
-        if (vigente) setEstancia({ total: cotizacion.total })
-      })
-      .catch(() => {
-        if (vigente) setEstancia('error')
-      })
-    return () => {
-      vigente = false
-    }
-  }, [reserva.apartamento, reserva.entrada, reserva.salida, reserva.ocupantes, yaEntro])
-
-  if (yaEntro) {
+  // DEC-116: los extras se cambian mientras la reserva esté pendiente o confirmada, también el día de la llegada
+  if (reserva.estado !== 'PENDIENTE' && reserva.estado !== 'CONFIRMADA') {
     return (
       <Dialogo titulo="Vehículos y mascotas" subtitulo={<span className="codigo">{reserva.codigo}</span>} alCerrar={alCerrar}>
         <div className="dialogo-contenido">
           <div className="dialogo-cuerpo">
             <Aviso
               tipo="info"
-              asunto="Ya no se puede modificar"
-              mensaje={`La entrada fue el ${fechaCorta(reserva.entrada)}: una reserva solo se modifica hasta el día de su entrada.`}
+              asunto="Ya no se puede cambiar"
+              mensaje="Solo se cambian en una reserva pendiente o confirmada. Si llegó un vehículo o una mascota durante la estancia, cárgalo como un consumo en el folio."
             />
           </div>
           <div className="dialogo-pie">
@@ -97,9 +75,8 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
   const totalNoches = noches(reserva.entrada, reserva.salida)
   const extras = estimarExtras({ cobroParqueadero, cargoCarro, cargoMoto, cargoMascota }, { carros, motos, mascotas }, totalNoches)
   const totalActual = reserva.valor.total + reserva.extras.total
-  const cotizada = estancia && estancia !== 'error' ? estancia.total : null
-  const totalNuevo = cotizada === null ? null : cotizada + extras.total
-  const diferencia = totalNuevo === null ? null : totalNuevo - totalActual
+  const totalNuevo = reserva.valor.total + extras.total
+  const diferencia = extras.total - reserva.extras.total
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault()
@@ -110,7 +87,7 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
     }
     setEnviando(true)
     try {
-      alModificar(await modificarReserva(reserva.codigo, modificacionCon(reserva, { carros, motos, mascotas })))
+      alModificar(await cambiarExtras(reserva.codigo, { carros, motos, mascotas }))
     } catch (causa) {
       setError(errorParaMostrar(causa))
       setEnviando(false)
@@ -169,11 +146,7 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
           )}
 
           <div className="resumen-cambio" aria-live="polite" aria-atomic="true">
-            {estancia === null && <p className="suave" role="status">Calculando el valor con las tarifas de hoy…</p>}
-            {estancia === 'error' && (
-              <p className="suave">No pudimos calcular el total nuevo. Al guardar, el valor se calcula igual con las tarifas de hoy.</p>
-            )}
-            {totalNuevo !== null && diferencia !== null && (
+            {!sinCambios && (
               <dl className="lineas">
                 <dt>Total actual</dt>
                 <dd>{dinero(totalActual)}</dd>
@@ -185,15 +158,9 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
               </dl>
             )}
           </div>
-          {cotizada !== null && cotizada !== reserva.valor.total && (
-            <Aviso
-              tipo="advertencia"
-              asunto="Cambiaron las tarifas"
-              mensaje={`La estancia pasa de ${dinero(reserva.valor.total)} a ${dinero(cotizada)} con las tarifas de hoy, aunque solo cambies vehículos o mascotas.`}
-            />
-          )}
           <p className="dialogo-texto suave">
-            El valor de la estancia se vuelve a calcular con las tarifas de hoy y la diferencia queda en el folio.
+            El valor de las noches no cambia. Los vehículos y las mascotas se cobran con los precios de hoy y la diferencia
+            queda en el folio.
           </p>
           {enviando && <p className="suave" role="status">Guardando el cambio…</p>}
         </div>
@@ -411,12 +378,14 @@ function ahoraLocal(ahora = new Date()): string {
  * Corregir la hora real de llegada (solo administración, reserva en curso). El registro actual no se borra: queda
  * anulado como historial (DEC-61).
  */
-export function DialogoCorregirRegistro({ reserva, alCerrar, alCorregir }: {
+export function DialogoCorregirRegistro({ reserva, vigente, alCerrar, alCorregir }: {
   reserva: Reserva
+  /** La hora del registro vigente, para partir de ella (DEC-114); vacía si no se pudo leer. */
+  vigente?: string | null
   alCerrar: () => void
   alCorregir: (estancia: Estancia) => void
 }) {
-  const [fechaHora, setFechaHora] = useState('')
+  const [fechaHora, setFechaHora] = useState(vigente ? vigente.slice(0, 16) : '')
   const [motivo, setMotivo] = useState('')
   const [errores, setErrores] = useState<{ fechaHora?: string; motivo?: string }>({})
   const [enviando, setEnviando] = useState(false)
@@ -475,7 +444,9 @@ export function DialogoCorregirRegistro({ reserva, alCerrar, alCorregir }: {
             min={`${reserva.entrada}T00:00`}
             max={ahoraLocal()}
             error={errores.fechaHora}
-            pista={`Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`}
+            pista={vigente
+              ? `Hoy dice ${fechaYHora(vigente)}. Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`
+              : `Entre la entrada (${fechaCorta(reserva.entrada)}) y este momento.`}
             onChange={(evento) => {
               setFechaHora(evento.target.value)
               setErrores({ ...errores, fechaHora: undefined })

@@ -90,4 +90,10 @@ public class ReservaJpa {
     @CollectionTable(name = "reserva_desglose_noche", joinColumns = @JoinColumn(name = "reserva_codigo"))
     @OrderColumn(name = "orden")
     private List<NocheReservaJpa> desglose = new ArrayList<>();
+
+    // DEC-120: historial de documentos corregidos
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "reserva_correccion_documento", joinColumns = @JoinColumn(name = "reserva_codigo"))
+    @OrderColumn(name = "orden")
+    private List<CorreccionDocumentoJpa> correccionesDocumento = new ArrayList<>();
 }

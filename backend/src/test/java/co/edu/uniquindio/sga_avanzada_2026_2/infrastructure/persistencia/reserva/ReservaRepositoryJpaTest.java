@@ -11,6 +11,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.politica.PoliticaId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.CorreccionDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.FiltroReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
@@ -39,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -98,6 +100,25 @@ class ReservaRepositoryJpaTest {
     private void sincronizar() {
         entityManager.flush();
         entityManager.clear();
+    }
+
+    @Test
+    @Tag("DEC-120")
+    void elHistorialDeDocumentosCorregidosSeGuardaYSeVuelveACargar() {
+        Reserva reserva = reserva("RES-2026-00009", APT, 10, 12, EstadoReserva.CONFIRMADA, CanalOrigen.DIRECTO, null,
+                null, null, null);
+        reserva.corregirDocumento(new OcupanteId("OCU-1"), new Documento(TipoDocumento.CC, "10940"),
+                "Faltaba un cero", RECEPCION, LocalDateTime.of(2026, 12, 2, 8, 15));
+        repositorio.guardar(reserva);
+        sincronizar();
+
+        Reserva cargada = repositorio.buscarPorCodigo(new ReservaId("RES-2026-00009")).orElseThrow();
+
+        assertEquals(new Documento(TipoDocumento.CC, "10940"), cargada.ocupantes().getFirst().documento());
+        assertEquals(List.of(new CorreccionDocumento("Ana", new Documento(TipoDocumento.CC, "1094"),
+                        new Documento(TipoDocumento.CC, "10940"), "Faltaba un cero", RECEPCION,
+                        LocalDateTime.of(2026, 12, 2, 8, 15))),
+                cargada.correccionesDocumento());
     }
 
     @Test
@@ -365,10 +386,18 @@ class ReservaRepositoryJpaTest {
         assertEquals(List.of("RES-2026-70003", "RES-2026-70002", "RES-2026-70001"),
                 codigos(new FiltroReservas(null, null, null, null, null, null)));
         assertEquals(List.of("RES-2026-70003"),
-                codigos(new FiltroReservas(null, null, null, null, CanalOrigen.EXTERNO, null)));
+                codigos(new FiltroReservas(null, null, null, null, Set.of(CanalOrigen.EXTERNO), null)));
         assertEquals(List.of("RES-2026-70002"), codigos(new FiltroReservas(LocalDate.of(2026, 12, 11),
-                LocalDate.of(2026, 12, 20), EstadoReserva.PENDIENTE, APT, null, new TitularId("TIT-1"))));
-        assertTrue(codigos(new FiltroReservas(null, null, EstadoReserva.CANCELADA, null, null, null)).isEmpty());
+                LocalDate.of(2026, 12, 20), Set.of(EstadoReserva.PENDIENTE), Set.of(APT), null,
+                new TitularId("TIT-1"))));
+        assertTrue(codigos(new FiltroReservas(null, null, Set.of(EstadoReserva.CANCELADA), null, null, null))
+                .isEmpty());
+        // #22 · DEC-119: varios valores en un filtro son «cualquiera de ellos»
+        assertEquals(List.of("RES-2026-70003", "RES-2026-70002", "RES-2026-70001"), codigos(new FiltroReservas(
+                null, null, Set.of(EstadoReserva.PENDIENTE, EstadoReserva.CONFIRMADA), null,
+                Set.of(CanalOrigen.EXTERNO, CanalOrigen.PORTAL), null)));
+        assertEquals(List.of("RES-2026-70003"), codigos(new FiltroReservas(null, null, null, null,
+                Set.of(CanalOrigen.EXTERNO, CanalOrigen.DIRECTO), null)));
     }
 
     private List<String> codigos(FiltroReservas filtro) {

@@ -34,6 +34,8 @@ export interface OcupacionApartamento {
   apartamento: string
   nombre: string
   estadoOperativo: string
+  /** Por qué está fuera de servicio, si se dijo (DEC-113). */
+  motivoFueraDeServicio?: string | null
   reservas: ReservaOcupada[]
   bloqueos: BloqueoOcupado[]
 }

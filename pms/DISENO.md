@@ -454,6 +454,15 @@ Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimient
 8. **#8 · Mensajes de los 409 para recepción**: textos sin códigos internos ni palabras técnicas. Cambia textos que ve la web (el `motivo` de DEC-94 no cambia, solo `mensaje`): avisar a la web.
 9. Si cabe: **#22**, filtros de varios valores en `GET /api/reservas` (`estado=PENDIENTE&estado=CONFIRMADA`), y **#14**, «Corregir documento» con motivo, autor y fecha, que conserva los datos del TRA.
 
+### Avance de Daniel (13 nov) y próxima sesión
+- **Hecho e integrado**: alojamiento (PR #75), política de cancelación (PR #76), las pantallas de DEC-111 a DEC-118 (PR #84) y la tarea 7, huésped principal y apellidos en «Nueva reserva» (`feature/pms/nueva-reserva-principal`). Cada una con su sección abajo: lo resuelto contra el contrato, la prueba en el navegador y la auditoría.
+- **Sigue** (desde el 13 nov, «Sprint 4: nuevo reparto»): la IA no bloqueante del PMS (B4d), adelantada del sprint 5. La planeación, las herramientas y las carpetas se deciden en una sesión nueva, empezando por una lluvia de ideas; el uso se lleva al cliente en el cierre 4.
+- **Revisar**: los PR de Arias (el resto del sprint 4) y de Reyes (la base publicada).
+- **Para el núcleo, sin urgencia**: ahora son de Arias («Para Arias», tarea 3).
+- **Al cerrar el sprint**: limpiar las ramas viejas y el worktree `../SGA-nucleo`.
+- **Cómo se trabaja con Claude** (además de lo de arriba): el ejecutable de `impeccable` no se corre; la auditoría lee sus guías a mano. La prueba en el navegador la hace Claude con el Chromium de Playwright que ya está en el equipo, desde su carpeta temporal (no queda nada en el repositorio), contra el backend local y `npm run dev`. Antes de probar, el backend debe estar reiniciado con lo último de develop. Commits, merges y PR los hace Daniel desde GitHub Desktop: «Merge into current branch… → `origin/develop`»; si hay conflictos, Claude los resuelve y Daniel da «Continue merge».
+- **Base local de Daniel**: la política tiene una versión 2 igual a la 1 (se publicó para probar); APT-101 se declaró fuera de servicio y se devolvió a «Preparado».
+
 ## Sprint 4: nuevo reparto (13 nov)
 Al núcleo de Reyes no le falta nada (DEC-111 a DEC-120 integrados), Arias terminó sus dos pantallas y Daniel las suyas. Desde aquí **Arias termina lo que queda del sprint 4 del PMS**, y **Daniel y Reyes adelantan el sprint 5**. La tabla de «Sprint 4: reparto» queda como historia.
 
@@ -605,6 +614,19 @@ Programada en `src/paginas/Tarifas.tsx` (`/tarifas`, solo el administrador). Los
 Queda, a propósito: con 5 o más temporadas, a 1280 la tabla de tarifas se desplaza de lado dentro de su caja, como las otras tablas anchas del PMS.
 
 **Para el núcleo (Reyes), sin urgencia**: que los rechazos de temporadas nombren la temporada y no su id (`CalendarioTemporadas.validarSinSolape` y `exigirTemporadaActiva`). Hoy el PMS cambia `TEM-n` por el nombre; otro cliente vería el id.
+
+## Sprint 4: lo que entró del núcleo (`feature/pms/decisiones-sprint4`)
+Cambios chicos sobre pantallas que ya existen, sin mockup nuevo: siguen los componentes de la base.
+- **DEC-111 · orden de la preparación**: el backend ya ordena por la entrada más cercana. El PMS solo separa «Ya empezados» y «Pendientes» con un orden estable, así que dentro de cada grupo se respeta el de la API; bajo «Pendientes» dice «Empieza por el de arriba: es el que recibe huéspedes primero».
+- **DEC-112 · llegada sin pago, solo el administrador**: recepción ya no ve «Entra sin pagar la estancia» ni el motivo; la pista del botón dice «Falta cobrar la estancia. Solo el administrador puede dejar entrar sin pagarla.» Si el backend responde 403, sale arriba como cualquier rechazo de la llegada.
+- **DEC-113 · motivo de fuera de servicio**: «Declarar fuera de servicio» pide un motivo opcional (hasta 500, `CampoMotivo` con `opcional`); sin motivo no se envía cuerpo. El motivo se ve en la tarjeta de la preparación y en el tablero (en la cuadrícula, dos renglones y el texto completo al pasar el puntero; en el celular, completo).
+- **DEC-114 · llegada registrada**: el detalle de una reserva en curso o finalizada lee `GET /api/reservas/{codigo}/estancia` y muestra la llegada con su hora y quién la registró, la corrección con su motivo y la hora anterior, el motivo de entrar sin pagar y la salida. «Corregir registro» parte de la hora vigente. Las demás reservas no la piden.
+- **DEC-115 · quién validó**: en la llegada, «Validada · El {fecha}, por {nombre}» con `validadoPorNombre`; sin nombre (cuenta borrada), solo la fecha.
+- **DEC-116 · vehículos y mascotas sin recalcular**: el diálogo llama a `PUT /api/reservas/{codigo}/extras` con los tres números. Ya no cotiza la estancia ni advierte «Cambiaron las tarifas»: la diferencia es solo la de los extras, con los precios de hoy, y dice «El valor de las noches no cambia». Se puede mientras la reserva esté pendiente o confirmada, también si llega después de su fecha; en otro estado, el diálogo explica que se carga como consumo en el folio. Se quitó `modificacionCon`, que solo servía para mandar la reserva completa a `/modificar`.
+- **DEC-117 · nombre de la temporada**: `TablaDesglose` (detalle, llegada y «Nueva reserva») muestra `temporadaNombre`; si una respuesta vieja no lo trae, el id.
+- **DEC-118 · mensajes de los 409**: nada en el PMS; los mensajes ya llegan en palabras de recepción. `src/reserva/mensajes.ts` sigue cambiando solo los de otro turno (por `motivo`, DEC-94).
+
+**Probado en el navegador** (13 nov, contra el backend local con develop): motivo de fuera de servicio en el diálogo, la preparación y el tablero (APT-101 quedó otra vez «Preparado»); recepción sin «Entra sin pagar» y el administrador con ella; la llegada registrada y corregida en el detalle de RES-2026-00046 y «Corregir registro» con su hora; el diálogo de vehículos de una confirmada con la entrada pasada. Sin desbordes a 1280 y 390 px.
 
 ## Sprint 4: huésped principal y apellidos en «Nueva reserva» (`feature/pms/nueva-reserva-principal`)
 Mockups en `pms/diseno/mockups-meridian-sprint4-nueva-reserva/S4Paso3/` (computador, celular y la hoja de estados, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el dominio (`TitularReservaRequest`, `OcupanteRequest`, `Reserva.marcarPrincipal`). Cuadran con el prompt; lo que el LEEME dejó dudoso, con su número:

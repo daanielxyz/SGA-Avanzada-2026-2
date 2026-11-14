@@ -83,6 +83,27 @@ class ListadoReservasTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-119")
+    void unFiltroAdmiteVariosValoresRepitiendoloOConComas() throws Exception {
+        listar("estado", "PENDIENTE", "estado", "CONFIRMADA")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva, anaConfirmada, anaPendiente)));
+        listar("estado", "PENDIENTE,CONFIRMADA")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva, anaConfirmada, anaPendiente)));
+        listar("estado", "CONFIRMADA", "estado", "EN_CURSO")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(anaConfirmada)));
+        listar("apartamento", "APT-101", "apartamento", "APT-102", "estado", "PENDIENTE")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva, anaPendiente)));
+        listar("canal", "PORTAL", "canal", "DIRECTO", "apartamento", "APT-102")
+                .andExpect(jsonPath("$.contenido[*].codigo").value(contains(eva)));
+        listar("estado", "CONFIRMADA", "estado", "CONFIRMADA")
+                .andExpect(jsonPath("$.totalElementos").value(1));
+        listar("estado", "PENDIENTE", "estado", "BORRADA")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detalles").value(hasItem(
+                        "estado: debe ser PENDIENTE, CONFIRMADA, EN_CURSO, FINALIZADA, CANCELADA o NO_SHOW")));
+    }
+
+    @Test
     @Tag("EST-03")
     @Tag("DEC-72")
     void porFechasEntraLaQueSeCruzaConElRango() throws Exception {

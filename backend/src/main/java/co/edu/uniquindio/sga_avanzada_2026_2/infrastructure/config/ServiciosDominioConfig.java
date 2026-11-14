@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CambioCapacidadDoma
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CancelacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CargoServicioDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CorreccionDocumentoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.NoShowDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PreparacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
@@ -68,6 +69,11 @@ public class ServiciosDominioConfig {
     @Bean
     public NoShowDomainService noShowDomainService() {
         return new NoShowDomainService();
+    }
+
+    @Bean
+    public CorreccionDocumentoDomainService correccionDocumentoDomainService() {
+        return new CorreccionDocumentoDomainService();
     }
 
     @Bean
