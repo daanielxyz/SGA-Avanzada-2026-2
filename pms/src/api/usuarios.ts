@@ -69,7 +69,7 @@ export function actualizarPerfil(datos: DatosPersonales): Promise<Usuario> {
 /**
  * `PUT /api/usuarios/perfil/contrasena`. Todas sus sesiones, esta incluida, dejan de valer: hay que volver a entrar.
  *
- * @throws ErrorApi 401 `CREDENCIALES_INVALIDAS` si la actual no es la correcta (la sesión sigue abierta)
+ * @throws ErrorApi 400 `CREDENCIALES_INVALIDAS` si la actual no es la correcta (DEC-124; antes era 401)
  */
 export async function cambiarContrasena(actual: string, nueva: string): Promise<void> {
   await pedir('/api/usuarios/perfil/contrasena', { method: 'PUT', cuerpo: { actual, nueva } })

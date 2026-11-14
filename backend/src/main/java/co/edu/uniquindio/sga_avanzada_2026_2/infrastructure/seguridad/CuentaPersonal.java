@@ -44,13 +44,13 @@ public class CuentaPersonal {
      * petición: hay que volver a entrar (DEC-71).
      *
      * @param nueva ya validada contra la política de contraseñas en el borde (USU-02)
-     * @throws CredencialesInvalidasException si la contraseña actual no es la correcta
+     * @throws ContrasenaActualIncorrectaException si la contraseña actual no es la correcta (400, DEC-124)
      */
     @Transactional
     public void cambiarContrasena(String id, String actual, String nueva) {
         Usuario usuario = buscar(id);
         if (!cifrador.matches(actual, usuario.contrasena())) {
-            throw new CredencialesInvalidasException("La contraseña actual no es correcta");
+            throw new ContrasenaActualIncorrectaException();
         }
         usuario.fijarContrasena(cifrador.encode(nueva));
         usuarios.save(usuario);
