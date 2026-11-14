@@ -26,6 +26,7 @@ Cómo está publicado el SGA y cómo se opera (DEC-125). Aquí no hay ninguna di
 | `SGA_DOCUMENTACION_API` | Render | `true` hasta la entrega; `false` en producción |
 | `SGA_CORREO_MODO` | Render | `local` (los correos quedan en el log de Render) |
 | `RESPALDO_PGHOST`, `RESPALDO_PGUSER`, `RESPALDO_PGPASSWORD` | GitHub → Settings → Secrets and variables → Actions → *Secrets* | El host del pooler, `sga_respaldo.<referencia>` y su clave. Los carga el dueño del repositorio |
+| `RENDER_DEPLOY_HOOK` | GitHub → … → *Secrets* (y Bitwarden) | Render → servicio → Settings → *Deploy Hook*. Quien la tenga puede desplegar; si se filtra, *Regenerate hook* y se cambia el secreto |
 | `RESPALDO_AGE_PUBLICA` | GitHub → … → *Variables* | Solo la línea `age1…`. Es pública: no abre nada |
 | Clave privada de age (`AGE-SECRET-KEY-1…`) | **Solo Bitwarden** | La única llave de las copias. Sin ella no se puede abrir ninguna |
 
@@ -60,9 +61,12 @@ El usuario siempre lleva la referencia después de un punto (`sga_app.<referenci
 
 ## Desplegar una versión nueva
 
-- Hoy Render usa el repositorio público sin despliegue automático: *Manual Deploy → Deploy latest commit* desde la rama configurada (`develop` cuando se integre DEC-125).
-- Las migraciones nuevas se aplican solas al arrancar. **Una migración ya integrada nunca se edita**: Flyway la rechaza (`checksum mismatch`) y el backend no arranca.
-- Si cambian `application.properties` o la configuración, es núcleo (`feature/nucleo/…`).
+- **Es automático (DEC-126)**: cada merge a `develop` que toca `backend/` corre las pruebas en GitHub (*Actions → Desplegar el backend*) y, si pasan, le pide a Render que despliegue. El avance se ve en Render → *Events*; tarda unos minutos y mientras tanto sigue viva la versión anterior.
+- A mano, si hace falta: *Actions → Desplegar el backend → Run workflow*, o en Render *Manual Deploy → Deploy latest commit*.
+- Si las pruebas fallan, no se despliega nada: se arregla en una rama y se integra de nuevo. Si Render no logra arrancar la versión nueva, deja la anterior; el motivo está en *Logs*.
+- Las migraciones nuevas se aplican solas al arrancar. **Una migración ya integrada nunca se edita**: Flyway la rechaza (`checksum mismatch`) y el backend no arranca. **Datos de prueba nunca en una migración**: también se ejecutarían en la base publicada; van en los cargadores de demo, que solo cargan en una base vacía (ver «Vaciar la demo»).
+- Lo que se crea en la demo publicada (reservas, pagos, llegadas) queda en la base de Supabase y entra en la copia de la noche. Lo que se hace en `localhost` va a la base local, nunca a la publicada.
+- Si cambian `application.properties` o la configuración, es núcleo (`feature/nucleo/…`). Una variable nueva se agrega en Render **antes** del merge que la usa.
 
 ## Copias de respaldo
 

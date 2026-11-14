@@ -1,0 +1,64 @@
+# Despliegue automático del backend publicado (DEC-126). Guía: docs/produccion/LEEME.md.
+# Cada merge a develop que toca backend/ compila y corre todas las pruebas; si pasan, le pide a Render que despliegue.
+# Si una prueba falla, no se despliega y la versión publicada sigue igual. Si el arranque en Render falla (por ejemplo,
+# una migración rota), Render deja viva la versión anterior.
+# La dirección del deploy hook es secreta (quien la tenga puede desplegar): llega por el secreto RENDER_DEPLOY_HOOK.
+name: Desplegar el backend
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/desplegar-backend.yml'
+  workflow_dispatch:      # a mano: Actions → Desplegar el backend → Run workflow
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-backend
+  cancel-in-progress: false
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Compilar y correr las pruebas
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon build
+
+  desplegar:
+    needs: pruebas
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Pedir el despliegue a Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          set -euo pipefail
+          HOOK=$(printf '%s' "$HOOK" | tr -d '[:space:]')
+          case "$HOOK" in
+            https://api.render.com/deploy/*) ;;
+            '') echo "::error::Falta el secreto RENDER_DEPLOY_HOOK"; exit 1 ;;
+            *) echo "::error::RENDER_DEPLOY_HOOK no es un deploy hook de Render"; exit 1 ;;
+          esac
+          curl -fsS --retry 3 --retry-all-errors -X POST -o /dev/null "$HOOK"
+          echo "Render recibió la orden: despliega el último commit de develop. El avance se ve en Render → Events."
