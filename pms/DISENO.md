@@ -649,6 +649,38 @@ Programada en `src/reserva/nueva/PasoPersonas.tsx` y `formulario.ts` (`nombreDel
 
 Queda, a propósito: el nombre largo del ocupante del titular se corta dentro de su campo de solo lectura (se lee completo en los campos del titular).
 
+## Sprint 4: usuarios, mi perfil y la cuenta (`feature/pms/usuarios`, Arias)
+Mockups en `pms/diseno/mockups-meridian-sprint4-usuarios/S4Usuarios/` (13 hojas, cada una a 1280 y 390 px, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el backend (`GestionUsuarios`, `CuentaPersonal`, `RecuperacionContrasena`, `CodigosDelPersonal`). Lo resuelto, con el número de la duda del LEEME:
+- **«Iniciar sesión»** (1): a Claude Design no le llegó `ingresar.png` y dibujó otra plantilla. Manda la pantalla programada: se queda la de siempre y solo se le agregan los enlaces «Olvidé mi contraseña» y «Activar mi cuenta» (el correo con el código no trae un enlace, así que la persona necesita una forma de llegar a `/activar`) y el aviso de éxito al volver. Activar y Recuperar usan esa misma plantilla. El «Ver» del mockup es el «Mostrar» de la entrada, ahora en `componentes/CampoClave.tsx`.
+- **Datos obligatorios** (2, 14): la API pide los cinco datos (`@NotBlank`) y la fecha de nacimiento anterior a hoy (`@Past`); la pantalla lo revisa antes de enviar. El correo, con arroba y dominio con punto (el `@Email` del backend acepta `a@b`). Sin más reglas de formato para el teléfono ni el documento.
+- **Código errado o vencido** (3, 4, 5): la API responde lo mismo (401 `CREDENCIALES_INVALIDAS`) si el correo no existe, el código no coincide, venció o ya tuvo 5 intentos fallidos, así que no hay un estado aparte de «demasiados intentos». El administrador **no puede reenviar** el código de activación (no hay endpoint), pero «Olvidé mi contraseña» sí sirve para una cuenta sin activar: por eso, al fallar el código de Activar, la pantalla ofrece «Pedir un código nuevo» (va a `/recuperar` con el correo) en vez de «Pídele al administrador uno nuevo». En Recuperar, el paso 2 tiene «Pedir otro código o usar otro correo» (vuelve al paso 1); el backend no envía más de 3 códigos en 15 minutos y no lo dice.
+- **Enlaces** (6): «Volver a iniciar sesión» en Activar y Recuperar. El 403 es la página «Sin permiso» de siempre.
+- **Cambiar la contraseña en Mi perfil** (7): la API cierra todas las sesiones de esa persona, esta incluida. Al cambiarla, el PMS vuelve a «Iniciar sesión» con «Tu contraseña cambió. Entra con la nueva.» (`terminar` en `sesion/contexto.ts`), y la pantalla lo avisa antes con una pista.
+- **La contraseña actual errada** responde 401 (`CREDENCIALES_INVALIDAS`), y el PMS cerraba la sesión ante cualquier 401 con token. Ahora `api/cliente.ts` no la cierra cuando el 401 es por una contraseña mal escrita: el error sale junto al campo.
+- **«Le enviamos… un código»** (8): dentro del diálogo, como en el mockup, con «Cerrar»; al cerrarlo, un aviso sobre la lista.
+- **Cambio de rol** (9): el aviso va dentro del diálogo en cuanto se elige otro rol, sin confirmación aparte. Si el administrador cambia **su propio** rol, el aviso dice «Tendrás que volver a entrar» y, al guardar, el PMS vuelve a «Iniciar sesión» con el rol nuevo dicho.
+- **Eliminar** (10): se puede eliminar una cuenta sin activar. El rechazo (el último administrador, una cuenta ya eliminada) sale en el diálogo con el mensaje de la API. La propia cuenta no ofrece «Eliminar».
+- **Orden** (11): el de la API, por nombre, con las eliminadas en su lugar.
+- **Menú** (12): el de `src/navegacion.ts`.
+- **Textos** (3, 13): se quedan los del mockup, salvo los de arriba. Las líneas de cada rol dicen lo que de verdad abre su menú (`navegacion.ts`).
+- **Nombre en la cabecera**: al cambiar el nombre propio (en Mi perfil o en Usuarios), la cabecera lo toma sin volver a entrar (`renombrar`).
+
+Programada en `src/paginas/Usuarios.tsx` (`/usuarios`, solo el administrador), `Perfil.tsx` (`/perfil`, todos), `ActivarCuenta.tsx` (`/activar`) y `RecuperarContrasena.tsx` (`/recuperar`), las dos fuera de la sesión. Los diálogos, los campos de la persona, el estado de la cuenta y la lógica sin pantalla están en `src/usuarios/`, y la API en `src/api/usuarios.ts`. Pruebas: `Usuarios.test.tsx`, `Perfil.test.tsx`, `CuentaSinSesion.test.tsx` y `src/usuarios/logica.test.ts`.
+
+**Probada en el navegador** (13 nov, Chrome contra el backend local, con el correo en modo local para leer los códigos del log): crear (vacío, correo repetido, creado), editar con cambio de rol, activar con el código errado y con el bueno, entrar con la cuenta nueva, Mi perfil (contraseña actual errada sin perder la sesión, guardar datos, cambiar la contraseña y volver a entrar), recuperar en dos pasos (reglas, código errado, hecho) y eliminar. Sin desbordes a 1280, 1024, 390 y 320 px y sin errores en la consola. En la base local quedaron cuentas de prueba eliminadas.
+
+**Auditoría** (guías de `impeccable` a mano y `break-ui` con un nombre de 109 caracteres y un correo de 106). Arreglado:
+- P2: un correo largo partía en mitad de una palabra; ahora parte en la arroba o en un punto (`Correo`, con `<wbr>`), en la tabla y en el diálogo de eliminar, donde además se salía del borde.
+- P2: el recuadro del navegador alrededor de «Rol» y el documento corrido 2 px (los `fieldset` sin reiniciar).
+- P2: el aviso de «¿Se venció el código?» con el botón al lado dejaba el texto en una columna angosta; el botón va debajo, a todo el ancho.
+- P3: entre 760 y 1024 px la tabla partía los nombres; ahí se ve en tarjetas, como Temporadas y tarifas.
+
+**Para el núcleo (sin urgencia, se suma a la tarea 3 de «Para Arias»)**:
+- Que una contraseña actual errada en `PUT /api/usuarios/perfil/contrasena` no responda 401 (es el estado de «no hay sesión»): un 409 o un 400 en el campo `actual`. El PMS ya lo maneja, pero cualquier otro cliente cerraría la sesión.
+- El correo de activación dice el rol crudo (`RECEPCIONISTA`) en `CodigosDelPersonal.texto`: que diga «Recepción».
+- Que el administrador no pueda eliminarse a sí mismo (hoy solo lo impide si es el último administrador). La pantalla no lo ofrece.
+- Reenviar el código de activación desde Usuarios: hoy se resuelve con «Olvidé mi contraseña».
+- Ya hecho por Reyes en DEC-118 (#83): los rechazos de temporadas dicen el nombre y no `TEM-n`; se quita de la tarea 3.
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.
