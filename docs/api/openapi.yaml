@@ -720,6 +720,58 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/novedades:
+    get:
+      tags:
+        - novedad-controller
+      description: "Las novedades de todos los apartamentos, de la más reciente a la más antigua, de 10 en 10 (DEC-132). Estado, gravedad y apartamento admiten varios valores, repitiendo el parámetro o separados por comas (DEC-119)."
+      operationId: listar_5
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: "ABIERTA|EN_REVISION|CERRADA"
+        - name: gravedad
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: "BAJA|MEDIA|ALTA"
+        - name: apartamento
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              pattern: "APT-\\d+"
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseNovedadResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   "/api/novedades/{id}/avanzar":
     put:
       tags:
@@ -4262,6 +4314,8 @@ components:
         estado:
           type: string
         autor:
+          type: string
+        autorNombre:
           type: string
         fechaHora:
           type: string

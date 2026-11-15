@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.noveda
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.FiltroNovedades;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.Novedad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadRepository;
@@ -55,5 +56,21 @@ public class NovedadRepositoryJpa implements NovedadRepository {
                 .limit(Pagina.TAMANO)
                 .toList();
         return new Pagina<>(pagina, numeroPagina, Pagina.TAMANO, todas.size());
+    }
+
+    /**
+     * Como en {@link #listarPorApartamento}, el estado y la fecha viven en el historial: se filtra, se ordena y se
+     * corta en memoria. Un alojamiento tiene pocas novedades; si crecen, el estado y la fecha pasan a columnas
+     * (DEC-132).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Pagina<Novedad> listar(FiltroNovedades filtro, int numeroPagina) {
+        return Pagina.de(filas.findAll().stream()
+                .map(NovedadMapper::aDominio)
+                .filter(filtro::cumple)
+                .sorted(Comparator.comparing(Novedad::registradaEn).reversed()
+                        .thenComparing(novedad -> novedad.id().valor()))
+                .toList(), numeroPagina);
     }
 }
