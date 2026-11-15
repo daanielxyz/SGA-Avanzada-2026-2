@@ -47,6 +47,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadasRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Tarifa;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.TarifaRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.BusquedaTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
@@ -354,6 +355,15 @@ public final class RepositoriosEnMemoria {
             return guardados.values().stream()
                     .filter(t -> t.alojamientoId().equals(alojamientoId) && correo.equals(t.correo()))
                     .toList();
+        }
+
+        @Override
+        public Pagina<Titular> buscar(AlojamientoId alojamientoId, BusquedaTitular busqueda, int numeroPagina) {
+            return Pagina.de(guardados.values().stream()
+                    .filter(t -> t.alojamientoId().equals(alojamientoId)
+                            && busqueda.encuentra(t.nombre(), t.documento().numero()))
+                    .sorted(Comparator.comparing(Titular::nombre).thenComparing(t -> t.id().valor()))
+                    .toList(), numeroPagina);
         }
     }
 

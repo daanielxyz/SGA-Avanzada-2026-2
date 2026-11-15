@@ -3,13 +3,17 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.titular;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ActualizarTitularUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.BuscarTitularesUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ConsultarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.RegistrarTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.TitularResult;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.titular.ValidarIdentidadTitularUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -35,16 +40,30 @@ public class TitularController {
     private final ActualizarTitularUseCase actualizarTitular;
     private final UsuarioActual usuario;
     private final ValidarIdentidadTitularUseCase validarIdentidad;
+    private final BuscarTitularesUseCase buscarTitulares;
 
     public TitularController(AlojamientoActual alojamiento, RegistrarTitularUseCase registrarTitular,
                              ConsultarTitularUseCase consultarTitular, ActualizarTitularUseCase actualizarTitular,
-                             UsuarioActual usuario, ValidarIdentidadTitularUseCase validarIdentidad) {
+                             UsuarioActual usuario, ValidarIdentidadTitularUseCase validarIdentidad,
+                             BuscarTitularesUseCase buscarTitulares) {
         this.alojamiento = alojamiento;
         this.registrarTitular = registrarTitular;
         this.consultarTitular = consultarTitular;
         this.actualizarTitular = actualizarTitular;
         this.usuario = usuario;
         this.validarIdentidad = validarIdentidad;
+        this.buscarTitulares = buscarTitulares;
+    }
+
+    /**
+     * Busca titulares del alojamiento por nombre o documento; sin {@code buscar}, todos. Por nombre, de 10 en 10
+     * (DEC-131). Recepción y administración, por la regla de {@code /api/titulares/**}.
+     */
+    @GetMapping
+    public PaginaResponse<TitularResponse> buscar(
+            @RequestParam(required = false) @Size(max = 100, message = "admite máximo 100 caracteres") String buscar,
+            @RequestParam(defaultValue = "0") @Min(value = 0, message = "no puede ser negativa") int pagina) {
+        return PaginaResponse.de(buscarTitulares.ejecutar(alojamiento.id(), buscar, pagina), TitularResponse::de);
     }
 
     /**
