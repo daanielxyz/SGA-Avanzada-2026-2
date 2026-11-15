@@ -1,9 +1,10 @@
 import { useCallback, type ClipboardEvent } from 'react'
-import { guardarDatos, guardarUbicacion } from '../api/alojamiento'
+import { guardarDatos, guardarRnt, guardarUbicacion } from '../api/alojamiento'
 import { Bloque, CampoBloque } from './Bloque'
 import { useBloque, type AlBloque } from './useBloque'
 import {
-  LARGO_DATOS, cuerpoDatos, cuerpoUbicacion, formDatos, formUbicacion, repartirPegado, validarDatos, validarUbicacion,
+  LARGO_DATOS, cuerpoDatos, cuerpoUbicacion, formDatos, formRnt, formUbicacion, repartirPegado, validarDatos, validarRnt,
+  validarUbicacion,
 } from './formularios'
 
 /** Nombre, descripción, ciudad, dirección y normas de la casa (CU-50). */
@@ -77,6 +78,34 @@ export function BloqueUbicacion(props: AlBloque) {
           onPaste={alPegar} alCambiar={(valor) => cambiar('latitud', valor)} />
         <CampoBloque etiqueta="Longitud" valor={form.longitud} error={errores.longitud}
           onPaste={alPegar} alCambiar={(valor) => cambiar('longitud', valor)} />
+      </div>
+    </Bloque>
+  )
+}
+
+/**
+ * El Registro Nacional de Turismo (DEC-130): con él se envía el TRA de cada estadía al Ministerio. Sin RNT, los envíos
+ * quedan con error y no sale nada.
+ */
+export function BloqueRnt(props: AlBloque) {
+  const { form, cambiar, errores, estado, rechazo, sucio, guardar } = useBloque(props, { desde: formRnt, validar: validarRnt })
+  return (
+    <Bloque
+      titulo="Registro Nacional de Turismo"
+      descripcion="Con este número se envía al Ministerio la tarjeta de registro (TRA) de cada huésped que llega."
+      estado={estado}
+      sucio={sucio}
+      rechazo={rechazo}
+      guardado="RNT guardado"
+      boton="Guardar RNT"
+      alEnviar={(evento) => guardar(evento, 'No se guardó el RNT', (f) => guardarRnt(f.rnt.trim()))}
+    >
+      <div className="campos-bloque">
+        {/* Solo dígitos: lo demás se descarta al escribir o pegar, y en el celular sale el teclado numérico */}
+        <CampoBloque etiqueta="RNT" nota="solo números" valor={form.rnt} maximo={20} error={errores.rnt}
+          inputMode="numeric" autoComplete="off"
+          pista="Está en el certificado del RNT. Si lo dejas vacío, el TRA no se puede enviar."
+          alCambiar={(valor) => cambiar('rnt', valor.replace(/\D/g, ''))} />
       </div>
     </Bloque>
   )

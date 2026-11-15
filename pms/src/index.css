@@ -8225,3 +8225,44 @@ button.barra {
     min-height: 44px;
   }
 }
+
+/* ===== Sprint 5 · TRA: el envío de cada reserva al Ministerio (DEC-130) =====
+   Bloque en el detalle de la reserva y aviso en el listado. Sin componentes nuevos: tarjeta, datos, etiqueta y aviso. */
+.envio-tra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.envio-tra .datos:empty {
+  display: none;
+}
+
+.envio-tra > * {
+  width: 100%;
+}
+
+.envio-tra-estado {
+  margin: 0;
+}
+
+.envio-tra-enviado > span:first-child {
+  color: var(--exito);
+}
+
+.envio-tra-pendiente > span:first-child {
+  color: var(--acento);
+}
+
+.envio-tra-con_error > span:first-child {
+  color: var(--error);
+}
+
+.envios-tra-error {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2) var(--espacio-3);
+  margin: var(--espacio-2) 0 0;
+  padding: 0;
+  list-style: none;
+}

@@ -60,6 +60,18 @@ export function cuerpoDatos(form: FormDatos): DatosAlojamiento {
 
 // ---- Ubicación ----
 
+export type FormRnt = { rnt: string }
+
+/** DEC-130: el RNT del alojamiento, vacío si no se ha escrito. */
+export function formRnt(alojamiento: Alojamiento): FormRnt {
+  return { rnt: alojamiento.rnt ?? '' }
+}
+
+export function validarRnt(form: FormRnt): Errores<keyof FormRnt> {
+  const rnt = form.rnt.trim()
+  return rnt === '' || /^\d{1,20}$/.test(rnt) ? {} : { rnt: 'El RNT son solo números, hasta 20.' }
+}
+
 export type FormUbicacion = Record<'latitud' | 'longitud', string>
 
 export function formUbicacion(alojamiento: Alojamiento): FormUbicacion {

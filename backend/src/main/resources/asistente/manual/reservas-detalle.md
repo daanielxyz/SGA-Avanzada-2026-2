@@ -33,6 +33,13 @@ Una reserva pendiente que no se confirmó antes de la hora límite de su día de
 - **Ocupantes**: nombre, documento, nacionalidad, fecha de nacimiento y el estado de sus datos del TRA, con «Completar datos» o «Editar datos».
 - **Desglose por noche**: el valor de cada noche y su temporada.
 
+## Reporte al Ministerio (TRA)
+En una reserva que ya llegó, el bloque «Reporte al Ministerio (TRA)» dice si la tarjeta de registro ya se envió:
+- **Pendiente**: se envía sola cuando estén todos los datos del TRA de los ocupantes; si ya están, sale en unos minutos o con «Enviar ahora».
+- **Enviado**: la fecha y el código que dio el Ministerio. No hay que hacer nada más.
+- **Con error**: el motivo (por ejemplo, falta el RNT del hotel o el Ministerio no respondió) y «Reintentar». Lo que ya entró no se vuelve a enviar.
+En «Reservas», un aviso amarillo lista las reservas cuyo TRA no llegó, con un enlace a cada una.
+
 ## Corregir un documento mal escrito
 Si el documento de un huésped o del titular quedó mal escrito, en una reserva activa:
 1. Pulsa «Corregir documento»: en la fila del huésped, en «Ocupantes», o junto al titular, en «Datos de la reserva».
