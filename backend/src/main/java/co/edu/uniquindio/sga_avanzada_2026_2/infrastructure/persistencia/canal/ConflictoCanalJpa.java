@@ -34,6 +34,9 @@ public class ConflictoCanalJpa {
     private LocalDate salida;
     private LocalDateTime detectadoEn;
     private String motivo;
+    private String titularNombre;     // DEC-129: null en los conflictos de antes
+    private String titularTelefono;
+    private String titularCorreo;
 
     @Enumerated(EnumType.STRING)
     private EstadoConflicto estado;
