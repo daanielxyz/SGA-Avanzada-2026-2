@@ -8,6 +8,8 @@ Cómo está publicado el SGA y cómo se opera (DEC-125). Aquí no hay ninguna di
 |---|---|---|
 | Base PostgreSQL | Supabase, proyecto `sga-demo`, East US (North Virginia) | API de datos apagada, TLS obligatorio, entrada por el *Session pooler* |
 | Backend | Render, servicio `sga-demo-api`, Virginia, Docker desde `backend/` | Plan gratuito: se duerme a los 15 min sin uso y tarda ~1 min en despertar |
+| Web de reservas (`web/`) | Cloudflare Pages, proyecto `puerta-al-sol` → `https://puerta-al-sol.pages.dev` | Se publica sola con cada merge a `develop` que toca `web/` (DEC-128) |
+| PMS (`pms/`) | Cloudflare Pages, proyecto `meridian` → `https://meridian-1xt.pages.dev` | Igual, con `pms/`. `meridian.pages.dev` ya era de otra persona: Cloudflare agregó `-1xt` |
 | Copias de respaldo | GitHub Actions, workflow «Respaldo de la base» | Diaria, a las 3 a. m. de Colombia; cifrada; se guarda 30 días |
 | Secretos | Bitwarden, colección `SGA demo` de la organización | Cuentas de los proveedores a nombre de la empresa, con verificación en dos pasos |
 
@@ -24,7 +26,10 @@ Cómo está publicado el SGA y cómo se opera (DEC-125). Aquí no hay ninguna di
 | `SGA_ADMIN_CORREO`, `SGA_ADMIN_CLAVE` | Render | El administrador de la empresa (la clave con mayúscula y número) |
 | `SGA_DATOS_DEMO`, `SGA_DEMO_CLAVE` | Render | `true` en la demo; la clave de los usuarios de prueba (no la del README) |
 | `SGA_DOCUMENTACION_API` | Render | `true` hasta la entrega; `false` en producción |
+| `SGA_CORS_ORIGENES` | Render | Las direcciones exactas de los dos frontends, separadas por coma, sin espacios ni `/` final. No es secreta |
+| `VITE_API_URL`, `NODE_VERSION` | Cloudflare → cada proyecto → Settings → Variables and Secrets, en **Production** | `https://sga-demo-api.onrender.com` y `22`. No son secretas: la dirección queda dentro del JavaScript publicado |
 | `SGA_CORREO_MODO` | Render | `local` (los correos quedan en el log de Render) |
+| `SGA_IA_MODO`, `SGA_IA_CLAVE` | Render | `gemini` y la clave de Google AI Studio (también en Bitwarden), para el asistente del PMS (DEC-127). Sin ellas responde el manual (`local`) |
 | `RESPALDO_PGHOST`, `RESPALDO_PGUSER`, `RESPALDO_PGPASSWORD` | GitHub → Settings → Secrets and variables → Actions → *Secrets* | El host del pooler, `sga_respaldo.<referencia>` y su clave. Los carga el dueño del repositorio |
 | `RENDER_DEPLOY_HOOK` | GitHub → … → *Secrets* (y Bitwarden) | Render → servicio → Settings → *Deploy Hook*. Quien la tenga puede desplegar; si se filtra, *Regenerate hook* y se cambia el secreto |
 | `RESPALDO_AGE_PUBLICA` | GitHub → … → *Variables* | Solo la línea `age1…`. Es pública: no abre nada |
@@ -67,6 +72,27 @@ El usuario siempre lleva la referencia después de un punto (`sga_app.<referenci
 - Las migraciones nuevas se aplican solas al arrancar. **Una migración ya integrada nunca se edita**: Flyway la rechaza (`checksum mismatch`) y el backend no arranca. **Datos de prueba nunca en una migración**: también se ejecutarían en la base publicada; van en los cargadores de demo, que solo cargan en una base vacía (ver «Vaciar la demo»).
 - Lo que se crea en la demo publicada (reservas, pagos, llegadas) queda en la base de Supabase y entra en la copia de la noche. Lo que se hace en `localhost` va a la base local, nunca a la publicada.
 - Si cambian `application.properties` o la configuración, es núcleo (`feature/nucleo/…`). Una variable nueva se agrega en Render **antes** del merge que la usa.
+
+## Frontends (Cloudflare Pages)
+
+Un proyecto de **Pages** (no un Worker) por frontend, conectado al repositorio con la app *Cloudflare Workers and Pages*, instalada por el dueño del repositorio solo para este repositorio.
+
+| Campo | `puerta-al-sol` | `meridian` |
+|---|---|---|
+| Production branch | `develop` | `develop` |
+| Root directory | `web` | `pms` |
+| Build command / output | `npm run build` / `dist` | `npm run build` / `dist` |
+| Build watch paths (Include) | `web/*` | `pms/*` |
+| Preview deployments | None | None |
+
+- Un merge a `develop` que toca `web/` o `pms/` vuelve a construir ese frontend; si la construcción falla, sigue la versión anterior. A mano: *Deployments* → **⋯** → *Retry deployment*.
+- `VITE_API_URL` se lee **al construir**: si se cambia, hay que volver a construir. Las rutas internas (`/reservas/…`) funcionan solas: sin `404.html`, Pages responde con `index.html`.
+- Un frontend nuevo o una dirección nueva (dominio propio) se agrega a `SGA_CORS_ORIGENES` en Render **antes** de usarlo.
+- Comprobar CORS desde fuera (debe volver `access-control-allow-origin` con la misma dirección; un origen ajeno, 403):
+
+  ```bash
+  curl -s -o /dev/null -D - -X OPTIONS https://sga-demo-api.onrender.com/api/auth/login     -H "Origin: https://meridian-1xt.pages.dev" -H "Access-Control-Request-Method: POST"
+  ```
 
 ## Copias de respaldo
 
@@ -122,6 +148,7 @@ Solo mientras la base sea de demo. Los cargadores no hacen nada si ya existe el 
 | De un usuario de la base | Nueva en Bitwarden → psql como `postgres`, `\password <usuario>` → actualizarla en Render (`DB_PASSWORD` o `SPRING_FLYWAY_PASSWORD`) o en GitHub (`RESPALDO_PGPASSWORD`) → desplegar o relanzar el respaldo |
 | `postgres` de Supabase | Supabase → *Database → Settings → Reset database password* → Bitwarden |
 | `SGA_JWT_SECRETO` | Nueva en Render y desplegar. Todas las sesiones abiertas se cierran |
+| `SGA_IA_CLAVE` | Nueva en Google AI Studio (y borrar la vieja) → Bitwarden → Render y desplegar |
 | `SGA_ADMIN_CLAVE`, `SGA_DEMO_CLAVE` | Solo valen al crear los usuarios: después se cambian desde la aplicación (mi perfil o usuarios). En una base vacía, cambiar la variable antes del primer arranque |
 | Pareja de age | Nueva pareja a Bitwarden → `RESPALDO_AGE_PUBLICA` en GitHub → relanzar el respaldo → simulacro. Guardar la privada vieja mientras haya copias cifradas con ella (30 días) |
 
@@ -136,6 +163,7 @@ Solo mientras la base sea de demo. Los cargadores no hacen nada si ya existe el 
 | `Validate failed` / `checksum mismatch` | Se editó una migración ya aplicada, o la base no quedó vacía antes de recargar |
 | `OutOfMemoryError` o reinicios en Render | 512 MB no alcanzan: bajar `MaxRAMPercentage` en el Dockerfile o subir de plan |
 | El estado en Render se queda en *In progress* | Normal hasta 5 min en el primer arranque; después, revisar los logs (`ERROR`, `APPLICATION FAILED TO START`) |
+| Un frontend dice «No pudimos comunicarnos con el servidor» | El backend estaba dormido (reintentar en 30 s); si sigue, falta su dirección en `SGA_CORS_ORIGENES` o se construyó sin `VITE_API_URL` (en *Production*) |
 | La base no responde tras días sin uso | Supabase gratuito pausó el proyecto: *Restore* en su panel |
 
 ## Pasar a la etapa 2 (después de la entrega)
@@ -146,5 +174,5 @@ Solo mientras la base sea de demo. Los cargadores no hacen nada si ya existe el 
 4. Supabase Pro y Render de pago, siempre encendido, en la misma región. Cerrar la base a las IP del backend si el plan lo permite. `sslmode=verify-full`.
 5. Un ambiente de **producción por cliente** con base limpia (`SGA_DATOS_DEMO=false`, `SGA_DOCUMENTACION_API=false`); el demo actual queda para ventas.
 6. Conectar Render al repositorio privado (despliegue automático desde `main`) y mover las copias a Cloudflare R2 (30 diarias y 12 mensuales).
-7. Dominio propio, frontends en Cloudflare Pages (DEC-83) con `SGA_CORS_ORIGENES`, correo transaccional con SPF, DKIM y DMARC, y un monitor de disponibilidad sobre `/actuator/health`.
+7. Dominio propio para los frontends (ya en Cloudflare Pages, DEC-128), que se agrega a `SGA_CORS_ORIGENES`, correo transaccional con SPF, DKIM y DMARC, y un monitor de disponibilidad sobre `/actuator/health`.
 8. Antes del primer cliente: confirmar con un asesor lo que exige la Ley 1581 de 2012 para guardar datos personales de huéspedes fuera del país, y publicar la política de tratamiento de datos.
