@@ -7560,3 +7560,668 @@ button.barra {
     margin: var(--espacio-1) 0 0;
   }
 }
+
+/* ===== Sprint 5 · canales: conflictos, canales de venta y bitácora (mockups S5Canales, S5Bitacora y sus diálogos) =====
+   Primero lo urgente (los conflictos) y debajo la lista de canales. En lo angosto, tarjetas; desde 760 px de contenido,
+   las columnas. Ningún estado va solo por color: cada uno lleva su forma y su palabra. */
+.canales,
+.bitacora {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+}
+
+.canales h1:focus,
+.bitacora h1:focus {
+  outline: none;
+}
+
+.canales-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.canales-bloque-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+}
+
+.canales-bloque-pista {
+  max-width: 72ch;
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.canales-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+/* Conflictos: borde izquierdo de error y el sello «!», no solo el color. Los más antiguos primero */
+.conflictos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conflicto {
+  display: grid;
+  grid-template-areas: 'cabecera' 'datos' 'motivo' 'accion';
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  border-left: 4px solid var(--error);
+}
+
+.conflicto-cabecera {
+  grid-area: cabecera;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  min-width: 0;
+}
+
+.conflicto-sello {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: var(--error);
+  color: var(--fondo-pagina);
+  font-size: var(--tamano-pista);
+  font-weight: 700;
+}
+
+.conflicto-cabecera h3 {
+  min-width: 0;
+  font-size: var(--tamano-base);
+  line-height: var(--interlinea-control);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.conflicto-cabecera h3 .codigo {
+  font-size: var(--tamano-control);
+  /* Un id externo puede tener hasta 80 caracteres sin espacios: se parte solo si no cabe */
+  overflow-wrap: anywhere;
+}
+
+.conflicto-datos {
+  grid-area: datos;
+  display: grid;
+  gap: var(--espacio-2);
+  margin: 0;
+}
+
+.conflicto-datos > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.conflicto-datos dt {
+  flex: none;
+  color: var(--texto-suave);
+}
+
+.conflicto-datos dd {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* El motivo tal cual lo dejó el sistema, sobre el fondo de error */
+.conflicto-motivo {
+  grid-area: motivo;
+  padding: var(--espacio-3) var(--espacio-3-medio);
+  border-radius: var(--radio-chico);
+  background: var(--error-fondo);
+  color: var(--error-texto);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+  overflow-wrap: anywhere;
+}
+
+.conflicto-motivo-rotulo {
+  display: block;
+  margin-bottom: var(--espacio-1);
+  font-size: var(--tamano-rotulo);
+  line-height: var(--interlinea-rotulo);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conflicto-telefono {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.conflicto-resolver {
+  grid-area: accion;
+  width: 100%;
+}
+
+.conflictos-vacio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.conflictos-vacio .icono {
+  margin-top: 1px;
+  color: var(--exito);
+}
+
+/* Canales: «Activo» con ✓ y «Inactivo» con ○; el inactivo además en gris y solo con «Ver bitácora» si es externo */
+.tabla-canales-marco {
+  display: none;
+}
+
+.tabla-canales td {
+  vertical-align: middle;
+}
+
+.canal-nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.canal-referencia {
+  font-size: var(--tamano-pista);
+  overflow-wrap: anywhere;
+}
+
+.canal-acciones {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--espacio-2);
+}
+
+.canal-activo .etiqueta-forma {
+  color: var(--exito);
+}
+
+.canal-inactivo,
+.canal-inactivo .canal-nombre {
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+
+.canal-inactivo .etiqueta {
+  border-color: var(--borde);
+  background: transparent;
+  color: var(--texto-suave);
+}
+
+.canal-inactivo .boton-secundario {
+  color: var(--texto);
+}
+
+.canales-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.canal-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  padding: var(--espacio-4);
+}
+
+.canal-tarjeta p {
+  margin: 0;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.canal-tarjeta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.canal-tarjeta .canal-acciones {
+  margin-top: var(--espacio-2);
+}
+
+.canal-tarjeta .canal-acciones .boton {
+  flex: 1;
+}
+
+/* Diálogos: la referencia de la clave en letra de código y el motivo a lo ancho del resumen */
+/* El contador no se parte aunque la pista de al lado sea larga */
+.campo-contador .contador {
+  flex: none;
+  white-space: nowrap;
+}
+
+.campo-referencia {
+  font-family: var(--letra-codigo);
+}
+
+/* Sin teléfono, el correo va en su lugar: puede ser largo y sí se parte */
+.conflicto-telefono.conflicto-correo {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.resumen-dialogo .resumen-ancho {
+  grid-column: 1 / -1;
+}
+
+.resumen-dialogo dd.resumen-ancho {
+  margin-top: calc(-1 * var(--espacio-1));
+  text-align: left;
+}
+
+/* Bitácora: el canal y su estado bajo el título, el filtro de fechas y la lista de mensajes */
+.bitacora-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.bitacora-canal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2);
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+}
+
+.bitacora-filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-3);
+  align-items: start;
+  padding: var(--espacio-4);
+}
+
+.bitacora-filtros .boton,
+.bitacora-filtros .campo-pista {
+  grid-column: 1 / -1;
+}
+
+.bitacora-filtros .campo-pista {
+  margin: 0;
+}
+
+@media (max-width: 26rem) {
+  .bitacora-filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.bitacora-resumen {
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.eventos-columnas {
+  display: none;
+}
+
+.eventos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evento {
+  padding: var(--espacio-3-medio) var(--espacio-4);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+}
+
+.evento-datos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'fecha resultado' 'operacion operacion' 'detalle detalle';
+  gap: var(--espacio-2) var(--espacio-3);
+  margin: 0;
+}
+
+.evento-datos dd {
+  margin: 0;
+}
+
+.evento-fecha {
+  grid-area: fecha;
+  align-self: center;
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.evento-fecha time {
+  white-space: nowrap;
+}
+
+.evento-operacion {
+  grid-area: operacion;
+}
+
+.evento-operacion strong {
+  display: block;
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-control);
+  font-weight: 500;
+}
+
+/* Sentido: la flecha y la palabra («Recibido del canal», «Enviado al canal») */
+.evento-sentido {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-1);
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.evento-sentido .icono {
+  width: 14px;
+  height: 14px;
+}
+
+.evento-resultado {
+  grid-area: resultado;
+  justify-self: end;
+}
+
+.evento-detalle {
+  grid-area: detalle;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+  overflow-wrap: anywhere;
+}
+
+/* Resultado: cada uno con su forma y su palabra; el color solo acompaña */
+.resultado-hecho .etiqueta-forma {
+  color: var(--exito);
+}
+
+.resultado-repetido .etiqueta-forma {
+  color: var(--info);
+}
+
+.resultado-disponibilidad,
+.resultado-error {
+  border-color: var(--error);
+}
+
+.resultado-disponibilidad .etiqueta-forma,
+.resultado-error .etiqueta-forma {
+  color: var(--error);
+}
+
+.resultado-rechazado .etiqueta-forma {
+  color: var(--advertencia);
+}
+
+/* El mensaje del canal trae datos del huésped: siempre plegado, en letra de código y con su propio desplazamiento */
+.mensaje-canal {
+  margin-top: var(--espacio-2);
+}
+
+.mensaje-canal summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 44px;
+  color: var(--acento);
+  font-size: var(--tamano-chico);
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.mensaje-canal summary::-webkit-details-marker {
+  display: none;
+}
+
+.mensaje-canal-flecha {
+  color: var(--texto-suave);
+  transition: transform 150ms ease-out;
+}
+
+.mensaje-canal[open] .mensaje-canal-flecha {
+  transform: rotate(90deg);
+}
+
+.mensaje-canal-texto {
+  max-height: 240px;
+  margin: var(--espacio-1) 0 0;
+  padding: var(--espacio-3);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--fondo-pagina);
+  color: var(--texto);
+  font-family: var(--letra-codigo);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+  white-space: pre;
+}
+
+.mensaje-canal-texto:focus-visible {
+  outline-offset: -3px;
+}
+
+.eventos-cargando {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mensaje-canal summary:hover {
+    color: var(--enlace-encima);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensaje-canal-flecha {
+    transition: none;
+  }
+}
+
+@container (min-width: 760px) {
+  .conflicto {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'cabecera accion' 'datos datos' 'motivo motivo';
+    padding: var(--espacio-4) var(--espacio-5);
+  }
+
+  .conflicto-resolver {
+    align-self: start;
+    width: auto;
+  }
+
+  .conflicto-datos,
+  .conflicto-motivo {
+    margin-left: calc(24px + var(--espacio-3));
+  }
+
+  .conflicto-datos {
+    grid-template-columns: 96px max-content minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: var(--espacio-6);
+  }
+
+  .conflicto-datos > div {
+    display: block;
+  }
+
+  .conflicto-datos dt {
+    margin-bottom: var(--espacio-1);
+    font-size: var(--tamano-rotulo);
+    line-height: var(--interlinea-rotulo);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .conflicto-telefono {
+    margin-left: 0;
+  }
+
+  .conflicto-datos dd {
+    text-align: left;
+    font-size: var(--tamano-control);
+    line-height: var(--interlinea-control);
+  }
+
+  .tabla-canales-marco {
+    display: block;
+  }
+
+  .canales-tarjetas {
+    display: none;
+  }
+
+  .bitacora-filtros {
+    grid-template-columns: 200px 200px auto;
+    align-items: end;
+    justify-content: start;
+    padding: var(--espacio-4) var(--espacio-5);
+  }
+
+  .bitacora-filtros .boton {
+    grid-column: auto;
+  }
+
+  /* En lo ancho la lista es una tabla: una sola tarjeta, columnas con rótulo y un renglón por mensaje */
+  .eventos-marco {
+    overflow: hidden;
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--superficie);
+  }
+
+  .eventos-columnas,
+  .evento-datos {
+    display: grid;
+    grid-template-columns: 124px 200px 252px minmax(0, 1fr);
+    gap: var(--espacio-4);
+  }
+
+  .eventos-columnas {
+    padding: var(--espacio-3) var(--espacio-4);
+    border-bottom: 1px solid var(--borde);
+    background: var(--superficie-2);
+    color: var(--texto-suave);
+    font-size: var(--tamano-rotulo);
+    line-height: var(--interlinea-rotulo);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .eventos {
+    gap: 0;
+  }
+
+  .evento {
+    padding: var(--espacio-3) var(--espacio-4) var(--espacio-1);
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .evento + .evento {
+    border-top: 1px solid var(--borde);
+  }
+
+  .evento-datos {
+    grid-template-areas: 'fecha operacion resultado detalle';
+    align-items: start;
+  }
+
+  .evento-fecha {
+    align-self: start;
+    color: var(--texto);
+    font-size: var(--tamano-chico);
+    line-height: var(--interlinea-chica);
+  }
+
+  .evento-fecha time {
+    display: block;
+  }
+
+  .evento-fecha-separador {
+    display: none;
+  }
+
+  .evento-fecha time + time {
+    color: var(--texto-suave);
+    font-size: var(--tamano-pista);
+  }
+
+  .evento-operacion strong {
+    font-size: var(--tamano-chico);
+    line-height: var(--interlinea-chica);
+  }
+
+  .evento-resultado {
+    justify-self: start;
+  }
+
+  .mensaje-canal {
+    margin: 0 0 0 calc(124px + var(--espacio-4));
+  }
+
+  .mensaje-canal summary {
+    min-height: 36px;
+  }
+
+  .mensaje-canal[open] {
+    padding-bottom: var(--espacio-3);
+  }
+}
+
+@media (pointer: coarse) {
+  .mensaje-canal summary {
+    min-height: 44px;
+  }
+}
