@@ -456,7 +456,7 @@ Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimient
 
 ### Avance de Daniel (13 nov) y próxima sesión
 - **Hecho e integrado**: alojamiento (PR #75), política de cancelación (PR #76), las pantallas de DEC-111 a DEC-118 (PR #84) y la tarea 7, huésped principal y apellidos en «Nueva reserva» (`feature/pms/nueva-reserva-principal`). Cada una con su sección abajo: lo resuelto contra el contrato, la prueba en el navegador y la auditoría.
-- **Sigue** (desde el 13 nov, «Sprint 4: nuevo reparto»): la IA no bloqueante del PMS (B4d), adelantada del sprint 5. Ya decidida (DEC-121, «Sprint 5 adelantado: asistente de IA» más abajo); el manual v1 y las preguntas de prueba ya están (paso 2); sigue el paso 3, la rama de núcleo de configuración. El uso se lleva al cliente en el cierre 4.
+- **Sigue** (desde el 13 nov, «Sprint 4: nuevo reparto»): la IA no bloqueante del PMS (B4d), adelantada del sprint 5. Ya decidida (DEC-127, «Sprint 5 adelantado: asistente de IA» más abajo); el manual v1 y las preguntas de prueba ya están (paso 2); sigue el paso 3, la rama de núcleo de configuración. El uso se lleva al cliente en el cierre 4.
 - **Revisar**: los PR de Arias (el resto del sprint 4) y de Reyes (la base publicada).
 - **Para el núcleo, sin urgencia**: ahora son de Arias («Para Arias», tarea 3).
 - **Al cerrar el sprint**: limpiar las ramas viejas y el worktree `../SGA-nucleo`.
@@ -498,7 +498,7 @@ Al terminar: el cierre 4 con el cliente (vie 20 nov). Revisar los PR de los dem�
 - `application.properties`, que pueden tocar Reyes y Daniel, cada uno en su rama de núcleo con un PR pequeño.
 
 ## Sprint 5 adelantado: asistente de IA (`feature/pms/asistente-ia`, Daniel)
-Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-121** (el número es tentativo). Lo que sigue es el detalle para programarlo.
+Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el número es tentativo). Lo que sigue es el detalle para programarlo.
 
 **Qué hace (MVP1)**: un panel de ayuda en el marco del PMS donde quien tenga la sesión pregunta en lenguaje natural y recibe pasos cortos con el enlace a la pantalla. Responde según su rol:
 - **Recepción**: reservas, llegada, salida, folio y pagos, no-show, cancelación con la política vigente, notas, titulares.
@@ -518,15 +518,17 @@ Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-121** (el núm
 - **Núcleo**, en una rama `feature/nucleo/…` con su PR pequeño: la dependencia del SDK de Google en `build.gradle`, `sga.asistente.*` en `application.properties`, la elección del adaptador en `infrastructure/config/` y las dos variables en `backend/.env.example`. La línea de `PermisosPorRol` puede ir en la rama del equipo, avisando en el PR.
 - **PMS**: `pms/src/asistente/` (panel, cliente de la API, pruebas) y una sola línea en el marco para el botón de ayuda de la cabecera, como pide «Dónde se pueden cruzar». El «¿Por qué?» va en el componente que ya muestra los 409.
 
-**Clave**: se crea en Google AI Studio con una cuenta de Google del equipo y va en `backend/.env` como `SGA_IA_CLAVE`, con `SGA_IA_MODO=gemini`. Sin ella, el modo es `local` y todo funciona igual. La cuota y lo gastado se ven en AI Studio; cada respuesta trae los tokens usados, que se escriben en el log. La suscripción Google AI Pro no da cuota de API; los créditos de Google Cloud que pueda traer servirían para el plan pago si algún día hace falta.
+**Clave**: se crea en Google AI Studio con una cuenta de Google del equipo y va en `backend/.env` como `SGA_IA_CLAVE`, con `SGA_IA_MODO=gemini`. Sin ella, el modo es `local` y todo funciona igual. La cuota y lo gastado se ven en AI Studio; cada respuesta trae los tokens usados, que se escriben en el log.
+
+**En la demo publicada (DEC-125 · DEC-126)**: la clave se guarda en Bitwarden (colección `SGA demo`) y va como variable en Render, junto con `SGA_IA_MODO=gemini`; nunca en git ni en el PR. Como cada merge a develop se despliega solo, **las variables se agregan en Render antes del merge que las usa** (`docs/produccion/LEEME.md`); si no están, el backend arranca en modo `local` y sigue funcionando. Render gratis tiene 512 MB: el SDK no debe sumar mucho, y si se nota, se cambia por el cliente HTTP de Spring. El backend de Render ya está en EE. UU.; Gemini no cambia eso, y la regla de no mandar datos de huéspedes sigue igual. La suscripción Google AI Pro no da cuota de API; los créditos de Google Cloud que pueda traer servirían para el plan pago si algún día hace falta.
 
 **Plan por pasos**:
-1. [x] Lluvia de ideas y decisiones (DEC-121 y esta sección).
+1. [x] Lluvia de ideas y decisiones (DEC-127 y esta sección).
 2. [x] Manual v1 y preguntas de prueba, escritos contra las pantallas y el dominio de hoy. 22 preguntas de prueba (12 de recepción, 4 de servicio y 6 de administración) en `backend/src/test/resources/asistente/preguntas-prueba.md`.
    - Recepción (13 nov): `general`, `reservas-conceptos`, `reservas-listado`, `reservas-nueva`, `reservas-detalle`, `reservas-cancelar-noshow`, `reservas-llegada`, `folio`, `reservas-salida`, `ocupacion` y `casos-recepcion`.
    - Servicio (14 nov): `preparacion`, `novedades` (la pantalla está en construcción: el archivo lo dice y explica cómo funcionará) y `casos-servicio`.
    - Administración (14 nov): `alojamiento`, `apartamentos`, `tarifas`, `politica` y `casos-administracion`. Usuarios, Titulares, Canales y Mi perfil están en construcción: `general` lo dice.
-   - **Por actualizar cuando se integren**: «Corregir documento» y los filtros de varios valores (DEC-119/120, Arias) en `reservas-detalle`, `reservas-listado` y `casos-recepcion`; novedades, titulares y usuarios cuando tengan pantalla.
+   - **Al traer develop (14 nov)**: se agregaron `mi-cuenta` (activar la cuenta, olvidé mi contraseña, mi perfil; todos los roles) y `usuarios` (administración), y se pusieron al día `general`, `reservas-listado` (filtros de varios valores, DEC-119), `reservas-detalle` y `casos-recepcion` («Corregir documento», DEC-120), `apartamentos` (el bloqueo no empieza antes de hoy, DEC-122) y `casos-administracion`. Quedan en construcción Titulares, Novedades y Canales: al tener pantalla, se actualizan `general`, `novedades` y `casos-servicio`.
 
    **Formato de cada archivo** (`backend/src/main/resources/asistente/manual/`): una cabecera entre `---` con `id`, `titulo`, `pantalla` (la ruta, con `{codigo}` donde va el código) y `roles` (separados por comas), y debajo Markdown. Cada pantalla se nombra con los textos exactos de sus botones. No lleva valores de un hotel (horas, porcentajes, plazos): esos llegan de la configuración en cada pregunta. Lo que todavía no tiene pantalla (modificar fechas o apartamento, «Corregir documento») se dice así, para que el asistente no invente pasos. **Si cambia una pantalla, se actualiza su archivo en el mismo PR.**
 3. [ ] Rama de núcleo: dependencia, propiedades, configuración y `.env.example`.
@@ -535,7 +537,7 @@ Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-121** (el núm
 6. [ ] Panel en el PMS: mockup con Claude Design (DEC-84), código, prueba en el navegador y auditoría.
 7. [ ] Cierre 4 (vie 20 nov): demostración y la lista de usos futuros para el cliente.
 
-**Si alcanza el tiempo**: el resumen del turno (llegadas, salidas, saldos pendientes, preparación y novedades abiertas; el backend calcula los números y la IA solo los redacta, con códigos y sin nombres) y el registro anónimo de preguntas por 30 días (DEC-121).
+**Si alcanza el tiempo**: el resumen del turno (llegadas, salidas, saldos pendientes, preparación y novedades abiertas; el backend calcula los números y la IA solo los redacta, con códigos y sin nombres) y el registro anónimo de preguntas por 30 días (DEC-127).
 
 **Para el cliente en el cierre 4, como versiones futuras del SaaS** (antes, estudio de mercado):
 - Llenar «Nueva reserva» por texto o voz, con los campos que faltan marcados para completarlos a mano o dictándolos. La IA nunca crea la reserva: la crea la persona y el backend valida igual. Exige el plan pago y la decisión del cliente sobre datos personales (Ley 1581).

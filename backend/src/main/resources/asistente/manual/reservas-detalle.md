@@ -33,5 +33,13 @@ Una reserva pendiente que no se confirmó antes de la hora límite de su día de
 - **Ocupantes**: nombre, documento, nacionalidad, fecha de nacimiento y el estado de sus datos del TRA, con «Completar datos» o «Editar datos».
 - **Desglose por noche**: el valor de cada noche y su temporada.
 
+## Corregir un documento mal escrito
+Si el documento de un huésped o del titular quedó mal escrito, en una reserva activa:
+1. Pulsa «Corregir documento»: en la fila del huésped, en «Ocupantes», o junto al titular, en «Datos de la reserva».
+2. Elige el tipo nuevo, escribe el número nuevo y el **motivo** (obligatorio, por ejemplo «se escribió mal un número al hacer la reserva»).
+3. Guarda. Solo cambia el documento: los demás datos del TRA, el huésped principal y las reservas del titular se conservan (DEC-120).
+
+Cada corrección queda en «Documentos corregidos», con cómo estaba, cómo quedó, el motivo, quién y cuándo; las del titular van marcadas. El sistema la rechaza si el documento nuevo es igual, si ya es de otra persona del grupo o, para el titular, si ya es de otro titular del hotel o es un registro civil.
+
 ## Lo que todavía no se hace desde el PMS
-Cambiar las fechas, el apartamento o las personas de una reserva ya creada no tiene pantalla todavía: pregúntale al administrador. Corregir un documento mal escrito de un huésped o del titular tampoco tiene pantalla aún.
+Cambiar las fechas, el apartamento o las personas de una reserva ya creada no tiene pantalla todavía: pregúntale al administrador.

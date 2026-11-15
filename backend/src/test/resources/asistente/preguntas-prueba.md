@@ -1,4 +1,4 @@
-# Preguntas de prueba del asistente (DEC-121)
+# Preguntas de prueba del asistente (DEC-127)
 
 Para medir a mano si el asistente responde bien (paso 5 de «Sprint 5 adelantado: asistente de IA» en `pms/DISENO.md`). Cada pregunta dice el rol que la hace, la pantalla desde donde se hace y lo que la respuesta **debe** decir (y lo que no). No las usa ninguna prueba automática: las pruebas JUnit no llaman a Google.
 
@@ -82,6 +82,18 @@ Una respuesta pasa si dice todo lo de «Debe decir», nada de «No debe» y cita
 - **Pregunta**: ¿Cómo cancelo una reserva?
 - **Debe decir**: que eso lo hace recepción o administración, sin dar los pasos.
 - **Sección**: ninguna (el manual de recepción no se le manda a servicio)
+
+### R13 · Documento mal escrito
+- **Rol / pantalla**: RECEPCIONISTA · /reservas/{codigo}
+- **Pregunta**: Escribí mal la cédula de un huésped al crear la reserva, ¿cómo la arreglo sin perder sus datos?
+- **Debe decir**: «Corregir documento» en su fila del detalle, con el tipo, el número nuevo y el motivo; los demás datos del TRA se conservan; queda en «Documentos corregidos».
+- **Sección**: reservas-detalle
+
+### G1 · Contraseña olvidada
+- **Rol / pantalla**: PERSONAL_SERVICIO · /perfil
+- **Pregunta**: No me acuerdo de mi contraseña.
+- **Debe decir**: «Olvidé mi contraseña» en la pantalla de entrar; el código de 6 dígitos vence en 15 minutos.
+- **Sección**: mi-cuenta
 
 ## Servicio
 

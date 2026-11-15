@@ -21,7 +21,7 @@ Nace **retirado de la venta** y **pendiente de preparación**: para venderlo hay
 - **Capacidad**: «Cambiar capacidad». Cuenta a todos, también a los niños. Si hay reservas con más ocupantes que la nueva capacidad, el sistema las lista para revisarlas con recepción.
 - **Mascotas**: «Cambiar» cuántas admite (0 = no admite; vacío = el límite del hotel). Solo sale si el hotel acepta mascotas.
 - **Fotos**: hasta 10. «Agregar foto» con su dirección (muestra una vista previa), «Hacer principal» y «Quitar». La única foto no se puede quitar: agrega otra antes.
-- **Bloqueos**: noches que no se venden en ningún canal (por ejemplo, mantenimiento). «Nuevo bloqueo» con las fechas y un motivo. El «Hasta» es el día en que se vuelve a vender: del 24 al 27 deja libre la noche del 27. «Levantar» un bloqueo vigente devuelve sus noches a la venta. Los terminados y levantados están en «Ver anteriores».
+- **Bloqueos**: noches que no se venden en ningún canal (por ejemplo, mantenimiento). «Nuevo bloqueo» con las fechas y un motivo; no puede empezar antes de hoy (DEC-122). El «Hasta» es el día en que se vuelve a vender: del 24 al 27 deja libre la noche del 27. «Levantar» un bloqueo vigente devuelve sus noches a la venta. Los terminados y levantados están en «Ver anteriores».
 - **Venta**: «Poner a la venta» o «Retirar de la venta». Retirado, no aparece en la web ni se puede reservar; las reservas que ya tiene no cambian. Si no deja ponerlo a la venta, casi siempre le falta la tarifa de alguna temporada activa: el diálogo ofrece «Ir a temporadas y tarifas».
 
 ## Bloqueo, fuera de servicio y retirado: diferencias

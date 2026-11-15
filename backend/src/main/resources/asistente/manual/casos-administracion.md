@@ -34,7 +34,10 @@ Créalo en Alojamiento › Servicios adicionales.
 Agrégalo en Alojamiento › Medios de pago.
 
 ## Crear o cambiar cuentas del personal
-La pantalla «Usuarios» todavía está en construcción.
+En «Usuarios»: «+ Nuevo usuario», «Editar» o «Eliminar» (ver «Cuentas del personal»).
+
+## Alguien del personal no puede entrar
+Si su cuenta dice «Sin activar», tiene que activarla con el código del correo; si se le venció, pide otro en «Olvidé mi contraseña». Si dice «Eliminada», ya no puede entrar: créale otra con otro correo si hace falta.
 
 ## Cambiar las fechas, el apartamento o las personas de una reserva
 Todavía no hay pantalla para modificar una reserva ya creada (solo vehículos y mascotas). Si no se puede esperar, una opción es cancelar y crear otra, pero ojo: cancelar puede retener según la política de esa reserva.

@@ -44,4 +44,4 @@ En el detalle de la reserva, «Notas del turno» → «Agregar nota». Quien la 
 Todavía no se hace desde el PMS: pregúntale al administrador.
 
 ## Escribí mal el documento de un huésped
-Desde el TRA no se cambia un documento ya registrado. La pantalla para corregirlo todavía no está: avisa al administrador.
+Desde el TRA no se cambia un documento ya registrado. En el detalle de la reserva, «Corregir documento» en su fila (o junto al titular), con el motivo. Sus demás datos se conservan.

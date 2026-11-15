@@ -15,7 +15,8 @@ Arriba está «Ir a la reserva»: se escribe el código (por ejemplo RES-2026-00
 ## Filtrar
 1. Pulsa «Filtros» (en el celular están plegados).
 2. Llena los que necesites: Desde y Hasta (fechas), Estado, Apartamento, Canal y Titular (su id, por ejemplo TIT-12).
-3. Pulsa «Filtrar».
+   - **Estado, Apartamento y Canal admiten varios valores**: se abre la lista, se marcan las casillas y «Listo». Sin ninguna marcada es «Todos». En Estado hay dos atajos: **Activas** (pendiente, confirmada y en curso) y **Terminadas** (finalizada, cancelada y no se presentó).
+3. Pulsa «Filtrar». Dentro de un filtro vale cualquiera de los valores marcados; entre filtros distintos se tienen que cumplir todos.
 
 Los filtros aplicados aparecen como etiquetas; cada una se quita con su ✕, y «Limpiar» quita todos. Si el rango de fechas está mal (Desde después de Hasta), el mensaje sale junto a los filtros.
 
