@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -55,6 +56,11 @@ class DatosDePruebaYApiTest {
 
     @Autowired
     private WebApplicationContext contexto;
+
+    /** El reloj del backend (zona del alojamiento): el escenario de demo se arma con él, así que «hoy» en las
+     *  pruebas es el mismo. En GitHub la máquina está en UTC y de 7 p. m. a medianoche de Colombia ya es otro día. */
+    @Autowired
+    private Clock reloj;
 
     private MockMvc mvc;
 
@@ -238,7 +244,7 @@ class DatosDePruebaYApiTest {
     @Test
     @Tag("CU-08")
     void elCalendarioEsPublicoYMarcaLasNochesOcupadas() throws Exception {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(reloj);
         mvc.perform(get("/api/apartamentos/APT-103/calendario").param("desde", hoy.toString())
                         .param("hasta", hoy.plusDays(3).toString()))
                 .andExpect(status().isOk())
@@ -252,7 +258,7 @@ class DatosDePruebaYApiTest {
     @Test
     @Tag("CU-24")
     void laOcupacionMuestraReservasYBloqueos() throws Exception {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(reloj);
         como("recepcion.demo@example.com", get("/api/ocupacion").param("desde", hoy.minusDays(2).toString())
                 .param("hasta", hoy.plusDays(30).toString()).param("apartamento", "APT-109"), null)
                 .andExpect(status().isOk())
