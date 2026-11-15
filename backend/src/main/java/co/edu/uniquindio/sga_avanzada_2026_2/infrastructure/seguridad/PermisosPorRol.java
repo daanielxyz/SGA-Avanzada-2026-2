@@ -87,6 +87,10 @@ final class PermisosPorRol {
                 .requestMatchers("/api/usuarios/perfil", "/api/usuarios/perfil/**")
                 .hasAnyRole(RECEPCIONISTA, PERSONAL_SERVICIO, ADMINISTRADOR)
 
+                // El asistente de dudas del PMS, para todo el personal; el huésped no (DEC-127)
+                .requestMatchers(HttpMethod.POST, "/api/asistente/preguntas")
+                .hasAnyRole(RECEPCIONISTA, PERSONAL_SERVICIO, ADMINISTRADOR)
+
                 // Preparación y novedades (CU-41 a CU-44 · CU-55); EOPE-04 se revisa en el controlador
                 .requestMatchers(HttpMethod.PUT, "/api/apartamentos/{codigo}/iniciar-preparacion",
                         "/api/apartamentos/{codigo}/marcar-preparado",

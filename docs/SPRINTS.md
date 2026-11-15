@@ -144,7 +144,8 @@ Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el h
   - [ ] B5 TRA: titular validado y envío del reporte (los datos del ocupante se piden en la llegada desde el sprint 3, BL-07); SIRE para extranjeros y adjuntos si hay capacidad (BL-18, BL-19).
   - [ ] B4d IA no bloqueante (Daniel, adelantado desde el 13 nov): un asistente en el PMS que resuelve dudas de cómo hacer las cosas y qué hacer en cada caso, y lo que salga de la lluvia de ideas. El plan, las herramientas y las carpetas se deciden en su sesión; el uso se lleva al cliente en el cierre 4.
     - [x] Decidido el 13 nov (DEC-127, `pms/DISENO.md`, «Sprint 5 adelantado: asistente de IA»): asistente de dudas de uso según el rol, con Gemini gratis de AI Studio, sin n8n y sin datos de huéspedes. Resumen del turno y registro anónimo de preguntas, si alcanza el tiempo; llenar reservas por voz o texto, para versiones futuras.
-    - [ ] Daniel: manual v1 y preguntas de prueba, núcleo de configuración, backend en modo local, `AsistenteGemini` y el panel en el PMS (`feature/pms/asistente-ia`).
+    - [x] Daniel: manual v1 y 24 preguntas de prueba (`feature/pms/asistente-ia`), la configuración (`feature/nucleo/asistente-config`) y el backend con `AsistenteLocal` y `AsistenteGemini`, probado sin Google (`feature/pms/asistente-backend`).
+    - [ ] Daniel: probar con la clave real las preguntas de prueba y el panel en el PMS.
 - **Cierre final (vie 27 nov)**: entrega del MVP1.
 
 ## Registro de cierres
