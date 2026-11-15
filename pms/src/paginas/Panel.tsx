@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { alCambiarNombre, consultarAlojamiento } from '../api/alojamiento'
+import BotonAyuda from '../asistente/BotonAyuda'
+import PanelAsistente from '../asistente/PanelAsistente'
+import ProveedorAsistente from '../asistente/ProveedorAsistente'
 import Icono from '../componentes/Icono'
 import Logo from '../componentes/Logo'
 import ProteccionErrores from '../componentes/ProteccionErrores'
@@ -68,6 +71,7 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
   }, [pathname])
 
   return (
+    <ProveedorAsistente>
     <div className="panel">
       <a
         href="#contenido"
@@ -105,6 +109,7 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
           <span className="quien-nombre">{sesion.nombre}</span>
           <span className="quien-rol">{rol}</span>
         </p>
+        <BotonAyuda />
         <button type="button" className="boton boton-secundario boton-chico cabecera-salir" onClick={() => void salir()}>
           Cerrar sesión
         </button>
@@ -176,6 +181,9 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
           </ProteccionErrores>
         </div>
       </main>
+
+      <PanelAsistente />
     </div>
+    </ProveedorAsistente>
   )
 }

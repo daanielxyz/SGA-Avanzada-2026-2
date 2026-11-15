@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { useAsistente } from '../asistente/contexto'
+import { preguntaDelRechazo } from '../asistente/logica'
 
 const TIPOS = {
   error: { titulo: 'Error', sello: '!', rol: 'alert' },
@@ -14,6 +16,9 @@ const TIPOS = {
  * @param asunto   qué fue lo que salió mal, cuando el mensaje solo no lo dice: «No se pudo aplicar el filtro»
  * @param detalles los errores por campo de un 400 (`ErrorResponse.detalles`, DEC-33)
  * @param accion   lo que se puede hacer ahí mismo, como reintentar
+ *
+ * Un rechazo de una acción (error con asunto y sin acción, como «No se registró la salida») ofrece «¿Por qué?», que
+ * le pregunta a la ayuda del PMS (DEC-127). Los errores al cargar traen «Reintentar» y no lo ofrecen.
  */
 export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: {
   tipo: keyof typeof TIPOS
@@ -23,6 +28,8 @@ export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: 
   accion?: ReactNode
 }) {
   const { titulo, sello, rol } = TIPOS[tipo]
+  const asistente = useAsistente()
+  const porQue = tipo === 'error' && asunto && !accion && asistente ? asistente : null
   // Un éxito se entiende por lo que dice: «Reserva cancelada» no necesita «Listo ·» delante
   const encabezado = asunto ? (tipo === 'exito' ? asunto : `${titulo} · ${asunto}`) : titulo
   return (
@@ -33,6 +40,12 @@ export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: 
       <div className="aviso-cuerpo">
         <strong>{encabezado}</strong>
         <p>{mensaje}</p>
+        {porQue && asunto && (
+          <button type="button" className="enlace aviso-por-que" aria-label="¿Por qué? Preguntarle a la ayuda del PMS"
+            onClick={() => porQue.preguntar(preguntaDelRechazo(asunto, mensaje))}>
+            ¿Por qué?
+          </button>
+        )}
         {detalles.length > 0 && (
           <ul>
             {detalles.map((detalle) => (
