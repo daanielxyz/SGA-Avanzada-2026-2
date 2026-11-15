@@ -7144,3 +7144,419 @@ button.barra {
   color: var(--texto-suave);
   text-decoration: line-through;
 }
+
+/* ===== Asistente: la ayuda del PMS (DEC-127, mockups S5Asistente) ===== */
+
+/* «Ayuda» en la cabecera: en el celular, solo el ícono, junto a quien entró */
+.boton-ayuda {
+  order: 2;
+  flex: none;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.boton-ayuda .icono {
+  width: 22px;
+  height: 22px;
+}
+
+.boton-ayuda-texto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.boton-ayuda[aria-expanded='true'] {
+  border-color: var(--acento);
+  background: var(--superficie-2);
+}
+
+/* El panel: en el celular tapa todo; en el computador va al lado del PMS, sin velo */
+.asistente {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: env(safe-area-inset-top);
+  background: var(--superficie);
+}
+
+.asistente-cabecera {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  padding: var(--espacio-2-medio) var(--espacio-3) var(--espacio-2-medio) var(--espacio-4);
+  border-bottom: 1px solid var(--borde);
+}
+
+.asistente-cabecera h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--tamano-medio);
+  line-height: var(--interlinea-media);
+  font-weight: 600;
+}
+
+.asistente-cerrar .icono {
+  display: none;
+}
+
+/* En el celular los dos botones de la cabecera son más angostos, para que el título quepa en una línea; en una
+   pantalla de menos de 360 px no cabe y se parte */
+.asistente-cabecera .boton-chico {
+  padding: 0 var(--espacio-3);
+}
+
+@media (min-width: 360px) {
+  .asistente-cabecera h2 {
+    white-space: nowrap;
+  }
+}
+
+.asistente-conversacion {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  padding: var(--espacio-4);
+}
+
+.asistente-inicio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3-medio);
+  padding-top: var(--espacio-2);
+}
+
+.asistente-inicio h3 {
+  font-size: var(--tamano-destacado);
+  line-height: var(--interlinea-destacada);
+  font-weight: 600;
+}
+
+.asistente-sugerencias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asistente-sugerencia {
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: var(--espacio-2-medio) var(--espacio-3-medio);
+  font-weight: 500;
+  line-height: var(--interlinea-control);
+  text-align: left;
+  white-space: normal;
+}
+
+.asistente-nota {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+/* La pregunta a la derecha y la respuesta a la izquierda, con la esquina recta del lado de quien habla */
+.asistente-pregunta {
+  align-self: flex-end;
+  max-width: 85%;
+  margin: 0;
+  padding: var(--espacio-2-medio) var(--espacio-3-medio);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 12px 12px 4px 12px;
+  background: var(--superficie-2);
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-control);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.asistente-pregunta-fallida {
+  border-color: var(--error);
+}
+
+.asistente-falla {
+  align-self: flex-end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--espacio-2);
+  margin-top: calc(-1 * var(--espacio-2));
+}
+
+.asistente-falla .campo-mensaje {
+  margin: 0;
+}
+
+.asistente-respuesta {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  max-width: 100%;
+  padding: var(--espacio-3-medio) var(--espacio-4);
+  border: 1px solid var(--borde);
+  border-radius: 12px 12px 12px 4px;
+  background: var(--fondo-pagina);
+  font-size: var(--tamano-control);
+  line-height: var(--interlinea-control);
+}
+
+.asistente-aviso p {
+  margin: 0;
+}
+
+.asistente-texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2-medio);
+  overflow-wrap: anywhere;
+}
+
+.asistente-texto p {
+  margin: 0;
+}
+
+.asistente-texto ol,
+.asistente-texto ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1-medio);
+  margin: 0;
+  padding-left: var(--espacio-5-medio);
+}
+
+.asistente-texto li::marker {
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.asistente-texto strong {
+  font-weight: 600;
+}
+
+.asistente-fuentes {
+  padding-top: var(--espacio-2-medio);
+  border-top: 1px solid var(--borde);
+}
+
+.asistente-fuentes-titulo {
+  margin: 0 0 var(--espacio-minimo);
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+.asistente-fuentes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asistente-fuentes li {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  min-height: 44px;
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.asistente-fuentes li .icono {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--texto-suave);
+}
+
+.asistente-fuentes a {
+  color: var(--acento);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.asistente-espera {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: var(--espacio-1) var(--espacio-minimo);
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.asistente-espera .icono {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* El pie: el campo crece hasta unas cinco líneas y la pista siempre se ve */
+.asistente-pie {
+  flex: none;
+  padding: var(--espacio-3) var(--espacio-4) calc(var(--espacio-3-medio) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--borde);
+  background: var(--superficie);
+}
+
+.asistente-preguntar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--espacio-2);
+}
+
+.asistente-campo {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: 48px;
+  max-height: 136px;
+  padding: var(--espacio-3);
+  line-height: var(--interlinea-control);
+  resize: none;
+  overflow-y: auto;
+}
+
+.asistente-preguntar .boton {
+  min-height: 48px;
+}
+
+.asistente-pie-pistas {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+}
+
+.asistente-pie-pistas .campo-pista {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.asistente-contador {
+  flex: none;
+  margin: var(--espacio-1-medio) 0 0;
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.asistente-contador-pasado {
+  color: var(--error-campo);
+  font-weight: 500;
+}
+
+/* «¿Por qué?» al final de un aviso de rechazo */
+.aviso-por-que {
+  min-height: 44px;
+  margin: calc(-1 * var(--espacio-2-medio)) 0;
+  padding: 0;
+  color: var(--error-texto);
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+@media (min-width: 800px) {
+  .boton-ayuda {
+    order: 0;
+    width: auto;
+    min-height: 36px;
+    padding: 0 var(--espacio-3-medio);
+  }
+
+  .boton-ayuda .icono {
+    width: 18px;
+    height: 18px;
+  }
+
+  .boton-ayuda-texto {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  /* Con el panel abierto, el PMS y la ayuda quedan lado a lado */
+  .panel:has(> .asistente) {
+    grid-template-columns: 240px minmax(0, 1fr) 400px;
+    grid-template-areas: 'cabecera cabecera cabecera' 'menu contenido asistente';
+  }
+
+  /* Bajo la cabecera y quieto mientras la página baja; sin el «inset: 0» del celular, que lo subiría sobre ella */
+  .asistente {
+    position: sticky;
+    inset: auto;
+    top: 0;
+    z-index: auto;
+    grid-area: asistente;
+    align-self: start;
+    height: calc(100dvh - 68px);
+    padding-top: 0;
+    border-left: 1px solid var(--borde-fuerte);
+  }
+
+  .asistente-cabecera {
+    padding: var(--espacio-3) var(--espacio-3) var(--espacio-3) var(--espacio-5);
+  }
+
+  .asistente-cerrar {
+    width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+
+  .asistente-cerrar .icono {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+
+  .asistente-cerrar-texto {
+    display: none;
+  }
+
+  .asistente-conversacion {
+    padding: var(--espacio-5);
+  }
+
+  .asistente-respuesta {
+    max-width: 92%;
+  }
+
+  .asistente-fuentes li {
+    min-height: 28px;
+  }
+
+  .asistente-campo {
+    min-height: 44px;
+    max-height: 132px;
+    padding: var(--espacio-2-medio) var(--espacio-3);
+  }
+
+  .asistente-preguntar .boton {
+    min-height: 44px;
+  }
+
+  .aviso-por-que {
+    min-height: 0;
+    margin: var(--espacio-1) 0 0;
+  }
+}

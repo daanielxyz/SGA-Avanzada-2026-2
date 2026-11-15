@@ -103,6 +103,18 @@ const TRAZOS = {
       <path d="M14 3v5h5M9.5 13.5l5 5M14.5 13.5l-5 5" />
     </>
   ),
+  ayuda: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01" />
+    </>
+  ),
+  documento: (
+    <>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5M9 13h6M9 17h4" />
+    </>
+  ),
   abajo: <path d="M6 9l6 6 6-6" />,
   alerta: <path d="M12 3l9 16H3zM12 10v4M12 17h.01" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,

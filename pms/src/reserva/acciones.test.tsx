@@ -108,7 +108,11 @@ function llamadasA(fetch: ReturnType<typeof apiCon>, sufijo: string) {
   return fetch.mock.calls.filter(([url]) => String(url).endsWith(sufijo))
 }
 
-const PENDIENTE = { estado: 'PENDIENTE' as const, horaEstimadaLlegada: '15:00:00' }
+// Entra en una fecha futura fija: la de la reserva de prueba (14 nov 2026) ya pasó y una pendiente vencida solo se
+// cancela (DEC-110), así que estas pruebas dejaban de valer con el paso de los días
+const PENDIENTE = {
+  estado: 'PENDIENTE' as const, horaEstimadaLlegada: '15:00:00', entrada: '2099-11-14', salida: '2099-11-17',
+}
 const CONFIRMADA_VENCIDA = { estado: 'CONFIRMADA' as const, entrada: '2020-01-01', salida: '2020-01-03' }
 
 describe('botones según el estado (RN-08)', () => {
@@ -425,7 +429,7 @@ describe('confirmar (RN-08 · RN-09 · RES-15)', () => {
 
   it('sin hora no deja confirmar; al escribirla la guarda antes de confirmar (RN-09)', async () => {
     const fetch = apiCon({
-      reserva: { estado: 'PENDIENTE', horaEstimadaLlegada: null },
+      reserva: { ...PENDIENTE, horaEstimadaLlegada: null },
       folio: folioDePrueba({ totalPagado: ANTICIPO, saldo: TOTAL - ANTICIPO }),
     })
     abrir()
@@ -499,7 +503,7 @@ describe('cancelar y no-show (RN-08 · RN-13)', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Cancelar' }))
     const dialogo = await screen.findByRole('dialog', { name: 'Cancelar reserva' })
     expect(within(dialogo).getByText(/No se puede deshacer/)).toBeInTheDocument()
-    expect(within(dialogo).getByText(/del 14 nov 2026 al 16 nov 2026/)).toBeInTheDocument()
+    expect(within(dialogo).getByText(/del 14 nov 2099 al 16 nov 2099/)).toBeInTheDocument()
     // Antes de decidir, cuánto se retendría (DEC-91)
     expect((await within(dialogo).findByText('Se retendrá')).nextSibling).toHaveTextContent('$ 125.000')
     await usuario.click(within(dialogo).getByRole('button', { name: 'Cancelar reserva' }))
