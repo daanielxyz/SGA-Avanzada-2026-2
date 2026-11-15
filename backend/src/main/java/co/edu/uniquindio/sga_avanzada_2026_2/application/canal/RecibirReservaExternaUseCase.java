@@ -15,6 +15,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanalRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ContactoTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalRepository;
@@ -137,7 +138,9 @@ public class RecibirReservaExternaUseCase {
                             titular, estancia, CanalOrigen.EXTERNO, canal.id(), comando.idExterno(), ocupantes, null,
                             cotizacion, politica.id(), apartamento.capacidad(),
                             calendario.estanciaMinimaPara(estancia), ahora);
-                }, new ConflictoId(codigos.siguiente(SerieCodigo.CONFLICTO)), ahora);
+                }, new ConflictoId(codigos.siguiente(SerieCodigo.CONFLICTO)),
+                new ContactoTitular(comando.titular().nombres(), comando.titular().telefono(),
+                        comando.titular().correo()), ahora);
 
         integracion.reservaCreada().ifPresent(reserva -> {
             titulares.guardar(titular);

@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ContactoTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EstadoConflicto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ResultadoEvento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
@@ -54,6 +55,7 @@ class SincronizacionCanalDomainServiceTest {
     private static final Estancia PEDIDA = new Estancia(dia(10), dia(12));
     private static final LocalDateTime AHORA = dia(1).atTime(9, 0);
     private static final ConflictoId CONFLICTO = new ConflictoId("CON-1");
+    private static final ContactoTitular EVA = new ContactoTitular("Eva Mora", "300 123 4567", null);
 
     private final SincronizacionCanalDomainService servicio = new SincronizacionCanalDomainService();
     private final DisponibilidadDomainService disponibilidad = new DisponibilidadDomainService();
@@ -79,7 +81,8 @@ class SincronizacionCanalDomainServiceTest {
 
     private IntegracionExterna integrar(Canal canal, Optional<Reserva> yaRecibida, Disponibilidad disponible,
                                         Supplier<Reserva> crear) {
-        return servicio.integrarReservaExterna(canal, ID_EXTERNO, yaRecibida, disponible, crear, CONFLICTO, AHORA);
+        return servicio.integrarReservaExterna(canal, ID_EXTERNO, yaRecibida, disponible, crear, CONFLICTO, EVA,
+                AHORA);
     }
 
     @Test
@@ -115,6 +118,7 @@ class SincronizacionCanalDomainServiceTest {
         assertEquals(ID_EXTERNO, conflicto.idExterno());
         assertEquals(PEDIDA, conflicto.estanciaSolicitada());
         assertTrue(conflicto.motivo().contains("RES-2026-00001"));
+        assertEquals(EVA, conflicto.contacto()); // DEC-129: a quién llamar
         assertEquals(EstadoReserva.CONFIRMADA, vigente.estado());
         assertTrue(vigente.estaActiva());
     }

@@ -30,7 +30,7 @@ class CanalTest {
     private static ConflictoCanal conflicto() {
         return ConflictoCanal.registrar(new ConflictoId("CON-1"), new CanalId("CAN-1"), "BK-77",
                 new ApartamentoId("APT-101"), new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12)),
-                AHORA, "Ya está reservado en esas fechas");
+                AHORA, "Ya está reservado en esas fechas", new ContactoTitular("Eva Mora", "300 123 4567", null));
     }
 
     @Test
@@ -76,6 +76,29 @@ class CanalTest {
         assertEquals("Ya está reservado en esas fechas", conflicto.motivo());
         assertEquals(AHORA, conflicto.detectadoEn());
         assertNull(conflicto.decision());
+    }
+
+    @Test
+    @Tag("CONF-03")
+    @Tag("DEC-129")
+    void unConflictoGuardaAQuienLlamar() {
+        ContactoTitular contacto = conflicto().contacto();
+
+        assertEquals("Eva Mora", contacto.nombre());
+        assertEquals("300 123 4567", contacto.telefono());
+        assertNull(contacto.correo());
+        assertNull(new ContactoTitular("  Eva Mora ", " ", "").telefono());
+        assertEquals("Eva Mora", new ContactoTitular("  Eva Mora ", null, null).nombre());
+    }
+
+    @Test
+    @Tag("CONF-03")
+    @Tag("DEC-129")
+    void unConflictoNuevoSinContactoOSinNombreSeRechaza() {
+        assertThrows(ReglaDominioException.class, () -> new ContactoTitular(" ", "300 123 4567", null));
+        assertThrows(ReglaDominioException.class, () -> ConflictoCanal.registrar(new ConflictoId("CON-2"),
+                new CanalId("CAN-1"), "BK-78", new ApartamentoId("APT-101"),
+                new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12)), AHORA, "Ocupado", null));
     }
 
     @Test

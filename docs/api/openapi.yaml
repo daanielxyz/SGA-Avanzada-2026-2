@@ -4222,6 +4222,12 @@ components:
           format: date-time
         motivo:
           type: string
+        titularNombre:
+          type: string
+        titularTelefono:
+          type: string
+        titularCorreo:
+          type: string
         estado:
           type: string
         resueltoPor:

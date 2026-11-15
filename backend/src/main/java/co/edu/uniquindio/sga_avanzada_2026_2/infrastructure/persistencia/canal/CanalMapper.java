@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ContactoTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
@@ -38,9 +39,15 @@ final class CanalMapper {
     static ConflictoCanal aDominio(ConflictoCanalJpa jpa) {
         return new ConflictoCanal(new ConflictoId(jpa.getId()), new CanalId(jpa.getCanalId()), jpa.getIdExterno(),
                 new ApartamentoId(jpa.getApartamentoCodigo()), new Estancia(jpa.getEntrada(), jpa.getSalida()),
-                jpa.getDetectadoEn(), jpa.getMotivo(), jpa.getEstado(),
+                jpa.getDetectadoEn(), jpa.getMotivo(), contactoDe(jpa), jpa.getEstado(),
                 jpa.getResueltoPor() == null ? null : new UsuarioId(jpa.getResueltoPor()), jpa.getResueltoEn(),
                 jpa.getDecision());
+    }
+
+    /** Los conflictos de antes de DEC-129 no tienen contacto. */
+    private static ContactoTitular contactoDe(ConflictoCanalJpa jpa) {
+        return jpa.getTitularNombre() == null ? null
+                : new ContactoTitular(jpa.getTitularNombre(), jpa.getTitularTelefono(), jpa.getTitularCorreo());
     }
 
     /** Copia sobre una fila nueva o ya cargada; no toca {@code version}. */
@@ -53,6 +60,10 @@ final class CanalMapper {
         jpa.setSalida(conflicto.estanciaSolicitada().salida());
         jpa.setDetectadoEn(conflicto.detectadoEn());
         jpa.setMotivo(conflicto.motivo());
+        ContactoTitular contacto = conflicto.contacto();
+        jpa.setTitularNombre(contacto == null ? null : contacto.nombre());
+        jpa.setTitularTelefono(contacto == null ? null : contacto.telefono());
+        jpa.setTitularCorreo(contacto == null ? null : contacto.correo());
         jpa.setEstado(conflicto.estado());
         jpa.setResueltoPor(conflicto.resueltoPor() == null ? null : conflicto.resueltoPor().valor());
         jpa.setResueltoEn(conflicto.resueltoEn());
