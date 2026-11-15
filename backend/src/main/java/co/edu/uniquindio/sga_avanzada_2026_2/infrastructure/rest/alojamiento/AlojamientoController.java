@@ -13,6 +13,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DesactivarS
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DesactivarServicioCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.DeshabilitarMedioPagoUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.HabilitarMedioPagoUseCase;
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.RegistrarRntUseCase;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.MedioPagoCommand;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.AlojamientoActual;
 import jakarta.validation.Valid;
@@ -49,6 +50,7 @@ public class AlojamientoController {
     private final AgregarServicioAdicionalUseCase agregarServicio;
     private final CambiarValorServicioUseCase cambiarValorServicio;
     private final DesactivarServicioUseCase desactivarServicio;
+    private final RegistrarRntUseCase registrarRnt;
 
     public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamientoUseCase consultarAlojamiento,
                                  ActualizarDatosAlojamientoUseCase actualizarDatos,
@@ -59,7 +61,7 @@ public class AlojamientoController {
                                  DeshabilitarMedioPagoUseCase deshabilitarMedioPago,
                                  AgregarServicioAdicionalUseCase agregarServicio,
                                  CambiarValorServicioUseCase cambiarValorServicio,
-                                 DesactivarServicioUseCase desactivarServicio) {
+                                 DesactivarServicioUseCase desactivarServicio, RegistrarRntUseCase registrarRnt) {
         this.alojamiento = alojamiento;
         this.consultarAlojamiento = consultarAlojamiento;
         this.actualizarDatos = actualizarDatos;
@@ -71,6 +73,7 @@ public class AlojamientoController {
         this.agregarServicio = agregarServicio;
         this.cambiarValorServicio = cambiarValorServicio;
         this.desactivarServicio = desactivarServicio;
+        this.registrarRnt = registrarRnt;
     }
 
     @GetMapping
@@ -91,6 +94,12 @@ public class AlojamientoController {
     @PutMapping("/parametros")
     public AlojamientoResponse cambiarParametros(@Valid @RequestBody ParametrosRequest solicitud) {
         return AlojamientoResponse.de(cambiarParametros.ejecutar(solicitud.aCommand(alojamiento.id())));
+    }
+
+    /** El RNT con el que se envía el TRA (DEC-130); vacío lo borra. Solo el administrador ({@code PermisosPorRol}). */
+    @PutMapping("/rnt")
+    public AlojamientoResponse registrarRnt(@Valid @RequestBody RntRequest solicitud) {
+        return AlojamientoResponse.de(registrarRnt.ejecutar(alojamiento.id(), solicitud.rnt()));
     }
 
     @PutMapping("/ubicacion")

@@ -45,6 +45,7 @@ public class AlojamientoJpa {
     private double latitud;
     private double longitud;
     private String normas;
+    private String rnt; // DEC-130
 
     private int umbralEdadFacturable;
     private LocalTime horaEntrada;

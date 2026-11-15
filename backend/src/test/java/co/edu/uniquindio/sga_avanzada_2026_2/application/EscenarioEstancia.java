@@ -81,6 +81,7 @@ public final class EscenarioEstancia {
     public final RepositoriosEnMemoria.Conflictos conflictos = new RepositoriosEnMemoria.Conflictos();
     public final RepositoriosEnMemoria.Eventos eventos = new RepositoriosEnMemoria.Eventos();
     public final RepositoriosEnMemoria.Novedades novedades = new RepositoriosEnMemoria.Novedades();
+    public final RepositoriosEnMemoria.EnviosTra enviosTra = new RepositoriosEnMemoria.EnviosTra();
     public final RepositoriosEnMemoria.Codigos codigos = new RepositoriosEnMemoria.Codigos();
     public final RepositoriosEnMemoria.Notificaciones notificaciones = new RepositoriosEnMemoria.Notificaciones();
     public final AvisosReserva avisos = new AvisosReserva(notificaciones);
@@ -147,7 +148,7 @@ public final class EscenarioEstancia {
 
     public RegistrarLlegadaUseCase registrarLlegada(Clock reloj) {
         return new RegistrarLlegadaUseCase(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(),
-                SIN_NOMBRES, reloj);
+                SIN_NOMBRES, enviosTra, reloj);
     }
 
     /** Abona en efectivo con la fecha del reloj. */

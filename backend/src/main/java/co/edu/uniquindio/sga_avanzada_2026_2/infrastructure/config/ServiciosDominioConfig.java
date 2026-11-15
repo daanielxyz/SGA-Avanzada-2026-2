@@ -16,6 +16,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SalidaOperativaDoma
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.SincronizacionCanalDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.PagoEnLineaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.ReporteTraDomainService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,6 +30,11 @@ public class ServiciosDominioConfig {
     @Bean
     public ActivadorApartamentoService activadorApartamentoService() {
         return new ActivadorApartamentoService();
+    }
+
+    @Bean
+    public ReporteTraDomainService reporteTraDomainService() {
+        return new ReporteTraDomainService();
     }
 
     @Bean

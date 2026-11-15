@@ -77,7 +77,8 @@ final class PermisosPorRol {
 
                 // Venta y recepción (CU-10 a CU-29)
                 .requestMatchers(HttpMethod.PUT, "/api/reservas/{codigo}/corregir-registro").hasRole(ADMINISTRADOR)
-                .requestMatchers("/api/reservas/**", "/api/titulares/**", "/api/ocupacion")
+                // El envío del TRA de cada reserva cae en /api/reservas/**; la lista de envíos, aquí (DEC-130)
+                .requestMatchers("/api/reservas/**", "/api/titulares/**", "/api/ocupacion", "/api/tra/**")
                 .hasAnyRole(RECEPCIONISTA, ADMINISTRADOR)
                 // Recepción lee la política congelada en la reserva y la vigente; publicar y ver el historial de
                 // versiones es del administrador (RN-13 · DEC-104)

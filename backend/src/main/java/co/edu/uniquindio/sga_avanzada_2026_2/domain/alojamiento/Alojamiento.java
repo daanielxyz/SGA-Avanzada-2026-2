@@ -26,6 +26,7 @@ public class Alojamiento {
     private final List<ServicioAdicional> serviciosAdicionales;
     private final List<MedioPago> mediosPago; // solo los habilitados
     private MarcaAlojamiento marca;
+    private String rnt; // Registro Nacional de Turismo: opcional hasta encender el TRA (DEC-130)
 
     public Alojamiento(AlojamientoId id, String nombre, String descripcion, String ciudad, String direccion,
                        Ubicacion ubicacion, String normas, ParametrosAlojamiento parametros,
@@ -114,6 +115,24 @@ public class Alojamiento {
      */
     public void cambiarMarca(MarcaAlojamiento nueva) {
         marca = Objects.requireNonNull(nueva, "nueva");
+    }
+
+    /**
+     * El Registro Nacional de Turismo con el que se envía el TRA (DEC-130). Vacío lo borra.
+     *
+     * @throws ReglaDominioException si no son solo dígitos o pasa de 20
+     */
+    // DEC-130
+    public void registrarRnt(String nuevo) {
+        if (nuevo == null || nuevo.isBlank()) {
+            rnt = null;
+            return;
+        }
+        String limpio = nuevo.trim();
+        if (!limpio.matches("[0-9]{1,20}")) {
+            throw new ReglaDominioException("El RNT son solo números, hasta 20");
+        }
+        rnt = limpio;
     }
 
     /**
@@ -266,6 +285,11 @@ public class Alojamiento {
 
     public MarcaAlojamiento marca() {
         return marca;
+    }
+
+    /** Null mientras el administrador no lo escriba (DEC-130). */
+    public String rnt() {
+        return rnt;
     }
 
     public ParametrosAlojamiento parametros() {
