@@ -456,7 +456,8 @@ Pasan al sprint 5, o los toma quien termine primero: **novedades de mantenimient
 
 ### Avance de Daniel (13 nov) y próxima sesión
 - **Hecho e integrado**: alojamiento (PR #75), política de cancelación (PR #76), las pantallas de DEC-111 a DEC-118 (PR #84) y la tarea 7, huésped principal y apellidos en «Nueva reserva» (`feature/pms/nueva-reserva-principal`). Cada una con su sección abajo: lo resuelto contra el contrato, la prueba en el navegador y la auditoría.
-- **Sigue** (desde el 13 nov, «Sprint 4: nuevo reparto»): la IA no bloqueante del PMS (B4d), adelantada del sprint 5. Ya decidida (DEC-127, «Sprint 5 adelantado: asistente de IA» más abajo); el manual v1 y las preguntas de prueba ya están (paso 2); sigue el paso 3, la rama de núcleo de configuración. El uso se lleva al cliente en el cierre 4.
+- **Sigue** (desde el 15 nov, «Sprint 5: reparto final»): el rediseño visual global del PMS. La IA (B4d) ya está integrada.
+- **Historia** (13 nov, «Sprint 4: nuevo reparto»): la IA no bloqueante del PMS (B4d), adelantada del sprint 5. Ya decidida (DEC-127, «Sprint 5 adelantado: asistente de IA» más abajo); el manual v1 y las preguntas de prueba ya están (paso 2); sigue el paso 3, la rama de núcleo de configuración. El uso se lleva al cliente en el cierre 4.
 - **Revisar**: los PR de Arias (el resto del sprint 4) y de Reyes (la base publicada).
 - **Para el núcleo, sin urgencia**: ahora son de Arias («Para Arias», tarea 3).
 - **Al cerrar el sprint**: limpiar las ramas viejas y el worktree `../SGA-nucleo`.
@@ -496,6 +497,26 @@ Al terminar: el cierre 4 con el cliente (vie 20 nov). Revisar los PR de los dem�
 - las migraciones de Arias con la base publicada de Reyes (número: el siguiente libre al integrar);
 - el panel del asistente de Daniel y las pantallas de usuarios de Arias en el marco del PMS (`App.tsx`, `navegacion.ts`): el asistente va en su propio componente, con una sola línea en el marco;
 - `application.properties`, que pueden tocar Reyes y Daniel, cada uno en su rama de núcleo con un PR pequeño.
+
+## Sprint 5: reparto final (15 nov)
+La IA (B4d) quedó integrada (PR #98 y #100) y encendida en Render. Lo que falta del PMS para el cierre final (vie 27 nov):
+
+| Quién | Qué | Rama |
+|---|---|---|
+| Arias | Titulares y novedades, con su núcleo antes (un buscador de titulares y un listado general de novedades), como dice «Para Arias», tarea 4 | las suyas |
+| Reyes | **B5 TRA**: el envío del reporte de huéspedes (y SIRE para extranjeros y adjuntos si alcanza, BL-18, BL-19), con su núcleo y su pantalla | `feature/nucleo/…` y `feature/pms/tra` |
+| Reyes | **Canales de venta** (`/canales`, solo administración): los canales registrados, los conflictos pendientes y la bitácora de cada canal; el backend ya existe | `feature/pms/canales` |
+| Reyes | Núcleo: por qué fallaron las pruebas del backend en GitHub al integrar #96 y #97 (pasaban en local y en #98) | `feature/nucleo/…` |
+| Daniel | **Rediseño visual global** del PMS (colores, formas, espacios) sobre lo que ya existe | `feature/pms/rediseno` |
+
+**Para Reyes**, el punto de partida está en `pms/prompts/sprint5/reyes-tra-canales.md`: se pega en un chat nuevo de Claude Code. Lo que ya se sabe:
+- **TRA**: los datos de cada huésped se piden en la llegada y sin ellos no se registra la salida (BL-07 · DEC-96); el titular se valida en persona (DEC-98). Falta lo que el nombre de la tarea dice: **enviar el reporte**. Se decide en su sesión, con el cliente si hace falta, qué es «enviar» para el MVP1 (por ejemplo, un reporte para descargar con las llegadas de un día, listo para subir a la plataforma del Ministerio), y queda como `DEC-nn`.
+- **Canales de venta**: el backend ya tiene casi todo (`CanalController` y `ConflictoController`): `GET` y `POST /api/canales`, `PUT /api/canales/{id}/desactivar`, la bitácora en `GET /api/canales/{id}/eventos`, y `GET /api/conflictos/pendientes` con `PUT /api/conflictos/{id}/resolver` (DEC-62 · DEC-73), todos en `docs/api/openapi.yaml`. Si al hacer el prompt falta un dato, es núcleo. Lo de Channex (B4c) es del equipo web; el cierre 4 decide qué parte entra.
+- Cada pantalla sigue el flujo de DEC-84 y `pms/prompts/sprint4/LEEME.md`: prompt para Claude Design con el **diseño actual** (el último `base.css`), revisión contra el contrato, código, prueba en el navegador y auditoría.
+
+**El rediseño de Daniel no cambia el flujo de Arias ni de Reyes**: sus pantallas se diseñan y programan con el diseño de hoy, con las clases y variables de `src/index.css`. Daniel rediseña lo que ya existe, sobre todo desde las variables de `:root` y los componentes comunes, y cuando se integre cada pantalla nueva le aplica el rediseño en un PR aparte. Lo decidido queda como `DEC-nn` en su rama (DEC-84 pide decidirlo en equipo antes de usar los comandos de `impeccable` que rediseñan).
+
+**Pendiente de la IA**, sin código: confirmar que la clave de Gemini esté en Bitwarden (colección `SGA demo`) y que el proyecto «Meridian Asistente» de Google AI Studio sea de la cuenta del equipo; presentar el asistente al cliente en el cierre 4 (vie 20 nov); y, cuando entren titulares, novedades y canales, poner al día `general`, `novedades` y `casos-servicio` del manual.
 
 ## Sprint 5 adelantado: asistente de IA (`feature/pms/asistente-ia`, Daniel)
 Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el número es tentativo). Lo que sigue es el detalle para programarlo.
