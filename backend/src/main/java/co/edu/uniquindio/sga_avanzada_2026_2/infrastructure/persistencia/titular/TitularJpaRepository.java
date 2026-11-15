@@ -2,6 +2,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.titula
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,7 @@ import java.util.Optional;
 /**
  * Spring Data sobre la tabla {@code titular}. Solo lo usa {@link TitularRepositoryJpa}.
  */
-interface TitularJpaRepository extends JpaRepository<TitularJpa, String> {
+interface TitularJpaRepository extends JpaRepository<TitularJpa, String>, JpaSpecificationExecutor<TitularJpa> {
 
     Optional<TitularJpa> findByAlojamientoIdAndTipoDocumentoAndNumeroDocumento(String alojamientoId,
                                                                               TipoDocumento tipo, String numero);

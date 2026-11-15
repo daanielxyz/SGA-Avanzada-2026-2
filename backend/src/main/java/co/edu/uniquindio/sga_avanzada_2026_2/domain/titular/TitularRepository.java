@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.domain.titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Correo;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,4 +32,12 @@ public interface TitularRepository {
      * documento: dos titulares, p. ej. de la misma familia, pueden compartir correo (DEC-69).
      */
     List<Titular> buscarPorCorreo(AlojamientoId alojamientoId, Correo correo);
+
+    /**
+     * Titulares del alojamiento que cumplen la búsqueda (cada palabra en el nombre o en el documento), ordenados por
+     * nombre, de 10 en 10 (DEC-18 · DEC-131). Sin palabras, todos.
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Titular> buscar(AlojamientoId alojamientoId, BusquedaTitular busqueda, int numeroPagina);
 }

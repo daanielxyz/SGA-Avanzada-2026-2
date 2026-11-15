@@ -1583,6 +1583,40 @@ paths:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
   /api/titulares:
+    get:
+      tags:
+        - titular-controller
+      description: "Busca titulares del alojamiento por nombre o documento (cada palabra, sin importar mayúsculas, tildes ni los puntos del número); sin buscar, todos. Por nombre, de 10 en 10 (DEC-131)."
+      operationId: buscar
+      parameters:
+        - name: buscar
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+            minLength: 0
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseTitularResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
     post:
       tags:
         - titular-controller
@@ -5703,6 +5737,25 @@ components:
         - generaCargo
         - nombre
         - valor
+    PaginaResponseTitularResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TitularResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
     PaginaResponseUsuarioResponse:
       type: object
       properties:
