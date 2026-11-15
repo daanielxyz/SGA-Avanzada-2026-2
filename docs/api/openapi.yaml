@@ -2175,6 +2175,31 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/asistente/preguntas:
+    post:
+      tags:
+        - asistente-controller
+      operationId: preguntar
+      description: "Asistente de dudas del PMS (DEC-127), para recepción, servicio y administración. Siempre responde 200: si la IA no puede, responde el manual (origen LOCAL, con motivo y aviso)."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/PreguntaRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PreguntaResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/auth/logout:
     post:
       tags:
@@ -5919,6 +5944,65 @@ components:
         totalPaginas:
           type: integer
           format: int32
+    PreguntaRequest:
+      type: object
+      properties:
+        pregunta:
+          type: string
+          maxLength: 1000
+          minLength: 0
+        pantalla:
+          type: string
+          maxLength: 200
+          minLength: 0
+        historial:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MensajeRequest"
+          maxItems: 20
+          minItems: 0
+      required:
+        - pregunta
+    MensajeRequest:
+      type: object
+      properties:
+        autor:
+          type: string
+          pattern: PERSONA|ASISTENTE
+        texto:
+          type: string
+          maxLength: 4000
+          minLength: 0
+      required:
+        - autor
+        - texto
+    PreguntaResponse:
+      type: object
+      properties:
+        respuesta:
+          type: string
+        fuentes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FuenteResponse"
+        origen:
+          type: string
+          description: IA o LOCAL
+        motivo:
+          type: string
+          description: "Solo si origen es LOCAL: IA_APAGADA, LIMITE_PERSONAL, CUOTA_AGOTADA o NO_DISPONIBLE"
+        aviso:
+          type: string
+          description: Solo si origen es LOCAL
+    FuenteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        titulo:
+          type: string
+        pantalla:
+          type: string
     ErrorResponse:
       properties:
         estado:
