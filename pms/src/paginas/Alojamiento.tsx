@@ -5,7 +5,7 @@ import BloqueMarca from '../alojamiento/BloqueMarca'
 import BloqueMediosPago from '../alojamiento/BloqueMediosPago'
 import BloqueReglas from '../alojamiento/BloqueReglas'
 import BloqueServicios from '../alojamiento/BloqueServicios'
-import { BloqueDatos, BloqueUbicacion } from '../alojamiento/BloqueDatos'
+import { BloqueDatos, BloqueRnt, BloqueUbicacion } from '../alojamiento/BloqueDatos'
 import type { AlBloque } from '../alojamiento/useBloque'
 import Dialogo from '../componentes/Dialogo'
 import { useTitulo } from '../componentes/useTitulo'
@@ -82,7 +82,7 @@ export default function Alojamiento() {
 
   // Cada bloque avisa con su propia función, estable, para no volver a avisar en cada pintada
   const avisos = useMemo(() => Object.fromEntries(
-    ['datos', 'ubicacion', 'reglas', 'servicios', 'medios', 'marca'].map((clave) => [
+    ['datos', 'ubicacion', 'rnt', 'reglas', 'servicios', 'medios', 'marca'].map((clave) => [
       clave,
       (sucio: boolean) => setSucios((actuales) => (actuales[clave] === sucio ? actuales : { ...actuales, [clave]: sucio })),
     ]),
@@ -149,6 +149,7 @@ export default function Alojamiento() {
       <>
         <BloqueDatos {...props('datos')} />
         <BloqueUbicacion {...props('ubicacion')} />
+        <BloqueRnt {...props('rnt')} />
       </>
     ),
     reglas: <BloqueReglas {...props('reglas')} />,

@@ -20,6 +20,7 @@ import Paginador from '../componentes/Paginador'
 import SeleccionVarios from '../componentes/SeleccionVarios'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
+import EnviosTraConError from '../reserva/EnviosTraConError'
 
 const FILTROS = ['desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
 type Filtro = (typeof FILTROS)[number]
@@ -133,6 +134,8 @@ export default function ListadoReservas() {
         </div>
         <IrALaReserva />
       </div>
+
+      <EnviosTraConError />
 
       {/* Al cambiar los filtros aplicados, el formulario vuelve a empezar desde ellos */}
       <Filtros

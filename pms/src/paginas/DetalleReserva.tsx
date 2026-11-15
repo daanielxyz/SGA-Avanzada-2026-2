@@ -21,6 +21,7 @@ import BloquePago from '../reserva/BloquePago'
 import NotasTurno from '../reserva/NotasTurno'
 import PoliticaAplicada from '../reserva/PoliticaAplicada'
 import CorreccionesDocumento from '../reserva/CorreccionesDocumento'
+import EnvioTraReserva from '../reserva/EnvioTraReserva'
 import DialogoConfirmar from '../reserva/DialogoConfirmar'
 import DialogoCorregirDocumento, { type Corregido } from '../reserva/DialogoCorregirDocumento'
 import DialogoLiquidar from '../reserva/DialogoLiquidar'
@@ -365,6 +366,11 @@ export default function DetalleReserva() {
       </section>
 
       <CorreccionesDocumento correcciones={reserva.correccionesDocumento} />
+
+      {(reserva.estado === 'EN_CURSO' || reserva.estado === 'FINALIZADA') && (
+        <EnvioTraReserva codigo={reserva.codigo} faltanDatos={reserva.ocupantes.some(tieneTraPendiente)}
+          clave={reserva.ocupantes.map((o) => (o.datosTraFaltantes ?? []).join(',')).join('|') + reserva.estado} />
+      )}
 
       <section aria-labelledby="titulo-desglose" className="detalle-seccion">
         <h2 id="titulo-desglose">Desglose por noche</h2>

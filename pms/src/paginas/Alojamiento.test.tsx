@@ -36,6 +36,7 @@ function apiCon({ inicial = alojamientoDePrueba(), rechazos = {} }: {
     })),
     ...accion('/api/alojamiento/medios-pago/TARJETA/deshabilitar', () => ({ mediosPago: ['EFECTIVO', 'TRANSFERENCIA'] })),
     ...accion('/api/alojamiento/marca', () => ({})),
+    ...accion('/api/alojamiento/rnt', () => ({ rnt: '123456' })),
   })
   return fetch
 }
@@ -90,6 +91,19 @@ describe('alojamiento (CU-50 · CU-51 · CU-53)', () => {
       },
     })])
     expect(await screen.findByRole('heading', { level: 1, name: 'Puerta del Sol' })).toBeInTheDocument()
+  })
+
+  it('el RNT solo deja escribir números y se guarda para enviar el TRA (DEC-130)', async () => {
+    const fetch = apiCon()
+    const usuario = abrir()
+    const rnt = await screen.findByLabelText(/^RNT/)
+    expect(rnt).toHaveAttribute('inputmode', 'numeric')
+
+    await usuario.type(rnt, '12A-3 4.56')
+    expect(rnt).toHaveValue('123456')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar RNT' }))
+    expect(await screen.findByText('RNT guardado')).toBeInTheDocument()
+    expect(envios(fetch)).toEqual([expect.objectContaining({ url: '/api/alojamiento/rnt', metodo: 'PUT', cuerpo: { rnt: '123456' } })])
   })
 
   it('sin descripción no envía y lo marca junto al campo', async () => {

@@ -73,6 +73,8 @@ export interface Alojamiento {
   /** Catálogo de consumos que se cargan al folio (CAR-05), con los desactivados. Puede faltar en respuestas viejas. */
   serviciosAdicionales?: ServicioAdicional[]
   marca?: Marca | null
+  /** Registro Nacional de Turismo, con el que se envía el TRA (DEC-130); null si no se ha escrito. */
+  rnt?: string | null
 }
 
 export interface DatosAlojamiento {
@@ -96,6 +98,11 @@ export function guardarDatos(datos: DatosAlojamiento): Promise<Alojamiento> {
 /** `PUT /api/alojamiento/ubicacion`. */
 export function guardarUbicacion(latitud: number, longitud: number): Promise<Alojamiento> {
   return pedir<Alojamiento>('/api/alojamiento/ubicacion', { method: 'PUT', cuerpo: { latitud, longitud } })
+}
+
+/** `PUT /api/alojamiento/rnt` (DEC-130): solo números, hasta 20; vacío lo borra. */
+export function guardarRnt(rnt: string): Promise<Alojamiento> {
+  return pedir<Alojamiento>('/api/alojamiento/rnt', { method: 'PUT', cuerpo: { rnt } })
 }
 
 /** `PUT /api/alojamiento/parametros`: **reemplaza todos**, así que siempre van los 21 (los que faltan se apagan). */
