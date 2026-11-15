@@ -558,7 +558,7 @@ Lo que el diseño dejó abierto, resuelto con el contrato:
 - **Menú**: el de `src/navegacion.ts`; el del mockup era de ejemplo.
 - Al guardar otro nombre, la cabecera del panel se actualiza sin recargar.
 
-**Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40; falta la validación en el backend (400).
+**Para el núcleo (Reyes), sin urgencia**: el nombre de un medio de pago se guarda en `VARCHAR(40)` (`alojamiento_medio_pago.nombre`) y la API no valida el largo, así que uno más largo da un 500. El PMS no deja escribir más de 40. **Hecho** en DEC-121 (`feature/nucleo/largo-medio-pago`): el backend responde 400.
 
 **Probada en el navegador** (13 nov, Chromium contra el backend local con los datos demo, como administrador): guardar datos, marca y reglas; descripción vacía, latitud fuera de rango, anticipo de más de 100 y color mal escrito marcados junto al campo; pegar las coordenadas de Google Maps; la pregunta al cambiar de pestaña con cambios; el 409 por el mínimo de medios de pago junto al bloque, y volver a habilitar un medio escribiéndolo. Sin desbordes a 1280, 1024 y 390 px. Los datos demo quedaron como estaban (solo `normas` pasó de vacío a nulo, que es lo mismo).
 
@@ -593,7 +593,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint4-apartamentos/S4Apartamentos/` (8
 - **Sin foto** (2): la miniatura punteada con el ícono sale cuando `imagenes` viene vacío o la imagen no carga.
 - **Bloqueos** (4): `fin` es exclusivo, como la estancia: «24 → 27 nov» deja libre la noche del 27. El diálogo dice «Desde» y «Hasta», con la pista «Esas noches no se venden en ningún canal. La noche de “Hasta” ya se vende». `vigente` = no levantado. Arriba van los vigentes que no han terminado (`fechaFin` > hoy), con «Levantar». En «Ver anteriores» van los levantados y los ya terminados, en gris y sin acción.
 - **Fotos al crear** (6): acordado el 13 nov, todo apartamento tiene al menos una foto, como dice el prompt. El formulario la exige («Agrega al menos una foto»), aunque la API hoy acepta crear sin fotos (`minItems: 0`). La primera que se agrega queda marcada como principal, y con botones de opción nunca hay dos. El rechazo «Exactamente una imagen debe ser la principal» queda solo por si llega de la API.
-- **Quitar fotos** (7): sin confirmación, porque se vuelve a agregar con la misma dirección. Se puede quitar la principal: la API pasa a principal la primera de las que quedan. La única foto no se puede quitar: su «Quitar» no aparece, y la pista dice «Agrega otra antes de quitar esta». La API solo lo rechaza si el apartamento está a la venta; si aun así llega el rechazo, sale junto a la foto.
+- **Quitar fotos** (7): sin confirmación, porque se vuelve a agregar con la misma dirección. Se puede quitar la principal: la API pasa a principal la primera de las que quedan. La única foto no se puede quitar: su «Quitar» no aparece, y la pista dice «Agrega otra antes de quitar esta». Desde DEC-123 la API también lo rechaza, esté a la venta o retirado; si llega el rechazo, sale junto a la foto.
 - **Vista previa** (8): solo en el diálogo de foto. Si no carga, «Agregar foto» sigue habilitado: puede ser una dirección que el navegador no muestra pero sí existe.
 - **Al crear** (9): nace en «Pendiente de preparación» y «Retirado» (`Apartamento.crear`); la cabecera muestra los dos.
 - **Mascotas** (10, 16): `limiteMascotas` vacío = usa el límite del hotel (`GET /api/alojamiento`, `parametros.limiteMascotas`). La sección dice «Hasta N mascotas (el límite del hotel)». Si `aceptaMascotas` está apagado, el texto del mockup sin acción. El rechazo del diálogo (número negativo) va junto al campo.
@@ -601,7 +601,7 @@ Mockups en `pms/diseno/mockups-meridian-sprint4-apartamentos/S4Apartamentos/` (8
 - **Enlaces** (14): «Ir a temporadas y tarifas» lleva a `/tarifas` y cada reserva afectada a `/reservas/:codigo`.
 - **Menú** (15): ya está en `src/navegacion.ts`; no se cambia.
 
-**Para el núcleo (Reyes), sin urgencia**: que la API también exija al menos una foto (`minItems: 1` en `CrearApartamentoRequest` y que `quitarImagen` rechace la última aunque esté retirado). Hoy solo el PMS lo cuida, y otra pantalla o un canal podría crear uno sin fotos.
+**Para el núcleo, hecho** en DEC-123 (`feature/nucleo/al-menos-una-foto`): la API exige al menos una foto al crear y `quitarImagen` rechaza la última aunque esté retirado. Va en el dominio (409), no como `minItems: 1` en el Request.
 
 Propuesta para el equipo (no está en el prompt, no se dibuja por ahora): DEC-113 ya trae `motivoFueraDeServicio` en `ApartamentoResponse`. Se podría mostrar bajo «⊘ Fuera de servicio» en el detalle.
 
@@ -620,7 +620,7 @@ Queda, a propósito: una descripción de 2000 caracteres se lee completa en el d
 **Ajustes tras la prueba de Arias** (13 nov):
 - **Código repetido**: se avisa al salir del campo, sin esperar a «Crear» (`GET /api/apartamentos/APT-n`: 200 es que existe; 404, libre). Al crear, la API lo vuelve a revisar.
 - **Bloqueo en un calendario** (`src/apartamentos/CalendarioBloqueo.tsx`), como el de la web con la marca de Meridian: un clic elige la primera noche y el siguiente el día en que vuelve a venderse; un mes a la vez, hasta 12 meses adelante, con las flechas del teclado. Las noches pasadas no se eligen; las que tienen una reserva activa (de `GET /api/ocupacion` del apartamento) salen tachadas y las ya bloqueadas con las rayas del tablero. Como la API rechaza un bloqueo encima de una reserva activa, el rango no puede pasar por encima de una; el día en que vuelve a venderse sí puede ser la llegada de una reserva.
-- **Bloqueos en el pasado**: la API acepta uno que empezó antes de hoy (por ejemplo en marzo), que no tiene sentido. La pantalla ya no lo deja.
+- **Bloqueos en el pasado**: la API acepta uno que empezó antes de hoy (por ejemplo en marzo), que no tiene sentido. La pantalla ya no lo deja. **Hecho** en DEC-122 (`feature/nucleo/bloqueo-sin-pasado`): la API responde 409.
 
 **Para el núcleo (Reyes), sin urgencia**:
 - Que `RegistrarBloqueoUseCase` rechace un bloqueo cuyo inicio ya pasó (409), con el reloj inyectado. Hoy solo lo cuida el PMS.
@@ -696,6 +696,45 @@ Programada en `src/reserva/nueva/PasoPersonas.tsx` y `formulario.ts` (`nombreDel
 
 Queda, a propósito: el nombre largo del ocupante del titular se corta dentro de su campo de solo lectura (se lee completo en los campos del titular).
 
+## Sprint 4: usuarios, mi perfil y la cuenta (`feature/pms/usuarios`, Arias)
+Mockups en `pms/diseno/mockups-meridian-sprint4-usuarios/S4Usuarios/` (13 hojas, cada una a 1280 y 390 px, con su LEEME). Revisados el 13 nov contra `docs/api/openapi.yaml` y el backend (`GestionUsuarios`, `CuentaPersonal`, `RecuperacionContrasena`, `CodigosDelPersonal`). Lo resuelto, con el número de la duda del LEEME:
+- **«Iniciar sesión»** (1): a Claude Design no le llegó `ingresar.png` y dibujó otra plantilla. Manda la pantalla programada: se queda la de siempre y solo se le agregan los enlaces «Olvidé mi contraseña» y «Activar mi cuenta» (el correo con el código no trae un enlace, así que la persona necesita una forma de llegar a `/activar`) y el aviso de éxito al volver. Activar y Recuperar usan esa misma plantilla. El «Ver» del mockup es el «Mostrar» de la entrada, ahora en `componentes/CampoClave.tsx`.
+- **Datos obligatorios** (2, 14): la API pide los cinco datos (`@NotBlank`) y la fecha de nacimiento anterior a hoy (`@Past`); la pantalla lo revisa antes de enviar. El correo, con arroba y dominio con punto (el `@Email` del backend acepta `a@b`). Sin más reglas de formato para el teléfono ni el documento.
+- **Código errado o vencido** (3, 4, 5): la API responde lo mismo (401 `CREDENCIALES_INVALIDAS`) si el correo no existe, el código no coincide, venció o ya tuvo 5 intentos fallidos, así que no hay un estado aparte de «demasiados intentos». El administrador **no puede reenviar** el código de activación (no hay endpoint), pero «Olvidé mi contraseña» sí sirve para una cuenta sin activar: por eso, al fallar el código de Activar, la pantalla ofrece «Pedir un código nuevo» (va a `/recuperar` con el correo) en vez de «Pídele al administrador uno nuevo». En Recuperar, el paso 2 tiene «Pedir otro código o usar otro correo» (vuelve al paso 1); el backend no envía más de 3 códigos en 15 minutos y no lo dice.
+- **Enlaces** (6): «Volver a iniciar sesión» en Activar y Recuperar. El 403 es la página «Sin permiso» de siempre.
+- **Cambiar la contraseña en Mi perfil** (7): la API cierra todas las sesiones de esa persona, esta incluida. Al cambiarla, el PMS vuelve a «Iniciar sesión» con «Tu contraseña cambió. Entra con la nueva.» (`terminar` en `sesion/contexto.ts`), y la pantalla lo avisa antes con una pista.
+- **La contraseña actual errada** responde 401 (`CREDENCIALES_INVALIDAS`), y el PMS cerraba la sesión ante cualquier 401 con token. Ahora `api/cliente.ts` no la cierra cuando el 401 es por una contraseña mal escrita: el error sale junto al campo.
+- **«Le enviamos… un código»** (8): dentro del diálogo, como en el mockup, con «Cerrar»; al cerrarlo, un aviso sobre la lista.
+- **Cambio de rol** (9): el aviso va dentro del diálogo en cuanto se elige otro rol, sin confirmación aparte. Si el administrador cambia **su propio** rol, el aviso dice «Tendrás que volver a entrar» y, al guardar, el PMS vuelve a «Iniciar sesión» con el rol nuevo dicho.
+- **Eliminar** (10): se puede eliminar una cuenta sin activar. El rechazo (el último administrador, una cuenta ya eliminada) sale en el diálogo con el mensaje de la API. La propia cuenta no ofrece «Eliminar».
+- **Orden** (11): el de la API, por nombre, con las eliminadas en su lugar.
+- **Menú** (12): el de `src/navegacion.ts`.
+- **Textos** (3, 13): se quedan los del mockup, salvo los de arriba. Las líneas de cada rol dicen lo que de verdad abre su menú (`navegacion.ts`).
+- **Nombre en la cabecera**: al cambiar el nombre propio (en Mi perfil o en Usuarios), la cabecera lo toma sin volver a entrar (`renombrar`).
+
+Programada en `src/paginas/Usuarios.tsx` (`/usuarios`, solo el administrador), `Perfil.tsx` (`/perfil`, todos), `ActivarCuenta.tsx` (`/activar`) y `RecuperarContrasena.tsx` (`/recuperar`), las dos fuera de la sesión. Los diálogos, los campos de la persona, el estado de la cuenta y la lógica sin pantalla están en `src/usuarios/`, y la API en `src/api/usuarios.ts`. Pruebas: `Usuarios.test.tsx`, `Perfil.test.tsx`, `CuentaSinSesion.test.tsx` y `src/usuarios/logica.test.ts`.
+
+**Probada en el navegador** (13 nov, Chrome contra el backend local, con el correo en modo local para leer los códigos del log): crear (vacío, correo repetido, creado), editar con cambio de rol, activar con el código errado y con el bueno, entrar con la cuenta nueva, Mi perfil (contraseña actual errada sin perder la sesión, guardar datos, cambiar la contraseña y volver a entrar), recuperar en dos pasos (reglas, código errado, hecho) y eliminar. Sin desbordes a 1280, 1024, 390 y 320 px y sin errores en la consola. En la base local quedaron cuentas de prueba eliminadas.
+
+**Auditoría** (guías de `impeccable` a mano y `break-ui` con un nombre de 109 caracteres y un correo de 106). Arreglado:
+- P2: un correo largo partía en mitad de una palabra; ahora parte en la arroba o en un punto (`Correo`, con `<wbr>`), en la tabla y en el diálogo de eliminar, donde además se salía del borde.
+- P2: el recuadro del navegador alrededor de «Rol» y el documento corrido 2 px (los `fieldset` sin reiniciar).
+- P2: el aviso de «¿Se venció el código?» con el botón al lado dejaba el texto en una columna angosta; el botón va debajo, a todo el ancho.
+- P3: entre 760 y 1024 px la tabla partía los nombres; ahí se ve en tarjetas, como Temporadas y tarifas.
+
+**Para el núcleo (sin urgencia, se suma a la tarea 3 de «Para Arias»)**:
+- Que una contraseña actual errada en `PUT /api/usuarios/perfil/contrasena` no responda 401 (es el estado de «no hay sesión»): un 409 o un 400 en el campo `actual`. El PMS ya lo maneja, pero cualquier otro cliente cerraría la sesión. **Hecho** en DEC-124: 400 con el código `CREDENCIALES_INVALIDAS` y el detalle en `actual`.
+- El correo de activación dice el rol crudo (`RECEPCIONISTA`) en `CodigosDelPersonal.texto`: que diga «Recepción».
+- Que el administrador no pueda eliminarse a sí mismo (hoy solo lo impide si es el último administrador). La pantalla no lo ofrece.
+- Reenviar el código de activación desde Usuarios: hoy se resuelve con «Olvidé mi contraseña».
+- Ya hecho por Reyes en DEC-118 (#83): los rechazos de temporadas dicen el nombre y no `TEM-n`; se quita de la tarea 3.
+## Sprint 4: filtros de varios valores y corregir documento (`feature/pms/decisiones-119-120`, Arias)
+Sin mockup: siguen los componentes de la base, como en «Sprint 4: lo que entró del núcleo».
+- **DEC-119 · filtros de varios valores**: en Reservas, Estado, Apartamento y Canal son un botón que dice lo elegido («Todos», «Activas», «APT-101, APT-102» o «3 elegidos») y abre una lista de casillas (`componentes/SeleccionVarios.tsx`, la lógica del texto en `componentes/eleccion.ts`). Estado trae dos atajos: «Activas» (pendiente, confirmada y en curso) y «Terminadas» (finalizada, cancelada y no se presentó). Los valores van separados por comas en la dirección y en la consulta; una dirección con el parámetro repetido (`estado=A&estado=B`) también se lee. Cada filtro aplicado sigue siendo una sola etiqueta para quitarlo («Estado: Activas»). En el computador la lista flota sobre la tabla; en el celular empuja hacia abajo. Se cierra con Escape, al tocar fuera o con «Listo».
+- **DEC-120 · corregir documento**: en el detalle de una reserva activa, cada huésped con documento tiene «Corregir documento» junto a «Editar datos», y el titular lo tiene en «Datos de la reserva» (su documento actual se lee de `GET /api/titulares/{id}`, porque la reserva no lo trae). El diálogo (`reserva/DialogoCorregirDocumento.tsx`) muestra el documento actual y pide el nuevo y el motivo (obligatorio, hasta 500). Antes de enviar revisa que no sea el mismo y que el tipo sirva para la edad del huésped (#18); al titular no le ofrece registro civil (TIT-01). Los 409 de la API (otro del grupo ya lo tiene, otro titular ya lo tiene) salen en el diálogo. Al corregir, la sección «Documentos corregidos (n)» (`reserva/CorreccionesDocumento.tsx`) lista cada corrección, la más reciente primero: de quién (con «Titular» si fue el del titular), cómo estaba (tachado) y cómo quedó, el motivo, quién y cuándo. Se ve también en las reservas ya terminadas, que no ofrecen corregir. El diálogo del TRA dice dónde corregir un documento ya registrado.
+- **Prueba de la llegada** («una pendiente que entra hoy ofrece Continuar llegada»): fallaba después de las 10 p. m., cuando pasa la hora límite de la reserva de prueba; ahora fija el reloj al mediodía.
+
+**Probada en el navegador** (13 nov, Chrome contra el backend local): «Activas» y dos apartamentos, con sus etiquetas y la dirección; los filtros en el celular; corregir el documento de un huésped (el mismo documento se marca junto al campo), el historial y el diálogo del titular. Sin desbordes a 1280 y 390 px y sin errores en la consola. En la base local, RES-2026-00016 quedó con dos correcciones de prueba («Prueba del PMS»): el documento se cambió y se devolvió como estaba.
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

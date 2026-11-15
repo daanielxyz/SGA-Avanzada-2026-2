@@ -12,6 +12,9 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BloqueoOperativoDom
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDate;
+
 /**
  * Caso de uso: el administrador bloquea un apartamento en un rango de fechas (CU-32). Que solo el administrador
  * bloquee (BLO-04) lo controla la seguridad (DEC-22 · DEC-67).
@@ -23,20 +26,22 @@ public class RegistrarBloqueoUseCase {
     private final ReservaRepository reservas;
     private final BloqueoOperativoDomainService bloqueos;
     private final GeneradorCodigos codigos;
+    private final Clock reloj;
 
     public RegistrarBloqueoUseCase(ApartamentoRepository apartamentos, ReservaRepository reservas,
-                                   BloqueoOperativoDomainService bloqueos, GeneradorCodigos codigos) {
+                                   BloqueoOperativoDomainService bloqueos, GeneradorCodigos codigos, Clock reloj) {
         this.apartamentos = apartamentos;
         this.reservas = reservas;
         this.bloqueos = bloqueos;
         this.codigos = codigos;
+        this.reloj = reloj;
     }
 
     /**
      * @throws RecursoNoEncontradoException si el apartamento no existe
      * @throws co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException si el rango o el
      *                                      motivo son inválidos (BLO-02) o una reserva activa ocupa esas noches
-     *                                      (BLO-01)
+     *                                      (BLO-01), o el bloqueo empieza antes de hoy (DEC-122)
      */
     @Transactional
     public ApartamentoResult ejecutar(RegistrarBloqueoCommand comando) {
@@ -45,7 +50,8 @@ public class RegistrarBloqueoUseCase {
                 .orElseThrow(() -> new RecursoNoEncontradoException("el apartamento", id.valor()));
 
         bloqueos.registrarBloqueo(apartamento, new BloqueoId(codigos.siguiente(SerieCodigo.BLOQUEO)),
-                comando.inicio(), comando.fin(), comando.motivo(), reservas.buscarActivasPorApartamento(id));
+                comando.inicio(), comando.fin(), comando.motivo(), reservas.buscarActivasPorApartamento(id),
+                LocalDate.now(reloj));
 
         apartamentos.guardar(apartamento);
         return ApartamentoResult.de(apartamento);

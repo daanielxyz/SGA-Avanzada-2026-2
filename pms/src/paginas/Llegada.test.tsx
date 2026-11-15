@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import type { Folio } from '../api/folio'
 import type { Ocupante, Reserva } from '../api/reservas'
@@ -348,7 +348,7 @@ describe('huéspedes y titular en la llegada (BL-07 · DEC-97 · DEC-98)', () =>
     expect(await within(dialogo).findByText('Huésped 1 de 3 · Ana Torres Vélez')).toBeInTheDocument()
     expect(within(dialogo).getByText('Se guardaron los datos de Julián Mejía Ríos.')).toBeInTheDocument()
     expect(within(dialogo).getByLabelText(/Número de documento/)).toHaveAttribute('readonly')
-    expect(within(dialogo).getByText('Un documento ya registrado no se cambia aquí.')).toBeInTheDocument()
+    expect(within(dialogo).getByText(/Un documento ya registrado no se cambia aquí/)).toBeInTheDocument()
     expect(llamadasA(fetch, '/datos-tra')).toEqual([{
       metodo: 'PUT',
       cuerpo: {
@@ -508,11 +508,15 @@ describe('la llegada desde el detalle', () => {
   })
 
   it('una pendiente que entra hoy ofrece «Continuar llegada» primero', async () => {
+    // Al mediodía: pasada la hora límite de llegada, una pendiente ya no ofrece la llegada
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${HOY}T12:00:00`))
     apiCon({ reserva: { estado: 'PENDIENTE' } })
     abrir(`/reservas/${CODIGO}`)
 
     const botones = await screen.findAllByRole('button', { name: /Continuar llegada|Confirmar|Cancelar/ })
     expect(botones.map((boton) => boton.textContent)).toEqual(['Continuar llegada', 'Confirmar', 'Cancelar'])
+    vi.useRealTimers()
   })
 
   it('el desglose dice el nombre de la temporada, no su código (DEC-117)', async () => {

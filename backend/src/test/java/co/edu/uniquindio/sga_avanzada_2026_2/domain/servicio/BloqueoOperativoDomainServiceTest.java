@@ -8,6 +8,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.EstadoReserva;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ReservasDePrueba.APT;
@@ -20,6 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BloqueoOperativoDomainServiceTest {
 
+    private static final LocalDate HOY = dia(1);
+
     private final BloqueoOperativoDomainService servicio = new BloqueoOperativoDomainService();
 
     @Test
@@ -29,7 +32,7 @@ class BloqueoOperativoDomainServiceTest {
 
         servicio.registrarBloqueo(apartamento, new BloqueoId("BLO-1"), dia(12), dia(14), "Pintura",
                 List.of(confirmada("RES-2026-00001", 10, 12),
-                        reserva("RES-2026-00002", APT, 12, 14, EstadoReserva.CANCELADA)));
+                        reserva("RES-2026-00002", APT, 12, 14, EstadoReserva.CANCELADA)), HOY);
 
         assertTrue(apartamento.tieneBloqueoEn(new Noche(dia(13))));
     }
@@ -40,7 +43,8 @@ class BloqueoOperativoDomainServiceTest {
         Apartamento apartamento = apartamentoActivo();
 
         assertThrows(ReglaDominioException.class, () -> servicio.registrarBloqueo(apartamento,
-                new BloqueoId("BLO-1"), dia(11), dia(13), "Pintura", List.of(confirmada("RES-2026-00001", 10, 12))));
+                new BloqueoId("BLO-1"), dia(11), dia(13), "Pintura", List.of(confirmada("RES-2026-00001", 10, 12)),
+                HOY));
         assertTrue(apartamento.bloqueos().isEmpty());
     }
 
@@ -48,6 +52,27 @@ class BloqueoOperativoDomainServiceTest {
     @Tag("BLO-02")
     void deberiaRechazarRangoInvalidoAntesDeCompararConReservas() {
         assertThrows(ReglaDominioException.class, () -> servicio.registrarBloqueo(apartamentoActivo(),
-                new BloqueoId("BLO-1"), dia(12), dia(12), "Pintura", List.of()));
+                new BloqueoId("BLO-1"), dia(12), dia(12), "Pintura", List.of(), HOY));
+    }
+
+    @Test
+    @Tag("BLO-02")
+    void deberiaPermitirUnBloqueoQueEmpiezaHoy() {
+        Apartamento apartamento = apartamentoActivo();
+
+        servicio.registrarBloqueo(apartamento, new BloqueoId("BLO-1"), dia(5), dia(7), "Pintura", List.of(), dia(5));
+
+        assertTrue(apartamento.tieneBloqueoEn(new Noche(dia(5))));
+    }
+
+    @Test
+    @Tag("BLO-02")
+    void deberiaRechazarUnBloqueoQueEmpezoAntesDeHoy() {
+        Apartamento apartamento = apartamentoActivo();
+
+        // DEC-122: aunque siga hasta días que no han pasado, empezó ayer
+        assertThrows(ReglaDominioException.class, () -> servicio.registrarBloqueo(apartamento,
+                new BloqueoId("BLO-1"), dia(4), dia(9), "Pintura", List.of(), dia(5)));
+        assertTrue(apartamento.bloqueos().isEmpty());
     }
 }

@@ -190,6 +190,32 @@ class AlojamientoControllerTest {
     }
 
     @Test
+    @Tag("MPAG-06")
+    void deberiaHabilitarUnMedioDePagoDeCuarentaCaracteres() throws Exception {
+        conAlojamiento();
+        String cuarenta = "A".repeat(40);
+
+        mvc.perform(put("/api/alojamiento/medios-pago/" + cuarenta + "/habilitar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mediosPago").value(hasItem(cuarenta)));
+    }
+
+    @Test
+    @Tag("MPAG-06")
+    void deberiaRechazarConUn400UnMedioDePagoDeMasDeCuarentaCaracteres() throws Exception {
+        conAlojamiento();
+        String largo = "A".repeat(41);
+
+        // DEC-121: antes llegaba a la base (VARCHAR(40)) y respondía 500
+        mvc.perform(put("/api/alojamiento/medios-pago/" + largo + "/habilitar"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
+        mvc.perform(put("/api/alojamiento/medios-pago/" + largo + "/deshabilitar"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("VALIDACION"));
+    }
+
+    @Test
     void deberiaHabilitarYDeshabilitarMediosDePagoRespetandoElMinimo() throws Exception {
         conAlojamiento();
 

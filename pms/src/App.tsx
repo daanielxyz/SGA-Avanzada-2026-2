@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import ProteccionErrores from './componentes/ProteccionErrores'
 import { ADMINISTRACION, OPCIONES, RECEPCION } from './navegacion'
+import ActivarCuenta from './paginas/ActivarCuenta'
 import Alojamiento from './paginas/Alojamiento'
 import Apartamentos from './paginas/Apartamentos'
 import DetalleReserva from './paginas/DetalleReserva'
@@ -16,11 +17,14 @@ import NoEncontrada from './paginas/NoEncontrada'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
+import Perfil from './paginas/Perfil'
 import Politica from './paginas/Politica'
 import Preparacion from './paginas/Preparacion'
 import PublicarPolitica from './paginas/PublicarPolitica'
+import RecuperarContrasena from './paginas/RecuperarContrasena'
 import SinPermiso from './paginas/SinPermiso'
 import Tarifas from './paginas/Tarifas'
+import Usuarios from './paginas/Usuarios'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
 
@@ -33,6 +37,8 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/politica': <Politica />,
   '/apartamentos': <Apartamentos />,
   '/tarifas': <Tarifas />,
+  '/usuarios': <Usuarios />,
+  '/perfil': <Perfil />,
 }
 
 /** Mapa del PMS: qué pantalla se muestra para cada dirección y quién la puede abrir. */
@@ -41,6 +47,8 @@ export default function App() {
     <ProteccionErrores global>
     <Routes>
       <Route path="/ingresar" element={<IniciarSesion />} />
+      <Route path="/activar" element={<ActivarCuenta />} />
+      <Route path="/recuperar" element={<RecuperarContrasena />} />
       <Route element={<ConSesion />}>
         <Route index element={<Inicio />} />
         {OPCIONES.map((opcion) => (
@@ -117,7 +125,9 @@ function ConSesion() {
   const { sesion, motivo } = useSesion()
   const { pathname, search } = useLocation()
   if (!sesion) {
-    return <Navigate to="/ingresar" replace state={motivo === 'salio' ? null : { desde: pathname + search }} />
+    // Tras cambiar la contraseña o el propio rol se vuelve a entrar desde Inicio
+    const recordar = motivo === 'sin-entrar' || motivo === 'perdida'
+    return <Navigate to="/ingresar" replace state={recordar ? { desde: pathname + search } : null} />
   }
   return <Panel sesion={sesion} />
 }

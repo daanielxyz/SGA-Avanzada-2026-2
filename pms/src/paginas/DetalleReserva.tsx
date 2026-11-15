@@ -20,7 +20,9 @@ import LlegadaRegistrada from '../reserva/llegada/LlegadaRegistrada'
 import BloquePago from '../reserva/BloquePago'
 import NotasTurno from '../reserva/NotasTurno'
 import PoliticaAplicada from '../reserva/PoliticaAplicada'
+import CorreccionesDocumento from '../reserva/CorreccionesDocumento'
 import DialogoConfirmar from '../reserva/DialogoConfirmar'
+import DialogoCorregirDocumento, { type Corregido } from '../reserva/DialogoCorregirDocumento'
 import DialogoLiquidar from '../reserva/DialogoLiquidar'
 import FormularioPago from '../reserva/FormularioPago'
 import { mediosDeRecepcion, montoSugerido } from '../reserva/pago'
@@ -37,6 +39,7 @@ interface ReservaRecienCreada {
 }
 
 type DialogoAbierto = Exclude<Accion, 'llegada'> | 'pago' | 'vehiculos' | { tra: string; volverASalida?: boolean }
+  | { documento: Corregido }
 
 /** Detalle de una reserva (CU-49): sus datos, su pago, su grupo, el valor por noche y lo que se puede hacer con ella. */
 export default function DetalleReserva() {
@@ -249,6 +252,12 @@ export default function DetalleReserva() {
           <Dato nombre="Titular">
             {reserva.titularNombre && <span className="dato-titular">{reserva.titularNombre}</span>}
             <span className="codigo titular-id">{reserva.titularId}</span>
+            {activa && (
+              <button type="button" className="boton boton-secundario boton-chico dato-accion"
+                aria-label="Corregir el documento del titular" onClick={() => setDialogo({ documento: { titular: true } })}>
+                Corregir documento
+              </button>
+            )}
           </Dato>
           <Dato nombre="Canal">{NOMBRE_DEL_CANAL[reserva.canalOrigen]}</Dato>
           <Dato nombre="Entrada">{fechaCorta(reserva.entrada)}</Dato>
@@ -329,6 +338,7 @@ export default function DetalleReserva() {
                   )}
                   {activa && (
                     <td className="ocupante-acciones">
+                      <div className="ocupante-botones">
                       <button
                         type="button"
                         className="boton boton-secundario boton-chico"
@@ -337,6 +347,14 @@ export default function DetalleReserva() {
                       >
                         {tieneTraPendiente(ocupante) ? 'Completar datos' : 'Editar datos'}
                       </button>
+                      {ocupante.numeroDocumento && (
+                        <button type="button" className="boton boton-secundario boton-chico"
+                          aria-label={`Corregir el documento de ${ocupante.nombre}`}
+                          onClick={() => setDialogo({ documento: { ocupante } })}>
+                          Corregir documento
+                        </button>
+                      )}
+                      </div>
                     </td>
                   )}
                 </tr>
@@ -345,6 +363,8 @@ export default function DetalleReserva() {
           </table>
         </div>
       </section>
+
+      <CorreccionesDocumento correcciones={reserva.correccionesDocumento} />
 
       <section aria-labelledby="titulo-desglose" className="detalle-seccion">
         <h2 id="titulo-desglose">Desglose por noche</h2>
@@ -401,7 +421,20 @@ export default function DetalleReserva() {
           }}
         />
       )}
-      {typeof dialogo === 'object' && dialogo !== null && (
+      {typeof dialogo === 'object' && dialogo !== null && 'documento' in dialogo && (
+        <DialogoCorregirDocumento
+          reserva={reserva}
+          corregido={dialogo.documento}
+          alCerrar={() => setDialogo(null)}
+          alCorregir={(nueva) => {
+            setResultado({ clave, reserva: nueva })
+            setExito({ asunto: 'Documento corregido', mensaje: 'Quedó en «Documentos corregidos», con el motivo, quién y cuándo.' })
+            enfocarTitulo.current = true
+            setDialogo(null)
+          }}
+        />
+      )}
+      {typeof dialogo === 'object' && dialogo !== null && 'tra' in dialogo && (
         <DialogoTra
           reserva={reserva}
           ocupanteId={dialogo.tra}

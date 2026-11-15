@@ -105,13 +105,17 @@ public class Apartamento {
     /**
      * Crea un apartamento nuevo: nace inactivo (se activa con tarifas completas, APA-11), sin bloqueos y en
      * PENDIENTE_PREPARACION, para que nunca se entregue sin revisar (RN-11 · DEC-34). Las invariantes de imágenes
-     * y características las valida el constructor (IMG-01 · IMG-02 · CARAC-01).
+     * y características las valida el constructor (IMG-01 · IMG-02 · CARAC-01). Nace con al menos una imagen (IMG-01 ·
+     * DEC-123); el constructor no lo exige porque también reconstruye los que se guardaron sin ninguna.
      *
-     * @throws ReglaDominioException si algún dato viola una invariante del apartamento
+     * @throws ReglaDominioException si no trae imágenes o algún dato viola una invariante del apartamento
      */
     public static Apartamento crear(ApartamentoId codigo, AlojamientoId alojamientoId, String nombre,
                                     String descripcion, Capacidad capacidad, Dormitorio dormitorios,
                                     List<Imagen> imagenes, List<Caracteristica> caracteristicas) {
+        if (imagenes == null || imagenes.isEmpty()) {
+            throw new ReglaDominioException("Un apartamento nuevo necesita al menos una imagen");
+        }
         return new Apartamento(codigo, alojamientoId, nombre, descripcion, capacidad, dormitorios,
                 EstadoOperativo.PENDIENTE_PREPARACION, imagenes, caracteristicas, List.of(), false);
     }
@@ -220,15 +224,15 @@ public class Apartamento {
     }
 
     /**
-     * Quita una imagen; si era la principal, la primera de las que quedan toma su lugar (IMG-02). Un apartamento a la
-     * venta no puede quedarse sin imágenes (IMG-01).
+     * Quita una imagen; si era la principal, la primera de las que quedan toma su lugar (IMG-02). Ningún apartamento
+     * se queda sin imágenes, esté a la venta o retirado (IMG-01 · DEC-123).
      *
-     * @throws ReglaDominioException si la imagen no existe o es la última de un apartamento activo
+     * @throws ReglaDominioException si la imagen no existe o es la última
      */
     public void quitarImagen(String url) {
         exigirImagen(url);
-        if (activo && imagenes.size() == 1) {
-            throw new ReglaDominioException("Un apartamento a la venta no puede quedarse sin imágenes");
+        if (imagenes.size() == 1) {
+            throw new ReglaDominioException("No se puede quitar la única imagen del apartamento: agrega otra antes");
         }
         List<Imagen> restantes = imagenes.stream().filter(i -> !i.url().equals(url.trim())).toList();
         boolean falta = restantes.stream().noneMatch(Imagen::principal);

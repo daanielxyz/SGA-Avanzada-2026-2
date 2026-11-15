@@ -1419,6 +1419,8 @@ paths:
           required: true
           schema:
             type: string
+            maxLength: 40
+            minLength: 0
       responses:
         "200":
           description: OK
@@ -1443,6 +1445,8 @@ paths:
           required: true
           schema:
             type: string
+            maxLength: 40
+            minLength: 0
       responses:
         "200":
           description: OK

@@ -21,12 +21,18 @@ public class BloqueoOperativoDomainService {
      * RN-07). Que solo el administrador bloquee (BLO-04) se controla en la aplicación (DEC-22).
      *
      * @param reservas reservas del apartamento ({@code ReservaRepository.buscarActivasPorApartamento})
+     * @param hoy      la fecha del alojamiento, del reloj inyectado: un bloqueo no empieza antes (DEC-122)
      * @throws ReglaDominioException si el rango o el motivo son inválidos (BLO-02) o alguna reserva activa ocupa
-     *                               esas noches (BLO-01)
+     *                               esas noches (BLO-01), o empieza antes de hoy (DEC-122)
      */
     public void registrarBloqueo(Apartamento apartamento, BloqueoId id, LocalDate inicio, LocalDate fin,
-                                 String motivo, List<Reserva> reservas) {
+                                 String motivo, List<Reserva> reservas, LocalDate hoy) {
         new Bloqueo(id, inicio, fin, motivo, true); // valida BLO-02 antes de comparar rangos
+        // BLO-02 · DEC-122: bloquear noches que ya pasaron no cambia nada y ensucia el historial
+        if (inicio.isBefore(hoy)) {
+            throw new ReglaDominioException(
+                    "No se puede bloquear desde una fecha que ya pasó: el bloqueo empieza hoy o después");
+        }
         Estancia rango = new Estancia(inicio, fin); // misma convención [inicio, fin) (BLO-02 · EST-01)
         reservas.stream()
                 .filter(r -> r.apartamentoId().equals(apartamento.codigo()) && r.retieneNochesDe(rango))

@@ -98,6 +98,32 @@ export interface Reserva {
   noShow?: { autor: string; autorNombre: string | null; fechaHora: string } | null
   /** Solo llega al crear: el titular ya tenía una cuenta con otro correo. */
   avisoCuenta?: string | null
+  /** Los documentos corregidos, del más antiguo al más reciente (DEC-120). Solo en el detalle; nulo en el listado. */
+  correccionesDocumento?: CorreccionDocumento[] | null
+}
+
+/** `CorreccionDocumentoResponse` (DEC-120). */
+export interface CorreccionDocumento {
+  /** El nombre de la persona cuando se corrigió: los ids de los ocupantes cambian al modificar la reserva. */
+  ocupante: string
+  tipoAnterior: string
+  numeroAnterior: string
+  tipoNuevo: string
+  numeroNuevo: string
+  motivo: string
+  autor: string
+  /** Su nombre vigente; nulo si esa cuenta ya no existe. */
+  autorNombre: string | null
+  fechaHora: string
+  /** Fue el documento del titular (y, si se aloja, también el de su ocupante). */
+  titular: boolean
+}
+
+/** `CorregirDocumentoRequest`: el documento como debe quedar y por qué. */
+export interface DocumentoCorregido {
+  tipoDocumento: string
+  numeroDocumento: string
+  motivo: string
 }
 
 /** `PaginaResponse` del backend: `numero` empieza en 0 y las páginas son de 10 (DEC-18). */
@@ -313,6 +339,29 @@ export function completarDatosTra(codigo: string, ocupanteId: string, datos: Dat
  */
 export function designarPrincipal(codigo: string, ocupanteId: string): Promise<Reserva> {
   return accion(codigo, `ocupantes/${encodeURIComponent(ocupanteId)}/principal`)
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/ocupantes/{ocupanteId}/documento` (DEC-120): solo cambia el documento; los datos del TRA
+ * se conservan. Si es el del titular que se aloja, el titular se corrige con él. Responde el detalle.
+ *
+ * @throws ErrorApi 409 si la reserva ya terminó, el ocupante no tiene documento, es el mismo o ya es de otro del grupo
+ */
+export function corregirDocumentoOcupante(codigo: string, ocupanteId: string, datos: DocumentoCorregido): Promise<Reserva> {
+  return pedir<Reserva>(
+    `/api/reservas/${encodeURIComponent(codigo)}/ocupantes/${encodeURIComponent(ocupanteId)}/documento`,
+    { method: 'PUT', cuerpo: datos },
+  )
+}
+
+/**
+ * `PUT /api/reservas/{codigo}/titular/documento` (DEC-120): el del titular, también si no se aloja. Sigue siendo el
+ * mismo titular, con sus reservas y su cuenta.
+ *
+ * @throws ErrorApi 409 si el documento ya es de otro titular o es un registro civil (`TITULAR_INVALIDO`)
+ */
+export function corregirDocumentoTitular(codigo: string, datos: DocumentoCorregido): Promise<Reserva> {
+  return pedir<Reserva>(`/api/reservas/${encodeURIComponent(codigo)}/titular/documento`, { method: 'PUT', cuerpo: datos })
 }
 
 export interface NuevoTitular {
