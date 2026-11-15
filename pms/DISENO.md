@@ -589,6 +589,23 @@ Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el núm
 - Un bot de WhatsApp para huéspedes (disponibilidad, estado de la reserva, indicaciones de llegada): datos personales y costo por conversación de Meta.
 - Otras ideas de la lluvia de ideas: clasificar novedades (gravedad sugerida), borradores de mensajes al huésped con `{nombre}` que llena el PMS, tarifa sugerida (cuando haya historia) y explicar los conflictos de canal (después de Channex).
 
+## Sprint 5: envío del TRA (`feature/pms/tra`, Reyes)
+Pantallas del envío del TRA al Ministerio (DEC-130, núcleo en el PR #106). **Sin mockups de Claude Design**: son tres agregados pequeños a pantallas que ya tienen diseño, hechos con los componentes que existen (`Bloque`, `Dato`, `Aviso`, `etiqueta`); el CSS nuevo son 34 líneas al final de `src/index.css` («Sprint 5 · TRA»), solo con variables.
+- **Alojamiento → Datos**: el bloque «Registro Nacional de Turismo» (`BloqueRnt` en `alojamiento/BloqueDatos.tsx`), con «Guardar RNT»; solo números, hasta 20: lo que no es dígito se descarta al escribir o pegar, con el teclado numérico en el celular (`validarRnt` queda de respaldo); vacío lo borra y entonces el TRA no se puede enviar.
+- **Detalle de la reserva**: «Reporte al Ministerio (TRA)» (`reserva/EnvioTraReserva.tsx`), solo en reservas EN_CURSO o FINALIZADA, después de «Ocupantes». Arriba, el estado con símbolo y palabra («✓ Enviado», «◐ Pendiente», «! Con error»); la acción va **dentro del aviso que dice por qué hace falta**, como «Reintentar» en el resto del PMS: «Reintentar» en el aviso amarillo con el motivo del Ministerio y «Enviar ahora» en el aviso «Los datos están completos…»; si se envió, la fecha, a cuántos y el código del Ministerio; si falló, el motivo como advertencia y «Reintentar»; si está pendiente con los datos completos, «Enviar ahora»; si faltan datos, lo dice y no ofrece enviar. Se vuelve a leer cuando cambian los datos del TRA de los ocupantes. Una reserva que llegó antes de DEC-130 (404) se muestra pendiente y «Enviar ahora» crea su envío.
+- **Reservas**: un aviso amarillo arriba del listado cuando hay envíos con error (`reserva/EnviosTraConError.tsx`), con cuántos y un enlace a cada reserva (las 10 más recientes). Si no hay o falla la consulta, no se muestra.
+- **Manual del asistente**: `alojamiento.md` (el RNT) y `reservas-detalle.md` (el bloque del TRA y el aviso).
+
+**Pruebas**: 7 nuevas (`reserva/EnvioTraReserva.test.tsx` y el RNT en `paginas/Alojamiento.test.tsx`). Pasan las 481 del PMS, el lint y la compilación.
+
+**Probado en el navegador** (15 nov, Reyes, contra el backend local): el RNT dejaba escribir letras y solo fallaba al guardar (ahora se descartan al escribir), y el botón del TRA abajo a la izquierda se perdía (primero se subió junto al estado; en la auditoría, dentro del aviso).
+
+**Auditoría** (`impeccable` audit, harden y adapt; el detector no marcó nada). Arreglado:
+- (P2) La acción quedaba lejos de su motivo: pasa dentro del aviso, con el patrón del PMS.
+- (P2) Al enviar, el botón desaparecía y el foco se perdía: vuelve al título del bloque (con su prueba).
+- (P2) El lector de pantalla no se enteraba del envío: sale el aviso «TRA enviado».
+- (P2) Una reserva sin envío (llegó antes de DEC-130) se quedaba sin «Enviar ahora» con el nuevo orden: cuenta como pendiente.
+
 ## Sprint 5: canales de venta (`feature/pms/canales`, Reyes)
 Prompt en `pms/prompts/sprint5/canales.md`; mockups en `pms/diseno/mockups-meridian-sprint5-canales/` (S5Canales, S5Bitacora y los diálogos de registrar, desactivar y resolver, cada uno con su hoja de estados, a 1280 y 390 px). Como `base.css` se usó una copia de `src/index.css`: el de los mockups es ese mismo archivo con 658 líneas nuevas al final («Sprint 5 · canales»), que pasan tal cual a `src/index.css`. Revisados contra `docs/api/openapi.yaml` y el dominio el 15 nov.
 

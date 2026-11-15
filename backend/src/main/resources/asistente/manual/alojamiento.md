@@ -12,6 +12,9 @@ Pantalla «Alojamiento» del menú, solo para el administrador. Tiene cinco bloq
 ## Datos
 Nombre, ciudad, dirección, descripción (obligatoria), normas (opcional) y ubicación (latitud de −90 a 90 y longitud de −180 a 180). Se puede pegar «4.6372, -75.5701» tal como lo copia Google Maps y se reparte en los dos campos. Al guardar otro nombre, la cabecera del PMS se actualiza.
 
+## Registro Nacional de Turismo (RNT)
+En la pestaña «Datos», el bloque «Registro Nacional de Turismo»: el número del RNT del hotel, solo números, y «Guardar RNT». Con él se envía al Ministerio la tarjeta de registro (TRA) de cada huésped que llega. Si está vacío, los envíos del TRA quedan con error y no sale nada.
+
 ## Reglas de la estancia
 Son los valores que usa todo el sistema; cambiarlos afecta lo que viene, no lo ya reservado.
 - **Horarios**: hora de entrada, hora de salida, **hora límite de llegada** (después de ella una reserva pendiente ya no se confirma y una confirmada puede declararse no-show) y tiempo de preparación entre reservas (horas).
