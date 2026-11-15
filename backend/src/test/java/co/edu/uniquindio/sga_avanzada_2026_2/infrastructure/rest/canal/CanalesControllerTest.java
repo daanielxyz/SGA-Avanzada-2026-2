@@ -147,6 +147,9 @@ class CanalesControllerTest extends PruebaRestDeReservas {
                 .andExpect(jsonPath("$.contenido[0].id").value(conflicto))
                 .andExpect(jsonPath("$.contenido[0].idExterno").value("BK-2"))
                 .andExpect(jsonPath("$.contenido[0].apartamento").value("APT-101"))
+                .andExpect(jsonPath("$.contenido[0].titularNombre").value("Eva Mora"))      // DEC-129
+                .andExpect(jsonPath("$.contenido[0].titularTelefono").value("300 123 4567"))
+                .andExpect(jsonPath("$.contenido[0].titularCorreo").value(nullValue()))
                 .andExpect(jsonPath("$.contenido[0].estado").value("PENDIENTE"));
         enviar(put("/api/conflictos/" + conflicto + "/resolver"), "{\"decision\": \" \"}")
                 .andExpect(status().isBadRequest())

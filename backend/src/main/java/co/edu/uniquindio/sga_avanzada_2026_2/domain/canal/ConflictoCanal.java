@@ -21,15 +21,16 @@ public class ConflictoCanal {
     private final Estancia estanciaSolicitada;
     private final LocalDateTime detectadoEn;
     private final String motivo;
+    private final ContactoTitular contacto; // null en los conflictos de antes de DEC-129
     private EstadoConflicto estado;
     private UsuarioId resueltoPor;     // solo RESUELTO
     private LocalDateTime resueltoEn;  // solo RESUELTO
     private String decision;           // solo RESUELTO
 
-    // CONF-03 · CONF-04
+    // CONF-03 · CONF-04 · DEC-129
     public ConflictoCanal(ConflictoId id, CanalId canalId, String idExterno, ApartamentoId apartamentoId,
                           Estancia estanciaSolicitada, LocalDateTime detectadoEn, String motivo,
-                          EstadoConflicto estado, UsuarioId resueltoPor, LocalDateTime resueltoEn, String decision) {
+                          ContactoTitular contacto, EstadoConflicto estado, UsuarioId resueltoPor, LocalDateTime resueltoEn, String decision) {
         if (id == null || canalId == null || apartamentoId == null || estanciaSolicitada == null
                 || detectadoEn == null || estado == null) {
             throw new ReglaDominioException("Faltan datos obligatorios del conflicto de canal");
@@ -48,6 +49,7 @@ public class ConflictoCanal {
         this.estanciaSolicitada = estanciaSolicitada;
         this.detectadoEn = detectadoEn;
         this.motivo = motivo.trim();
+        this.contacto = contacto;
         this.estado = estado;
         this.resueltoPor = resueltoPor;
         this.resueltoEn = resueltoEn;
@@ -55,15 +57,19 @@ public class ConflictoCanal {
     }
 
     /**
-     * Registra un conflicto PENDIENTE con lo que pidió el canal y por qué se rechazó (CONF-01 · CONF-03).
+     * Registra un conflicto PENDIENTE con lo que pidió el canal, por qué se rechazó y a quién llamar (CONF-01 ·
+     * CONF-03 · DEC-129).
      *
-     * @throws ReglaDominioException si falta algún dato (CONF-03)
+     * @throws ReglaDominioException si falta algún dato, también el contacto del titular (CONF-03 · DEC-129)
      */
     public static ConflictoCanal registrar(ConflictoId id, CanalId canalId, String idExterno,
                                            ApartamentoId apartamentoId, Estancia estanciaSolicitada,
-                                           LocalDateTime detectadoEn, String motivo) {
+                                           LocalDateTime detectadoEn, String motivo, ContactoTitular contacto) {
+        if (contacto == null) {
+            throw new ReglaDominioException("El conflicto requiere el contacto del titular");
+        }
         return new ConflictoCanal(id, canalId, idExterno, apartamentoId, estanciaSolicitada, detectadoEn, motivo,
-                EstadoConflicto.PENDIENTE, null, null, null);
+                contacto, EstadoConflicto.PENDIENTE, null, null, null);
     }
 
     /**
@@ -113,6 +119,11 @@ public class ConflictoCanal {
 
     public String motivo() {
         return motivo;
+    }
+
+    /** El titular de la reserva rechazada; null solo en los conflictos registrados antes de DEC-129. */
+    public ContactoTitular contacto() {
+        return contacto;
     }
 
     public EstadoConflicto estado() {

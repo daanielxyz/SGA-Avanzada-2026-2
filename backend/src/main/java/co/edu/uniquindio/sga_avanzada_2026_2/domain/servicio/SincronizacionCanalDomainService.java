@@ -4,6 +4,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.Canal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ContactoTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ResultadoEvento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
@@ -34,13 +35,15 @@ public class SincronizacionCanalDomainService {
      * @param disponibilidad de {@code DisponibilidadDomainService.verificarDisponibilidad} para lo que pidió el canal
      * @param crearReserva  arma la reserva con {@code Reserva.crear}; solo se invoca si hay disponibilidad
      * @param conflictoId   id para el conflicto, por si hay que registrarlo
+     * @param contacto      el titular que mandó el canal, para llamarlo si hay conflicto (DEC-129)
      * @param ahora         fecha y hora actuales en Colombia, inyectadas
      * @throws ReglaDominioException si el canal no es externo o está inactivo, la reserva existente no corresponde a
      *                               ese canal e identificador, o {@code Reserva.crear} rechaza los datos
      */
     public IntegracionExterna integrarReservaExterna(Canal canal, String idExterno, Optional<Reserva> yaRecibida,
                                                      Disponibilidad disponibilidad, Supplier<Reserva> crearReserva,
-                                                     ConflictoId conflictoId, LocalDateTime ahora) {
+                                                     ConflictoId conflictoId, ContactoTitular contacto,
+                                                     LocalDateTime ahora) {
         canal.exigirReservasExternas();
         if (yaRecibida.isPresent()) {
             validarOrigen(yaRecibida.get(), canal, idExterno);
@@ -48,7 +51,8 @@ public class SincronizacionCanalDomainService {
         }
         if (!disponibilidad.disponible()) {
             ConflictoCanal conflicto = ConflictoCanal.registrar(conflictoId, canal.id(), idExterno,
-                    disponibilidad.apartamentoId(), disponibilidad.estancia(), ahora, disponibilidad.motivo());
+                    disponibilidad.apartamentoId(), disponibilidad.estancia(), ahora, disponibilidad.motivo(),
+                    contacto);
             return new IntegracionExterna(ResultadoEvento.CONFLICTO, null, conflicto);
         }
         Reserva nueva = crearReserva.get();

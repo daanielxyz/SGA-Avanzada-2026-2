@@ -7,6 +7,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.CanalOrigen;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ConflictoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.ContactoTitular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EstadoConflicto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.canal.EventoCanalId;
@@ -64,7 +65,8 @@ class CanalesRepositoryJpaTest {
 
     private static ConflictoCanal conflicto(String id) {
         return ConflictoCanal.registrar(new ConflictoId(id), BOOKING, "BK-77", new ApartamentoId("APT-101"),
-                new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12)), AHORA, "Ya está reservado");
+                new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12)), AHORA, "Ya está reservado",
+                new ContactoTitular("Eva Mora", "300 123 4567", "eva@ejemplo.co"));
     }
 
     private static EventoCanal evento(String id, LocalDateTime cuando) {
@@ -97,6 +99,7 @@ class CanalesRepositoryJpaTest {
         ConflictoCanal conflicto = conflictos.buscarPorId(new ConflictoId("CON-1")).orElseThrow();
         assertEquals(new Estancia(LocalDate.of(2026, 12, 10), LocalDate.of(2026, 12, 12)),
                 conflicto.estanciaSolicitada());
+        assertEquals(new ContactoTitular("Eva Mora", "300 123 4567", "eva@ejemplo.co"), conflicto.contacto());
         assertNull(conflicto.resueltoPor());
         conflicto.resolver(new UsuarioId("ADM-1"), "Reubicado en APT-102", AHORA.plusHours(1));
         conflictos.guardar(conflicto);
