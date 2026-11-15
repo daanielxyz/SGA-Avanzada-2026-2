@@ -23,6 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -63,7 +64,7 @@ class AsistenteGeminiTest {
     private AsistenteGemini gemini(String clave, int preguntasPorHora) {
         AsistentePropiedades propiedades = new AsistentePropiedades("gemini", clave, "modelo-de-prueba",
                 "https://gemini.prueba/v1beta", 2, 256, preguntasPorHora);
-        return new AsistenteGemini(propiedades, cliente, JSON, RELOJ);
+        return new AsistenteGemini(propiedades, cliente, JSON, RELOJ, Duration.ZERO);
     }
 
     private static Consulta consulta(String pregunta) {
@@ -146,6 +147,33 @@ class AsistenteGeminiTest {
                     () -> gemini.responder(consulta("¿Cómo registro la llegada?")));
             assertEquals(MotivoSinIa.NO_DISPONIBLE, sinIa.motivo());
         }
+        servidor.verify();
+    }
+
+    @Test
+    @Tag("DEC-127")
+    void deberiaReintentarUnaVezSiGeminiEstaSaturado() {
+        servidor.expect(requestTo(URL)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        servidor.expect(requestTo(URL)).andRespond(withSuccess(deGemini("{\"respuesta\":\"Ya\",\"fuentes\":[]}"),
+                MediaType.APPLICATION_JSON));
+
+        Respuesta respuesta = gemini("clave-de-prueba", 30).responder(consulta("¿Cómo registro la llegada?"));
+
+        assertEquals(OrigenRespuesta.IA, respuesta.origen());
+        assertEquals("Ya", respuesta.texto());
+        servidor.verify();
+    }
+
+    @Test
+    @Tag("DEC-127")
+    void noDeberiaReintentarMasDeUnaVez() {
+        servidor.expect(requestTo(URL)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        servidor.expect(requestTo(URL)).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        AsistenteNoDisponibleException sinIa = assertThrows(AsistenteNoDisponibleException.class,
+                () -> gemini("clave-de-prueba", 30).responder(consulta("¿Cómo registro la llegada?")));
+
+        assertEquals(MotivoSinIa.NO_DISPONIBLE, sinIa.motivo());
         servidor.verify();
     }
 

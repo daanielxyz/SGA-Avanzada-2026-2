@@ -61,13 +61,17 @@ public class AsistenteGemini implements Asistente {
     private final ObjectMapper json;
     private final Clock reloj;
     private final CupoPreguntas cupo;
+    private final Duration pausaReintento;
 
     @Autowired
     public AsistenteGemini(AsistentePropiedades propiedades, ObjectMapper json, Clock reloj) {
-        this(propiedades, RestClient.builder().requestFactory(fabrica(propiedades)), json, reloj);
+        this(propiedades, RestClient.builder().requestFactory(fabrica(propiedades)), json, reloj,
+                Duration.ofSeconds(1));
     }
 
-    AsistenteGemini(AsistentePropiedades propiedades, RestClient.Builder cliente, ObjectMapper json, Clock reloj) {
+    AsistenteGemini(AsistentePropiedades propiedades, RestClient.Builder cliente, ObjectMapper json, Clock reloj,
+                    Duration pausaReintento) {
+        this.pausaReintento = pausaReintento;
         this.propiedades = propiedades;
         this.cliente = cliente.baseUrl(propiedades.url()).build();
         this.json = json;
@@ -111,7 +115,44 @@ public class AsistenteGemini implements Asistente {
         return contenidos;
     }
 
+    /**
+     * Si Gemini está saturado (503) se intenta una vez más, después de una pausa corta: pasa a menudo en el plan
+     * gratis y casi siempre se resuelve en un segundo. Cualquier otra falla va directo al manual.
+     */
     private RespuestaGemini llamar(Peticion peticion) {
+        try {
+            return llamarUnaVez(peticion);
+        } catch (RestClientResponseException saturado) {
+            if (!saturado.getStatusCode().isSameCodeAs(HttpStatus.SERVICE_UNAVAILABLE)) {
+                throw noDisponible(saturado);
+            }
+            LOG.info("Gemini está saturado (503): se intenta una vez más");
+            esperar();
+            try {
+                return llamarUnaVez(peticion);
+            } catch (RestClientResponseException otraVez) {
+                throw noDisponible(otraVez);
+            }
+        }
+    }
+
+    private static AsistenteNoDisponibleException noDisponible(RestClientResponseException fallo) {
+        LOG.warn("Gemini respondió {} al asistente", fallo.getStatusCode().value());
+        MotivoSinIa motivo = fallo.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)
+                ? MotivoSinIa.CUOTA_AGOTADA : MotivoSinIa.NO_DISPONIBLE;
+        return new AsistenteNoDisponibleException(motivo, "Gemini respondió " + fallo.getStatusCode().value());
+    }
+
+    private void esperar() {
+        try {
+            Thread.sleep(pausaReintento);
+        } catch (InterruptedException interrumpido) {
+            Thread.currentThread().interrupt();
+            throw new AsistenteNoDisponibleException(MotivoSinIa.NO_DISPONIBLE, "Reintento interrumpido");
+        }
+    }
+
+    private RespuestaGemini llamarUnaVez(Peticion peticion) {
         try {
             String cuerpo = cliente.post()
                     .uri("/models/{modelo}:generateContent", propiedades.modelo())
@@ -123,10 +164,7 @@ public class AsistenteGemini implements Asistente {
                     .body(String.class);
             return json.readValue(Objects.requireNonNullElse(cuerpo, "{}"), RespuestaGemini.class);
         } catch (RestClientResponseException fallo) {
-            LOG.warn("Gemini respondió {} al asistente", fallo.getStatusCode().value());
-            MotivoSinIa motivo = fallo.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS)
-                    ? MotivoSinIa.CUOTA_AGOTADA : MotivoSinIa.NO_DISPONIBLE;
-            throw new AsistenteNoDisponibleException(motivo, "Gemini respondió " + fallo.getStatusCode().value());
+            throw fallo;
         } catch (RuntimeException fallo) {
             LOG.warn("Gemini no respondió al asistente: {}", fallo.getClass().getSimpleName());
             throw new AsistenteNoDisponibleException(MotivoSinIa.NO_DISPONIBLE, fallo.getClass().getSimpleName());
