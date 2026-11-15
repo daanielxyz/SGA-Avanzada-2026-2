@@ -1,5 +1,7 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.novedad;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.CambioEstadoNovedad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.Novedad;
 
@@ -15,10 +17,13 @@ import java.util.List;
 public record NovedadResult(String id, String apartamento, String descripcion, String gravedad, String estado,
                             List<CambioResult> historial) {
 
-    public record CambioResult(String estado, String autor, LocalDateTime fechaHora) {
-
+    /**
+     * @param autorNombre su nombre vigente, solo con {@link NovedadResult#conNombres}; nulo si esa cuenta ya no
+     *                    existe (DEC-132, como DEC-103)
+     */
+    public record CambioResult(String estado, String autor, String autorNombre, LocalDateTime fechaHora) {
         static CambioResult de(CambioEstadoNovedad cambio) {
-            return new CambioResult(cambio.estado().name(), cambio.autor().valor(), cambio.fechaHora());
+            return new CambioResult(cambio.estado().name(), cambio.autor().valor(), null, cambio.fechaHora());
         }
     }
 
@@ -26,5 +31,13 @@ public record NovedadResult(String id, String apartamento, String descripcion, S
         return new NovedadResult(novedad.id().valor(), novedad.apartamentoId().valor(), novedad.descripcion(),
                 novedad.gravedad().name(), novedad.estado().name(),
                 novedad.historial().stream().map(CambioResult::de).toList());
+    }
+
+    /** La misma novedad con el nombre de quien dio cada paso: para el personal, que ve quién reportó y quién cerró. */
+    public NovedadResult conNombres(DirectorioPersonal personal) {
+        return new NovedadResult(id, apartamento, descripcion, gravedad, estado, historial.stream()
+                .map(c -> new CambioResult(c.estado(), c.autor(),
+                        personal.nombreDe(new UsuarioId(c.autor())).orElse(null), c.fechaHora()))
+                .toList());
     }
 }

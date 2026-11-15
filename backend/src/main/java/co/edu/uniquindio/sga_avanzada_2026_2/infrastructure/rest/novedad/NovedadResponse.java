@@ -14,11 +14,13 @@ import java.util.List;
 public record NovedadResponse(String id, String apartamento, String descripcion, String gravedad, String estado,
                               List<CambioResponse> historial) {
 
-    public record CambioResponse(String estado, String autor, LocalDateTime fechaHora) {
+    /** @param autorNombre el nombre vigente de quien dio el paso; nulo si esa cuenta ya no existe (DEC-132) */
+    public record CambioResponse(String estado, String autor, String autorNombre, LocalDateTime fechaHora) {
     }
 
     static NovedadResponse de(NovedadResult r) {
         return new NovedadResponse(r.id(), r.apartamento(), r.descripcion(), r.gravedad(), r.estado(),
-                r.historial().stream().map(c -> new CambioResponse(c.estado(), c.autor(), c.fechaHora())).toList());
+                r.historial().stream()
+                        .map(c -> new CambioResponse(c.estado(), c.autor(), c.autorNombre(), c.fechaHora())).toList());
     }
 }

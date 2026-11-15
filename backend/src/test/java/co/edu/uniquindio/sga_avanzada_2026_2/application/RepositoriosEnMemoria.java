@@ -31,6 +31,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Pagina;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.FiltroNovedades;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.Novedad;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.novedad.NovedadRepository;
@@ -475,6 +476,15 @@ public final class RepositoriosEnMemoria {
             return paginar(guardadas.values().stream()
                     .filter(n -> n.apartamentoId().equals(apartamentoId))
                     .sorted(Comparator.comparing(Novedad::registradaEn).reversed())
+                    .toList(), numeroPagina);
+        }
+
+        @Override
+        public Pagina<Novedad> listar(FiltroNovedades filtro, int numeroPagina) {
+            return paginar(guardadas.values().stream()
+                    .filter(filtro::cumple)
+                    .sorted(Comparator.comparing(Novedad::registradaEn).reversed()
+                            .thenComparing(n -> n.id().valor()))
                     .toList(), numeroPagina);
         }
     }
