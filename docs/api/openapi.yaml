@@ -1306,6 +1306,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/rnt:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: registrarRnt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/RntRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/alojamiento/ubicacion:
     put:
       tags:
@@ -2991,6 +3015,88 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/tra":
+    get:
+      tags:
+        - tra-controller
+      operationId: consultar_7
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EnvioTraResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/reservas/{codigo}/tra/enviar":
+    put:
+      tags:
+        - tra-controller
+      operationId: enviar
+      parameters:
+        - name: codigo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/EnvioTraResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  /api/tra/envios:
+    get:
+      tags:
+        - tra-controller
+      operationId: listar_4
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            default: CON_ERROR
+            pattern: PENDIENTE|ENVIADO|CON_ERROR
+        - name: pagina
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/PaginaResponseEnvioTraResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/conflictos/pendientes:
     get:
       tags:
@@ -4464,6 +4570,56 @@ components:
             type: string
         marca:
           "$ref": "#/components/schemas/MarcaResponse"
+        rnt:
+          type: string
+    RntRequest:
+      type: object
+      properties:
+        rnt:
+          type: string
+          pattern: "^$|^[0-9]{1,20}$"
+    EnvioTraResponse:
+      type: object
+      properties:
+        reserva:
+          type: string
+        estado:
+          type: string
+        codigoMinisterio:
+          type: string
+        acompanantesEnviados:
+          type: integer
+          format: int32
+        intentos:
+          type: integer
+          format: int32
+        ultimoIntento:
+          type: string
+          format: date-time
+        ultimoError:
+          type: string
+        enviadoEn:
+          type: string
+          format: date-time
+    PaginaResponseEnvioTraResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items:
+            "$ref": "#/components/schemas/EnvioTraResponse"
+        numero:
+          type: integer
+          format: int32
+        tamano:
+          type: integer
+          format: int32
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+          format: int32
     MarcaResponse:
       type: object
       properties:

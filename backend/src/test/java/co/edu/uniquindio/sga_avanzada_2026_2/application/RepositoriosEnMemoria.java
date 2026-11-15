@@ -51,6 +51,10 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.TitularRepository;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.EnvioTra;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.EnvioTraRepository;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.EstadoEnvioTra;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -390,6 +394,35 @@ public final class RepositoriosEnMemoria {
         @Override
         public List<ConflictoCanal> buscarPendientes() {
             return guardados.values().stream().filter(c -> c.estado() == EstadoConflicto.PENDIENTE).toList();
+        }
+    }
+
+    /** DEC-130: los envíos del TRA, uno por reserva. */
+    public static final class EnviosTra implements EnvioTraRepository {
+
+        public final Map<ReservaId, EnvioTra> guardados = new LinkedHashMap<>();
+
+        @Override
+        public void guardar(EnvioTra envio) {
+            guardados.put(envio.reserva(), envio);
+        }
+
+        @Override
+        public Optional<EnvioTra> buscarPorReserva(ReservaId reserva) {
+            return Optional.ofNullable(guardados.get(reserva));
+        }
+
+        @Override
+        public List<ReservaId> buscarParaEnviar(int maximoIntentos) {
+            return guardados.values().stream()
+                    .filter(e -> e.estado() == EstadoEnvioTra.PENDIENTE
+                            || (e.estado() == EstadoEnvioTra.CON_ERROR && e.intentos() < maximoIntentos))
+                    .map(EnvioTra::reserva).toList();
+        }
+
+        @Override
+        public Pagina<EnvioTra> listarPorEstado(EstadoEnvioTra estado, int numeroPagina) {
+            return Pagina.de(guardados.values().stream().filter(e -> e.estado() == estado).toList(), numeroPagina);
         }
     }
 

@@ -13,7 +13,8 @@ import java.util.List;
  */
 public record AlojamientoResult(String id, String nombre, String descripcion, String ciudad, String direccion,
                                 double latitud, double longitud, String normas, ParametrosResult parametros,
-                                List<ServicioResult> serviciosAdicionales, List<String> mediosPago, MarcaDatos marca) {
+                                List<ServicioResult> serviciosAdicionales, List<String> mediosPago, MarcaDatos marca,
+                                String rnt) {
 
     public record ParametrosResult(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                    long tiempoPreparacionHoras, long plazoConfirmacionHoras,
@@ -51,6 +52,7 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                                 s.activo()))
                         .toList(),
                 alojamiento.mediosPago().stream().map(MedioPago::nombre).toList(),
-                MarcaDatos.de(alojamiento.marca()));
+                MarcaDatos.de(alojamiento.marca()),
+                alojamiento.rnt());
     }
 }

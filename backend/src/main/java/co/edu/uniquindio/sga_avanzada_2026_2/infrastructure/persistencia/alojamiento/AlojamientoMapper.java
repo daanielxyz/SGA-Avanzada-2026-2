@@ -46,7 +46,7 @@ final class AlojamientoMapper {
                 jpa.getCobroParqueadero(),
                 new Dinero(jpa.getCargoCarro()),
                 new Dinero(jpa.getCargoMoto()));
-        return new Alojamiento(
+        Alojamiento alojamiento = new Alojamiento(
                 new AlojamientoId(jpa.getId()),
                 jpa.getNombre(),
                 jpa.getDescripcion(),
@@ -70,6 +70,8 @@ final class AlojamientoMapper {
                         new MarcaAlojamiento.Radios(jpa.getMarcaRadioPequeno(), jpa.getMarcaRadioMediano(),
                                 jpa.getMarcaRadioGrande()),
                         jpa.getMarcaLogoUrl(), jpa.getMarcaPortadaUrl()));
+        alojamiento.registrarRnt(jpa.getRnt());
+        return alojamiento;
     }
 
     /**
@@ -85,6 +87,7 @@ final class AlojamientoMapper {
         jpa.setLatitud(alojamiento.ubicacion().latitud());
         jpa.setLongitud(alojamiento.ubicacion().longitud());
         jpa.setNormas(alojamiento.normas());
+        jpa.setRnt(alojamiento.rnt());
         jpa.setUmbralEdadFacturable(p.umbralEdadFacturable());
         jpa.setHoraEntrada(p.horaEntrada());
         jpa.setHoraSalida(p.horaSalida());
