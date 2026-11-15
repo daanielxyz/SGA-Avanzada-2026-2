@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -39,6 +40,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class GestionApartamentosControllerTest {
 
     private static final String APT = "/api/apartamentos/APT-101";
+
+    /** El reloj del backend (zona del alojamiento): «hoy» en las pruebas es el mismo que usa la API, no el de la
+     *  máquina. En GitHub la máquina está en UTC y de 7 p. m. a medianoche de Colombia ya es otro día. */
+    @Autowired
+    private Clock reloj;
 
     @Autowired
     private MockMvc mvc;
@@ -77,7 +83,7 @@ class GestionApartamentosControllerTest {
 
     /** Dos temporadas además de la base y la tarifa del APT-101 en las tres: lo que exige la activación. */
     private void dejarListoParaActivar() throws Exception {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(reloj);
         agregarTemporada("Alta", hoy.plusDays(200), hoy.plusDays(210));
         agregarTemporada("Media", hoy.plusDays(300), hoy.plusDays(310));
         String calendario = mvc.perform(get("/api/temporadas")).andReturn().getResponse().getContentAsString();
@@ -196,7 +202,7 @@ class GestionApartamentosControllerTest {
 
     @Test
     void deberiaRegistrarUnBloqueoYLevantarlo() throws Exception {
-        LocalDate inicio = LocalDate.now().plusDays(20);
+        LocalDate inicio = LocalDate.now(reloj).plusDays(20);
         String bloqueo = "{\"inicio\": \"%s\", \"fin\": \"%s\", \"motivo\": \"Pintura\"}";
 
         String respuesta = enviar(post(APT + "/bloqueos"), bloqueo.formatted(inicio, inicio.plusDays(3)))
@@ -252,10 +258,10 @@ class GestionApartamentosControllerTest {
     @Test
     @Tag("BLO-02")
     void unBloqueoQueEmpiezaHoySeRegistraYUnoQueEmpezoAyerEs409() throws Exception {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(reloj);
         String bloqueo = "{\"inicio\": \"%s\", \"fin\": \"%s\", \"motivo\": \"Pintura\"}";
 
-        // DEC-122: el reloj de las pruebas es el del sistema, como LocalDate.now()
+        // DEC-122: «hoy» es el del reloj del backend, en la zona del alojamiento
         enviar(post(APT + "/bloqueos"), bloqueo.formatted(hoy.minusDays(1), hoy.plusDays(2)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"));
@@ -266,7 +272,7 @@ class GestionApartamentosControllerTest {
 
     @Test
     void unBloqueoSinMotivoEs400YConFechasInvertidasEs409() throws Exception {
-        LocalDate inicio = LocalDate.now().plusDays(20);
+        LocalDate inicio = LocalDate.now(reloj).plusDays(20);
 
         enviar(post(APT + "/bloqueos"), "{\"inicio\": \"%s\", \"fin\": \"%s\"}".formatted(inicio, inicio.plusDays(3)))
                 .andExpect(status().isBadRequest())
