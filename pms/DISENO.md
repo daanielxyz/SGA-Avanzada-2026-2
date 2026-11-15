@@ -589,6 +589,37 @@ Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el núm
 - Un bot de WhatsApp para huéspedes (disponibilidad, estado de la reserva, indicaciones de llegada): datos personales y costo por conversación de Meta.
 - Otras ideas de la lluvia de ideas: clasificar novedades (gravedad sugerida), borradores de mensajes al huésped con `{nombre}` que llena el PMS, tarifa sugerida (cuando haya historia) y explicar los conflictos de canal (después de Channex).
 
+## Sprint 5: canales de venta (`feature/pms/canales`, Reyes)
+Prompt en `pms/prompts/sprint5/canales.md`; mockups en `pms/diseno/mockups-meridian-sprint5-canales/` (S5Canales, S5Bitacora y los diálogos de registrar, desactivar y resolver, cada uno con su hoja de estados, a 1280 y 390 px). Como `base.css` se usó una copia de `src/index.css`: el de los mockups es ese mismo archivo con 658 líneas nuevas al final («Sprint 5 · canales»), que pasan tal cual a `src/index.css`. Revisados contra `docs/api/openapi.yaml` y el dominio el 15 nov.
+
+**Lo resuelto de «Lo que falta o quedó dudoso» del LEEME de los mockups** (por número):
+- (5) **El huésped y su teléfono en el conflicto**: no estaban en la API; se agregaron en el núcleo (DEC-129, PR #104): `ConflictoResponse` trae `titularNombre`, `titularTelefono` y `titularCorreo`. Los conflictos de antes llegan sin ellos: la tarjeta dice «Sin datos de contacto». Si falta solo el teléfono, se muestra el correo; si faltan los dos, «Sin teléfono ni correo».
+- **Desactivar solo en los canales externos**: el backend solo revisa si el canal está activo cuando entra algo de un canal externo (`SincronizacionCanalDomainService`, `ConsultarDisponibilidadCanalUseCase`). Desactivar «Portal web» o «Recepción» no cambiaría nada, así que la pantalla no lo ofrece. Los externos inactivos conservan «Ver bitácora», como en el mockup.
+- (1) Reactivar un canal no existe en el backend: queda como propuesta de núcleo. El diálogo ya dice que no se puede deshacer desde el PMS.
+- (2) Quién desactivó un canal y por qué: no se guarda. Fuera del MVP1; la bitácora sigue siendo solo de mensajes con el canal.
+- (3) Los rechazos muestran el `mensaje` del `ErrorResponse` (por ejemplo, «Solo un canal EXTERNO tiene credencial, y siempre la tiene» se traduce en la pantalla a «Falta la referencia de la clave» junto al campo; lo demás, el mensaje tal cual). El nombre repetido lo permite el backend: no hay ese error.
+- (4) «El canal ya está inactivo»: se cierra el diálogo, se recarga la lista y sale el aviso, como en «Resolver».
+- (6) Los atajos entre conflicto, bitácora y reserva no entran ahora.
+- (7, 8) Los datos de ejemplo bastan: los motivos llegan tal cual del backend.
+- (9) El mensaje del canal se ve solo en administración (como toda la pantalla), plegado y como texto, nunca como HTML.
+- (10) Por defecto, los últimos 7 días: de hoy menos 6 a hoy, los dos incluidos. El backend no pone un límite de rango.
+- (11) **Los conflictos sí se paginan**: `GET /api/conflictos/pendientes` devuelve una página de 10, aunque el caso de uso no pagina. El bloque lleva paginador cuando hay más de 10.
+- (12) Se quedan los textos propuestos. El 403 usa `SinPermiso`, que ya existe.
+- (13) Un contador de conflictos en el menú o en el inicio no entra ahora; se anota para después del cierre 4.
+- (14) El orden de los botones es el de `.dialogo-pie`, sin cambios.
+
+**Código** (15 nov): `src/api/canales.ts` (cliente), `src/canales/` (`logica.ts` con los textos de tipos, operaciones y resultados, la estancia, «hace 13 horas», el enlace `tel:` y el rango de fechas; `Piezas.tsx` con el estado del canal, el resultado de un mensaje, el contacto del conflicto y los códigos en letra de código; `Dialogos.tsx` con registrar, desactivar y resolver), y las pantallas `src/paginas/Canales.tsx` (`/canales`) y `src/paginas/Bitacora.tsx` (`/canales/{id}/bitacora`, solo administración, conectada en `App.tsx`). No hay un endpoint de un solo canal: la bitácora busca el nombre en la lista de canales. Los estilos de los mockups («Sprint 5 · canales») pasaron tal cual al final de `src/index.css`. Los diálogos usan `DialogoFormulario`, así que el pie dice «Volver», como en el resto del PMS. El manual del asistente suma `canales.md` y `general.md` ya no la nombra como en construcción.
+
+**Pruebas**: 26 nuevas (`canales/logica.test.ts`, `paginas/Canales.test.tsx`, `paginas/Bitacora.test.tsx`). Pasan las 474 del PMS, el lint y la compilación.
+
+**Probado en el navegador** (15 nov, Reyes, contra el backend local con la migración V30): un conflicto real de Booking (una reserva externa que chocó con otra en el APT-103) con el nombre y el teléfono del huésped, resolverlo, la bitácora con «Hecho» y «Rechazado por disponibilidad», registrar un canal y la pantalla a 390 px.
+
+**Auditoría** (`impeccable` audit, harden y adapt; el detector no marcó nada): el CSS nuevo solo usa variables, respeta `prefers-reduced-motion` y da 44 px de toque en pantallas táctiles. Arreglado:
+- (P2) Un id externo largo (hasta 80 caracteres sin espacios) no se partía en el título del conflicto y se salía de la tarjeta en el celular.
+- (P2) El correo que reemplaza al teléfono cuando falta no se partía (hasta 150 caracteres): `.conflicto-correo`.
+- (P2) Al pasar de página en la bitácora con el teclado, el foco se perdía mientras cargaba; ahora vuelve al resumen cuando llega la página nueva (con su prueba).
+- (P3) El contador de la referencia de la clave no se anunciaba con el campo.
+
 ## Sprint 4: alojamiento (`feature/pms/alojamiento`)
 Mockups en `pms/diseno/mockups-meridian-sprint4-alojamiento/` (segunda entrega, con los mínimos abiertos y un servicio desactivado). Revisados contra `docs/api/openapi.yaml` y el dominio el 13 nov. Pantalla en `src/paginas/Alojamiento.tsx`, bloques en `src/alojamiento/`.
 

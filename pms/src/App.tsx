@@ -25,6 +25,8 @@ import RecuperarContrasena from './paginas/RecuperarContrasena'
 import SinPermiso from './paginas/SinPermiso'
 import Tarifas from './paginas/Tarifas'
 import Usuarios from './paginas/Usuarios'
+import Bitacora from './paginas/Bitacora'
+import Canales from './paginas/Canales'
 import { useSesion } from './sesion/contexto'
 import type { Rol } from './sesion/roles'
 
@@ -38,6 +40,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/apartamentos': <Apartamentos />,
   '/tarifas': <Tarifas />,
   '/usuarios': <Usuarios />,
+  '/canales': <Canales />,
   '/perfil': <Perfil />,
 }
 
@@ -107,6 +110,14 @@ export default function App() {
           element={
             <SoloPara roles={ADMINISTRACION}>
               <FichaApartamento />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/canales/:id/bitacora"
+          element={
+            <SoloPara roles={ADMINISTRACION}>
+              <Bitacora />
             </SoloPara>
           }
         />
