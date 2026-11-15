@@ -9,11 +9,14 @@ import java.util.List;
 /**
  * JSON del alojamiento hacia el cliente (DEC-31): sus datos, sus parámetros, su catálogo de servicios y sus medios
  * de pago.
+ *
+ * @param rnt el Registro Nacional de Turismo con el que se envía el TRA (DEC-130); null si no se ha escrito. Es un
+ *            dato público del prestador.
  */
 public record AlojamientoResponse(String id, String nombre, String descripcion, String ciudad, String direccion,
                                   double latitud, double longitud, String normas, ParametrosResponse parametros,
                                   List<ServicioResponse> serviciosAdicionales, List<String> mediosPago,
-                                  MarcaResponse marca) {
+                                  MarcaResponse marca, String rnt) {
 
     public record ParametrosResponse(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                      long tiempoPreparacionHoras, long plazoConfirmacionHoras,
@@ -42,6 +45,7 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                         .map(s -> new ServicioResponse(s.id(), s.nombre(), s.generaCargo(), s.valor(), s.activo()))
                         .toList(),
                 r.mediosPago(),
-                MarcaResponse.de(r.marca()));
+                MarcaResponse.de(r.marca()),
+                r.rnt());
     }
 }

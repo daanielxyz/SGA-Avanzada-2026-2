@@ -29,6 +29,7 @@ Cómo está publicado el SGA y cómo se opera (DEC-125). Aquí no hay ninguna di
 | `SGA_CORS_ORIGENES` | Render | Las direcciones exactas de los dos frontends, separadas por coma, sin espacios ni `/` final. No es secreta |
 | `VITE_API_URL`, `NODE_VERSION` | Cloudflare → cada proyecto → Settings → Variables and Secrets, en **Production** | `https://sga-demo-api.onrender.com` y `22`. No son secretas: la dirección queda dentro del JavaScript publicado |
 | `SGA_CORREO_MODO` | Render | `local` (los correos quedan en el log de Render) |
+| `SGA_TRA_MODO`, `SGA_TRA_TOKEN` | Render | **No van en la demo**: sin ellas el TRA queda en `local` y no sale a internet (DEC-130). Con un cliente real: `mincit` y el token que el Ministerio manda al correo de su RNT (también en Bitwarden) |
 | `SGA_IA_MODO`, `SGA_IA_CLAVE` | Render | `gemini` y la clave de Google AI Studio (también en Bitwarden), para el asistente del PMS (DEC-127). Sin ellas responde el manual (`local`) |
 | `RESPALDO_PGHOST`, `RESPALDO_PGUSER`, `RESPALDO_PGPASSWORD` | GitHub → Settings → Secrets and variables → Actions → *Secrets* | El host del pooler, `sga_respaldo.<referencia>` y su clave. Los carga el dueño del repositorio |
 | `RENDER_DEPLOY_HOOK` | GitHub → … → *Secrets* (y Bitwarden) | Render → servicio → Settings → *Deploy Hook*. Quien la tenga puede desplegar; si se filtra, *Regenerate hook* y se cambia el secreto |

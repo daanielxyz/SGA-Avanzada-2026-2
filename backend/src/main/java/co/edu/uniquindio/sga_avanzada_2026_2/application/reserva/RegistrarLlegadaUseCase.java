@@ -9,6 +9,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.Folio;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.RegistroLlegadaDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.EnvioTra;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.tra.EnvioTraRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +19,8 @@ import java.time.LocalDateTime;
 
 /**
  * Caso de uso: recepción registra la llegada del grupo (CU-21). La reserva pasa a EN_CURSO y el apartamento a
- * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee: lo pagado (BL-22) y el saldo.
+ * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee: lo pagado (BL-22) y el saldo. Deja además
+ * pendiente el envío del TRA, que hace el planificador cuando los datos estén completos (DEC-130).
  */
 @Service
 public class RegistrarLlegadaUseCase {
@@ -27,16 +30,18 @@ public class RegistrarLlegadaUseCase {
     private final ApartamentoRepository apartamentos;
     private final RegistroLlegadaDomainService registroLlegada;
     private final DirectorioPersonal personal;
+    private final EnvioTraRepository envios;
     private final Clock reloj;
 
     public RegistrarLlegadaUseCase(CargadorReserva cargador, ReservaRepository reservas,
                                    ApartamentoRepository apartamentos, RegistroLlegadaDomainService registroLlegada,
-                                   DirectorioPersonal personal, Clock reloj) {
+                                   DirectorioPersonal personal, EnvioTraRepository envios, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.apartamentos = apartamentos;
         this.registroLlegada = registroLlegada;
         this.personal = personal;
+        this.envios = envios;
         this.reloj = reloj;
     }
 
@@ -59,6 +64,8 @@ public class RegistrarLlegadaUseCase {
 
         reservas.guardar(reserva);
         apartamentos.guardar(apartamento);
+        // DEC-130: una llegada corregida conserva lo que ya se envió
+        envios.guardar(envios.buscarPorReserva(reserva.codigo()).orElseGet(() -> EnvioTra.pendiente(reserva.codigo())));
         return EstanciaResult.de(reserva, apartamento, folio, personal);
     }
 
