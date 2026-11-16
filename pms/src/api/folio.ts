@@ -3,7 +3,8 @@
 import { pedir } from './cliente'
 
 export type SituacionSaldo = 'PENDIENTE' | 'A_FAVOR' | 'AL_DIA'
-export type TipoCargo = 'HOSPEDAJE' | 'SERVICIO_ADICIONAL' | 'PENALIDAD_CANCELACION' | 'AJUSTE'
+/** IMPUESTO: el IVA de la estancia, cargado en la llegada (DEC-133). */
+export type TipoCargo = 'HOSPEDAJE' | 'SERVICIO_ADICIONAL' | 'PENALIDAD_CANCELACION' | 'AJUSTE' | 'IMPUESTO'
 
 export interface Cargo {
   id: string

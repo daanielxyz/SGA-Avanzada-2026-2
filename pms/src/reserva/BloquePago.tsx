@@ -6,6 +6,7 @@ import type { Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import Dato from '../componentes/Dato'
 import { dinero } from '../formato'
+import { lineaIva } from './valor'
 import { estaTerminada, faltaParaAnticipo, otrosCargos, puedeRegistrarPago, valorRetenido } from './pago'
 import type { DatosDePago, useDatosDePago } from './useDatosDePago'
 
@@ -71,6 +72,7 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
   const otros = otrosCargos(folio)
   const retenido = valorRetenido(folio)
   const saldo = SALDO[folio.situacionSaldo]
+  const iva = lineaIva(reserva.valor) // DEC-134
   // Al cancelar o con el no-show, el backend anula los extras en el folio y lo pagado por ellos queda a favor (DEC-89)
   const extrasAnulados = reserva.estado === 'CANCELADA' || reserva.estado === 'NO_SHOW'
   const extra = (valor: number) => (
@@ -99,6 +101,11 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
         <Dato nombre="Estancia" codigo>
           {dinero(reserva.valor.total)}
         </Dato>
+        {iva && (
+          <Dato nombre={iva.texto} codigo>
+            {extrasAnulados ? extra(iva.valor) : dinero(iva.valor)}
+          </Dato>
+        )}
         {reserva.extras.parqueadero > 0 && (
           <Dato nombre="Parqueadero" codigo>
             {extra(reserva.extras.parqueadero)}

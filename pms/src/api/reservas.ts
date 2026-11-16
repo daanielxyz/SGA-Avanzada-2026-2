@@ -82,7 +82,7 @@ export interface Reserva {
   canalOrigen: CanalOrigen
   ocupantes: Ocupante[]
   horaEstimadaLlegada: string | null
-  valor: { desglose: Noche[]; total: number }
+  valor: Valor
   politicaId: string
   creadaEn: string
   /** Carros más motos (obsoleto: se usan `carros` y `motos`). */
@@ -436,11 +436,24 @@ export function registrarSalida(codigo: string, motivoAutorizacion?: string): Pr
   return accion(codigo, 'registrar-salida', motivoAutorizacion ? { motivoAutorizacion } : undefined)
 }
 
-/** `CotizacionResponse`: el valor de una estancia, antes de crear la reserva. */
-export interface Cotizacion {
+/**
+ * `CotizacionResponse`: el valor de una estancia, el de una cotización o el congelado en la reserva. `total` es la
+ * suma de las noches, sin IVA; el IVA va aparte (DEC-134). Los campos del IVA pueden faltar en respuestas viejas.
+ */
+export interface Valor {
   desglose: Noche[]
   total: number
+  /** El del alojamiento al crearla; 0 si no cobra IVA. */
+  ivaPorcentaje?: number
+  /** No paga IVA porque decide un pasaporte; en una cotización, siempre falso. */
+  ivaExento?: boolean
+  iva?: number
+  /** `total` más `iva`: lo que ve el huésped como valor de la estancia. */
+  totalConIva?: number
 }
+
+/** El valor de una estancia, antes de crear la reserva. */
+export type Cotizacion = Valor
 
 /**
  * `POST /api/cotizaciones` (público).

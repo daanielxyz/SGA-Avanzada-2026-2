@@ -8,6 +8,7 @@ import Apartamentos from './paginas/Apartamentos'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
 import FichaApartamento from './paginas/FichaApartamento'
+import EstadoCuenta from './paginas/EstadoCuenta'
 import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
@@ -86,6 +87,14 @@ export default function App() {
           element={
             <SoloPara roles={RECEPCION}>
               <Folio />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/reservas/:codigo/estado-cuenta"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <EstadoCuenta />
             </SoloPara>
           }
         />

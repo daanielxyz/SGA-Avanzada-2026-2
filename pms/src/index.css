@@ -8266,3 +8266,402 @@ button.barra {
   padding: 0;
   list-style: none;
 }
+
+/* ===== Sprint 5 · IVA de la estancia en el desglose (DEC-134) =====
+   Entre las noches y el total: el alojamiento sin IVA y el IVA, con el mismo fondo del total. */
+.desglose-iva {
+  display: grid;
+  gap: var(--espacio-1);
+  margin: 0;
+  padding: var(--espacio-3) var(--espacio-4) 0;
+  background: var(--superficie-2);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+}
+
+.desglose-iva > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+}
+
+.desglose-iva dt {
+  color: var(--texto-suave);
+}
+
+.desglose-iva dd {
+  margin: 0;
+}
+
+/* ===== Sprint 5 · estado de cuenta (DEC-133) =====
+   Una hoja clara para imprimir o guardar en PDF: en pantalla se ve como papel sobre el panel y al imprimir es lo
+   único que sale. La tinta es Carbón y el texto suave queda en 8,9:1 sobre blanco; el acento de la marca del
+   alojamiento solo pinta la franja de arriba, nunca texto, porque su contraste sobre blanco no está garantizado. */
+:root {
+  --hoja-papel: #ffffff;
+  --hoja-tinta: #1f1f1f;
+  --hoja-suave: #4a4a4a;
+  --hoja-linea: #d6d3cc;
+  --hoja-fila: #f4f2ee;
+  --hoja-acento-base: var(--marca-medianoche);
+  --hoja-ancho: 820px;
+}
+
+.estado-cuenta-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.estado-cuenta-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+  max-width: var(--hoja-ancho);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.estado-cuenta-imprimir {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--espacio-1);
+  max-width: 320px;
+  text-align: right;
+}
+
+.estado-cuenta-imprimir .campo-pista {
+  margin: 0;
+}
+
+.hoja {
+  --hoja-letra: var(--hoja-letra-titulo, var(--letra-titulo));
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-6);
+  width: 100%;
+  max-width: var(--hoja-ancho);
+  margin: 0 auto;
+  padding: var(--espacio-8) var(--espacio-8) var(--espacio-6);
+  border-top: 8px solid var(--hoja-acento, var(--hoja-acento-base));
+  border-radius: var(--radio-chico);
+  background: var(--hoja-papel);
+  color: var(--hoja-tinta);
+  font-family: var(--letra-interfaz);
+  font-size: var(--tamano-chico);
+  line-height: var(--interlinea-chica);
+  overflow-wrap: anywhere;
+}
+
+.hoja h1,
+.hoja h2 {
+  color: var(--hoja-tinta);
+  font-family: var(--hoja-letra);
+}
+
+.hoja h1 {
+  font-size: var(--tamano-titulo);
+  line-height: var(--interlinea-titulo);
+}
+
+.hoja h2 {
+  margin-bottom: var(--espacio-2);
+  padding-bottom: var(--espacio-1);
+  border-bottom: 1px solid var(--hoja-linea);
+  font-size: var(--tamano-medio);
+  line-height: var(--interlinea-media);
+}
+
+.hoja p {
+  margin: 0;
+}
+
+.hoja-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--espacio-4) var(--espacio-6);
+}
+
+.hoja-alojamiento {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  min-width: 0;
+  color: var(--hoja-suave);
+}
+
+.hoja-logo {
+  display: block;
+  max-width: 180px;
+  max-height: 72px;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: var(--espacio-2);
+}
+
+.hoja-nombre {
+  color: var(--hoja-tinta);
+  font-family: var(--hoja-letra);
+  font-size: var(--tamano-subtitulo);
+  font-weight: 600;
+  line-height: var(--interlinea-subtitulo);
+}
+
+.hoja-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  text-align: right;
+  color: var(--hoja-suave);
+}
+
+.hoja-codigo {
+  color: var(--hoja-tinta);
+  font-family: var(--letra-codigo);
+  font-weight: 600;
+}
+
+.hoja-no-factura {
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid var(--hoja-tinta);
+  border-radius: var(--radio-chico);
+  font-weight: 600;
+  text-align: center;
+}
+
+.hoja-partes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--espacio-6);
+}
+
+.hoja-datos {
+  display: grid;
+  gap: var(--espacio-1);
+  margin: 0;
+}
+
+.hoja-datos > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: var(--espacio-2);
+}
+
+.hoja-datos dt,
+.hoja-nota,
+.hoja-vacio {
+  color: var(--hoja-suave);
+}
+
+.hoja-datos dd {
+  margin: 0;
+}
+
+.hoja-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja-tabla th,
+.hoja-tabla td {
+  padding: var(--espacio-1) var(--espacio-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.hoja-tabla thead th {
+  border-bottom: 1px solid var(--hoja-tinta);
+  font-size: var(--tamano-rotulo);
+  font-weight: 600;
+  line-height: var(--interlinea-rotulo);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hoja-tabla tbody tr {
+  border-bottom: 1px solid var(--hoja-linea);
+}
+
+.hoja-tabla tbody td:first-child {
+  width: 112px;
+  white-space: nowrap;
+}
+
+.hoja-tabla .hoja-valor {
+  width: 140px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* La corrección va debajo del cargo que corrige, un poco adentro */
+.hoja-correccion td {
+  color: var(--hoja-suave);
+}
+
+.hoja-correccion td:nth-child(2) {
+  padding-left: var(--espacio-5);
+}
+
+.hoja-tabla tfoot th {
+  font-weight: 400;
+  text-align: right;
+}
+
+.hoja-tabla tfoot tr:first-child > * {
+  padding-top: var(--espacio-2);
+}
+
+.hoja-total > * {
+  font-weight: 600;
+}
+
+.hoja-resumen dl {
+  display: grid;
+  gap: var(--espacio-1);
+  max-width: 360px;
+  margin: 0 0 0 auto;
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: var(--radio-chico);
+  background: var(--hoja-fila);
+  font-variant-numeric: tabular-nums;
+}
+
+.hoja-resumen dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-4);
+}
+
+.hoja-resumen dd {
+  margin: 0;
+}
+
+.hoja-saldo {
+  margin-top: var(--espacio-1);
+  padding-top: var(--espacio-2);
+  border-top: 1px solid var(--hoja-tinta);
+  font-size: var(--tamano-base);
+  font-weight: 600;
+}
+
+.hoja-lista {
+  display: grid;
+  gap: var(--espacio-1);
+  margin: var(--espacio-2) 0 0;
+  padding-left: var(--espacio-5);
+}
+
+.hoja-normas {
+  white-space: pre-line;
+}
+
+.hoja-pie {
+  padding-top: var(--espacio-3);
+  border-top: 1px solid var(--hoja-linea);
+  color: var(--hoja-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
+}
+
+@media (max-width: 640px) {
+  .hoja {
+    padding: var(--espacio-5) var(--espacio-4);
+  }
+
+  .hoja-titulo {
+    text-align: left;
+  }
+
+  .estado-cuenta-imprimir {
+    align-items: stretch;
+    max-width: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .hoja-tabla tbody td:first-child {
+    width: auto;
+    white-space: normal;
+  }
+
+  .hoja-tabla .hoja-valor {
+    width: auto;
+  }
+
+  .hoja-datos > div {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+}
+
+/* Al imprimir sale solo la hoja, en blanco y negro si la impresora lo es, sin el marco del panel */
+@media print {
+  /* Página «2 de 3» abajo a la derecha; los navegadores que no la soportan la ignoran y ponen la suya */
+  @page {
+    margin: 14mm;
+
+    @bottom-right {
+      content: 'Página ' counter(page) ' de ' counter(pages);
+      /* El margen de la página no siempre hereda las variables de :root: el respaldo es el mismo --hoja-suave */
+      color: var(--hoja-suave, #4a4a4a);
+      font-family: var(--letra-interfaz, sans-serif);
+      font-size: 8pt;
+    }
+  }
+
+  body,
+  .panel,
+  .contenido {
+    background: var(--hoja-papel);
+  }
+
+  .panel {
+    display: block;
+    min-height: 0;
+  }
+
+  .cabecera,
+  .menu,
+  .velo,
+  .saltar,
+  .asistente,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .contenido {
+    padding: 0;
+  }
+
+  .contenido-ancho {
+    max-width: none;
+  }
+
+  .hoja {
+    max-width: none;
+    padding: 0;
+    border-top-width: 4px;
+    border-radius: 0;
+    font-size: 10.5pt;
+    line-height: 1.4;
+    print-color-adjust: exact;
+  }
+
+  .hoja-tabla tr,
+  .hoja-resumen,
+  .hoja-datos > div {
+    break-inside: avoid;
+  }
+
+  .hoja h2 {
+    break-after: avoid;
+  }
+
+  .hoja-tabla thead {
+    display: table-header-group;
+  }
+}

@@ -159,20 +159,22 @@ export default function Folio() {
               <span className="codigo">{reserva.apartamento}</span> · Titular: {reserva.titularNombre ?? reserva.titularId}
             </p>
           </div>
-          {acciones.length > 0 && (
-            <div className="acciones-reserva">
-              {acciones.map((accion, posicion) => (
-                <button
-                  key={accion}
-                  type="button"
-                  className={posicion === 0 ? 'boton' : 'boton boton-secundario'}
-                  onClick={() => setDialogo({ tipo: accion })}
-                >
-                  {TEXTO_DE_ACCION[accion]}
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="acciones-reserva">
+            {acciones.map((accion, posicion) => (
+              <button
+                key={accion}
+                type="button"
+                className={posicion === 0 ? 'boton' : 'boton boton-secundario'}
+                onClick={() => setDialogo({ tipo: accion })}
+              >
+                {TEXTO_DE_ACCION[accion]}
+              </button>
+            ))}
+            {/* DEC-133: para imprimir o guardar en PDF; siempre, también con el folio cerrado */}
+            <Link to={`/reservas/${encodeURIComponent(reserva.codigo)}/estado-cuenta`} className="boton boton-secundario">
+              Estado de cuenta
+            </Link>
+          </div>
         </div>
       </div>
 

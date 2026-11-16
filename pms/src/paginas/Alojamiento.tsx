@@ -5,6 +5,7 @@ import BloqueMarca from '../alojamiento/BloqueMarca'
 import BloqueMediosPago from '../alojamiento/BloqueMediosPago'
 import BloqueReglas from '../alojamiento/BloqueReglas'
 import BloqueServicios from '../alojamiento/BloqueServicios'
+import BloqueIva from '../alojamiento/BloqueIva'
 import { BloqueDatos, BloqueRnt, BloqueUbicacion } from '../alojamiento/BloqueDatos'
 import type { AlBloque } from '../alojamiento/useBloque'
 import Dialogo from '../componentes/Dialogo'
@@ -16,7 +17,7 @@ type Pestana = 'datos' | 'reglas' | 'servicios' | 'medios' | 'marca'
 
 const PESTANAS: readonly { clave: Pestana; titulo: string; resumen: string }[] = [
   { clave: 'datos', titulo: 'Datos', resumen: 'Nombre, dirección, normas y ubicación' },
-  { clave: 'reglas', titulo: 'Reglas de la estancia', resumen: 'Horarios, anticipo, parqueadero y mascotas' },
+  { clave: 'reglas', titulo: 'Reglas de la estancia', resumen: 'Horarios, anticipo, parqueadero, mascotas e IVA' },
   { clave: 'servicios', titulo: 'Servicios adicionales', resumen: 'Lo que se carga como consumo' },
   { clave: 'medios', titulo: 'Medios de pago', resumen: 'Con qué se registran los pagos' },
   { clave: 'marca', titulo: 'Marca', resumen: 'Cómo se ve la web de reservas' },
@@ -82,7 +83,7 @@ export default function Alojamiento() {
 
   // Cada bloque avisa con su propia función, estable, para no volver a avisar en cada pintada
   const avisos = useMemo(() => Object.fromEntries(
-    ['datos', 'ubicacion', 'rnt', 'reglas', 'servicios', 'medios', 'marca'].map((clave) => [
+    ['datos', 'ubicacion', 'rnt', 'reglas', 'iva', 'servicios', 'medios', 'marca'].map((clave) => [
       clave,
       (sucio: boolean) => setSucios((actuales) => (actuales[clave] === sucio ? actuales : { ...actuales, [clave]: sucio })),
     ]),
@@ -152,7 +153,12 @@ export default function Alojamiento() {
         <BloqueRnt {...props('rnt')} />
       </>
     ),
-    reglas: <BloqueReglas {...props('reglas')} />,
+    reglas: (
+      <>
+        <BloqueReglas {...props('reglas')} />
+        <BloqueIva {...props('iva')} />
+      </>
+    ),
     servicios: <BloqueServicios {...props('servicios')} />,
     medios: <BloqueMediosPago {...props('medios')} />,
     marca: <BloqueMarca {...props('marca')} />,

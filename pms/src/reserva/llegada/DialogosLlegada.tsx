@@ -13,6 +13,7 @@ import Aviso from '../../componentes/Aviso'
 import Dialogo from '../../componentes/Dialogo'
 import CampoMotivo from '../../folio/CampoMotivo'
 import { cantidad, dinero, fechaCorta, fechaHoy, noches } from '../../formato'
+import { totalConIva } from '../valor'
 import { errorParaMostrar, type ErrorMostrado } from '../mensajes'
 import Campo from '../nueva/Campo'
 import { estimarExtras, MENSAJE_TELEFONO, telefonoValido, textoCobroVehiculo } from '../nueva/formulario'
@@ -74,8 +75,8 @@ export function DialogoVehiculos({ reserva, alojamiento, limiteApartamento, alCe
   const sinCambios = carros === reserva.carros && motos === reserva.motos && mascotas === reserva.mascotas
   const totalNoches = noches(reserva.entrada, reserva.salida)
   const extras = estimarExtras({ cobroParqueadero, cargoCarro, cargoMoto, cargoMascota }, { carros, motos, mascotas }, totalNoches)
-  const totalActual = reserva.valor.total + reserva.extras.total
-  const totalNuevo = reserva.valor.total + extras.total
+  const totalActual = totalConIva(reserva.valor) + reserva.extras.total
+  const totalNuevo = totalConIva(reserva.valor) + extras.total
   const diferencia = extras.total - reserva.extras.total
 
   async function enviar(evento: FormEvent) {
