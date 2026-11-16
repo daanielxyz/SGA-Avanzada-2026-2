@@ -15,6 +15,7 @@ import Inicio from './paginas/Inicio'
 import Llegada from './paginas/Llegada'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
+import Novedades from './paginas/Novedades'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
@@ -38,6 +39,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
   '/ocupacion': <Ocupacion />,
   '/preparacion': <Preparacion />,
+  '/novedades': <Novedades />,
   '/alojamiento': <Alojamiento />,
   '/politica': <Politica />,
   '/apartamentos': <Apartamentos />,

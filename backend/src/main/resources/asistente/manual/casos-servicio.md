@@ -20,7 +20,7 @@ No se puede devolver a pendiente desde la preparación. Avisa al administrador y
 Solo salen los que están pendientes o en preparación. Si sigue ocupado, aparecerá cuando recepción registre la salida del huésped. Si está fuera de servicio, solo el administrador lo devuelve a la preparación.
 
 ## Encontré un daño
-Avísalo al administrador (la pantalla de novedades todavía está en construcción). Si el daño impide usar el apartamento, el administrador lo declara fuera de servicio para que no se entregue ni se venda.
+Repórtalo en «Novedades» con «Reportar novedad»: el apartamento, qué encontraste y la gravedad. Reportarlo no bloquea el apartamento: si el daño impide usarlo, avisa además al administrador para que lo declare fuera de servicio y no se entregue ni se venda.
 
 ## No veo las reservas ni los datos de los huéspedes
 Es así a propósito: el personal de servicio no ve reservas. Lo que necesitas saber es el orden de la lista de preparación.

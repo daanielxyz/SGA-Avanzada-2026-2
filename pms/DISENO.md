@@ -861,6 +861,21 @@ Prompt en `pms/prompts/sprint5/titulares.md`; mockups en `pms/diseno/mockups-mer
 Programada en `src/paginas/Titulares.tsx` (`/titulares`) y `Titular.tsx` (`/titulares/:id`), recepción y administración. Los diálogos, el estado de la identidad y la lógica sin pantalla, en `src/titulares/`. Pruebas: `Titulares.test.tsx` y `src/titulares/logica.test.ts`.
 
 **Probada en el navegador** (16 nov, Chrome contra el backend local): buscar por nombre en cualquier orden y por documento con puntos, sin resultados y limpiar; detalle con reservas y vuelta a la búsqueda; editar sin contacto; el diálogo de validar (sin confirmarlo: no se deshace); un titular que no existe; personal de servicio sin permiso. Peor caso con un titular de prueba (`TIT-4`, nombre de 101 caracteres y correo de 103) a 1280, 1024, 390 y 320 px, sin desbordes ni errores en la consola. En la base local quedó ese titular de prueba.
+## Sprint 5: novedades (`feature/pms/novedades`, Arias)
+Prompt en `pms/prompts/sprint5/novedades.md`; mockups en `pms/diseno/mockups-meridian-sprint5-novedades/S5Novedades/` (5 hojas, primero a 390 px y con sufijo `Computador` a 1280), revisados el 16 nov contra `docs/api/openapi.yaml` y el backend. Lo resuelto, con el número de la duda del LEEME:
+- **Filtros** (1, 2): no se usan fichas nuevas, sino el mismo `SeleccionVarios` de Reservas (DEC-119), con el atajo «Por atender» (abiertas y en revisión), más gravedad y apartamento, «Limpiar» y «Filtrar». En el celular van plegados y, cerrados, dicen lo aplicado. Sin `estado` en la dirección se ven las por atender; «Limpiar» deja `estado=` vacío y se ven todas.
+- **Quién avanza** (3): personal de servicio y administración, como permite la API (`/api/novedades/{id}/avanzar`). La acción de la lista dice «Cerrar»; en la confirmación y en el historial, «Cerrar novedad» (4).
+- **Aviso corto** (5): la descripción recortada en la última palabra entera («APT-104 · Vidrio de la ventana del cuarto roto…»).
+- **«Hace …»** (6): minutos, horas o días; la fecha completa, en el historial.
+- **«Ver más»** (7): no se agregó. La descripción va a dos renglones y se lee completa en el historial, que se abre tocando el apartamento.
+- **Sin nombre** (8): «una persona que ya no está en el sistema» cuando `autorNombre` es nulo (DEC-132).
+- **Avanzar con rechazo** (10): un 409 cierra el diálogo, recarga la lista y avisa «Esta novedad ya avanzó».
+- **Textos** (13): se quedan los del mockup. El 403 es la página «Sin permiso» de siempre (11).
+- **Manual del asistente**: `novedades.md` y `casos-servicio.md` al día, y `general.md` ya no tiene pantallas en construcción.
+
+Programada en `src/paginas/Novedades.tsx` (`/novedades`, personal de servicio y administración). Los diálogos, las etiquetas de gravedad y estado y la lógica sin pantalla, en `src/novedades/`; la API en `src/api/novedades.ts`. Pruebas: `Novedades.test.tsx` y `src/novedades/logica.test.ts`.
+
+**Probada en el navegador** (16 nov, Chrome contra el backend local): como personal de servicio en el celular, reportar (los tres errores y luego bien) y pasar a revisión con confirmación; como administración en el computador, filtros, historial y cerrar desde el historial; una cerrada sin acción; recepción sin permiso. A 1280, 1024, 390 y 320 px, sin desbordes ni errores en la consola. Arreglado al revisar: el código del apartamento partido en la tabla, los pasos del historial desalineados, un subtítulo que repetía la gravedad y los botones de los filtros en otra fila. En la base local quedaron tres novedades de prueba («Prueba del PMS»), una de ellas cerrada.
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.
