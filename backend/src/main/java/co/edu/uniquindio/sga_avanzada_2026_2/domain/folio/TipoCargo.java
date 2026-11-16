@@ -7,5 +7,6 @@ public enum TipoCargo {
     HOSPEDAJE,
     SERVICIO_ADICIONAL,
     PENALIDAD_CANCELACION, // también la del no-show (CAR-02)
-    AJUSTE
+    AJUSTE,
+    IMPUESTO // el IVA de la estancia (DEC-133)
 }

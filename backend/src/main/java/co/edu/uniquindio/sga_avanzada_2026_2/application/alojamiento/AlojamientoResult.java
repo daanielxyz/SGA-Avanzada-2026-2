@@ -14,7 +14,12 @@ import java.util.List;
 public record AlojamientoResult(String id, String nombre, String descripcion, String ciudad, String direccion,
                                 double latitud, double longitud, String normas, ParametrosResult parametros,
                                 List<ServicioResult> serviciosAdicionales, List<String> mediosPago, MarcaDatos marca,
-                                String rnt) {
+                                String rnt, ImpuestoResult impuesto) {
+
+    /** DEC-133: si cobra el IVA de la estancia y su porcentaje. */
+    public record ImpuestoResult(boolean cobraIva, int porcentaje) {
+    }
+
 
     public record ParametrosResult(int umbralEdadFacturable, LocalTime horaEntrada, LocalTime horaSalida,
                                    long tiempoPreparacionHoras, long plazoConfirmacionHoras,
@@ -53,6 +58,7 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                         .toList(),
                 alojamiento.mediosPago().stream().map(MedioPago::nombre).toList(),
                 MarcaDatos.de(alojamiento.marca()),
-                alojamiento.rnt());
+                alojamiento.rnt(),
+                new ImpuestoResult(alojamiento.impuesto().cobraIva(), alojamiento.impuesto().porcentaje().valor()));
     }
 }

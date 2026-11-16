@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.persistencia.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ImpuestoAlojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.MarcaAlojamiento;
@@ -71,6 +72,7 @@ final class AlojamientoMapper {
                                 jpa.getMarcaRadioGrande()),
                         jpa.getMarcaLogoUrl(), jpa.getMarcaPortadaUrl()));
         alojamiento.registrarRnt(jpa.getRnt());
+        alojamiento.cambiarImpuesto(new ImpuestoAlojamiento(jpa.isCobraIva(), new Porcentaje(jpa.getPorcentajeIva())));
         return alojamiento;
     }
 
@@ -88,6 +90,8 @@ final class AlojamientoMapper {
         jpa.setLongitud(alojamiento.ubicacion().longitud());
         jpa.setNormas(alojamiento.normas());
         jpa.setRnt(alojamiento.rnt());
+        jpa.setCobraIva(alojamiento.impuesto().cobraIva());
+        jpa.setPorcentajeIva(alojamiento.impuesto().porcentaje().valor());
         jpa.setUmbralEdadFacturable(p.umbralEdadFacturable());
         jpa.setHoraEntrada(p.horaEntrada());
         jpa.setHoraSalida(p.horaSalida());

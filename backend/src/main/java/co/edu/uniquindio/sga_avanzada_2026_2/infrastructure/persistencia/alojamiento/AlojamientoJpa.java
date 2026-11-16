@@ -46,6 +46,8 @@ public class AlojamientoJpa {
     private double longitud;
     private String normas;
     private String rnt; // DEC-130
+    private boolean cobraIva;    // DEC-133
+    private int porcentajeIva;
 
     private int umbralEdadFacturable;
     private LocalTime horaEntrada;

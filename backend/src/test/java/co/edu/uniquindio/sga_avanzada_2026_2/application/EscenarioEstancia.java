@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.DatosTraDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
@@ -148,7 +149,7 @@ public final class EscenarioEstancia {
 
     public RegistrarLlegadaUseCase registrarLlegada(Clock reloj) {
         return new RegistrarLlegadaUseCase(cargador, reservas, apartamentos, new RegistroLlegadaDomainService(),
-                SIN_NOMBRES, enviosTra, reloj);
+                SIN_NOMBRES, enviosTra, folios, new ImpuestoEstanciaDomainService(), reloj);
     }
 
     /** Abona en efectivo con la fecha del reloj. */
