@@ -1,5 +1,8 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import java.time.LocalDate;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.folio.FolioRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.DirectorioPersonal;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.ApartamentoRepository;
@@ -20,7 +23,8 @@ import java.time.LocalDateTime;
 /**
  * Caso de uso: recepción registra la llegada del grupo (CU-21). La reserva pasa a EN_CURSO y el apartamento a
  * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee: lo pagado (BL-22) y el saldo. Deja además
- * pendiente el envío del TRA, que hace el planificador cuando los datos estén completos (DEC-130).
+ * pendiente el envío del TRA, que hace el planificador cuando los datos estén completos (DEC-130), y carga el IVA de
+ * la estancia si el alojamiento lo cobra y quien llega no trae pasaporte (DEC-133).
  */
 @Service
 public class RegistrarLlegadaUseCase {
@@ -31,17 +35,22 @@ public class RegistrarLlegadaUseCase {
     private final RegistroLlegadaDomainService registroLlegada;
     private final DirectorioPersonal personal;
     private final EnvioTraRepository envios;
+    private final FolioRepository folios;
+    private final ImpuestoEstanciaDomainService impuestos;
     private final Clock reloj;
 
     public RegistrarLlegadaUseCase(CargadorReserva cargador, ReservaRepository reservas,
                                    ApartamentoRepository apartamentos, RegistroLlegadaDomainService registroLlegada,
-                                   DirectorioPersonal personal, EnvioTraRepository envios, Clock reloj) {
+                                   DirectorioPersonal personal, EnvioTraRepository envios, FolioRepository folios,
+                                   ImpuestoEstanciaDomainService impuestos, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.apartamentos = apartamentos;
         this.registroLlegada = registroLlegada;
         this.personal = personal;
         this.envios = envios;
+        this.folios = folios;
+        this.impuestos = impuestos;
         this.reloj = reloj;
     }
 
@@ -62,8 +71,13 @@ public class RegistrarLlegadaUseCase {
         registroLlegada.procesarCheckIn(reserva, apartamento, siguienteRegistro(reserva), LocalDateTime.now(reloj),
                 new UsuarioId(comando.autor()), folio.totalPagado(), comando.motivoSinPago());
 
+        // DEC-133: el IVA de la estancia, congelado desde la llegada
+        impuestos.aplicarEnLaLlegada(folio, reserva, cargador.titular(reserva.titularId()).documento(),
+                cargador.alojamientoDe(apartamento).impuesto(), LocalDate.now(reloj));
+
         reservas.guardar(reserva);
         apartamentos.guardar(apartamento);
+        folios.guardar(folio);
         // DEC-130: una llegada corregida conserva lo que ya se envió
         envios.guardar(envios.buscarPorReserva(reserva.codigo()).orElseGet(() -> EnvioTra.pendiente(reserva.codigo())));
         return EstanciaResult.de(reserva, apartamento, folio, personal);

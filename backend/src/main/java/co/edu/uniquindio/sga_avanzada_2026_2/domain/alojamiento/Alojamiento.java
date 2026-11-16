@@ -27,6 +27,7 @@ public class Alojamiento {
     private final List<MedioPago> mediosPago; // solo los habilitados
     private MarcaAlojamiento marca;
     private String rnt; // Registro Nacional de Turismo: opcional hasta encender el TRA (DEC-130)
+    private ImpuestoAlojamiento impuesto = ImpuestoAlojamiento.INICIAL; // DEC-133
 
     public Alojamiento(AlojamientoId id, String nombre, String descripcion, String ciudad, String direccion,
                        Ubicacion ubicacion, String normas, ParametrosAlojamiento parametros,
@@ -115,6 +116,14 @@ public class Alojamiento {
      */
     public void cambiarMarca(MarcaAlojamiento nueva) {
         marca = Objects.requireNonNull(nueva, "nueva");
+    }
+
+    /**
+     * Enciende o apaga el IVA de la estancia y su porcentaje (DEC-133). Aplica a las llegadas que vienen; lo ya
+     * cobrado no cambia.
+     */
+    public void cambiarImpuesto(ImpuestoAlojamiento nuevo) {
+        impuesto = Objects.requireNonNull(nuevo, "nuevo");
     }
 
     /**
@@ -285,6 +294,11 @@ public class Alojamiento {
 
     public MarcaAlojamiento marca() {
         return marca;
+    }
+
+    /** Apagado en un alojamiento nuevo (DEC-133). */
+    public ImpuestoAlojamiento impuesto() {
+        return impuesto;
     }
 
     /** Null mientras el administrador no lo escriba (DEC-130). */

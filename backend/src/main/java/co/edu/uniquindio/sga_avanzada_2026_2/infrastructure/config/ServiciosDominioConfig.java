@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.config;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ActivadorApartamentoService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.BajaApartamentoDomainService;
@@ -30,6 +31,11 @@ public class ServiciosDominioConfig {
     @Bean
     public ActivadorApartamentoService activadorApartamentoService() {
         return new ActivadorApartamentoService();
+    }
+
+    @Bean
+    public ImpuestoEstanciaDomainService impuestoEstanciaDomainService() {
+        return new ImpuestoEstanciaDomainService();
     }
 
     @Bean
