@@ -23,8 +23,8 @@ import java.time.LocalDateTime;
 /**
  * Caso de uso: recepción registra la llegada del grupo (CU-21). La reserva pasa a EN_CURSO y el apartamento a
  * OCUPADO en la misma transacción (REG-04 · D-02); el folio solo se lee: lo pagado (BL-22) y el saldo. Deja además
- * pendiente el envío del TRA, que hace el planificador cuando los datos estén completos (DEC-130), y carga el IVA de
- * la estancia si el alojamiento lo cobra y quien llega no trae pasaporte (DEC-133).
+ * pendiente el envío del TRA, que hace el planificador cuando los datos estén completos (DEC-130), y revisa el IVA
+ * congelado al crear: quien llega con pasaporte no lo paga (DEC-134).
  */
 @Service
 public class RegistrarLlegadaUseCase {
@@ -71,9 +71,9 @@ public class RegistrarLlegadaUseCase {
         registroLlegada.procesarCheckIn(reserva, apartamento, siguienteRegistro(reserva), LocalDateTime.now(reloj),
                 new UsuarioId(comando.autor()), folio.totalPagado(), comando.motivoSinPago());
 
-        // DEC-133: el IVA de la estancia, congelado desde la llegada
-        impuestos.aplicarEnLaLlegada(folio, reserva, cargador.titular(reserva.titularId()).documento(),
-                cargador.alojamientoDe(apartamento).impuesto(), LocalDate.now(reloj));
+        // DEC-134: se revisa la exención del IVA con el documento de quien llega
+        impuestos.revisarEnLaLlegada(reserva, folio, cargador.titular(reserva.titularId()).documento(),
+                LocalDate.now(reloj));
 
         reservas.guardar(reserva);
         apartamentos.guardar(apartamento);

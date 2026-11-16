@@ -9,8 +9,15 @@ import java.util.List;
 /**
  * JSON de una cotización (DEC-31): el desglose noche por noche y el total (COT-02). También es el valor congelado
  * de una reserva.
+ *
+ * @param total         la suma de las noches, sin IVA
+ * @param ivaPorcentaje el del alojamiento; 0 si no cobra IVA (DEC-134)
+ * @param ivaExento     no paga IVA porque decide un pasaporte; en una cotización, siempre falso
+ * @param iva           el IVA sobre {@code total}
+ * @param totalConIva   lo que ve el huésped como valor de la estancia
  */
-public record CotizacionResponse(List<NocheResponse> desglose, BigDecimal total) {
+public record CotizacionResponse(List<NocheResponse> desglose, BigDecimal total, int ivaPorcentaje, boolean ivaExento,
+                                 BigDecimal iva, BigDecimal totalConIva) {
 
     /**
      * @param temporada       id de la temporada de esa noche
@@ -28,6 +35,6 @@ public record CotizacionResponse(List<NocheResponse> desglose, BigDecimal total)
                                 n.ocupantesFacturables(),
                                 n.subtotal()))
                         .toList(),
-                r.total());
+                r.total(), r.ivaPorcentaje(), r.ivaExento(), r.iva(), r.totalConIva());
     }
 }

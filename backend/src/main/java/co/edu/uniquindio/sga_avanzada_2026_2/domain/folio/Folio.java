@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Raíz del agregado Folio, uno por reserva (FOL-02). Cargos y pagos solo se agregan; se corrigen con un movimiento
@@ -106,8 +107,8 @@ public class Folio {
     }
 
     /**
-     * Carga el IVA de la estancia, calculado en la llegada y congelado desde ahí (DEC-133). Se paga hasta la salida,
-     * como un consumo.
+     * Carga el IVA de la estancia, congelado en la reserva desde que se crea (DEC-133 · DEC-134). Va en su propio
+     * cargo, aparte del alojamiento, para que el estado de cuenta lo muestre aparte.
      *
      * @param porcentaje el del alojamiento, para el concepto («IVA del alojamiento (19 %)»)
      * @throws ReglaDominioException si el folio está cerrado (CAR-07), el valor no es positivo (CAR-06) o ya tiene
@@ -124,8 +125,41 @@ public class Folio {
 
     /** Si ya tiene un cargo de IVA que no se haya corregido (DEC-133). */
     public boolean tieneIvaVigente() {
-        return cargos.stream().anyMatch(c -> c.tipo() == TipoCargo.IMPUESTO
-                && cargos.stream().noneMatch(otro -> c.id().equals(otro.corrigeA())));
+        return ivaVigente().isPresent();
+    }
+
+    /**
+     * Deja el IVA del folio en el valor nuevo de la reserva (DEC-134): si cambió, corrige el cargo vigente con un
+     * AJUSTE que lo referencia y, si el nuevo es positivo, carga otro. Si no cambió, no registra nada. Así el IVA
+     * siempre queda en cargos de tipo IMPUESTO y sus correcciones, aparte del alojamiento.
+     *
+     * @param motivo «modificación de la reserva», «llega con pasaporte», «cancelación»…
+     * @throws ReglaDominioException si hay que registrar algo y el folio está cerrado (CAR-07)
+     */
+    // DEC-134
+    public void ajustarIva(Dinero nuevo, Porcentaje porcentaje, String motivo, LocalDate fecha) {
+        Optional<Cargo> vigente = ivaVigente();
+        Dinero actual = vigente.map(Cargo::valor).orElse(Dinero.CERO);
+        if (actual.monto().compareTo(nuevo.monto()) == 0) {
+            return;
+        }
+        vigente.ifPresent(cargo -> agregar(TipoCargo.AJUSTE, "Corrección de " + cargo.id().valor() + ": " + motivo,
+                cargo.valor(), SentidoAjuste.DISMINUYE, fecha, cargo.id()));
+        if (nuevo.esPositivo()) {
+            cargarIva(nuevo, porcentaje, fecha);
+        }
+    }
+
+    /** Quita el IVA vigente, si hay: la estancia no se va a cobrar (cancelación, no-show, vencimiento; DEC-134). */
+    public void anularIva(String motivo, LocalDate fecha) {
+        ajustarIva(Dinero.CERO, null, "anulación por " + motivo, fecha);
+    }
+
+    private Optional<Cargo> ivaVigente() {
+        return cargos.stream()
+                .filter(c -> c.tipo() == TipoCargo.IMPUESTO
+                        && cargos.stream().noneMatch(otro -> c.id().equals(otro.corrigeA())))
+                .findFirst();
     }
 
     /**

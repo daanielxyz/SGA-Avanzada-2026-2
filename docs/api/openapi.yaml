@@ -3969,6 +3969,19 @@ components:
             "$ref": "#/components/schemas/NocheResponse"
         total:
           type: number
+          description: "La suma de las noches: la base, sin IVA."
+        ivaPorcentaje:
+          type: integer
+          description: "El IVA del alojamiento; 0 si no lo cobra (DEC-134)."
+        ivaExento:
+          type: boolean
+          description: "La reserva no paga IVA porque decide un pasaporte; en una cotización, siempre falso."
+        iva:
+          type: number
+          description: "El IVA sobre total, redondeado al peso."
+        totalConIva:
+          type: number
+          description: "total más iva: lo que ve el huésped como valor de la estancia."
     NocheResponse:
       type: object
       properties:
@@ -5954,6 +5967,16 @@ components:
             "$ref": "#/components/schemas/NocheResponse"
         total:
           type: number
+          description: "La suma de las noches, sin IVA."
+        ivaPorcentaje:
+          type: integer
+          description: "El IVA del alojamiento; 0 si no lo cobra (DEC-134)."
+        iva:
+          type: number
+          description: "El IVA sobre total; quien llega con pasaporte no lo paga."
+        totalConIva:
+          type: number
+          description: "El precio que se muestra."
     EstanciaPortalResponse:
       type: object
       properties:

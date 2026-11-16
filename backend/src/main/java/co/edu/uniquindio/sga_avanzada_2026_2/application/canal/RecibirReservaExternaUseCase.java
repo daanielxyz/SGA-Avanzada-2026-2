@@ -134,6 +134,8 @@ public class RecibirReservaExternaUseCase {
                     Cotizacion cotizacion = tarificacion.calcularValorEstancia(apartamento.codigo(), estancia,
                             ocupantes, parametros.umbralEdadFacturable(), calendario,
                             tarifas.buscarVigentesPorApartamento(apartamento.codigo(), ahora.toLocalDate()));
+                    // TODO(equipo): BL-13, las plataformas venden con su propio precio e IVA; por ahora la reserva de
+                    // un canal externo no lleva IVA (DEC-134) hasta decidir con el cliente cómo se concilia
                     return Reserva.crear(new ReservaId(codigos.siguiente(SerieCodigo.RESERVA)), apartamento.codigo(),
                             titular, estancia, CanalOrigen.EXTERNO, canal.id(), comando.idExterno(), ocupantes, null,
                             cotizacion, politica.id(), apartamento.capacidad(),
