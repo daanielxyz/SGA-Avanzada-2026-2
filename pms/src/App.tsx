@@ -25,6 +25,8 @@ import PublicarPolitica from './paginas/PublicarPolitica'
 import RecuperarContrasena from './paginas/RecuperarContrasena'
 import SinPermiso from './paginas/SinPermiso'
 import Tarifas from './paginas/Tarifas'
+import Titular from './paginas/Titular'
+import Titulares from './paginas/Titulares'
 import Usuarios from './paginas/Usuarios'
 import Bitacora from './paginas/Bitacora'
 import Canales from './paginas/Canales'
@@ -40,6 +42,7 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/politica': <Politica />,
   '/apartamentos': <Apartamentos />,
   '/tarifas': <Tarifas />,
+  '/titulares': <Titulares />,
   '/usuarios': <Usuarios />,
   '/canales': <Canales />,
   '/perfil': <Perfil />,
@@ -119,6 +122,14 @@ export default function App() {
           element={
             <SoloPara roles={ADMINISTRACION}>
               <FichaApartamento />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/titulares/:id"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <Titular />
             </SoloPara>
           }
         />
