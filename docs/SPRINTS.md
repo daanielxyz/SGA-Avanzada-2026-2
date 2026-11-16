@@ -148,7 +148,8 @@ Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el h
     - [x] Pantallas (`feature/pms/tra`, 15 nov): el RNT en «Alojamiento», «Reporte al Ministerio (TRA)» con «Reintentar» en el detalle de la reserva y el aviso de los envíos con error en «Reservas» (`pms/DISENO.md`, «Sprint 5: envío del TRA»).
   - [ ] Reyes · IVA de la estancia y estado de cuenta (BL-13, pedido el 15 nov, DEC-133): las tarifas son la base; el IVA (19 %) se enciende o apaga en «Alojamiento»; exentos los que llegan con pasaporte; solo la estancia. Estado de cuenta imprimible con la marca del hotel, no fiscal (la factura electrónica es BL-02, MVP2).
     - [x] Núcleo (`feature/nucleo/iva-estancia`, migración V32): `ImpuestoAlojamiento`, cargo `IMPUESTO` en la llegada, `PUT /api/alojamiento/iva`. Pasan las 1008 (sobre develop con el buscador y las novedades, #108 y #109).
-    - [ ] Pantallas: el interruptor del IVA en «Alojamiento», el IVA en el folio y el estado de cuenta.
+    - [x] Núcleo, el IVA desde la reserva (DEC-134, `feature/nucleo/iva-desde-reserva`, migración V33): al probar en el navegador se decidió que el huésped vea alojamiento, IVA y total desde que reserva y que el anticipo y las retenciones vayan sobre el total con IVA; la exención se revisa en la llegada. Pasan las 1020.
+    - [ ] Pantallas: el interruptor del IVA en «Alojamiento», el valor con IVA en la reserva, el IVA en el folio y el estado de cuenta.
   - [ ] Reyes · Canales de venta (`/canales`): canales, conflictos pendientes y bitácora (el backend ya existe); lo de Channex que decida el cierre 4 lo hace el equipo web (B4c).
     - [x] Prompt y mockups (15 nov, `pms/prompts/sprint5/canales.md`), revisados contra el contrato en `pms/DISENO.md`, «Sprint 5: canales de venta».
     - [x] Núcleo: el conflicto guarda a quién llamar, nombre, teléfono y correo del titular (DEC-129, `feature/nucleo/conflicto-huesped`, migración V30).

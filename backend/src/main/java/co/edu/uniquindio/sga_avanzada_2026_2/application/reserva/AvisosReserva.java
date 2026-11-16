@@ -82,7 +82,9 @@ public class AvisosReserva {
                 + "Entrada: " + reserva.estancia().entrada() + "\n"
                 + "Salida: " + reserva.estancia().salida() + "\n"
                 + "Personas: " + reserva.ocupantes().size() + "\n"
-                + "Valor total: $" + pesos(reserva.valorConExtras()) + "\n"
+                + "Valor total: $" + pesos(reserva.valorConExtras())
+                // DEC-134: el IVA va dentro del total; se dice cuánto es
+                + (reserva.iva().esPositivo() ? " (incluye IVA de $" + pesos(reserva.iva()) + ")" : "") + "\n"
                 + "Estado: " + reserva.estado() + "\n";
     }
 

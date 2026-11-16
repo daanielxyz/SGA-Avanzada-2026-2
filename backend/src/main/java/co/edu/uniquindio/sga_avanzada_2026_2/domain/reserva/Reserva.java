@@ -56,6 +56,7 @@ public class Reserva {
     private int motos;                          // RP-02
     private int mascotas;                       // RP-03
     private Extras extras;                      // congelados; DEC-89
+    private IvaReserva iva = IvaReserva.NINGUNO; // congelado al crear; DEC-134
     private DeclaracionNoShow declaracionNoShow; // nula en los no-show anteriores a BL-25
     private final List<CorreccionDocumento> correccionesDocumento; // historial (DEC-120)
 
@@ -218,12 +219,51 @@ public class Reserva {
         return declaracionNoShow;
     }
 
-    /** La estancia y sus extras: la base del anticipo (RES-15 · DEC-89). */
+    /**
+     * Congela el IVA de la reserva (DEC-134): al crearla, al modificarla y al reconstruirla desde la base. El
+     * porcentaje y la exención los decide {@code ImpuestoEstanciaDomainService}; el valor sale de las noches.
+     */
+    public void congelarIva(IvaReserva nuevo) {
+        iva = Objects.requireNonNull(nuevo, "nuevo");
+    }
+
+    /**
+     * En la llegada se revisa la exención con el documento de quien llega (DEC-134): la tasa congelada no cambia.
+     *
+     * @param documento el del huésped principal o, si aún no lo tiene, el del titular
+     */
+    public void revisarIvaEnLaLlegada(Documento documento) {
+        iva = iva.revisadoCon(documento);
+    }
+
+    public IvaReserva ivaReserva() {
+        return iva;
+    }
+
+    /** El IVA sobre el valor de las noches: cero si no se cobra o está exenta (DEC-134). */
+    public Dinero iva() {
+        return iva.sobre(valorTotal);
+    }
+
+    /** Las noches con su IVA: lo que el huésped ve como el valor de la estancia y la base «valor total» (DEC-134). */
+    public Dinero valorEstancia() {
+        return valorTotal.sumar(iva());
+    }
+
+    /** La estancia con su IVA y los extras: la base del anticipo y del pago en línea (RES-15 · DEC-89 · DEC-134). */
     public Dinero valorConExtras() {
+        return valorEstancia().sumar(extras.total());
+    }
+
+    /** Sin el IVA: lo que se ajusta en el folio al modificar, porque el IVA se ajusta en su propio cargo (DEC-134). */
+    public Dinero valorSinIvaConExtras() {
         return valorTotal.sumar(extras.total());
     }
 
-    /** Lo que debe estar pagado para confirmar: ese porcentaje de la estancia y sus extras (RES-15 · DEC-89). */
+    /**
+     * Lo que debe estar pagado para confirmar: ese porcentaje de la estancia con su IVA y sus extras (RES-15 ·
+     * DEC-89 · DEC-134).
+     */
     public Dinero anticipoExigido(Porcentaje anticipo) {
         return valorConExtras().porcentaje(anticipo);
     }
@@ -238,7 +278,8 @@ public class Reserva {
         if (!extras.total().esPositivo()) {
             return pagado;
         }
-        return new Dinero(pagado.monto().multiply(valorTotal.monto())
+        // DEC-134: la estancia con su IVA
+        return new Dinero(pagado.monto().multiply(valorEstancia().monto())
                 .divide(valorConExtras().monto(), 0, RoundingMode.HALF_UP));
     }
 

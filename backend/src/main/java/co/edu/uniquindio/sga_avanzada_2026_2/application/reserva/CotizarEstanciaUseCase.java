@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.IvaReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.Alojamiento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.apartamento.Apartamento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Estancia;
@@ -50,7 +51,8 @@ public class CotizarEstanciaUseCase {
         return CotizacionResult.de(tarificacion.calcularValorEstancia(apartamento.codigo(), estancia,
                 ocupantes(comando.fechasNacimiento()), alojamiento.parametros().umbralEdadFacturable(),
                 cargador.calendario(alojamiento.id()),
-                tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))));
+                tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))),
+                IvaReserva.paraCotizar(alojamiento.impuesto())); // DEC-134
     }
 
     /**
@@ -70,7 +72,8 @@ public class CotizarEstanciaUseCase {
 
         return CotizacionResult.de(tarificacion.calcularValorEstancia(apartamento.codigo(), estancia,
                 comando.facturables(), cargador.calendario(alojamiento.id()),
-                tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))));
+                tarifas.buscarVigentesPorApartamento(apartamento.codigo(), LocalDate.now(reloj))),
+                IvaReserva.paraCotizar(alojamiento.impuesto())); // DEC-134
     }
 
     // Para cotizar solo cuenta la edad a la fecha de entrada (RN-06); el nombre es de relleno

@@ -19,6 +19,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Cotizacion;
@@ -34,8 +35,8 @@ import java.util.List;
 
 /**
  * Caso de uso: crear una reserva por el portal (CU-10) o en recepción (CU-11), según el flujo de MODELO §3 (DEC-36 ·
- * DEC-37). Guarda en una transacción la reserva, su folio abierto con el cargo del alojamiento (FOL-01 · DEC-44) y el
- * titular nuevo o con su contacto completado (DEC-58 · DEC-59 · DEC-69). Después avisa al titular por correo
+ * DEC-37). Guarda en una transacción la reserva, su folio abierto con el cargo del alojamiento y el de su IVA (FOL-01 ·
+ * DEC-44 · DEC-134) y el titular nuevo o con su contacto completado (DEC-58 · DEC-59 · DEC-69). Después avisa al titular por correo
  * (DEC-68).
  */
 @Service
@@ -50,6 +51,7 @@ public class CrearReservaUseCase {
     private final DisponibilidadDomainService disponibilidad;
     private final TarificacionDomainService tarificacion;
     private final CupoParqueaderoDomainService cupoParqueadero;
+    private final ImpuestoEstanciaDomainService impuestos;
     private final GeneradorCodigos codigos;
     private final AvisosReserva avisos;
     private final Clock reloj;
@@ -58,7 +60,7 @@ public class CrearReservaUseCase {
                                TitularRepository titulares, TarifaRepository tarifas,
                                PoliticaCancelacionRepository politicas,
                                DisponibilidadDomainService disponibilidad, TarificacionDomainService tarificacion,
-                               CupoParqueaderoDomainService cupoParqueadero,
+                               CupoParqueaderoDomainService cupoParqueadero, ImpuestoEstanciaDomainService impuestos,
                                GeneradorCodigos codigos, AvisosReserva avisos, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
@@ -69,6 +71,7 @@ public class CrearReservaUseCase {
         this.disponibilidad = disponibilidad;
         this.tarificacion = tarificacion;
         this.cupoParqueadero = cupoParqueadero;
+        this.impuestos = impuestos;
         this.codigos = codigos;
         this.avisos = avisos;
         this.reloj = reloj;
@@ -114,6 +117,8 @@ public class CrearReservaUseCase {
         Folio folio = Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
                 reserva.valorTotal(), ahora.toLocalDate());
         folio.cargarExtras(reserva.extras(), ahora.toLocalDate());
+        // DEC-134: el IVA desde la reserva, para que el huésped vea el total y el anticipo con IVA
+        impuestos.congelarAlCrear(reserva, folio, alojamiento.impuesto(), titular.documento(), ahora.toLocalDate());
 
         titulares.guardar(titular);
         reservas.guardar(reserva);

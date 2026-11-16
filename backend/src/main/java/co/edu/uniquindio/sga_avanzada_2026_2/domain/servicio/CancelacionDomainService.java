@@ -77,8 +77,7 @@ public class CancelacionDomainService {
                                     LocalDateTime ahora) {
         validarFolio(reserva, folio);
         reserva.expirar(ahora, parametros.plazoParaConfirmar(reserva.canalOrigen()));
-        folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "vencimiento", ahora.toLocalDate());
-        folio.anularExtras(reserva.extras(), "vencimiento", ahora.toLocalDate());
+        anular(reserva, folio, Dinero.CERO, "vencimiento", ahora);
     }
 
     /**
@@ -97,8 +96,7 @@ public class CancelacionDomainService {
                     + " ya tiene pagos: se cancela con su política de cancelación");
         }
         reserva.liberar();
-        folio.liquidarPenalidad(reserva.valorTotal(), Dinero.CERO, "liberación", ahora.toLocalDate());
-        folio.anularExtras(reserva.extras(), "liberación", ahora.toLocalDate());
+        anular(reserva, folio, Dinero.CERO, "liberación", ahora);
     }
 
     // RN-13 · FOL-02: la retención sale de la política que el huésped aceptó, nunca de la vigente
@@ -122,9 +120,15 @@ public class CancelacionDomainService {
     static Dinero liquidar(Reserva reserva, Folio folio, Penalizacion penalizacion, ParametrosAlojamiento parametros,
                            String motivo, LocalDateTime ahora) {
         Dinero retenido = retencion(reserva, folio, penalizacion, parametros);
-        folio.liquidarPenalidad(reserva.valorTotal(), retenido, motivo, ahora.toLocalDate());
-        folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
+        anular(reserva, folio, retenido, motivo, ahora);
         return retenido;
+    }
+
+    // DEC-43 · DEC-89 · DEC-134: el alojamiento, su IVA y los extras dejan de cobrarse, cada uno en su cargo
+    private static void anular(Reserva reserva, Folio folio, Dinero retenido, String motivo, LocalDateTime ahora) {
+        folio.liquidarPenalidad(reserva.valorTotal(), retenido, motivo, ahora.toLocalDate());
+        folio.anularIva(motivo, ahora.toLocalDate());
+        folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
     }
 
     // DEC-91 · DEC-102: la misma cuenta de liquidar, sin registrar nada
@@ -136,8 +140,9 @@ public class CancelacionDomainService {
 
     private static Dinero retencion(Reserva reserva, Folio folio, Penalizacion penalizacion,
                                     ParametrosAlojamiento parametros) {
-        Dinero valorTotal = reserva.valorTotal();
-        return penalizacion.calcular(valorTotal, reserva.pagadoPorLaEstancia(folio.totalPagado()),
-                valorTotal.porcentaje(parametros.anticipo()));
+        // DEC-134: «del valor total» y el anticipo son de la estancia con su IVA, como la ve el huésped
+        Dinero valorEstancia = reserva.valorEstancia();
+        return penalizacion.calcular(valorEstancia, reserva.pagadoPorLaEstancia(folio.totalPagado()),
+                valorEstancia.porcentaje(parametros.anticipo()));
     }
 }

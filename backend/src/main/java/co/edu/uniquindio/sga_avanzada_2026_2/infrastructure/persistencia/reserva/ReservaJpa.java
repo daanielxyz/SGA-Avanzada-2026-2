@@ -63,6 +63,8 @@ public class ReservaJpa {
     private BigDecimal extrasParqueadero;
 
     private BigDecimal extrasMascotas;
+    private int ivaPorcentaje;  // DEC-134
+    private boolean ivaExento;
 
     private int mascotas;
 

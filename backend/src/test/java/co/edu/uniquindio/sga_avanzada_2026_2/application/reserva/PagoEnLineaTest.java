@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.application.reserva;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.CupoParqueaderoDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.EscenarioEstancia;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.compartido.ClavesReserva;
@@ -79,7 +80,8 @@ class PagoEnLineaTest {
     private CrearReservaUseCase crearReserva(Clock reloj) {
         return new CrearReservaUseCase(escenario.cargador, escenario.reservas, escenario.folios, escenario.titulares,
                 escenario.tarifas, escenario.politicas, new DisponibilidadDomainService(),
-                new TarificacionDomainService(), new CupoParqueaderoDomainService(), escenario.codigos, escenario.avisos, reloj);
+                new TarificacionDomainService(), new CupoParqueaderoDomainService(), new ImpuestoEstanciaDomainService(), escenario.codigos,
+                escenario.avisos, reloj);
     }
 
     private ReservaPortalResult reservarDesdePortal() {
