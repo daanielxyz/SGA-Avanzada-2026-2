@@ -24,12 +24,12 @@
   --marca-terracota: #c98f6b;
   --marca-piedra: #e8e6e1;
 
-  /* Superficies y líneas */
-  --fondo-pagina: #0b2230;
-  --fondo-marco: #08202c;
+  /* Superficies y líneas: tres capas que se distinguen por el fondo (1,2:1 entre una y otra), no solo por el borde */
+  --fondo-pagina: #071923;
+  --fondo-marco: #06151e;
   --superficie: var(--marca-medianoche);
-  --superficie-2: #153448;
-  --superficie-fila: #123246;
+  --superficie-2: #17384c;
+  --superficie-fila: #13324a;
   --borde: #27475a;
   --borde-fuerte: #5b7889;
   --velo: rgb(3 13 20 / 60%);
@@ -91,7 +91,8 @@
   /* Tipografía */
   --letra-titulo: Satoshi, system-ui, sans-serif;
   --letra-interfaz: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --letra-codigo: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Códigos y dinero: Inter con cifras de ancho fijo, la voz del brandbook (antes, monoespaciada del sistema) */
+  --letra-codigo: var(--letra-interfaz);
 
 /* Tamaños de letra e interlineados: los componentes no escriben píxeles, para cambiar la escala en un solo lugar */
   --tamano-mini: 11px;
@@ -136,8 +137,15 @@
   --espacio-4-medio: 18px;
   --espacio-5-medio: 22px;
   --alto-rotulo: 26px;
-  --radio: 10px;
-  --radio-chico: 6px;
+  --radio: 12px;
+  --radio-chico: 8px;
+  /* Rótulos de un dato («Apartamento», «Saldo») en minúscula inicial; las mayúsculas, solo en los encabezados de tabla */
+  --rotulo-mayusculas: none;
+  --rotulo-espaciado: 0.01em;
+  --encabezado-mayusculas: uppercase;
+  --encabezado-espaciado: 0.04em;
+  /* Lo que dibuja el navegador también lleva la marca */
+  --seleccion: rgb(217 201 176 / 32%);
   --sombra-menu: 8px 0 24px rgb(3 13 20 / 45%);
   --sombra-dialogo: 0 24px 60px rgb(0 0 0 / 50%);
 
@@ -147,6 +155,9 @@
   color: var(--texto);
   background: var(--fondo-pagina);
   color-scheme: dark;
+  caret-color: var(--acento);
+  accent-color: var(--acento);
+  scrollbar-color: var(--borde-fuerte) var(--fondo-pagina);
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
@@ -195,6 +206,11 @@ a {
   outline-offset: 2px;
 }
 
+::selection {
+  background: var(--seleccion);
+  color: var(--texto);
+}
+
 a,
 button {
   touch-action: manipulation;
@@ -209,13 +225,19 @@ button {
   color: var(--texto-suave);
 }
 
-/* Códigos (RES-2026-00042, APT-101) y dinero: los dígitos quedan alineados */
+/* Códigos (RES-2026-00042, APT-101) y dinero. Las cifras de ancho fijo de Inter también ensanchan el guion
+   («RES - 2026»), así que solo van donde las cifras se alinean en columna: lo alineado a la derecha y los importes */
 .codigo {
   font-family: var(--letra-codigo);
-  font-variant-numeric: tabular-nums;
 }
 
-.numero {
+.tabla .codigo {
+  white-space: nowrap;
+}
+
+.numero,
+.derecha,
+.importe {
   font-variant-numeric: tabular-nums;
 }
 
@@ -460,9 +482,9 @@ button {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--encabezado-espaciado);
   text-align: left;
-  text-transform: uppercase;
+  text-transform: var(--encabezado-mayusculas);
   white-space: nowrap;
 }
 
@@ -817,7 +839,19 @@ button {
   flex-direction: column;
   gap: var(--espacio-2);
   padding: var(--espacio-4);
-  border-left: 4px solid var(--advertencia);
+  border-color: var(--advertencia);
+  background: var(--advertencia-fondo);
+}
+
+/* El código es un enlace dentro de una frase: el área de toque crece por fuera sin mover el renglón */
+.salidas-vencidas li a {
+  position: relative;
+}
+
+.salidas-vencidas li a::after {
+  content: '';
+  position: absolute;
+  inset: -12px -4px;
 }
 
 .salidas-vencidas h2 {
@@ -983,7 +1017,10 @@ button {
   top: var(--espacio-2);
   left: var(--espacio-2);
   z-index: 30;
-  padding: var(--espacio-2) var(--espacio-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--espacio-3);
   border-radius: var(--radio-chico);
   background: var(--acento);
   color: var(--sobre-acento);
@@ -1472,8 +1509,8 @@ button {
   color: var(--texto-suave);
   font-size: var(--tamano-pista);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .desglose-total-valor {
@@ -1635,7 +1672,8 @@ button {
   }
 
   .quien {
-    flex: 0 1 270px;
+    flex: 0 1 auto;
+    max-width: 270px;
   }
 
   .quien-nombre {
@@ -1820,8 +1858,8 @@ button {
     font-size: var(--tamano-rotulo);
     line-height: var(--interlinea-rotulo);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: var(--rotulo-espaciado);
+    text-transform: var(--rotulo-mayusculas);
   }
 
   .dato dd {
@@ -2354,8 +2392,8 @@ button {
   color: var(--texto-suave);
   font-size: var(--tamano-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .paso-total-extra {
@@ -2492,8 +2530,8 @@ button {
   color: var(--texto-suave);
   font-size: var(--tamano-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .apartamento-valor strong {
@@ -2903,8 +2941,8 @@ button {
   color: var(--texto-suave);
   font-size: var(--tamano-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--encabezado-espaciado);
+  text-transform: var(--encabezado-mayusculas);
 }
 
 .ocupacion-dias,
@@ -3140,8 +3178,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .ocupacion-leyenda-fija {
@@ -3220,8 +3258,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .folio-subtitulo {
@@ -3406,8 +3444,8 @@ button.barra {
   color: var(--texto-suave);
   font-size: var(--tamano-pista);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .movimientos-total strong {
@@ -3611,8 +3649,8 @@ button.barra {
   font-size: var(--tamano-pista);
   line-height: var(--interlinea-pista);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .lo-que-falta ul {
@@ -3818,8 +3856,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .datos-titular dd {
@@ -3890,8 +3928,8 @@ button.barra {
   color: var(--texto-suave);
   font-size: var(--tamano-pista);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .campos-2 {
@@ -4076,8 +4114,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .notas-lista {
@@ -4094,8 +4132,7 @@ button.barra {
   flex-direction: column;
   gap: var(--espacio-2-medio);
   padding: var(--espacio-3) var(--espacio-3-medio);
-  border: 1px solid var(--borde);
-  border-left: 3px solid var(--acento);
+  border: 1px solid var(--acento);
   border-radius: var(--radio-chico);
   background: var(--fondo-pagina);
 }
@@ -4265,8 +4302,8 @@ button.barra {
   font-size: var(--tamano-pista);
   line-height: var(--interlinea-pista);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .preparacion-panel {
@@ -4292,8 +4329,8 @@ button.barra {
 }
 
 .preparacion-empezado {
-  border-color: var(--borde-fuerte);
-  border-left: 4px solid var(--info);
+  border-color: var(--info);
+  background: var(--info-fondo);
 }
 
 .preparacion-codigo {
@@ -4504,8 +4541,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .alojamiento-cabecera {
@@ -4813,8 +4850,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .grupo-reglas-subtitulo {
@@ -4975,8 +5012,8 @@ button.barra {
     font-size: var(--tamano-rotulo);
     line-height: var(--interlinea-rotulo);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: var(--encabezado-espaciado);
+    text-transform: var(--encabezado-mayusculas);
   }
 
   .servicios-cabecera .derecha {
@@ -5721,8 +5758,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .ficha-estados {
@@ -5759,8 +5796,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .ficha-datos dd {
@@ -6548,8 +6585,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .tarifas-nuevas-lista {

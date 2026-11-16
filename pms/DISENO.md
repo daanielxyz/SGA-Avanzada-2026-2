@@ -518,6 +518,26 @@ La IA (B4d) quedó integrada (PR #98 y #100) y encendida en Render. Lo que falta
 
 **Pendiente de la IA**, sin código: confirmar que la clave de Gemini esté en Bitwarden (colección `SGA demo`) y que el proyecto «Meridian Asistente» de Google AI Studio sea de la cuenta del equipo; presentar el asistente al cliente en el cierre 4 (vie 20 nov); y, cuando entren titulares, novedades y canales, poner al día `general`, `novedades` y `casos-servicio` del manual.
 
+## Sprint 5: rediseño visual (`feature/pms/rediseno`, Daniel)
+Decidido el 15 nov: **DEC-137** (número tentativo). Ajustes mínimos sobre lo que ya existe, desde `:root` y los componentes comunes de `src/index.css`; nada de flujos, pantallas ni textos. Se trabaja en un worktree aparte (`../SGA-rediseno`, puerto 5175) para comparar con el PMS de `develop` (5173) y se integra en un solo PR.
+
+**Auditoría** (capturas a 1280 y 390 px de 14 pantallas; `impeccable critique` y `audit` leídos a mano): todo texto pasaba AA (el par más bajo, `--texto-pista` sobre `--superficie-2`, 5,15:1); sin desbordes; casi sin colores fuera de variables. Lo que se corrige:
+
+| # | Problema | Cambio | Riesgo |
+|---|---|---|---|
+| 1 | Todo en un plano: página y tarjeta a 1,10:1, tarjeta y panel a 1,14:1; solo los bordes separaban | `--fondo-pagina #0b2230 → #071923`, `--fondo-marco #08202c → #06151e`, `--superficie-2 #153448 → #17384c`, `--superficie-fila #123246 → #13324a`; la tarjeta sigue en Medianoche. Ahora 1,2:1 entre capas | Medio: se volvió a medir todo texto; el más bajo queda en 4,88:1 (`--texto-pista` sobre panel) |
+| 2 | Dinero en monoespaciada en unas pantallas e Inter en otras; el código de la reserva en Consolas a 32 px | `--letra-codigo` = Inter. Las cifras de ancho fijo de Inter ensanchan el guion («RES - 2026»), así que van solo en `.derecha`, `.importe` y `.numero`; en una tabla, un código no se parte | Bajo |
+| 3 | El navegador pintaba con sus colores la selección, el cursor, las casillas y las barras | `::selection` (`--seleccion`), `caret-color`, `accent-color` y `scrollbar-color` desde la paleta | Muy bajo |
+| 4 | Borde izquierdo grueso de color (salidas vencidas, notas, preparación empezada) | Borde de 1 px en su color y fondo tintado (`--advertencia-fondo`, `--info-fondo`); el «!» y los textos siguen | Bajo |
+| 5 | Formas | `--radio 10 → 12`, `--radio-chico 6 → 8`; las etiquetas siguen como píldora | Bajo |
+| 6 | 22 rótulos en mayúsculas espaciadas compitiendo | `--rotulo-mayusculas: none` en los rótulos de un dato; mayúsculas solo en encabezados de tabla (`--encabezado-*`, 0,04em). El menú y el código de color de la marca no cambian | Bajo; las pruebas leen el texto del DOM |
+| 7 | Enlace de salto de 40 px; los códigos de salidas vencidas, 20 px de alto | Salto de 44 px; el código crece su área de toque por fuera (`::after`) sin mover el renglón | Muy bajo |
+| 8 | El avatar quedaba solo en el centro de la cabecera | `.quien` ya no toma 270 px fijos: el avatar queda junto al nombre | Bajo |
+
+**Pantallas de otros**: las reglas de canales y TRA (desde «Sprint 5 · canales» en `index.css`) no se tocaron; titulares y novedades, cuando entren. A cada una se le pasa el rediseño en un PR aparte: sus rótulos a `--rotulo-*` y `--encabezado-*`, y sus bordes izquierdos gruesos (`.conflicto`) al borde de 1 px con fondo tintado.
+
+**Comprobado**: 481 pruebas del PMS pasan; sin desbordes a 1280 y 390 px en las 14 pantallas. Capturas antes y después en el scratchpad de la sesión (no van a git).
+
 ## Sprint 5 adelantado: asistente de IA (`feature/pms/asistente-ia`, Daniel)
 Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el número es tentativo). Lo que sigue es el detalle para programarlo.
 
