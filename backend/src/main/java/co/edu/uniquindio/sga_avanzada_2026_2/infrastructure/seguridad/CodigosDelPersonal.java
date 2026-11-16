@@ -67,7 +67,7 @@ public class CodigosDelPersonal {
 
     private static String texto(Usuario usuario, CodigoUsuario.Proposito proposito, String codigo) {
         return proposito == CodigoUsuario.Proposito.ACTIVACION
-                ? "Hola " + usuario.nombre() + ":\n\nTe crearon una cuenta como " + usuario.rol() + ". Tu código"
+                ? "Hola " + usuario.nombre() + ":\n\nTe crearon una cuenta de " + usuario.rol().texto() + ". Tu código"
                         + " para fijar la contraseña es " + codigo + ". Vence en 24 horas y sirve una sola vez.\n"
                 : "Hola " + usuario.nombre() + ":\n\nTu código para fijar una contraseña nueva es " + codigo
                         + ". Vence en 15 minutos y sirve una sola vez. Si no lo pediste, ignora este mensaje.\n";

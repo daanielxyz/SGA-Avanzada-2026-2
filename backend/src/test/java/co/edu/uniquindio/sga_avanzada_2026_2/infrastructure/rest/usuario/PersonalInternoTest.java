@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -133,6 +134,18 @@ class PersonalInternoTest extends PruebaRestDeReservas {
         entrar(RITA, CLAVE).andExpect(status().isOk()).andExpect(jsonPath("$.rol").value("RECEPCIONISTA"));
         mvc.perform(get("/api/usuarios"))
                 .andExpect(jsonPath("$.contenido[*].correo").value(hasItem(RITA)));
+    }
+
+    @Test
+    @Tag("DEC-71")
+    void elCorreoDeActivacionDiceElRolEnPalabras() throws Exception {
+        enviar(post("/api/usuarios"), NUEVA).andExpect(status().isCreated());
+
+        // DEC-135: decía «Te crearon una cuenta como RECEPCIONISTA»
+        String cuerpo = notificador.enviados().stream().filter(m -> m.destino().equals(RITA)).toList().getLast()
+                .cuerpo();
+        assertTrue(cuerpo.contains("Te crearon una cuenta de Recepción"), cuerpo);
+        assertFalse(cuerpo.contains("RECEPCIONISTA"), cuerpo);
     }
 
     @Test
