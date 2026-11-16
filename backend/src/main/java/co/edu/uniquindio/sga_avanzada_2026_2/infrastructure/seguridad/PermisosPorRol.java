@@ -97,6 +97,7 @@ final class PermisosPorRol {
                         "/api/apartamentos/{codigo}/marcar-preparado",
                         "/api/apartamentos/{codigo}/marcar-pendiente-preparacion",
                         "/api/novedades/{id}/avanzar").hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
+                .requestMatchers(HttpMethod.GET, "/api/novedades").hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR) // DEC-132
                 .requestMatchers("/api/apartamentos/{codigo}/novedades")
                 .hasAnyRole(PERSONAL_SERVICIO, ADMINISTRADOR)
 

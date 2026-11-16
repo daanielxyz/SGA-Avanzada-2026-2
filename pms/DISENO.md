@@ -480,7 +480,7 @@ Al empezar: `CLAUDE.md`, `CLAUDE.local.md` (equipo **pms**), la sección pms del
    - que los rechazos de temporadas digan el nombre y no `TEM-n` (Temporadas y tarifas). Al integrarlo, el PMS ya no necesita cambiar los ids por nombres.
 
    Subir fotos desde el equipo sigue para después de la entrega.
-4. **Novedades de mantenimiento y titulares**. Primero su núcleo: un listado general de novedades (hoy la API las lista por apartamento) y un buscador de titulares por nombre o documento. El buscador ya está: `GET /api/titulares?buscar=` (DEC-131). Luego las pantallas, con un prompt para Claude Design escrito como los de `pms/prompts/sprint4/`, que revisa Daniel antes de lanzarlo.
+4. **Novedades de mantenimiento y titulares**. Primero su núcleo: un listado general de novedades (hoy la API las lista por apartamento) y un buscador de titulares por nombre o documento. El buscador ya está: `GET /api/titulares?buscar=` (DEC-131). Y la lista general: `GET /api/novedades?estado=&gravedad=&apartamento=`, con el nombre de quien dio cada paso (DEC-132). Luego las pantallas, con un prompt para Claude Design escrito como los de `pms/prompts/sprint4/`, que revisa Daniel antes de lanzarlo.
 
 Al terminar: el cierre 4 con el cliente (vie 20 nov). Revisar los PR de los demás es de todos, a medida que lleguen.
 

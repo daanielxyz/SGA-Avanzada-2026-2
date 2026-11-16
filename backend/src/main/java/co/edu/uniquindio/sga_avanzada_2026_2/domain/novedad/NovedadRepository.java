@@ -20,4 +20,12 @@ public interface NovedadRepository {
      * @param numeroPagina empieza en 0
      */
     Pagina<Novedad> listarPorApartamento(ApartamentoId apartamentoId, int numeroPagina);
+
+    /**
+     * Las novedades de todos los apartamentos que cumplen el filtro, de la más reciente a la más antigua, de 10 en 10
+     * (DEC-18 · DEC-132).
+     *
+     * @param numeroPagina empieza en 0
+     */
+    Pagina<Novedad> listar(FiltroNovedades filtro, int numeroPagina);
 }
