@@ -1,6 +1,9 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio;
 
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.AlojamientoId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.alojamiento.ImpuestoAlojamiento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Documento;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.TipoDocumento;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Dinero;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
@@ -81,6 +84,23 @@ class CancelacionDomainServiceTest {
         assertEquals(EstadoReserva.CANCELADA, reserva.estado());
         assertFalse(reserva.estaActiva());
         assertEquals(new Saldo(Dinero.de(100_000), SituacionSaldo.PENDIENTE), folio.saldo());
+    }
+
+    @Test
+    @Tag("RN-13")
+    @Tag("DEC-134")
+    void conIvaRetieneSobreElTotalConIvaYAnulaElIvaEnSuCargo() {
+        Reserva reserva = confirmada("RES-2026-00001", 10, 12);
+        Folio folio = folioDe(reserva);
+        // 200.000 de noches + 38.000 de IVA
+        new ImpuestoEstanciaDomainService().congelarAlCrear(reserva, folio,
+                new ImpuestoAlojamiento(true, new Porcentaje(19)), new Documento(TipoDocumento.CC, "1094"), dia(1));
+
+        Dinero retenido = cancelar(reserva, folio, politicaCongelada(), dia(9).atTime(10, 0)); // 29 h antes: 50 %
+
+        assertEquals(Dinero.de(119_000), retenido);
+        assertFalse(folio.tieneIvaVigente());
+        assertEquals(new Saldo(Dinero.de(119_000), SituacionSaldo.PENDIENTE), folio.saldo());
     }
 
     @Test

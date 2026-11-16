@@ -16,6 +16,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.OcupanteId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Registro;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.RegistroId;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.IvaReserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Salida;
@@ -34,7 +36,7 @@ final class ReservaMapper {
     }
 
     static Reserva aDominio(ReservaJpa jpa) {
-        return new Reserva(
+        Reserva reserva = new Reserva(
                 new ReservaId(jpa.getCodigo()),
                 new ApartamentoId(jpa.getApartamentoCodigo()),
                 new TitularId(jpa.getTitularId()),
@@ -70,6 +72,9 @@ final class ReservaMapper {
                                 new Documento(c.getTipoNuevo(), c.getNumeroNuevo()), c.getMotivo(),
                                 new UsuarioId(c.getAutor()), c.getFechaHora(), c.isTitular()))
                         .toList());
+        // DEC-134
+        reserva.congelarIva(new IvaReserva(new Porcentaje(jpa.getIvaPorcentaje()), jpa.isIvaExento()));
+        return reserva;
     }
 
     /**
@@ -95,6 +100,8 @@ final class ReservaMapper {
         jpa.setExtrasParqueadero(reserva.extras().parqueadero().monto());
         jpa.setExtrasMascotas(reserva.extras().mascotas().monto());
         jpa.setMascotas(reserva.mascotas());
+        jpa.setIvaPorcentaje(reserva.ivaReserva().porcentaje().valor());
+        jpa.setIvaExento(reserva.ivaReserva().exento());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
                 r.autor().valor(), r.anulado(), r.motivoCorreccion(), r.motivoSinPago())));

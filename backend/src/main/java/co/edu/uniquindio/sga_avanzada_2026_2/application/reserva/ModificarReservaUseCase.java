@@ -12,6 +12,8 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Ocupante;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.Reserva;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaRepository;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.DisponibilidadDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.ImpuestoEstanciaDomainService;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.titular.Titular;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.servicio.TarificacionDomainService;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.CalendarioTemporadas;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.tarifa.Cotizacion;
@@ -39,12 +41,14 @@ public class ModificarReservaUseCase {
     private final DisponibilidadDomainService disponibilidad;
     private final TarificacionDomainService tarificacion;
     private final CupoParqueaderoDomainService cupoParqueadero;
+    private final ImpuestoEstanciaDomainService impuestos;
     private final Clock reloj;
 
     public ModificarReservaUseCase(CargadorReserva cargador, ReservaRepository reservas, FolioRepository folios,
                                    TarifaRepository tarifas, DisponibilidadDomainService disponibilidad,
                                    TarificacionDomainService tarificacion,
-                                   CupoParqueaderoDomainService cupoParqueadero, Clock reloj) {
+                                   CupoParqueaderoDomainService cupoParqueadero,
+                                   ImpuestoEstanciaDomainService impuestos, Clock reloj) {
         this.cargador = cargador;
         this.reservas = reservas;
         this.folios = folios;
@@ -52,6 +56,7 @@ public class ModificarReservaUseCase {
         this.disponibilidad = disponibilidad;
         this.tarificacion = tarificacion;
         this.cupoParqueadero = cupoParqueadero;
+        this.impuestos = impuestos;
         this.reloj = reloj;
     }
 
@@ -73,7 +78,9 @@ public class ModificarReservaUseCase {
         LocalDate hoy = LocalDate.now(reloj);
         Estancia estancia = new Estancia(comando.entrada(), comando.salida());
         List<Ocupante> ocupantes = OcupanteCommand.aDominio(comando.ocupantes());
-        Dinero valorAnterior = reserva.valorConExtras();
+        // DEC-134: sin el IVA, que se ajusta en su propio cargo
+        Titular titular = cargador.titular(reserva.titularId());
+        Dinero valorAnterior = reserva.valorSinIvaConExtras();
         // BL-23: lo que no llega en el comando se conserva
         int carros = Optional.ofNullable(comando.carros()).orElse(reserva.carros());
         int motos = Optional.ofNullable(comando.motos()).orElse(reserva.motos());
@@ -85,7 +92,7 @@ public class ModificarReservaUseCase {
                 parametros.umbralEdadFacturable(), calendario,
                 tarifas.buscarVigentesPorApartamento(destino.codigo(), hoy));
         reserva.modificar(estancia, ocupantes, destino.codigo(), cotizacion, destino.capacidad(),
-                calendario.estanciaMinimaPara(estancia), cargador.titular(reserva.titularId()), hoy);
+                calendario.estanciaMinimaPara(estancia), titular, hoy);
         // RP-03 · DEC-93: las mascotas, contra el límite del apartamento destino
         parametros.exigirMascotas(mascotas, destino);
         // RP-02: los vehículos y las nuevas fechas también deben caber en el parqueadero
@@ -94,7 +101,8 @@ public class ModificarReservaUseCase {
         // DEC-89 · BL-23: modificar recalcula los extras, porque el parqueadero puede cobrarse por noche
         reserva.declararExtras(carros, motos, mascotas,
                 parametros.calcularExtras(carros, motos, mascotas, estancia.noches().size()));
-        folio.ajustarPorModificacion(valorAnterior, reserva.valorConExtras(), hoy);
+        folio.ajustarPorModificacion(valorAnterior, reserva.valorSinIvaConExtras(), hoy);
+        impuestos.recalcularAlModificar(reserva, folio, alojamiento.impuesto(), titular.documento(), hoy);
 
         reservas.guardar(reserva);
         folios.guardar(folio);
