@@ -20,6 +20,7 @@ import Paginador from '../componentes/Paginador'
 import SeleccionVarios from '../componentes/SeleccionVarios'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
+import { totalConIva } from '../reserva/valor'
 import EnviosTraConError from '../reserva/EnviosTraConError'
 
 const FILTROS = ['desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
@@ -507,7 +508,7 @@ function Resultados({ pagina, hayFiltros, volverA, alLimpiar, alCambiarPagina }:
                   </td>
                   <td>{NOMBRE_DEL_CANAL[reserva.canalOrigen]}</td>
                   <td className="derecha numero">{reserva.ocupantes.length}</td>
-                  <td className="derecha codigo importe">{dinero(reserva.valor.total)}</td>
+                  <td className="derecha codigo importe">{dinero(totalConIva(reserva.valor))}</td>
                 </tr>
               ))}
             </tbody>
@@ -543,7 +544,7 @@ function Resultados({ pagina, hayFiltros, volverA, alLimpiar, alCambiarPagina }:
                     {NOMBRE_DEL_CANAL[reserva.canalOrigen]} ·{' '}
                     {cantidad(reserva.ocupantes.length, 'ocupante', 'ocupantes')}
                   </span>
-                  <span className="codigo importe">{dinero(reserva.valor.total)}</span>
+                  <span className="codigo importe">{dinero(totalConIva(reserva.valor))}</span>
                 </span>
               </Link>
             </li>

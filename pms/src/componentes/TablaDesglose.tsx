@@ -1,26 +1,17 @@
+import type { Valor } from '../api/reservas'
 import { dinero, fechaCorta } from '../formato'
-
-interface Noche {
-  noche: string
-  temporada: string
-  /** DEC-117: el nombre que recepción reconoce; si no llega, el id. */
-  temporadaNombre?: string
-  tarifa: number
-  ocupantesFacturables: number
-  subtotal: number
-}
+import { lineaIva, totalConIva } from '../reserva/valor'
 
 /**
  * Valor por noche y total de una estancia. En pantallas angostas la tarifa y los ocupantes pasan debajo de la fecha:
- * el subtotal se queda a la vista para que las noches sumen el total.
+ * el subtotal se queda a la vista para que las noches sumen el alojamiento. Si la estancia lleva IVA, abajo van el
+ * alojamiento, el IVA y el total con IVA (DEC-134).
  *
  * @param idTitulo el `id` del título que la nombra
  */
-export default function TablaDesglose({ idTitulo, desglose, total }: {
-  idTitulo: string
-  desglose: Noche[]
-  total: number
-}) {
+export default function TablaDesglose({ idTitulo, valor }: { idTitulo: string; valor: Valor }) {
+  const { desglose } = valor
+  const iva = lineaIva(valor)
   return (
     <div className="tarjeta tabla-marco">
       <div className="desplazable" tabIndex={0} role="group" aria-labelledby={idTitulo}>
@@ -58,9 +49,21 @@ export default function TablaDesglose({ idTitulo, desglose, total }: {
           </tbody>
         </table>
       </div>
+      {iva && (
+        <dl className="desglose-iva">
+          <div>
+            <dt>Alojamiento</dt>
+            <dd className="codigo">{dinero(valor.total)}</dd>
+          </div>
+          <div>
+            <dt>{iva.texto}</dt>
+            <dd className="codigo">{dinero(iva.valor)}</dd>
+          </div>
+        </dl>
+      )}
       <p className="desglose-total">
         <span className="desglose-total-rotulo">Total</span>
-        <span className="codigo desglose-total-valor">{dinero(total)}</span>
+        <span className="codigo desglose-total-valor">{dinero(totalConIva(valor))}</span>
       </p>
     </div>
   )

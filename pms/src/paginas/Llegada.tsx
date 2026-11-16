@@ -22,6 +22,7 @@ import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
 import CampoMotivo from '../folio/CampoMotivo'
 import { cantidad, dinero, fechaCorta, fechaHoy, noches, textoEdad } from '../formato'
+import { lineaIva, totalConIva } from '../reserva/valor'
 import FormularioPago from '../reserva/FormularioPago'
 import NotasTurno from '../reserva/NotasTurno'
 import DialogoTra from '../reserva/llegada/DialogoTra'
@@ -211,6 +212,7 @@ export default function Llegada() {
   const pista = pistaDelBloqueo(bloqueo, situacion.sinCobro, autorizaSinCobro)
   const pendientesTra = datosReserva.ocupantes.filter(tieneTraPendiente).length
   const totalNoches = noches(datosReserva.entrada, datosReserva.salida)
+  const iva = lineaIva(datosReserva.valor) // DEC-134
   const aFavor = folio.situacionSaldo === 'A_FAVOR' ? folio.saldo : 0
   const enviarMotivo = situacion.sinCobro && motivo.trim() ? motivo.trim() : undefined
 
@@ -350,7 +352,7 @@ export default function Llegada() {
         <div className="cobro">
           <div className="detalle-seccion">
             <h3 id="titulo-desglose-llegada">Desglose por noche</h3>
-            <TablaDesglose idTitulo="titulo-desglose-llegada" desglose={datosReserva.valor.desglose} total={datosReserva.valor.total} />
+            <TablaDesglose idTitulo="titulo-desglose-llegada" valor={datosReserva.valor} />
           </div>
           <div className="tarjeta falta-por-cobrar">
             <p className="folio-cifra-nombre">Falta por cobrar</p>
@@ -365,6 +367,12 @@ export default function Llegada() {
             <dl className="lineas">
               <dt>Estancia ({cantidad(totalNoches, 'noche', 'noches')})</dt>
               <dd>{dinero(datosReserva.valor.total)}</dd>
+              {iva && (
+                <>
+                  <dt>{iva.texto}</dt>
+                  <dd>{dinero(iva.valor)}</dd>
+                </>
+              )}
               {datosReserva.extras.parqueadero > 0 && (
                 <>
                   <dt>Parqueadero ({vehiculos(datosReserva)})</dt>
@@ -379,7 +387,7 @@ export default function Llegada() {
               )}
               <div className="lineas-separador" />
               <dt className="lineas-fuerte">Total</dt>
-              <dd className="lineas-fuerte">{dinero(datosReserva.valor.total + datosReserva.extras.total)}</dd>
+              <dd className="lineas-fuerte">{dinero(totalConIva(datosReserva.valor) + datosReserva.extras.total)}</dd>
               <dt>Pagado</dt>
               <dd>{dinero(folio.totalPagado)}</dd>
             </dl>

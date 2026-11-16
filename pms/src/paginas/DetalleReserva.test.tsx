@@ -34,6 +34,21 @@ describe('detalle de una reserva (CU-49)', () => {
     expect(screen.getByText('Noches').nextSibling).toHaveTextContent('3')
   })
 
+  it('DEC-134: con IVA, el desglose separa alojamiento, IVA y total', async () => {
+    const reserva = reservaDePrueba()
+    laApiRespondePorRuta({
+      [RUTA]: [200, reservaDePrueba({
+        valor: { ...reserva.valor, ivaPorcentaje: 19, ivaExento: false, iva: 237500, totalConIva: 1487500 },
+      })],
+    })
+    abrir()
+
+    expect(await screen.findByText('IVA (19 %)')).toBeInTheDocument()
+    expect(screen.getByText('IVA (19 %)').nextSibling).toHaveTextContent('$ 237.500')
+    expect(screen.getAllByText('Alojamiento')[0].nextSibling).toHaveTextContent('$ 1.250.000')
+    expect(screen.getByText('$ 1.487.500')).toBeInTheDocument()
+  })
+
   it('sin hora de llegada dice que no se ha informado', async () => {
     laApiRespondePorRuta({ [RUTA]: [200, reservaDePrueba({ horaEstimadaLlegada: null })] })
     abrir()

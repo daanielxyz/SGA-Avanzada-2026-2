@@ -65,6 +65,7 @@ const TIPO_DE_CARGO: Record<string, string> = {
   HOSPEDAJE: 'Hospedaje',
   SERVICIO_ADICIONAL: 'Servicio',
   PENALIDAD_CANCELACION: 'Penalidad',
+  IMPUESTO: 'IVA', // DEC-133
 }
 
 /** «Servicio», «Corrección · disminuye», «Ajuste · aumenta». Un ajuste sin `corrigeA` lo hizo el sistema (RN-14). */

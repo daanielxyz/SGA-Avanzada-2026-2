@@ -75,6 +75,14 @@ export interface Alojamiento {
   marca?: Marca | null
   /** Registro Nacional de Turismo, con el que se envía el TRA (DEC-130); null si no se ha escrito. */
   rnt?: string | null
+  /** El IVA de la estancia (DEC-133): las tarifas son la base sin IVA. Puede faltar en respuestas viejas. */
+  impuesto?: Impuesto | null
+}
+
+/** Si el alojamiento cobra el IVA de la estancia y su porcentaje (19 por defecto, apagado al empezar). */
+export interface Impuesto {
+  cobraIva: boolean
+  porcentaje: number
 }
 
 export interface DatosAlojamiento {
@@ -103,6 +111,16 @@ export function guardarUbicacion(latitud: number, longitud: number): Promise<Alo
 /** `PUT /api/alojamiento/rnt` (DEC-130): solo números, hasta 20; vacío lo borra. */
 export function guardarRnt(rnt: string): Promise<Alojamiento> {
   return pedir<Alojamiento>('/api/alojamiento/rnt', { method: 'PUT', cuerpo: { rnt } })
+}
+
+/**
+ * `PUT /api/alojamiento/iva` (DEC-133), solo el administrador. Rige para las llegadas que vienen: lo ya cobrado no
+ * cambia.
+ *
+ * @throws ErrorApi 409 si se pide cobrarlo con el 0 %
+ */
+export function guardarIva(impuesto: Impuesto): Promise<Alojamiento> {
+  return pedir<Alojamiento>('/api/alojamiento/iva', { method: 'PUT', cuerpo: impuesto })
 }
 
 /** `PUT /api/alojamiento/parametros`: **reemplaza todos**, así que siempre van los 21 (los que faltan se apagan). */

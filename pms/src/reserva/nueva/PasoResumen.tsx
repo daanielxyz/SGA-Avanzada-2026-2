@@ -7,6 +7,7 @@ import Aviso from '../../componentes/Aviso'
 import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
 import { cantidad, dinero, fechaCorta, fechaHoy, horaEnPalabras, noches } from '../../formato'
+import { lineaIva, totalConIva } from '../valor'
 import Campo from './Campo'
 import {
   estimarExtras,
@@ -24,10 +25,12 @@ export interface DatosLlegada {
   mascotas: string
 }
 
-/** «El anticipo incluye el parqueadero y las mascotas.», según lo que tenga la reserva (DEC-89). */
-function textoAnticipo(extras: { parqueadero: number; mascotas: number }): string {
-  const incluye = [extras.parqueadero > 0 && 'el parqueadero', extras.mascotas > 0 && 'las mascotas'].filter(Boolean)
-  return `El anticipo incluye ${incluye.join(' y ')}.`
+/** «El anticipo incluye el IVA y el parqueadero.», según lo que tenga la reserva (DEC-89 · DEC-134). */
+function textoAnticipo(conIva: boolean, extras: { parqueadero: number; mascotas: number }): string {
+  const incluye = [conIva && 'el IVA', extras.parqueadero > 0 && 'el parqueadero', extras.mascotas > 0 && 'las mascotas']
+    .filter(Boolean) as string[]
+  const lista = incluye.length > 1 ? `${incluye.slice(0, -1).join(', ')} y ${incluye.at(-1)}` : incluye[0]
+  return `El anticipo incluye ${lista}.`
 }
 
 /** Solo dígitos, hasta tres, para los campos de cantidad. */
@@ -112,6 +115,8 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, tit
 
   const actual = cotizacion?.intento === intento ? cotizacion : null
   const valor = actual && 'valor' in actual ? actual.valor : null
+  // DEC-134: el IVA de la cotización, si el alojamiento lo cobra (quien llega con pasaporte no lo paga)
+  const ivaDeLaCotizacion = valor ? (lineaIva(valor)?.valor ?? 0) : 0
   const fallaCotizar = actual && 'falla' in actual ? actual.falla : null
 
   const limiteListo = !aceptaMascotas || limitePropio?.codigo === apartamento.codigo
@@ -246,7 +251,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, tit
             {fallaCotizar.regla && salidas(fallaCotizar.motivo)}
           </div>
         )}
-        {valor && <TablaDesglose idTitulo="titulo-desglose-nueva" desglose={valor.desglose} total={valor.total} />}
+        {valor && <TablaDesglose idTitulo="titulo-desglose-nueva" valor={valor} />}
       </section>
 
       <section className="tarjeta paso-tarjeta" aria-labelledby="titulo-llegada">
@@ -330,13 +335,14 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, tit
           {valor && (
             <p aria-live="polite" aria-atomic="true">
               <span className="paso-total-rotulo">Total</span>
-              <strong className="codigo">{dinero(valor.total + extras.total)}</strong>
-              {extras.total > 0 && (
+              <strong className="codigo">{dinero(totalConIva(valor) + extras.total)}</strong>
+              {(extras.total > 0 || ivaDeLaCotizacion > 0) && (
                 <span className="paso-total-extra">
-                  Estancia <span className="codigo">{dinero(valor.total)}</span>
+                  Alojamiento <span className="codigo">{dinero(valor.total)}</span>
+                  {ivaDeLaCotizacion > 0 && <> + IVA <span className="codigo">{dinero(ivaDeLaCotizacion)}</span></>}
                   {extras.parqueadero > 0 && <> + parqueadero <span className="codigo">{dinero(extras.parqueadero)}</span></>}
                   {extras.mascotas > 0 && <> + mascotas <span className="codigo">{dinero(extras.mascotas)}</span></>}.{' '}
-                  {textoAnticipo(extras)}
+                  {textoAnticipo(ivaDeLaCotizacion > 0, extras)}
                 </span>
               )}
             </p>
