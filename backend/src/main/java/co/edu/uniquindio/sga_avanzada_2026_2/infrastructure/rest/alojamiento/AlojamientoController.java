@@ -1,5 +1,6 @@
 package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.alojamiento;
 
+import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.CambiarImpuestoAlojamientoUseCase;
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.application.alojamiento.ActualizarDatosAlojamientoUseCase;
@@ -51,6 +52,7 @@ public class AlojamientoController {
     private final CambiarValorServicioUseCase cambiarValorServicio;
     private final DesactivarServicioUseCase desactivarServicio;
     private final RegistrarRntUseCase registrarRnt;
+    private final CambiarImpuestoAlojamientoUseCase cambiarImpuesto;
 
     public AlojamientoController(AlojamientoActual alojamiento, ConsultarAlojamientoUseCase consultarAlojamiento,
                                  ActualizarDatosAlojamientoUseCase actualizarDatos,
@@ -61,7 +63,8 @@ public class AlojamientoController {
                                  DeshabilitarMedioPagoUseCase deshabilitarMedioPago,
                                  AgregarServicioAdicionalUseCase agregarServicio,
                                  CambiarValorServicioUseCase cambiarValorServicio,
-                                 DesactivarServicioUseCase desactivarServicio, RegistrarRntUseCase registrarRnt) {
+                                 DesactivarServicioUseCase desactivarServicio, RegistrarRntUseCase registrarRnt,
+                                 CambiarImpuestoAlojamientoUseCase cambiarImpuesto) {
         this.alojamiento = alojamiento;
         this.consultarAlojamiento = consultarAlojamiento;
         this.actualizarDatos = actualizarDatos;
@@ -74,6 +77,7 @@ public class AlojamientoController {
         this.cambiarValorServicio = cambiarValorServicio;
         this.desactivarServicio = desactivarServicio;
         this.registrarRnt = registrarRnt;
+        this.cambiarImpuesto = cambiarImpuesto;
     }
 
     @GetMapping
@@ -100,6 +104,13 @@ public class AlojamientoController {
     @PutMapping("/rnt")
     public AlojamientoResponse registrarRnt(@Valid @RequestBody RntRequest solicitud) {
         return AlojamientoResponse.de(registrarRnt.ejecutar(alojamiento.id(), solicitud.rnt()));
+    }
+
+    /** Enciende o apaga el IVA de la estancia y su porcentaje (DEC-133). Solo el administrador. */
+    @PutMapping("/iva")
+    public AlojamientoResponse cambiarImpuesto(@Valid @RequestBody ImpuestoRequest solicitud) {
+        return AlojamientoResponse.de(cambiarImpuesto.ejecutar(alojamiento.id(), solicitud.cobraIva(),
+                solicitud.porcentaje()));
     }
 
     @PutMapping("/ubicacion")

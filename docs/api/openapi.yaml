@@ -1358,6 +1358,30 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+  /api/alojamiento/iva:
+    put:
+      tags:
+        - alojamiento-controller
+      operationId: cambiarImpuesto
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImpuestoRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/AlojamientoResponse"
+        default:
+          description: "Error: 400 VALIDACION, 401 NO_AUTENTICADO, 403 SIN_PERMISO, 404 NO_ENCONTRADO, 409 REGLA_NEGOCIO, entre otros"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
   /api/alojamiento/rnt:
     put:
       tags:
@@ -4660,6 +4684,29 @@ components:
           "$ref": "#/components/schemas/MarcaResponse"
         rnt:
           type: string
+        impuesto:
+          "$ref": "#/components/schemas/ImpuestoResponse"
+    ImpuestoResponse:
+      type: object
+      properties:
+        cobraIva:
+          type: boolean
+        porcentaje:
+          type: integer
+          format: int32
+    ImpuestoRequest:
+      type: object
+      properties:
+        cobraIva:
+          type: boolean
+        porcentaje:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 0
+      required:
+        - cobraIva
+        - porcentaje
     RntRequest:
       type: object
       properties:

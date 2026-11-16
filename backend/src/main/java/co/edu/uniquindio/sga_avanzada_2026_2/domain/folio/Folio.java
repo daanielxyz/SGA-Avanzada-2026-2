@@ -5,6 +5,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Extras;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.FormatoTexto;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MedioPago;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.MotivoRechazo;
+import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.Porcentaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.ReglaDominioException;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.compartido.UsuarioId;
 import co.edu.uniquindio.sga_avanzada_2026_2.domain.reserva.ReservaId;
@@ -102,6 +103,29 @@ public class Folio {
         if (extras.mascotas().esPositivo()) {
             agregarServicioAdicional("Mascotas", extras.mascotas(), fecha);
         }
+    }
+
+    /**
+     * Carga el IVA de la estancia, calculado en la llegada y congelado desde ahí (DEC-133). Se paga hasta la salida,
+     * como un consumo.
+     *
+     * @param porcentaje el del alojamiento, para el concepto («IVA del alojamiento (19 %)»)
+     * @throws ReglaDominioException si el folio está cerrado (CAR-07), el valor no es positivo (CAR-06) o ya tiene
+     *                               un IVA vigente
+     */
+    // DEC-133
+    public CargoId cargarIva(Dinero iva, Porcentaje porcentaje, LocalDate fecha) {
+        if (tieneIvaVigente()) {
+            throw new ReglaDominioException("El folio ya tiene el IVA de la estancia");
+        }
+        return agregar(TipoCargo.IMPUESTO, "IVA del alojamiento (" + porcentaje.valor() + " %)", iva, null, fecha,
+                null);
+    }
+
+    /** Si ya tiene un cargo de IVA que no se haya corregido (DEC-133). */
+    public boolean tieneIvaVigente() {
+        return cargos.stream().anyMatch(c -> c.tipo() == TipoCargo.IMPUESTO
+                && cargos.stream().noneMatch(otro -> c.id().equals(otro.corrigeA())));
     }
 
     /**
