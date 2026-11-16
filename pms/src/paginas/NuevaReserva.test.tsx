@@ -417,6 +417,20 @@ describe('paso 4: resumen', () => {
     expect(await screen.findByText('Ya tenía una cuenta con otro correo.')).toBeInTheDocument()
   })
 
+  it('DEC-134: con IVA, el total lo incluye y el anticipo también', async () => {
+    apiDePrueba({
+      '/api/cotizaciones': [200, { ...COTIZACION, ivaPorcentaje: 19, ivaExento: false, iva: 76000, totalConIva: 476000 }],
+    })
+    abrir()
+    const usuario = userEvent.setup()
+    await llegarAlPaso4(usuario)
+    await screen.findByRole('table', { name: 'Desglose por noche' })
+
+    expect(screen.getByText('IVA (19 %)').nextSibling).toHaveTextContent('$ 76.000')
+    expect(screen.getByText(/El anticipo incluye el IVA\./)).toHaveTextContent('Alojamiento $ 400.000 + IVA $ 76.000')
+    expect(screen.getAllByText('$ 476.000').length).toBeGreaterThan(0)
+  })
+
   it('suma el parqueadero y las mascotas al total y los envía (RP-02 · RP-03 · DEC-89)', async () => {
     const fetch = apiDePrueba()
     abrir()
@@ -431,7 +445,7 @@ describe('paso 4: resumen', () => {
     // Dos noches: (10.000 + 5.000) × 2 de parqueadero y 2 × 30.000 por las mascotas, sobre 400.000 de estancia
     expect(screen.getByText('$ 490.000')).toBeInTheDocument()
     expect(screen.getByText(/El anticipo incluye el parqueadero y las mascotas\./)).toHaveTextContent(
-      'Estancia $ 400.000 + parqueadero $ 30.000 + mascotas $ 60.000',
+      'Alojamiento $ 400.000 + parqueadero $ 30.000 + mascotas $ 60.000',
     )
     // El total cambia mientras se escribe: el lector de pantalla lo anuncia
     expect(screen.getByText('$ 490.000').closest('[aria-live="polite"]')).not.toBeNull()

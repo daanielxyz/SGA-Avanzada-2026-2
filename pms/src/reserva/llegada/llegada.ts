@@ -4,6 +4,7 @@ import type { Folio } from '../../api/folio'
 import type { Ocupante, Reserva } from '../../api/reservas'
 import type { Titular } from '../../api/titulares'
 import { edadEn, fechaCorta, fechaSinAnio, hora } from '../../formato'
+import { totalConIva } from '../valor'
 
 /** «12 nov 2026, 2:45 p. m.» a partir de AAAA-MM-DDTHH:mm. */
 export function fechaYHora(valor: string): string {
@@ -57,9 +58,12 @@ export function documentoDe({ tipoDocumento, numeroDocumento }: { tipoDocumento:
   return `${tipo ?? ''} ${numeroDocumento}`.trim()
 }
 
-/** Lo que falta por cobrar de la estancia y sus extras (BL-22). Los consumos no cuentan: se cobran a la salida. */
+/**
+ * Lo que falta por cobrar de la estancia con su IVA y sus extras (BL-22 · DEC-134). Los consumos no cuentan: se
+ * cobran a la salida.
+ */
 export function faltaPorCobrar(reserva: Reserva, folio: Folio): number {
-  return Math.max(0, reserva.valor.total + reserva.extras.total - folio.totalPagado)
+  return Math.max(0, totalConIva(reserva.valor) + reserva.extras.total - folio.totalPagado)
 }
 
 /** «Completo», «Falta 1 dato», «Faltan 6 datos». Cada dato es uno de `DatoTra` del backend. */
