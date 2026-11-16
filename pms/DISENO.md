@@ -847,6 +847,20 @@ Sin mockup: siguen los componentes de la base, como en «Sprint 4: lo que entró
 - **Prueba de la llegada** («una pendiente que entra hoy ofrece Continuar llegada»): fallaba después de las 10 p. m., cuando pasa la hora límite de la reserva de prueba; ahora fija el reloj al mediodía.
 
 **Probada en el navegador** (13 nov, Chrome contra el backend local): «Activas» y dos apartamentos, con sus etiquetas y la dirección; los filtros en el celular; corregir el documento de un huésped (el mismo documento se marca junto al campo), el historial y el diálogo del titular. Sin desbordes a 1280 y 390 px y sin errores en la consola. En la base local, RES-2026-00016 quedó con dos correcciones de prueba («Prueba del PMS»): el documento se cambió y se devolvió como estaba.
+## Sprint 5: titulares (`feature/pms/titulares`, Arias)
+Prompt en `pms/prompts/sprint5/titulares.md`; mockups en `pms/diseno/mockups-meridian-sprint5-titulares/S5Titulares/` (6 hojas a 1280 y 390 px, con su LEEME), revisados el 16 nov contra `docs/api/openapi.yaml` y el backend. Lo resuelto, con el número de la duda del LEEME:
+- **Validar** (1): el botón sale solo sin la identidad validada. Si otra persona la validó antes, la API responde 409 con `motivo` `IDENTIDAD_VALIDADA` (no en `codigo`, DEC-94): el diálogo se cierra, el detalle se recarga y avisa (8).
+- **El nombre por partes** (2): llega de la API (`nombres`, `primerApellido`, `segundoApellido`). Un titular de antes de DEC-98 trae todo en `nombres` y los apellidos vacíos: el detalle lo muestra tal cual y el diálogo de editar avisa que se separen.
+- **Apellidos opcionales**: el backend solo exige los nombres y al menos un contacto (`Titular.asignarDatos`); el prompt suponía el primer apellido obligatorio, y se quitó. El hotel sí cambia el nombre de un titular validado; lo que no puede es el huésped desde su cuenta.
+- **Reservas** (3, 4): las de `GET /api/reservas?titular=`, en el orden de la API, con `EtiquetaEstado` (Finalizada ya tiene su forma) y el total con IVA (`totalConIva`, DEC-134).
+- **Búsqueda** (11): «Buscar» o Enter; la búsqueda y la página viven en la dirección, así «← Titulares» vuelve a la misma.
+- **Textos** (7): se quedan los del mockup. El 403 es la página «Sin permiso» de siempre (6).
+- **Documento**: se muestra con los miles separados si es solo números («CC 1.094.000»); el pasaporte, tal cual. Un correo largo parte en la arroba o en un punto (`Correo`).
+- **Manual del asistente**: sección nueva `titulares.md` y `general.md` ya no dice que Titulares está en construcción.
+
+Programada en `src/paginas/Titulares.tsx` (`/titulares`) y `Titular.tsx` (`/titulares/:id`), recepción y administración. Los diálogos, el estado de la identidad y la lógica sin pantalla, en `src/titulares/`. Pruebas: `Titulares.test.tsx` y `src/titulares/logica.test.ts`.
+
+**Probada en el navegador** (16 nov, Chrome contra el backend local): buscar por nombre en cualquier orden y por documento con puntos, sin resultados y limpiar; detalle con reservas y vuelta a la búsqueda; editar sin contacto; el diálogo de validar (sin confirmarlo: no se deshace); un titular que no existe; personal de servicio sin permiso. Peor caso con un titular de prueba (`TIT-4`, nombre de 101 caracteres y correo de 103) a 1280, 1024, 390 y 320 px, sin desbordes ni errores en la consola. En la base local quedó ese titular de prueba.
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

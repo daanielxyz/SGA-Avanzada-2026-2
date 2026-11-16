@@ -8665,3 +8665,209 @@ button.barra {
     display: table-header-group;
   }
 }
+
+/* Sprint 5 · titulares: el buscador, la lista (una fila que se abre entera), el detalle y sus reservas. En lo
+   angosto, tarjetas; las tablas desde 760 px de contenido */
+.titulares,
+.titular {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-5);
+}
+
+.buscador {
+  padding: var(--espacio-4);
+}
+
+.buscador-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.buscador-fila .campo-control {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.tabla-titulares-marco,
+.tabla-reservas-titular-marco {
+  display: none;
+  position: relative;
+}
+
+.tabla-titulares td {
+  vertical-align: middle;
+}
+
+.tabla-titulares td.texto-largo {
+  max-width: 280px;
+}
+
+/* La fila se abre entera: el enlace va en el nombre (así la tabla sigue siendo tabla) y su capa cubre toda la fila */
+.fila-enlace {
+  position: relative;
+}
+
+.fila-enlace:hover {
+  background: var(--superficie-fila);
+}
+
+.fila-enlace-nombre {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.fila-enlace-nombre::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.fila-enlace-nombre:focus-visible {
+  outline: none;
+}
+
+.fila-enlace:focus-within {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+.fila-enlace-final {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+}
+
+.fila-enlace-flecha {
+  color: var(--texto-suave);
+  font-size: var(--tamano-medio);
+}
+
+.contacto-titular-celda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-minimo);
+  overflow-wrap: anywhere;
+}
+
+/* Identidad: «✓ Validada» o «Sin validar» con borde punteado; nunca solo el color */
+.identidad-validada > span:first-child {
+  color: var(--exito);
+}
+
+.identidad-sin-validar {
+  border-style: dashed;
+  color: var(--texto-suave);
+}
+
+.titulares-tarjetas,
+.reservas-titular-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.titular-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  padding: var(--espacio-3-medio) var(--espacio-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.titular-tarjeta-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.titular-tarjeta .contacto-titular-celda {
+  color: var(--texto-suave);
+  font-size: var(--tamano-chico);
+}
+
+.titular-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-3);
+}
+
+.titular-encabezado h1 {
+  margin: 0;
+}
+
+.titular-encabezado h1:focus {
+  outline: none;
+}
+
+.titular-encabezado .etiqueta {
+  white-space: normal;
+}
+
+.titular-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.bloque-sin-datos {
+  margin: 0;
+  padding: var(--espacio-4);
+  border-style: dashed;
+}
+
+.reservas-titular-tarjetas .reserva-tarjeta .importe {
+  display: block;
+  margin-top: var(--espacio-2);
+}
+
+/* Diálogos: los apellidos lado a lado, el contacto con un mensaje para los dos y el documento en grande */
+.formulario-titular {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.contacto-titular {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.documento-grande {
+  margin: 0 0 var(--espacio-3);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  background: var(--superficie-2);
+  font-size: var(--tamano-destacado);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+@container (min-width: 760px) {
+  .tabla-titulares-marco,
+  .tabla-reservas-titular-marco {
+    display: block;
+  }
+
+  .titulares-tarjetas,
+  .reservas-titular-tarjetas {
+    display: none;
+  }
+}
