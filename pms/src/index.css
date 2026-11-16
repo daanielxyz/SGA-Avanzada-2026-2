@@ -8871,3 +8871,248 @@ button.barra {
     display: none;
   }
 }
+
+
+/* Sprint 5 · novedades: la lista general (tarjetas en el celular, tabla desde 760 px de contenido), las etiquetas de
+   gravedad y estado, y los diálogos. Una novedad de gravedad alta lleva además una franja a la izquierda */
+.novedades {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.novedades h1:focus {
+  outline: none;
+}
+
+.filtros-resumen {
+  display: block;
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  font-weight: 400;
+  text-align: left;
+}
+
+.tabla-novedades-marco {
+  display: none;
+  position: relative;
+}
+
+.tabla-novedades td {
+  vertical-align: middle;
+}
+
+.tabla-novedades td:nth-child(4) {
+  min-width: 220px;
+  max-width: 360px;
+}
+
+/* La gravedad: tres barras, llenas según cuánto pesa, y la palabra; la alta, además, con borde de error */
+.gravedad-barras {
+  width: 12px;
+  height: 12px;
+}
+
+.gravedad-barras .llena {
+  fill: currentcolor;
+}
+
+.gravedad-barras .vacia {
+  fill: currentcolor;
+  opacity: 0.25;
+}
+
+.gravedad-alta {
+  border-color: var(--error);
+}
+
+.gravedad-alta .gravedad-barras {
+  color: var(--error);
+}
+
+.novedad-cerrada {
+  color: var(--texto-suave);
+}
+
+.novedad-cerrada > span[aria-hidden] {
+  color: var(--exito);
+}
+
+/* La fila o la tarjeta se abre entera: la capa del apartamento la cubre y la acción queda por encima */
+.novedad-fila {
+  position: relative;
+}
+
+.novedad-fila:hover {
+  background: var(--superficie-fila);
+}
+
+.novedad-fila:focus-within {
+  outline: 2px solid var(--foco);
+  outline-offset: -2px;
+}
+
+.novedad-alta {
+  box-shadow: inset 4px 0 0 var(--error);
+}
+
+.novedad-abrir {
+  padding: 0;
+  white-space: nowrap;
+  border: 0;
+  background: none;
+  color: var(--acento);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.novedad-abrir::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.novedad-abrir:focus-visible {
+  outline: none;
+}
+
+.novedad-accion {
+  position: relative;
+  z-index: 1;
+}
+
+.novedad-descripcion {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.novedad-quien {
+  margin: 0;
+  font-size: var(--tamano-pista);
+}
+
+.novedades-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.novedad-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espacio-2);
+  padding: var(--espacio-4);
+}
+
+.novedad-tarjeta .novedad-accion {
+  align-self: stretch;
+  margin-top: var(--espacio-1);
+}
+
+.novedad-tarjeta-cabecera {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+}
+
+.novedad-tarjeta .novedad-abrir {
+  font-size: var(--tamano-destacado);
+}
+
+/* Los diálogos: el apartamento en grande, las etiquetas y los pasos del historial */
+.formulario-novedad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.formulario-novedad fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.formulario-novedad legend {
+  padding: 0;
+}
+
+.formulario-novedad .rol-opcion > span {
+  align-items: flex-start;
+}
+
+.novedad-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin-bottom: var(--espacio-3);
+}
+
+.novedad-resumen p {
+  margin: 0;
+}
+
+.novedad-apartamento {
+  color: var(--acento);
+  font-size: var(--tamano-titulo);
+  font-weight: 700;
+}
+
+.novedad-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.novedad-descripcion-completa {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.novedad-pasos-titulo {
+  margin: var(--espacio-2) 0;
+  font-size: var(--tamano-control);
+}
+
+.novedad-pasos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.novedad-pasos li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-minimo);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-left: 3px solid var(--borde-fuerte);
+}
+
+@container (min-width: 760px) {
+  .tabla-novedades-marco {
+    display: block;
+  }
+
+  .novedades-tarjetas {
+    display: none;
+  }
+}
+
+/* Con tres filtros, los botones caben en la cuarta columna en vez de bajar a otra fila */
+.novedades .filtros-botones {
+  grid-column: auto;
+}

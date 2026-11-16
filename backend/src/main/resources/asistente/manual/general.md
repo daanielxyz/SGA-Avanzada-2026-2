@@ -19,8 +19,6 @@ El PMS es el sistema interno del hotel: lo usan recepción, el personal de servi
 - **Personal de servicio**: Preparación de apartamentos y Novedades (grupo «Operación»).
 - **Administración**: todo lo anterior y, además, Alojamiento, Apartamentos, Temporadas y tarifas, Política de cancelación, Usuarios y Canales de venta (grupo «Configuración»).
 
-Todavía está en construcción (la opción sale en el menú, pero la pantalla dice «Esta pantalla todavía está en construcción»): Novedades. Mientras tanto, lo que haría falta en ella se le pide al administrador.
-
 ## Cosas que valen en todo el sistema
 - Nada se borra: los pagos, los cargos y los registros se corrigen con un movimiento contrario que queda en el historial, con quién lo hizo y cuándo.
 - Cuando el sistema rechaza una acción, el mensaje en rojo junto a la acción dice por qué. Ese mensaje manda: si algo de este manual parece decir otra cosa, vale lo que dice el sistema.
