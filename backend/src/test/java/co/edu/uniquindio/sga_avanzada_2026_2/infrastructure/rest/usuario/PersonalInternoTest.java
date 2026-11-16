@@ -6,6 +6,7 @@ import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos.Notificador
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.externos.NotificadorLocal.Mensaje;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PruebaRestDeReservas;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Rol;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.SesionDePrueba;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Usuario;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.UsuarioRepository;
 import com.jayway.jsonpath.JsonPath;
@@ -231,6 +232,20 @@ class PersonalInternoTest extends PruebaRestDeReservas {
         entrar(RITA, CLAVE).andExpect(status().isUnauthorized());
         mvc.perform(put("/api/usuarios/" + rita + "/eliminar")).andExpect(status().isConflict());
         mvc.perform(put("/api/usuarios/USR-99999/eliminar")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Tag("USU-05")
+    @Tag("DEC-136")
+    void elAdministradorNoEliminaSuPropiaCuentaPeroSiLaDeOtro() throws Exception {
+        String rita = ritaActivada();
+
+        mvc.perform(put("/api/usuarios/" + SesionDePrueba.ADMINISTRADOR + "/eliminar"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REGLA_NEGOCIO"))
+                .andExpect(jsonPath("$.mensaje")
+                        .value("No puedes eliminar tu propia cuenta: pídeselo a otro administrador"));
+        mvc.perform(put("/api/usuarios/" + rita + "/eliminar")).andExpect(status().isOk());
     }
 
     @Test

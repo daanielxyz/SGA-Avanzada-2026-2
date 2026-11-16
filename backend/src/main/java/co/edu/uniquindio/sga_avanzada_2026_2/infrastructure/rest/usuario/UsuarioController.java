@@ -3,6 +3,7 @@ package co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.usuario;
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.PaginaResponse;
+import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.rest.UsuarioActual;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.GestionUsuarios;
 import co.edu.uniquindio.sga_avanzada_2026_2.infrastructure.seguridad.Rol;
 import jakarta.validation.Valid;
@@ -26,9 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class UsuarioController {
 
     private final GestionUsuarios gestion;
+    private final UsuarioActual usuario;
 
-    public UsuarioController(GestionUsuarios gestion) {
+    public UsuarioController(GestionUsuarios gestion, UsuarioActual usuario) {
         this.gestion = gestion;
+        this.usuario = usuario;
     }
 
     /** Nace sin contraseña: le llega al correo el código para fijarla. No tiene {@code GET} por id: ubica el listado. */
@@ -50,8 +53,9 @@ public class UsuarioController {
         return UsuarioResponse.de(gestion.modificar(id, Rol.valueOf(solicitud.rol()), solicitud.aDatos()));
     }
 
+    /** El administrador no elimina su propia cuenta (DEC-136): la elimina otro. */
     @PutMapping("/{id}/eliminar")
     public UsuarioResponse eliminar(@PathVariable String id) {
-        return UsuarioResponse.de(gestion.eliminar(id));
+        return UsuarioResponse.de(gestion.eliminar(id, usuario.id()));
     }
 }
