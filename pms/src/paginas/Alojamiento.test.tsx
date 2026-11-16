@@ -37,6 +37,7 @@ function apiCon({ inicial = alojamientoDePrueba(), rechazos = {} }: {
     ...accion('/api/alojamiento/medios-pago/TARJETA/deshabilitar', () => ({ mediosPago: ['EFECTIVO', 'TRANSFERENCIA'] })),
     ...accion('/api/alojamiento/marca', () => ({})),
     ...accion('/api/alojamiento/rnt', () => ({ rnt: '123456' })),
+    ...accion('/api/alojamiento/iva', () => ({ impuesto: { cobraIva: true, porcentaje: 19 } })),
   })
   return fetch
 }
@@ -106,6 +107,40 @@ describe('alojamiento (CU-50 · CU-51 · CU-53)', () => {
     expect(envios(fetch)).toEqual([expect.objectContaining({ url: '/api/alojamiento/rnt', metodo: 'PUT', cuerpo: { rnt: '123456' } })])
   })
 
+  it('DEC-133: enciende el IVA de la estancia con su porcentaje, en las reglas', async () => {
+    const fetch = apiCon()
+    const usuario = abrir()
+    await usuario.click(await screen.findByRole('tab', { name: 'Reglas de la estancia' }))
+    const iva = screen.getByRole('group', { name: 'Cobrar IVA de la estancia' })
+    // Viene apagado y sin el porcentaje a la vista
+    expect(within(iva).getByRole('radio', { name: 'No' })).toBeChecked()
+    expect(screen.queryByLabelText(/^Porcentaje/)).not.toBeInTheDocument()
+
+    await usuario.click(within(iva).getByRole('radio', { name: 'Sí' }))
+    expect(screen.getByLabelText(/^Porcentaje/)).toHaveValue('19')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar IVA' }))
+
+    expect(await screen.findByText('IVA guardado')).toBeInTheDocument()
+    expect(envios(fetch)).toEqual([
+      expect.objectContaining({ url: '/api/alojamiento/iva', metodo: 'PUT', cuerpo: { cobraIva: true, porcentaje: 19 } }),
+    ])
+  })
+
+  it('DEC-133: no deja cobrar el IVA con 0 % y lo dice junto al campo', async () => {
+    const fetch = apiCon({ inicial: alojamientoDePrueba({ impuesto: { cobraIva: true, porcentaje: 19 } }) })
+    const usuario = abrir()
+    await usuario.click(await screen.findByRole('tab', { name: 'Reglas de la estancia' }))
+    const porcentaje = screen.getByLabelText(/^Porcentaje/)
+
+    await usuario.clear(porcentaje)
+    await usuario.type(porcentaje, '0')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar IVA' }))
+
+    expect(await screen.findByText('Para cobrar el IVA, el porcentaje debe ser mayor que 0.')).toBeInTheDocument()
+    expect(porcentaje).toHaveAttribute('aria-invalid', 'true')
+    expect(envios(fetch)).toEqual([])
+  })
+
   it('sin descripción no envía y lo marca junto al campo', async () => {
     const fetch = apiCon()
     const usuario = abrir()
@@ -145,7 +180,7 @@ describe('alojamiento (CU-50 · CU-51 · CU-53)', () => {
     await usuario.click(await screen.findByRole('tab', { name: 'Reglas de la estancia' }))
     expect(screen.getByText(/Aplica a las reservas nuevas/)).toBeInTheDocument()
 
-    await usuario.click(screen.getByRole('radio', { name: 'No' }))
+    await usuario.click(within(screen.getByRole('group', { name: 'Acepta mascotas' })).getByRole('radio', { name: 'No' }))
     expect(screen.queryByLabelText('Máximo por reserva')).not.toBeInTheDocument()
     await usuario.click(screen.getByRole('button', { name: 'Guardar reglas' }))
 

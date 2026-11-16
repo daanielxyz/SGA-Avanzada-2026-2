@@ -1,6 +1,6 @@
 // Cada bloque de «Alojamiento» se llena con texto y se revisa antes de enviarlo, con los mismos límites del contrato
 // (docs/api/openapi.yaml): así el error sale en español junto al campo, sin esperar el 400.
-import { NOMBRES_COLOR, type Alojamiento, type DatosAlojamiento, type Marca, type NombreColor, type Parametros } from '../api/alojamiento'
+import { NOMBRES_COLOR, type Alojamiento, type DatosAlojamiento, type Impuesto, type Marca, type NombreColor, type Parametros } from '../api/alojamiento'
 import { COLOR_VALIDO } from './contraste'
 
 export type Errores<C extends string> = Partial<Record<C, string>>
@@ -264,4 +264,26 @@ export function nombreMedio(medio: string): string {
 /** El valor de un servicio: pesos sin decimales, 0 o más. Nulo si no se entiende. */
 export function valorServicio(texto: string): number | null {
   return pesos(texto)
+}
+
+// ---- IVA de la estancia (DEC-133) ----
+
+export type FormIva = { cobraIva: boolean; porcentaje: string }
+
+/** Un alojamiento sin el dato (respuesta vieja) se muestra como uno nuevo: apagado, con el 19 %. */
+export function formIva(alojamiento: Alojamiento): FormIva {
+  const impuesto = alojamiento.impuesto ?? { cobraIva: false, porcentaje: 19 }
+  return { cobraIva: impuesto.cobraIva, porcentaje: String(impuesto.porcentaje) }
+}
+
+// Los mismos límites de `ImpuestoRequest` (0 a 100) y de `ImpuestoAlojamiento` (si se cobra, más de 0)
+export function validarIva(form: FormIva): Errores<keyof FormIva> {
+  const porcentaje = entero(form.porcentaje)
+  if (porcentaje === null || porcentaje > 100) return { porcentaje: 'Escribe un número entero de 0 a 100.' }
+  if (form.cobraIva && porcentaje === 0) return { porcentaje: 'Para cobrar el IVA, el porcentaje debe ser mayor que 0.' }
+  return {}
+}
+
+export function cuerpoIva(form: FormIva): Impuesto {
+  return { cobraIva: form.cobraIva, porcentaje: Number(form.porcentaje.trim()) }
 }

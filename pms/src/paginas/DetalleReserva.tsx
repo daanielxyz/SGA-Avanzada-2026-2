@@ -374,7 +374,7 @@ export default function DetalleReserva() {
 
       <section aria-labelledby="titulo-desglose" className="detalle-seccion">
         <h2 id="titulo-desglose">Desglose por noche</h2>
-        <TablaDesglose idTitulo="titulo-desglose" desglose={reserva.valor.desglose} total={reserva.valor.total} />
+        <TablaDesglose idTitulo="titulo-desglose" valor={reserva.valor} />
       </section>
 
       {dialogo === 'confirmar' && (

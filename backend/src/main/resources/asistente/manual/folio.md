@@ -29,8 +29,12 @@ Con la reserva **en curso**: «Cargar consumo», se elige el servicio del catál
 ## Corregir o revertir un cargo
 - **Corregir consumo** (reserva en curso): dos pasos. Primero se revierte el cargo con un motivo; después se carga el correcto, ya propuesto con el mismo servicio y cantidad. Si sales después del primer paso, el cargo queda revertido y no se carga el nuevo.
 - **Revertir**: cualquier cargo, con motivo obligatorio. El hospedaje, el parqueadero, las mascotas y la retención no se vuelven a cargar desde el folio: su valor cambia modificando la reserva.
+- **El IVA** («IVA del alojamiento (19 %)», tipo «IVA») se carga solo al crear la reserva si el hotel lo cobra, y se corrige solo en la llegada si el huésped principal trae pasaporte. Revertirlo a mano deja la estancia sin IVA y no se vuelve a calcular: úsalo solo si no correspondía cobrarlo.
 
 ## Cerrar el folio
 - Al registrar la salida, el folio se cierra solo.
 - En una reserva **cancelada o con no-show**, se cierra con «Cerrar folio» cuando el saldo está al día.
 - Con saldo distinto de cero, **solo el administrador** puede cerrarlo, con «Autorizar y cerrar» y el motivo de su autorización; queda a la vista como «Cerrado con autorización» (RN-17). Recepción debe cobrar o devolver primero, o pedir la autorización.
+
+## Estado de cuenta (imprimir o PDF)
+«Estado de cuenta», arriba en el folio, abre una hoja con la marca y los datos del hotel, el huésped, la estancia, cada cargo con el IVA aparte, cada pago, el total, el saldo, la política de cancelación de la reserva y las normas de la casa. «Imprimir o guardar en PDF» abre la impresión del navegador; para el PDF se elige «Guardar como PDF» como destino. **No es una factura electrónica**: así lo dice la hoja. La factura válida en Colombia es la electrónica de la DIAN, que todavía no hace el sistema.

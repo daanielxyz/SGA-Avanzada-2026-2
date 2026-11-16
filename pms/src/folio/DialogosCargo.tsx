@@ -95,12 +95,21 @@ function FormularioRevertir({ codigo, cargo, textoBoton, alVolver, alRevertir, a
       <div className="dialogo-cuerpo">
         {error && <Aviso tipo="error" asunto="No se revirtió" mensaje={error.mensaje} detalles={error.detalles} />}
         <ResumenCargo cargo={cargo} />
-        {!esConsumo(cargo) && (
+        {cargo.tipo === 'IMPUESTO' ? (
+          // DEC-133: el IVA queda congelado desde la llegada; revertirlo es la forma de quitarlo si no correspondía
           <Aviso
             tipo="advertencia"
-            asunto="Desde el folio no se puede volver a cargar"
-            mensaje="Si el valor cambió, modifica la reserva."
+            asunto="El IVA no se vuelve a calcular"
+            mensaje="Revertirlo deja la estancia sin IVA. Úsalo solo si no correspondía cobrarlo: el de quien llega con pasaporte se corrige solo al registrar la llegada."
           />
+        ) : (
+          !esConsumo(cargo) && (
+            <Aviso
+              tipo="advertencia"
+              asunto="Desde el folio no se puede volver a cargar"
+              mensaje="Si el valor cambió, modifica la reserva."
+            />
+          )
         )}
         <p className="dialogo-texto">El cargo no se borra: queda tachado junto a su corrección.</p>
         <CampoMotivo

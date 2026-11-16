@@ -1,5 +1,6 @@
 import type { Reserva } from '../api/reservas'
 import { cantidad, dinero, fechaCorta, noches } from '../formato'
+import { totalConIva } from './valor'
 
 /** Qué reserva se está tocando, para no equivocarse antes de actuar. */
 export default function ResumenDialogo({ reserva }: { reserva: Reserva }) {
@@ -15,7 +16,7 @@ export default function ResumenDialogo({ reserva }: { reserva: Reserva }) {
         {cantidad(noches(reserva.entrada, reserva.salida), 'noche', 'noches')}
       </dd>
       <dt>Total</dt>
-      <dd className="codigo">{dinero(reserva.valor.total)}</dd>
+      <dd className="codigo">{dinero(totalConIva(reserva.valor))}</dd>
     </dl>
   )
 }

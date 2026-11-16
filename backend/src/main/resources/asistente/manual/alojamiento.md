@@ -23,6 +23,9 @@ Son los valores que usa todo el sistema; cambiarlos afecta lo que viene, no lo y
 - **Mascotas**: si se aceptan, el máximo por reserva y el cargo por mascota (una vez por estancia). Cada apartamento puede tener su propio límite en su ficha.
 - **Avanzado**: mínimos que el sistema hace cumplir (medios de pago habilitados, servicios activos, temporadas, tramos de la política, capacidades distintas de apartamentos). Se abre solo si uno tiene error.
 
+## IVA de la estancia
+En la pestaña «Reglas de la estancia», el bloque «IVA de la estancia»: «Cobrar IVA de la estancia» (Sí o No; viene en No) y el porcentaje (19 % en Colombia), con «Guardar IVA». Las tarifas son el valor **sin IVA**. Si se cobra, cada reserva **nueva** muestra el alojamiento, el IVA y el total, y el anticipo se calcula sobre el total con IVA. Las reservas ya creadas no cambian. El IVA es solo sobre las noches: consumos, parqueadero y mascotas no llevan IVA. Quien llega con **pasaporte** no lo paga; la cédula de extranjería sí. Antes de encenderlo, el hotel debe confirmarlo con su contador.
+
 ## Servicios adicionales
 Lo que recepción carga como consumo en el folio (minibar, lavandería…). «Nuevo servicio» con nombre y valor; un servicio «Incluido» va con valor 0 y no genera cobro. «Cambiar valor» rige desde ese momento. «Desactivar» lo quita del catálogo de recepción; puede rechazarse si quedaría por debajo del mínimo de servicios activos. Los desactivados aparecen al final, marcados.
 

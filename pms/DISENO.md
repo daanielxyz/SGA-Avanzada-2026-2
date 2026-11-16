@@ -657,6 +657,25 @@ Prompt en `pms/prompts/sprint5/canales.md`; mockups en `pms/diseno/mockups-merid
 - (P2) Al pasar de página en la bitácora con el teclado, el foco se perdía mientras cargaba; ahora vuelve al resumen cuando llega la página nueva (con su prueba).
 - (P3) El contador de la referencia de la clave no se anunciaba con el campo.
 
+## Sprint 5: IVA de la estancia y estado de cuenta (`feature/pms/estado-cuenta`, Reyes)
+Pantallas del IVA (DEC-133, PR #110) y del IVA desde la reserva (DEC-134, PR #111), y el estado de cuenta. **Sin mockups de Claude Design**, como el TRA: el IVA son agregados pequeños a pantallas que ya tienen diseño, y el estado de cuenta es una hoja para imprimir, no una pantalla del panel. Se arma con los endpoints que ya existían (reserva, folio, alojamiento, política y titular).
+- **Alojamiento → Reglas de la estancia**: el bloque «IVA de la estancia» (`alojamiento/BloqueIva.tsx`), con «Cobrar IVA de la estancia» (Sí/No, como «Acepta mascotas») y el porcentaje, que solo se ve en Sí y se conserva al apagarlo. No deja cobrar con 0 % y lo dice junto al campo, igual que el 409 del dominio. `PUT /api/alojamiento/iva`, solo administración.
+- **El valor con IVA** (`reserva/valor.ts`): `total` es la base sin IVA y la pantalla usa `totalConIva`, o `total` si la respuesta no lo trae. El desglose (`TablaDesglose`, en el detalle, la llegada y «Nueva reserva») muestra «Alojamiento · IVA (19 %) · Total» cuando el alojamiento cobraba IVA al crear la reserva, o «IVA (19 %) · exento por pasaporte» con $ 0. El bloque Pago suma la línea del IVA debajo de «Estancia» (anulada si se canceló). El listado, la llegada, lo que falta por cobrar y los diálogos usan el total con IVA. En «Nueva reserva», abajo: «Alojamiento $ X + IVA $ Y. El anticipo incluye el IVA.»
+- **Folio**: el cargo `IMPUESTO` sale como tipo «IVA». Al revertirlo, el aviso dice que no se vuelve a calcular y que el del pasaporte se corrige solo en la llegada. «Estado de cuenta» siempre está arriba, también con el folio cerrado.
+- **Estado de cuenta** (`/reservas/{codigo}/estado-cuenta`, recepción y administración; `paginas/EstadoCuenta.tsx` y `estadoCuenta/logica.ts`): una hoja clara sobre el panel, con la franja del acento de la marca del alojamiento (solo la franja: su contraste sobre blanco no está garantizado), el logo si tiene, nombre, dirección, ciudad y RNT. Luego el huésped (titular, documento en siglas «C.C.», correo y teléfono), la estancia (apartamento, entrada y salida con hora, noches, huéspedes, estado) y la frase «Este documento no es una factura electrónica», arriba y en el pie. Los cargos van en su orden, con la corrección debajo del corregido y con signo; al pie, «Subtotal sin IVA · IVA · Total», o solo «Total» sin IVA, o la línea «exento por pasaporte». También los pagos con su total, el resumen con el saldo y su situación, la política congelada (con su versión) en frases y las normas de la casa si hay. El IVA se toma de los cargos `IMPUESTO` y sus correcciones, así que sale lo que de verdad se cobró. Si el titular no carga, sigue con el nombre de la reserva; si falla otra cosa, «Reintentar».
+- **Imprimir**: «Imprimir o guardar en PDF» llama a `window.print()`. En `@media print` solo sale la hoja (sin cabecera, menú, ayuda ni la barra), en blanco, con márgenes de 14 mm, el encabezado de las tablas repetido en cada página, sin partir filas ni el resumen, y «Página n de m» abajo a la derecha (Chrome y Edge; los demás navegadores la ignoran). El nombre del PDF sale del título de la pestaña («Estado de cuenta RES-… · Meridian»).
+- **Lo que la API no tiene**: NIT, teléfono y correo del hotel; si el cliente los quiere en la hoja, es núcleo. La factura electrónica es BL-02 (MVP2).
+- **Manual del asistente**: `alojamiento.md` (el IVA) y `folio.md` (el cargo del IVA y el estado de cuenta).
+
+**Pruebas**: 27 nuevas (`estadoCuenta/logica.test.ts`, `paginas/EstadoCuenta.test.tsx`, `reserva/valor.test.ts`, el IVA en `Alojamiento.test.tsx`, `DetalleReserva.test.tsx`, `NuevaReserva.test.tsx` y `movimientos.test.ts`). Pasan las 508 del PMS, el lint y la compilación.
+
+**Probado en el navegador** (15 nov, Reyes, contra el backend local con V32 y V33): con DEC-133 el IVA solo aparecía en la llegada, y Reyes decidió que se viera desde la reserva y que el anticipo fuera sobre el total con IVA (DEC-134, núcleo aparte). Después: reservas nuevas con IVA, el folio con su cargo y el estado de cuenta. Un «Algo salió mal» en el detalle no era del código: Vite en Windows no registró la segunda de dos escrituras seguidas de `BloquePago.tsx` y sirvió una versión a medias; se arregló tocando los archivos y recargando.
+
+**Auditoría** (`impeccable` audit, harden y adapt, sin su ejecutable). Nota **18/20**: accesibilidad 4, rendimiento 4, tema 3 (la hoja clara usa sus propias variables `--hoja-*` sobre el tema oscuro; al imprimir el tamaño va en `pt`), adaptable 3 (la vista previa de impresión no se revisó en Safari ni Firefox), integridad 4. Contraste de la hoja: tinta Carbón 16:1 y texto suave 8,9:1 sobre blanco, 8,1:1 sobre el fondo del resumen. Arreglado:
+- (P2) Una reserva exenta por pasaporte mostraba los totales como si el hotel no cobrara IVA: ahora dice «IVA (19 %) · exento por pasaporte · $ 0».
+- (P2) Un logo con la dirección rota dejaba el ícono roto impreso en la hoja: se oculta. Además es decorativo (`alt` vacío), porque el nombre va justo debajo y el lector lo leía dos veces.
+- (P3) Al imprimir no había números de página: «Página n de m».
+
 ## Sprint 4: alojamiento (`feature/pms/alojamiento`)
 Mockups en `pms/diseno/mockups-meridian-sprint4-alojamiento/` (segunda entrega, con los mínimos abiertos y un servicio desactivado). Revisados contra `docs/api/openapi.yaml` y el dominio el 13 nov. Pantalla en `src/paginas/Alojamiento.tsx`, bloques en `src/alojamiento/`.
 
@@ -837,8 +856,8 @@ Programada en `src/paginas/Usuarios.tsx` (`/usuarios`, solo el administrador), `
 
 **Para el núcleo (sin urgencia, se suma a la tarea 3 de «Para Arias»)**:
 - Que una contraseña actual errada en `PUT /api/usuarios/perfil/contrasena` no responda 401 (es el estado de «no hay sesión»): un 409 o un 400 en el campo `actual`. El PMS ya lo maneja, pero cualquier otro cliente cerraría la sesión. **Hecho** en DEC-124: 400 con el código `CREDENCIALES_INVALIDAS` y el detalle en `actual`.
-- El correo de activación dice el rol crudo (`RECEPCIONISTA`) en `CodigosDelPersonal.texto`: que diga «Recepción».
-- Que el administrador no pueda eliminarse a sí mismo (hoy solo lo impide si es el último administrador). La pantalla no lo ofrece.
+- El correo de activación dice el rol crudo (`RECEPCIONISTA`) en `CodigosDelPersonal.texto`: que diga «Recepción». **Hecho** en DEC-135.
+- Que el administrador no pueda eliminarse a sí mismo (hoy solo lo impide si es el último administrador). La pantalla no lo ofrece. **Hecho** en DEC-136.
 - Reenviar el código de activación desde Usuarios: hoy se resuelve con «Olvidé mi contraseña».
 - Ya hecho por Reyes en DEC-118 (#83): los rechazos de temporadas dicen el nombre y no `TEM-n`; se quita de la tarea 3.
 ## Sprint 4: filtros de varios valores y corregir documento (`feature/pms/decisiones-119-120`, Arias)
@@ -848,6 +867,35 @@ Sin mockup: siguen los componentes de la base, como en «Sprint 4: lo que entró
 - **Prueba de la llegada** («una pendiente que entra hoy ofrece Continuar llegada»): fallaba después de las 10 p. m., cuando pasa la hora límite de la reserva de prueba; ahora fija el reloj al mediodía.
 
 **Probada en el navegador** (13 nov, Chrome contra el backend local): «Activas» y dos apartamentos, con sus etiquetas y la dirección; los filtros en el celular; corregir el documento de un huésped (el mismo documento se marca junto al campo), el historial y el diálogo del titular. Sin desbordes a 1280 y 390 px y sin errores en la consola. En la base local, RES-2026-00016 quedó con dos correcciones de prueba («Prueba del PMS»): el documento se cambió y se devolvió como estaba.
+## Sprint 5: titulares (`feature/pms/titulares`, Arias)
+Prompt en `pms/prompts/sprint5/titulares.md`; mockups en `pms/diseno/mockups-meridian-sprint5-titulares/S5Titulares/` (6 hojas a 1280 y 390 px, con su LEEME), revisados el 16 nov contra `docs/api/openapi.yaml` y el backend. Lo resuelto, con el número de la duda del LEEME:
+- **Validar** (1): el botón sale solo sin la identidad validada. Si otra persona la validó antes, la API responde 409 con `motivo` `IDENTIDAD_VALIDADA` (no en `codigo`, DEC-94): el diálogo se cierra, el detalle se recarga y avisa (8).
+- **El nombre por partes** (2): llega de la API (`nombres`, `primerApellido`, `segundoApellido`). Un titular de antes de DEC-98 trae todo en `nombres` y los apellidos vacíos: el detalle lo muestra tal cual y el diálogo de editar avisa que se separen.
+- **Apellidos opcionales**: el backend solo exige los nombres y al menos un contacto (`Titular.asignarDatos`); el prompt suponía el primer apellido obligatorio, y se quitó. El hotel sí cambia el nombre de un titular validado; lo que no puede es el huésped desde su cuenta.
+- **Reservas** (3, 4): las de `GET /api/reservas?titular=`, en el orden de la API, con `EtiquetaEstado` (Finalizada ya tiene su forma) y el total con IVA (`totalConIva`, DEC-134).
+- **Búsqueda** (11): «Buscar» o Enter; la búsqueda y la página viven en la dirección, así «← Titulares» vuelve a la misma.
+- **Textos** (7): se quedan los del mockup. El 403 es la página «Sin permiso» de siempre (6).
+- **Documento**: se muestra con los miles separados si es solo números («CC 1.094.000»); el pasaporte, tal cual. Un correo largo parte en la arroba o en un punto (`Correo`).
+- **Manual del asistente**: sección nueva `titulares.md` y `general.md` ya no dice que Titulares está en construcción.
+
+Programada en `src/paginas/Titulares.tsx` (`/titulares`) y `Titular.tsx` (`/titulares/:id`), recepción y administración. Los diálogos, el estado de la identidad y la lógica sin pantalla, en `src/titulares/`. Pruebas: `Titulares.test.tsx` y `src/titulares/logica.test.ts`.
+
+**Probada en el navegador** (16 nov, Chrome contra el backend local): buscar por nombre en cualquier orden y por documento con puntos, sin resultados y limpiar; detalle con reservas y vuelta a la búsqueda; editar sin contacto; el diálogo de validar (sin confirmarlo: no se deshace); un titular que no existe; personal de servicio sin permiso. Peor caso con un titular de prueba (`TIT-4`, nombre de 101 caracteres y correo de 103) a 1280, 1024, 390 y 320 px, sin desbordes ni errores en la consola. En la base local quedó ese titular de prueba.
+## Sprint 5: novedades (`feature/pms/novedades`, Arias)
+Prompt en `pms/prompts/sprint5/novedades.md`; mockups en `pms/diseno/mockups-meridian-sprint5-novedades/S5Novedades/` (5 hojas, primero a 390 px y con sufijo `Computador` a 1280), revisados el 16 nov contra `docs/api/openapi.yaml` y el backend. Lo resuelto, con el número de la duda del LEEME:
+- **Filtros** (1, 2): no se usan fichas nuevas, sino el mismo `SeleccionVarios` de Reservas (DEC-119), con el atajo «Por atender» (abiertas y en revisión), más gravedad y apartamento, «Limpiar» y «Filtrar». En el celular van plegados y, cerrados, dicen lo aplicado. Sin `estado` en la dirección se ven las por atender; «Limpiar» deja `estado=` vacío y se ven todas.
+- **Quién avanza** (3): personal de servicio y administración, como permite la API (`/api/novedades/{id}/avanzar`). La acción de la lista dice «Cerrar»; en la confirmación y en el historial, «Cerrar novedad» (4).
+- **Aviso corto** (5): la descripción recortada en la última palabra entera («APT-104 · Vidrio de la ventana del cuarto roto…»).
+- **«Hace …»** (6): minutos, horas o días; la fecha completa, en el historial.
+- **«Ver más»** (7): no se agregó. La descripción va a dos renglones y se lee completa en el historial, que se abre tocando el apartamento.
+- **Sin nombre** (8): «una persona que ya no está en el sistema» cuando `autorNombre` es nulo (DEC-132).
+- **Avanzar con rechazo** (10): un 409 cierra el diálogo, recarga la lista y avisa «Esta novedad ya avanzó».
+- **Textos** (13): se quedan los del mockup. El 403 es la página «Sin permiso» de siempre (11).
+- **Manual del asistente**: `novedades.md` y `casos-servicio.md` al día, y `general.md` ya no tiene pantallas en construcción.
+
+Programada en `src/paginas/Novedades.tsx` (`/novedades`, personal de servicio y administración). Los diálogos, las etiquetas de gravedad y estado y la lógica sin pantalla, en `src/novedades/`; la API en `src/api/novedades.ts`. Pruebas: `Novedades.test.tsx` y `src/novedades/logica.test.ts`.
+
+**Probada en el navegador** (16 nov, Chrome contra el backend local): como personal de servicio en el celular, reportar (los tres errores y luego bien) y pasar a revisión con confirmación; como administración en el computador, filtros, historial y cerrar desde el historial; una cerrada sin acción; recepción sin permiso. A 1280, 1024, 390 y 320 px, sin desbordes ni errores en la consola. Arreglado al revisar: el código del apartamento partido en la tabla, los pasos del historial desalineados, un subtítulo que repetía la gravedad y los botones de los filtros en otra fila. En la base local quedaron tres novedades de prueba («Prueba del PMS»), una de ellas cerrada.
 ## Estado
 - [x] Flujo acordado (DEC-84).
 - [x] Elegir las skills con el documento del equipo.

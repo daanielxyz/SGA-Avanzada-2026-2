@@ -72,6 +72,8 @@ describe('Movimientos del folio (RN-15 · RN-16)', () => {
   it('distingue una corrección de un ajuste del sistema', () => {
     expect(tipoDelCargo(CARGOS[4])).toBe('Corrección · disminuye')
     expect(tipoDelCargo(cargo('CAR-8', { tipo: 'AJUSTE', sentido: 'AUMENTA' }))).toBe('Ajuste · aumenta')
+    // DEC-133: el IVA de la estancia, cargado en la llegada
+    expect(tipoDelCargo(cargo('CAR-9', { tipo: 'IMPUESTO', concepto: 'IVA del alojamiento (19 %)' }))).toBe('IVA')
   })
 
   it('suma los cargos netos: la corrección que disminuye resta', () => {

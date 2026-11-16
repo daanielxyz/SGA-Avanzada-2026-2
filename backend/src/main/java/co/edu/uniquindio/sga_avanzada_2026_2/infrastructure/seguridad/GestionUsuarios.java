@@ -88,10 +88,15 @@ public class GestionUsuarios {
      * conservan su id como autor.
      *
      * @throws RecursoNoEncontradoException si no existe
-     * @throws ReglaDominioException        si ya estaba eliminado o es el último administrador
+     * @param autor el usuario de la sesión, que no puede eliminarse a sí mismo (DEC-136)
+     * @throws ReglaDominioException        si es la propia cuenta, ya estaba eliminado o es el último administrador
      */
     @Transactional
-    public UsuarioResult eliminar(String id) {
+    public UsuarioResult eliminar(String id, String autor) {
+        // DEC-136: quedaría fuera del sistema sin que nadie lo decida; otro administrador puede hacerlo
+        if (id.equals(autor)) {
+            throw new ReglaDominioException("No puedes eliminar tu propia cuenta: pídeselo a otro administrador");
+        }
         Usuario usuario = buscar(id);
         if (usuario.eliminado()) {
             throw new ReglaDominioException("Ese usuario ya está eliminado");

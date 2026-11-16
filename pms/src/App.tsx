@@ -8,12 +8,14 @@ import Apartamentos from './paginas/Apartamentos'
 import DetalleReserva from './paginas/DetalleReserva'
 import EnConstruccion from './paginas/EnConstruccion'
 import FichaApartamento from './paginas/FichaApartamento'
+import EstadoCuenta from './paginas/EstadoCuenta'
 import Folio from './paginas/Folio'
 import IniciarSesion from './paginas/IniciarSesion'
 import Inicio from './paginas/Inicio'
 import Llegada from './paginas/Llegada'
 import ListadoReservas from './paginas/ListadoReservas'
 import NoEncontrada from './paginas/NoEncontrada'
+import Novedades from './paginas/Novedades'
 import NuevaReserva from './paginas/NuevaReserva'
 import Ocupacion from './paginas/Ocupacion'
 import Panel from './paginas/Panel'
@@ -24,6 +26,8 @@ import PublicarPolitica from './paginas/PublicarPolitica'
 import RecuperarContrasena from './paginas/RecuperarContrasena'
 import SinPermiso from './paginas/SinPermiso'
 import Tarifas from './paginas/Tarifas'
+import Titular from './paginas/Titular'
+import Titulares from './paginas/Titulares'
 import Usuarios from './paginas/Usuarios'
 import Bitacora from './paginas/Bitacora'
 import Canales from './paginas/Canales'
@@ -35,10 +39,12 @@ const PANTALLAS: Partial<Record<string, ReactNode>> = {
   '/reservas': <ListadoReservas />,
   '/ocupacion': <Ocupacion />,
   '/preparacion': <Preparacion />,
+  '/novedades': <Novedades />,
   '/alojamiento': <Alojamiento />,
   '/politica': <Politica />,
   '/apartamentos': <Apartamentos />,
   '/tarifas': <Tarifas />,
+  '/titulares': <Titulares />,
   '/usuarios': <Usuarios />,
   '/canales': <Canales />,
   '/perfil': <Perfil />,
@@ -90,6 +96,14 @@ export default function App() {
           }
         />
         <Route
+          path="/reservas/:codigo/estado-cuenta"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <EstadoCuenta />
+            </SoloPara>
+          }
+        />
+        <Route
           path="/reservas/:codigo/llegada"
           element={
             <SoloPara roles={RECEPCION}>
@@ -110,6 +124,14 @@ export default function App() {
           element={
             <SoloPara roles={ADMINISTRACION}>
               <FichaApartamento />
+            </SoloPara>
+          }
+        />
+        <Route
+          path="/titulares/:id"
+          element={
+            <SoloPara roles={RECEPCION}>
+              <Titular />
             </SoloPara>
           }
         />
