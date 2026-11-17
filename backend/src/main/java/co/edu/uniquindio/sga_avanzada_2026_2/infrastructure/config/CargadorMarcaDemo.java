@@ -34,14 +34,16 @@ public class CargadorMarcaDemo implements ApplicationRunner {
     // El valor inicial de sga.alojamiento.* mientras el hotel no escribe los suyos
     private static final String SIN_DEFINIR = "Por definir";
 
-    // TODO(equipo): boceto del logo y foto de relleno, hasta tener los definitivos del brandbook
+    // TODO(equipo): boceto del logo, hasta tener el definitivo del brandbook. La portada, el valle de Cocora (Pexels)
     private static final String LOGO = "data:image/svg+xml," + URLEncoder.encode("""
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="34" cy="26" r="10" fill="#F4B942"/>\
             <path d="M4 50C16 34 24 24 32 24s18 12 28 26c-9-7-18-11-28-11S14 43 4 50z" fill="#1B3A24"/>\
             <path d="M47 44V18M47 18c-5-3-9-2-11 1M47 18c5-3 9-2 11 1M47 18c-3-4-7-6-10-5M47 18c3-4 7-6 10-5" \
             stroke="#1B3A24" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>""", StandardCharsets.UTF_8)
             .replace("+", "%20");
-    private static final String PORTADA = "https://picsum.photos/seed/quindio-valle/1600/900";
+    private static final String PORTADA =
+            "https://images.pexels.com/photos/28405086/pexels-photo-28405086.jpeg"
+                    + "?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop";
 
     static final MarcaDatos MARCA = new MarcaDatos(
             new MarcaDatos.ColoresDatos("#F8F7F1", "#FFFFFF", "#1B3A24", "#55705A", "#D9C9A3", "#8A8066", "#F4B942",
