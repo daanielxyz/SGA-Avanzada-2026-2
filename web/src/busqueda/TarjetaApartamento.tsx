@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import type { ApartamentoPublico, Estadia, Grupo } from '../api/apartamentos'
-import { enPesos, fechaCorta, noches, masDias } from '../formato'
+import { enPesos, fechaCorta, noches } from '../formato'
+import { enlaceAlApartamento } from './enlace'
 import Foto from './Foto'
 
 interface Props {
@@ -26,7 +27,7 @@ export default function TarjetaApartamento({ apartamento, busqueda }: Props) {
       <Foto url={foto?.url} alt={`Foto de ${apartamento.nombre}`} />
       <div className="tarjeta-cuerpo">
         <h3 id={id}>
-          <Link to={enlace(apartamento, busqueda)} className="enlace-tarjeta" title={apartamento.nombre}>
+          <Link to={enlaceAlApartamento(apartamento, busqueda)} className="enlace-tarjeta" title={apartamento.nombre}>
             {apartamento.nombre}
           </Link>
         </h3>
@@ -85,15 +86,4 @@ function grupoYNoches({ estadia, grupo }: NonNullable<Props['busqueda']>) {
   const ninos = grupo.ninos > 0 ? ` y ${grupo.ninos} ${grupo.ninos === 1 ? 'niño' : 'niños'}` : ''
   return `Total ${n} ${n === 1 ? 'noche' : 'noches'}, ${grupo.adultos} ${grupo.adultos === 1 ? 'adulto' : 'adultos'}`
     + ninos
-}
-
-// La página del apartamento abre con lo que se ve en la tarjeta
-function enlace({ codigo, precio }: ApartamentoPublico, busqueda: Props['busqueda']) {
-  const noche = precio?.desglose[0]?.noche
-  const parametros = busqueda
-    ? new URLSearchParams({ ...busqueda.estadia, adultos: String(busqueda.grupo.adultos),
-      ninos: String(busqueda.grupo.ninos) })
-    : new URLSearchParams(noche ? { entrada: noche, salida: masDias(noche, 1) } : {})
-  const consulta = parametros.toString()
-  return `/apartamentos/${encodeURIComponent(codigo)}${consulta ? `?${consulta}` : ''}`
 }

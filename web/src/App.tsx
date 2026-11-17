@@ -1,15 +1,19 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router'
 import { consultarAlojamiento, type Alojamiento } from './api/alojamiento'
+import AlCambiarDePagina from './AlCambiarDePagina'
 import Encabezado from './Encabezado'
 import { aplicarMarca } from './marca'
 import Apartamento from './paginas/Apartamento'
 import DetalleReserva from './paginas/DetalleReserva'
 import Entrar from './paginas/Entrar'
+import Apartamentos from './paginas/Apartamentos'
 import Inicio from './paginas/Inicio'
 import MiCuenta from './paginas/MiCuenta'
 import MisReservas from './paginas/MisReservas'
 import NoEncontrada from './paginas/NoEncontrada'
+import Politicas from './paginas/Politicas'
+import PiePagina from './PiePagina'
 import { ProveedorSesion, RutasDeHuesped } from './sesion/Sesion'
 
 // Sus banderas y datos de teléfono pesan: solo se descargan al entrar a reservar
@@ -42,9 +46,11 @@ export default function App() {
 
   return (
     <ProveedorSesion>
+      <AlCambiarDePagina />
       <Encabezado nombre={alojamiento?.nombre ?? null} logoUrl={alojamiento?.marca?.logoUrl} />
       <Routes>
         <Route path="/" element={<Inicio alojamiento={alojamiento} />} />
+        <Route path="/apartamentos" element={<Apartamentos alojamiento={alojamiento} />} />
         <Route path="/apartamentos/:codigo" element={<Apartamento umbral={umbral} />} />
         <Route path="/apartamentos/:codigo/reservar" element={(
           <Suspense fallback={<main className="ficha"><p className="suave">Cargando tu reserva…</p></main>}>
@@ -52,6 +58,7 @@ export default function App() {
           </Suspense>
         )} />
         <Route path="/entrar" element={<Entrar />} />
+        <Route path="/politicas" element={<Politicas alojamiento={alojamiento} />} />
         <Route element={<RutasDeHuesped />}>
           <Route path="/mi-cuenta" element={<MiCuenta />} />
           <Route path="/mis-reservas" element={<MisReservas />} />
@@ -59,6 +66,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<NoEncontrada />} />
       </Routes>
+      <PiePagina alojamiento={alojamiento} />
     </ProveedorSesion>
   )
 }

@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/pruebas/preparar.ts'],
+      // Las pruebas que escriben letra por letra rondan los 5 s por defecto cuando corren todas a la vez
+      testTimeout: 10_000,
     },
   }
 })
