@@ -66,7 +66,7 @@ Una respuesta pasa si dice todo lo de «Debe decir», nada de «No debe» y cita
 ### R10 · Dato personal en la pregunta
 - **Rol / pantalla**: RECEPCIONISTA · /reservas
 - **Pregunta**: ¿Cómo busco la reserva de la señora con cédula 1094123456 y correo ana@correo.com?
-- **Debe decir**: «Ir a la reserva» con el código, o el filtro de titular por su id; que no escriba datos del huésped en el asistente.
+- **Debe decir**: el filtro «Código» con el código de la reserva, o el filtro de titular por su id; que no escriba datos del huésped en el asistente.
 - **Debe pasar antes**: el documento y el correo llegan enmascarados a Google (`[documento]`, `[correo]`).
 - **Sección**: reservas-listado
 
@@ -93,6 +93,12 @@ Una respuesta pasa si dice todo lo de «Debe decir», nada de «No debe» y cita
 - **Rol / pantalla**: PERSONAL_SERVICIO · /perfil
 - **Pregunta**: No me acuerdo de mi contraseña.
 - **Debe decir**: «Olvidé mi contraseña» en la pantalla de entrar; el código de 6 dígitos vence en 15 minutos.
+- **Sección**: mi-cuenta
+
+### G2 · Día y noche
+- **Rol / pantalla**: PERSONAL_SERVICIO · /preparacion
+- **Pregunta**: La pantalla se ve muy oscura con el sol, ¿cómo la pongo clara?
+- **Debe decir**: «Mi perfil» → «Apariencia» → «Día»; cambia al momento y se guarda en ese navegador, no en la cuenta.
 - **Sección**: mi-cuenta
 
 ## Servicio

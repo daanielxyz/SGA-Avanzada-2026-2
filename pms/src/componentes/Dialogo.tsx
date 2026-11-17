@@ -43,6 +43,11 @@ export default function Dialogo({ titulo, subtitulo, ocupado = false, ancho = fa
       aria-labelledby={id}
       onCancel={(evento) => {
         evento.preventDefault()
+        // Un calendario abierto adentro ya usó ese Escape para cerrarse (CampoFecha)
+        if (marco.current?.hasAttribute('data-escape-atendido')) {
+          marco.current.removeAttribute('data-escape-atendido')
+          return
+        }
         if (!ocupado) alCerrar()
       }}
     >

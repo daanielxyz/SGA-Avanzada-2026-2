@@ -10,7 +10,7 @@ roles: RECEPCIONISTA, ADMINISTRADOR
 En «Reservas», botón «+ Nueva reserva». Son cuatro pasos: Estancia, Apartamento, Personas y Resumen. Se puede ir y volver entre pasos sin perder lo escrito, pero **al recargar la página se pierde todo** (no se guarda en el navegador porque tiene datos personales). Si intentas salir con algo escrito, el sistema pregunta antes.
 
 ## Paso 1 · Estancia
-Fecha de entrada, fecha de salida y número de ocupantes. La entrada no puede ser antes de hoy y la noche de salida no se cobra. Pulsa «Siguiente: apartamento».
+Fecha de entrada, fecha de salida y número de ocupantes. Las fechas se eligen en un calendario: pulsa «Entrada» (o «Salida»), toca el día de entrada y luego el de salida; al elegir la salida se cierra. «Siguiente» y «Anterior» cambian de mes, y «Limpiar fechas» las borra para empezar de nuevo. Los días que ya pasaron no se pueden elegir y la noche de salida no se cobra. Pulsa «Siguiente: apartamento».
 
 ## Paso 2 · Apartamento
 Salen los apartamentos libres para esas fechas y con capacidad para ese número de personas, con su valor estimado. El valor definitivo se calcula en el resumen, cuando se conocen las edades. Pulsa «Elegir este apartamento». Si no hay ninguno libre, «Cambiar fechas».

@@ -12,6 +12,7 @@ import MotivoFueraDeServicio from '../componentes/MotivoFueraDeServicio'
 import { FormaEstado } from '../componentes/EtiquetaEstado'
 import { claseDeEstado } from '../componentes/estadosReserva'
 import Paginador from '../componentes/Paginador'
+import CampoFecha from '../componentes/CampoFecha'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, FECHA_MAXIMA, fechaCorta, fechaHoy, fechaSinAnio, noches, sumarDias } from '../formato'
 import { barrasDe, nochesDelRango, type Barra } from '../ocupacion/barras'
@@ -126,8 +127,8 @@ export default function Ocupacion() {
       </div>
 
       <div className="tarjeta ocupacion-controles">
-        <CampoFecha etiqueta="Desde" valor={desde} alCambiar={(valor) => cambiar({ desde: valor })} />
-        <CampoFecha
+        <FiltroFecha etiqueta="Desde" valor={desde} alCambiar={(valor) => cambiar({ desde: valor })} />
+        <FiltroFecha
           etiqueta="Última noche"
           valor={ultima}
           error={rangoInvalido ? 'La última noche no puede ser anterior a «Desde».' : undefined}
@@ -207,7 +208,7 @@ export default function Ocupacion() {
 }
 
 /** El navegador avisa una fecha vacía mientras se escribe: solo se aplica una completa, sin borrar lo que se teclea. */
-function CampoFecha({ etiqueta, valor, error, alCambiar }: {
+function FiltroFecha({ etiqueta, valor, error, alCambiar }: {
   etiqueta: string
   valor: string
   error?: string
@@ -225,9 +226,9 @@ function CampoFecha({ etiqueta, valor, error, alCambiar }: {
       <label className="campo-rotulo" htmlFor={id}>
         {etiqueta}
       </label>
-      <input
+      <CampoFecha
+        etiqueta={etiqueta}
         id={id}
-        type="date"
         max={FECHA_MAXIMA}
         className="campo-control"
         value={borrador}

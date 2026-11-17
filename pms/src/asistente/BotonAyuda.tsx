@@ -4,7 +4,7 @@ import { useAsistente } from './contexto'
 export const ID_BOTON_AYUDA = 'boton-ayuda'
 export const ID_PANEL_AYUDA = 'panel-ayuda'
 
-/** «Ayuda» en la cabecera, junto a «Cerrar sesión» (DEC-127). En el celular, solo el ícono. */
+/** «Asistente de IA» en la cabecera, junto a «Cerrar sesión» (DEC-127). En el celular, solo el ícono: el texto queda para los lectores de pantalla. */
 export default function BotonAyuda() {
   const asistente = useAsistente()
   if (!asistente) return null
@@ -19,7 +19,7 @@ export default function BotonAyuda() {
       onClick={abierto ? cerrar : abrir}
     >
       <Icono nombre="ayuda" />
-      <span className="boton-ayuda-texto">Ayuda</span>
+      <span className="boton-ayuda-texto">Asistente de IA</span>
     </button>
   )
 }

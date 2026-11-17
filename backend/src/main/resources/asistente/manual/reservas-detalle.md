@@ -7,7 +7,7 @@ roles: RECEPCIONISTA, ADMINISTRADOR
 
 # El detalle de una reserva
 
-Se abre tocando una reserva en «Reservas» o con «Ir a la reserva». Arriba van el código, el estado y los botones de lo que se puede hacer según el estado.
+Se abre tocando una reserva en «Reservas»; para encontrarla por su código está el filtro «Código». Arriba van el código, el estado y los botones de lo que se puede hacer según el estado.
 
 ## Qué botones salen según el estado
 - **Pendiente**: «Confirmar» y «Cancelar». Si la entrada es hoy, también «Continuar llegada»; si es mañana, «Preparar llegada».

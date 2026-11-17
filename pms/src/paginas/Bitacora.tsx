@@ -7,6 +7,7 @@ import { errorDeRango, horaDe, mensajeLegible, NOMBRE_DEL_TIPO, rangoInicial, TE
 import { ConCodigos, EstadoCanal, ResultadoMensaje } from '../canales/Piezas'
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
+import CampoFecha from '../componentes/CampoFecha'
 import Paginador from '../componentes/Paginador'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, FECHA_MAXIMA, fechaCorta } from '../formato'
@@ -102,7 +103,7 @@ export default function Bitacora() {
     return (
       <div className="campo">
         <label className="campo-rotulo" htmlFor={`${formulario}-${campo}`}>{rotulo}</label>
-        <input id={`${formulario}-${campo}`} className="campo-control" type="date" max={FECHA_MAXIMA}
+        <CampoFecha etiqueta={rotulo} id={`${formulario}-${campo}`} className="campo-control" max={FECHA_MAXIMA}
           value={filtro[campo]} aria-invalid={Boolean(error)}
           aria-describedby={error ? `${formulario}-${campo}-error` : undefined}
           onChange={(e) => {

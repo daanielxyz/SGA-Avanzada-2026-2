@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../App'
 import { paginaDe, reservaDePrueba } from '../pruebas/reservasDePrueba'
 import { entrarComo, laApiRespondePorRuta } from '../pruebas/sesionDePrueba'
@@ -62,9 +62,34 @@ function escribirFecha(etiqueta: string | RegExp, valor: string, dentro: HTMLEle
   fireEvent.change(within(dentro).getByLabelText(etiqueta), { target: { value: valor } })
 }
 
+// Las fechas se eligen en un calendario que empieza en el mes de hoy: para estas pruebas, hoy es 1 de marzo de 2099.
+// Solo se cambia la fecha (`Date`), no los temporizadores, para que las esperas de las pruebas sigan andando.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2099-03-01T12:00:00') })
+})
+afterEach(() => {
+  vi.useRealTimers()
+})
+
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre',
+  'noviembre', 'diciembre']
+
+/** El día de una fecha (AAAA-MM-DD) en el calendario abierto. */
+function diaDelCalendario(fecha: string) {
+  const [, mes, dia] = fecha.split('-').map(Number)
+  const calendario = screen.getByRole('dialog', { name: 'Elegir fechas' })
+  return within(calendario).getByRole('button', { name: new RegExp(`, ${dia} de ${MESES[mes - 1]},`) })
+}
+
+/** Elige la entrada y, si se da, la salida en el calendario (al elegir la salida, se cierra solo). */
+function elegirEstancia(entrada: string, salida?: string) {
+  fireEvent.click(screen.getByLabelText('Entrada'))
+  fireEvent.click(diaDelCalendario(entrada))
+  if (salida) fireEvent.click(diaDelCalendario(salida))
+}
+
 async function completarEstancia(usuario: UserEvent, ocupantes = 1) {
-  escribirFecha('Entrada', '2099-03-10')
-  escribirFecha('Salida', '2099-03-12')
+  elegirEstancia('2099-03-10', '2099-03-12')
   const campo = screen.getByLabelText('Número de ocupantes')
   await usuario.clear(campo)
   await usuario.type(campo, String(ocupantes))
@@ -134,36 +159,78 @@ describe('paso 1: estancia (EST-01)', () => {
     apiDePrueba()
     abrir()
 
-    escribirFecha('Entrada', '2099-03-10')
-    escribirFecha('Salida', '2099-03-12')
+    elegirEstancia('2099-03-10', '2099-03-12')
 
     expect(await screen.findByText('2 noches')).toBeInTheDocument()
+    // Con las dos fechas el calendario se cierra y el foco queda en «Salida»
+    expect(screen.queryByRole('dialog', { name: 'Elegir fechas' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Entrada')).toHaveTextContent('10 mar 2099')
+    expect(screen.getByLabelText('Salida')).toHaveTextContent('12 mar 2099')
+    expect(screen.getByLabelText('Salida')).toHaveFocus()
   })
 
-  it('una salida que no es posterior se marca y no avanza', async () => {
+  it('sin la salida se marca y no avanza', async () => {
     const fetch = apiDePrueba()
     abrir()
     const usuario = userEvent.setup()
 
-    escribirFecha('Entrada', '2099-03-10')
-    escribirFecha('Salida', '2099-03-10')
+    elegirEstancia('2099-03-10')
+    await usuario.keyboard('{Escape}')
     await usuario.click(screen.getByRole('button', { name: /Siguiente: apartamento/ }))
 
-    expect(screen.getByText('La salida debe ser posterior a la entrada.')).toBeInTheDocument()
+    expect(screen.getByText('Elige la fecha de salida.')).toBeInTheDocument()
     expect(screen.getByLabelText('Salida')).toBeInvalid()
+    expect(screen.getByLabelText('Entrada')).not.toBeInvalid()
     expect(fetch.mock.calls.some(([url]) => String(url).includes('disponibles'))).toBe(false)
   })
 
-  it('una entrada pasada se marca', async () => {
+  it('un día que ya pasó no se puede elegir, y un día anterior a la entrada empieza de nuevo', async () => {
+    vi.setSystemTime(new Date('2099-03-05T12:00:00'))
+    apiDePrueba()
+    abrir()
+
+    fireEvent.click(screen.getByLabelText('Entrada'))
+    expect(diaDelCalendario('2099-03-04')).toHaveAttribute('aria-disabled', 'true')
+    fireEvent.click(diaDelCalendario('2099-03-04'))
+    expect(screen.getByLabelText('Entrada')).toHaveTextContent('Elegir fecha')
+
+    fireEvent.click(diaDelCalendario('2099-03-10'))
+    fireEvent.click(diaDelCalendario('2099-03-08'))
+    expect(screen.getByLabelText('Entrada')).toHaveTextContent('8 mar 2099')
+    expect(screen.getByLabelText('Salida')).toHaveTextContent('Elegir fecha')
+  })
+
+  it('el calendario se maneja con el teclado y se cierra con Escape, devolviendo el foco', async () => {
+    apiDePrueba()
+    abrir()
+    const usuario = userEvent.setup()
+    const entrada = screen.getByLabelText('Entrada')
+
+    await usuario.click(entrada)
+    // Abre con el foco en hoy; las flechas mueven de día y de semana
+    expect(diaDelCalendario('2099-03-01')).toHaveFocus()
+    await usuario.keyboard('{ArrowDown}{ArrowRight}{Enter}')
+    expect(entrada).toHaveTextContent('9 mar 2099')
+    await usuario.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog', { name: 'Elegir fechas' })).not.toBeInTheDocument()
+    expect(entrada).toHaveFocus()
+  })
+
+  it('«Limpiar fechas» las quita y «Siguiente» muestra el mes que sigue', async () => {
     apiDePrueba()
     abrir()
     const usuario = userEvent.setup()
 
-    escribirFecha('Entrada', '2001-01-01')
-    escribirFecha('Salida', '2099-03-10')
-    await usuario.click(screen.getByRole('button', { name: /Siguiente: apartamento/ }))
+    elegirEstancia('2099-03-10')
+    const calendario = screen.getByRole('dialog', { name: 'Elegir fechas' })
+    await usuario.click(within(calendario).getByRole('button', { name: 'Limpiar fechas' }))
+    expect(screen.getByLabelText('Entrada')).toHaveTextContent('Elegir fecha')
 
-    expect(screen.getByText(/La entrada no puede ser anterior a hoy/)).toBeInTheDocument()
+    expect(within(calendario).getByRole('table', { name: 'Marzo de 2099' })).toBeInTheDocument()
+    await usuario.click(within(calendario).getByRole('button', { name: 'Mes siguiente' }))
+    expect(within(calendario).queryByRole('table', { name: 'Marzo de 2099' })).not.toBeInTheDocument()
+    expect(within(calendario).getByRole('table', { name: 'Abril de 2099' })).toBeInTheDocument()
   })
 })
 
@@ -198,7 +265,7 @@ describe('paso 2: apartamento', () => {
 
     await usuario.click(await screen.findByRole('button', { name: 'Cambiar fechas' }))
 
-    expect(screen.getByLabelText('Entrada')).toHaveValue('2099-03-10')
+    expect(screen.getByLabelText('Entrada')).toHaveTextContent('10 mar 2099')
   })
 
   it('si falla se puede reintentar', async () => {
@@ -741,7 +808,7 @@ describe('moverse sin perder lo escrito', () => {
     abrir()
     const usuario = userEvent.setup()
 
-    escribirFecha('Entrada', '2099-03-10')
+    elegirEstancia('2099-03-10')
     await usuario.click(screen.getByRole('link', { name: 'Volver a reservas' }))
 
     const dialogo = screen.getByRole('dialog', { name: '¿Salir sin crear la reserva?' })

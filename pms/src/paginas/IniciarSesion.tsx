@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { ErrorApi } from '../api/cliente'
 import Aviso from '../componentes/Aviso'
+import FondoEntrada from '../componentes/FondoEntrada'
 import Logo from '../componentes/Logo'
 import { useTitulo } from '../componentes/useTitulo'
 import { useSesion } from '../sesion/contexto'
@@ -62,13 +63,7 @@ export default function IniciarSesion() {
 
   return (
     <main className="entrada">
-      <div className="entrada-arte">
-        <Logo decorativo />
-        <div className="entrada-lema">
-          <p className="entrada-lema-titulo">Cada detalle bajo control.</p>
-          <p className="entrada-lema-texto">La operación en su punto más alto.</p>
-        </div>
-      </div>
+      <FondoEntrada />
 
       <div className="entrada-formulario">
         <form className="formulario" onSubmit={enviar} noValidate aria-busy={entrando}>

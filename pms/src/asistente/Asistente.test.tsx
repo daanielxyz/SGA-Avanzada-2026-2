@@ -61,31 +61,33 @@ describe('ayuda del PMS (DEC-127)', () => {
     apiCon()
     const usuario = abrir('PERSONAL_SERVICIO')
 
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
 
-    const panel = screen.getByRole('complementary', { name: 'Ayuda del PMS' })
+    const panel = screen.getByRole('complementary', { name: 'Asistente de IA' })
     expect(within(panel).getByRole('heading', { name: '¿En qué te ayudo?' })).toBeInTheDocument()
     expect(within(panel).getByRole('button', { name: '¿Por cuál apartamento empiezo?' })).toBeInTheDocument()
     expect(within(panel).queryByRole('button', { name: '¿Cómo registro una llegada?' })).not.toBeInTheDocument()
     expect(within(panel).queryByRole('button', { name: 'Empezar de nuevo' })).not.toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Tu pregunta' })).toHaveFocus()
-    expect(screen.getByRole('button', { name: 'Ayuda' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Asistente de IA' })).toHaveAttribute('aria-expanded', 'true')
   })
 
   it('responde con el texto, las negritas y las fuentes, y manda la conversación anterior', async () => {
     const fetch = apiCon(NO_SHOW, DEL_MANUAL)
     const usuario = abrir('RECEPCIONISTA', '/reservas/RES-2026-00042')
 
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
     await usuario.type(screen.getByRole('textbox', { name: 'Tu pregunta' }), '¿Cómo declaro el no-show?{Enter}')
 
-    const panel = screen.getByRole('complementary', { name: 'Ayuda del PMS' })
+    const panel = screen.getByRole('complementary', { name: 'Asistente de IA' })
     expect(await within(panel).findByText('confirmada', { selector: 'strong' })).toBeInTheDocument()
     expect(within(panel).getAllByRole('listitem').length).toBeGreaterThanOrEqual(2)
     expect(within(panel).getByRole('link', { name: /Cancelar una reserva o declarar el no-show/ }))
       .toHaveAttribute('href', '/reservas')
-    expect(within(panel).getByRole('link', { name: /El detalle de una reserva/ }))
-      .toHaveAttribute('href', '/reservas/RES-2026-00042')
+    // El detalle es la pantalla donde ya se está: se nombra, pero no como enlace
+    const detalle = within(panel).getByText('El detalle de una reserva').closest('li') as HTMLElement
+    expect(within(detalle).queryByRole('link')).not.toBeInTheDocument()
+    expect(detalle).toHaveTextContent('Es la pantalla donde estás.')
 
     await usuario.type(screen.getByRole('textbox', { name: 'Tu pregunta' }), '¿Y la llegada?{Enter}')
 
@@ -102,7 +104,7 @@ describe('ayuda del PMS (DEC-127)', () => {
     const fetch = apiCon()
     const usuario = abrir('ADMINISTRADOR')
 
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
     await usuario.click(screen.getByRole('button', { name: '¿Cómo pongo un apartamento a la venta?' }))
     await screen.findByText('confirmada', { selector: 'strong' })
     await usuario.click(screen.getByRole('button', { name: 'Empezar de nuevo' }))
@@ -115,7 +117,7 @@ describe('ayuda del PMS (DEC-127)', () => {
   it('sin conexión deja la pregunta con «Reintentar», que la vuelve a enviar', async () => {
     const fetch = apiCon()
     const usuario = abrir()
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
     const conRed = fetch.getMockImplementation()
     fetch.mockImplementationOnce(() => Promise.reject(new TypeError('Failed to fetch')))
 
@@ -131,7 +133,7 @@ describe('ayuda del PMS (DEC-127)', () => {
   it('no envía una pregunta vacía ni una de más de 1.000 caracteres', async () => {
     const fetch = apiCon()
     const usuario = abrir()
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
 
     await usuario.click(screen.getByRole('button', { name: 'Preguntar' }))
     expect(screen.getByText('Escribe tu pregunta.')).toBeInTheDocument()
@@ -147,18 +149,50 @@ describe('ayuda del PMS (DEC-127)', () => {
     expect(preguntasEnviadas(fetch)).toHaveLength(0)
   })
 
-  it('se cierra con Escape, conserva la conversación y el foco vuelve a «Ayuda»', async () => {
+  it('fuera de una reserva, la fuente del folio no parece enlace y dice por dónde se llega', async () => {
+    apiCon({
+      ...NO_SHOW,
+      respuesta: 'Pulsa «Revertir» en el folio. También puedes ver [las tarifas](/tarifas) o [otra web](https://ejemplo.com).',
+      fuentes: [
+        { id: 'folio', titulo: 'El folio (la cuenta de la reserva)', pantalla: '/reservas/{codigo}/folio' },
+        { id: 'general', titulo: 'Cómo está organizado el PMS', pantalla: '/' },
+      ],
+    })
+    const usuario = abrir('ADMINISTRADOR', '/')
+
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
+    await usuario.type(screen.getByRole('textbox', { name: 'Tu pregunta' }), '¿Cómo corrijo un pago?{Enter}')
+
+    const panel = screen.getByRole('complementary', { name: 'Asistente de IA' })
+    const folio = (await within(panel).findByText('El folio (la cuenta de la reserva)')).closest('li') as HTMLElement
+    expect(within(folio).queryByRole('link', { name: /El folio/ })).not.toBeInTheDocument()
+    expect(folio).toHaveTextContent('Se abre desde «Reservas».')
+    expect(within(folio).getByRole('link', { name: /Ir a Reservas/ })).toHaveAttribute('href', '/reservas')
+    // La pantalla donde ya se está tampoco es enlace
+    const general = within(panel).getByText('Cómo está organizado el PMS').closest('li') as HTMLElement
+    expect(within(general).queryByRole('link')).not.toBeInTheDocument()
+    expect(general).toHaveTextContent('Es la pantalla donde estás.')
+    // Dentro del texto: el enlace interno lleva a su pantalla; el de otra web se queda en texto
+    expect(within(panel).getByRole('link', { name: 'las tarifas' })).toHaveAttribute('href', '/tarifas')
+    expect(within(panel).queryByRole('link', { name: 'otra web' })).not.toBeInTheDocument()
+    expect(within(panel).getByText(/otra web/)).toBeInTheDocument()
+
+    await usuario.click(within(folio).getByRole('link', { name: /Ir a Reservas/ }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
+  })
+
+  it('se cierra con Escape, conserva la conversación y el foco vuelve a «Asistente de IA»', async () => {
     apiCon()
     const usuario = abrir()
-    await usuario.click(await screen.findByRole('button', { name: 'Ayuda' }))
+    await usuario.click(await screen.findByRole('button', { name: 'Asistente de IA' }))
     await usuario.type(screen.getByRole('textbox', { name: 'Tu pregunta' }), '¿Cómo declaro el no-show?{Enter}')
     await screen.findByText('confirmada', { selector: 'strong' })
 
     await usuario.keyboard('{Escape}')
 
-    expect(screen.queryByRole('complementary', { name: 'Ayuda del PMS' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Ayuda' })).toHaveFocus()
-    await usuario.click(screen.getByRole('button', { name: 'Ayuda' }))
+    expect(screen.queryByRole('complementary', { name: 'Asistente de IA' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Asistente de IA' })).toHaveFocus()
+    await usuario.click(screen.getByRole('button', { name: 'Asistente de IA' }))
     expect(screen.getByText('confirmada', { selector: 'strong' })).toBeInTheDocument()
   })
 })
@@ -180,13 +214,13 @@ describe('«¿Por qué?» en un rechazo (DEC-127)', () => {
     return userEvent.setup()
   }
 
-  it('abre la ayuda y pregunta por el mensaje del rechazo', async () => {
+  it('abre el asistente y pregunta por el mensaje del rechazo', async () => {
     const fetch = apiCon()
     const usuario = conAviso()
 
     await usuario.click(screen.getByRole('button', { name: /¿Por qué\?/ }))
 
-    expect(screen.getByRole('complementary', { name: 'Ayuda del PMS' })).toBeInTheDocument()
+    expect(screen.getByRole('complementary', { name: 'Asistente de IA' })).toBeInTheDocument()
     await waitFor(() => expect(preguntasEnviadas(fetch)).toHaveLength(1))
     expect(preguntasEnviadas(fetch)[0]).toMatchObject({
       pregunta: '¿Por qué el sistema dice: «No se registró la llegada: El apartamento todavía no está preparado.»?',

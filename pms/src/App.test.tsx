@@ -27,6 +27,13 @@ function abrir(direccion: string) {
   )
 }
 
+/** Salir se confirma: el botón de la barra abre la pregunta y el de la ventana cierra la sesión. */
+async function cerrarSesionConfirmando(usuario: ReturnType<typeof userEvent.setup>) {
+  await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+  const pregunta = screen.getByRole('dialog', { name: '¿Cerrar sesión?' })
+  await usuario.click(within(pregunta).getByRole('button', { name: 'Cerrar sesión' }))
+}
+
 async function escribirYEntrar(correo: string, contrasena: string) {
   const usuario = userEvent.setup()
   await usuario.type(screen.getByLabelText('Correo electrónico'), correo)
@@ -181,6 +188,19 @@ describe('panel según el rol', () => {
 })
 
 describe('navegar con teclado y lector de pantalla', () => {
+  it('en el riel de íconos, cada opción del menú conserva su nombre y lo repite como título', () => {
+    entrarComo('ADMINISTRADOR')
+    abrir('/')
+
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' })
+    for (const nombre of ['Reservas', 'Preparación de apartamentos', 'Canales de venta', 'Mi perfil']) {
+      expect(within(menu).getByRole('link', { name: nombre })).toHaveAttribute('title', nombre)
+    }
+    for (const grupo of ['Recepción', 'Operación', 'Configuración', 'Mi cuenta']) {
+      expect(within(menu).getByRole('heading', { name: grupo })).toBeInTheDocument()
+    }
+  })
+
   it('al cambiar de pantalla el foco pasa al contenido y cambia el título de la pestaña', async () => {
     entrarComo('RECEPCIONISTA')
     laApiRespondePorRuta({})
@@ -252,7 +272,7 @@ describe('salida', () => {
     const fetch = laApiRespondePorRuta({ '/api/auth/logout': [200, { mensaje: 'La sesión quedó cerrada.' }] })
     abrir('/')
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await cerrarSesionConfirmando(userEvent.setup())
 
     expect(await screen.findByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
     const salida = fetch.mock.calls.findIndex(([url]) => url === '/api/auth/logout')
@@ -260,6 +280,43 @@ describe('salida', () => {
       url: '/api/auth/logout', metodo: 'POST', cabeceras: { Authorization: 'Bearer token-RECEPCIONISTA' },
     })
     expect(leerSesion()).toBeNull()
+  })
+
+  it('«Cerrar sesión» pregunta antes; con «Cancelar» la sesión sigue y el foco vuelve al botón', async () => {
+    entrarComo('RECEPCIONISTA')
+    const fetch = laApiRespondePorRuta({ '/api/auth/logout': [200, { mensaje: 'La sesión quedó cerrada.' }] })
+    abrir('/')
+    const usuario = userEvent.setup()
+    const salir = screen.getByRole('button', { name: 'Cerrar sesión' })
+
+    await usuario.click(salir)
+    const pregunta = screen.getByRole('dialog', { name: '¿Cerrar sesión?' })
+    await usuario.click(within(pregunta).getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(salir).toHaveFocus()
+    expect(leerSesion()).not.toBeNull()
+    expect(fetch.mock.calls.some(([url]) => url === '/api/auth/logout')).toBe(false)
+  })
+
+  it('desde el menú del celular también pregunta, y al cancelar el menú queda cerrado', async () => {
+    entrarComo('PERSONAL_SERVICIO')
+    const fetch = laApiRespondePorRuta({ '/api/auth/logout': [200, { mensaje: 'La sesión quedó cerrada.' }] })
+    abrir('/')
+    const usuario = userEvent.setup()
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    const menu = screen.getByRole('navigation', { name: 'Menú principal' })
+    await usuario.click(within(menu).getByRole('button', { name: 'Cerrar sesión' }))
+    const pregunta = screen.getByRole('dialog', { name: '¿Cerrar sesión?' })
+    expect(screen.queryByRole('button', { name: 'Cerrar menú' })).not.toBeInTheDocument()
+    await usuario.click(within(pregunta).getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.getByRole('button', { name: 'Abrir menú' })).toHaveFocus()
+    expect(fetch.mock.calls.some(([url]) => url === '/api/auth/logout')).toBe(false)
+
+    await cerrarSesionConfirmando(usuario)
+    expect(await screen.findByRole('heading', { name: 'Te damos la bienvenida' })).toBeInTheDocument()
   })
 
   it('quien entra después de salir empieza en Inicio, no en la pantalla donde se salió', async () => {
@@ -271,7 +328,7 @@ describe('salida', () => {
     abrir('/titulares')
     const usuario = userEvent.setup()
 
-    await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await cerrarSesionConfirmando(usuario)
     await screen.findByRole('heading', { name: 'Te damos la bienvenida' })
     await escribirYEntrar('luis@sga.co', 'Clave1234')
 

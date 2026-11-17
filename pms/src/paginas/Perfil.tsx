@@ -8,6 +8,7 @@ import { useTitulo } from '../componentes/useTitulo'
 import { errorParaMostrar, type ErrorMostrado } from '../reserva/mensajes'
 import { useSesion } from '../sesion/contexto'
 import { NOMBRE_DEL_ROL } from '../sesion/roles'
+import { elegirTema, leerTema, type Tema } from '../tema'
 import CamposPersona, { DatoSoloLectura } from '../usuarios/CamposPersona'
 import {
   campoDelDetalle,
@@ -26,7 +27,10 @@ import {
 
 const CAMPOS: readonly CampoPersona[] = ['nombre', 'telefono', 'tipoDocumento', 'numeroDocumento', 'fechaNacimiento']
 
-/** Mi perfil (CU-03 · CU-04): cualquier rol cambia sus datos y su contraseña; el correo y el rol, solo el administrador. */
+/**
+ * Mi perfil (CU-03 · CU-04): cualquier rol cambia sus datos y su contraseña; el correo y el rol, solo el administrador.
+ * También elige aquí la apariencia del PMS, día o noche.
+ */
 export default function Perfil() {
   const [intento, setIntento] = useState(0)
   const [resultado, setResultado] = useState<{ intento: number; usuario?: Usuario; error?: unknown } | null>(null)
@@ -69,7 +73,51 @@ export default function Perfil() {
           <Contrasena />
         </>
       )}
+      <Apariencia />
     </div>
+  )
+}
+
+const TEMAS: readonly { tema: Tema; nombre: string; explica: string }[] = [
+  { tema: 'noche', nombre: 'Noche', explica: 'Fondo oscuro. Descansa la vista con poca luz.' },
+  { tema: 'dia', nombre: 'Día', explica: 'Fondo claro. Se lee mejor con mucha luz.' },
+]
+
+/**
+ * Apariencia: día o noche. No depende de los datos del perfil, así que está aunque no carguen. Cambia al momento y se
+ * guarda en este navegador (`src/tema.ts`), no en la cuenta.
+ */
+function Apariencia() {
+  const [tema, setTema] = useState<Tema>(leerTema)
+
+  function elegir(nuevo: Tema) {
+    elegirTema(nuevo)
+    setTema(nuevo)
+  }
+
+  return (
+    <section className="tarjeta perfil-bloque" aria-labelledby="titulo-apariencia">
+      <div className="perfil-bloque-cuerpo">
+        <h2 id="titulo-apariencia">Apariencia</h2>
+        <fieldset className="apariencia">
+          <legend className="solo-lectores">Tema del PMS</legend>
+          <div className="apariencia-opciones">
+            {TEMAS.map((opcion) => (
+              <label key={opcion.tema} className="apariencia-opcion">
+                <input type="radio" name="tema" value={opcion.tema} checked={tema === opcion.tema}
+                  onChange={() => elegir(opcion.tema)} />
+                <span className="apariencia-textos">
+                  <strong>{opcion.nombre}</strong>
+                  <span className="campo-pista">{opcion.explica}</span>
+                </span>
+                <span className={`apariencia-muestra apariencia-muestra-${opcion.tema}`} aria-hidden="true" />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <p className="campo-pista">Se guarda en este navegador: en otro computador o celular lo eliges de nuevo.</p>
+      </div>
+    </section>
   )
 }
 

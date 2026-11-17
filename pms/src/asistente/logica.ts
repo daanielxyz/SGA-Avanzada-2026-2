@@ -1,6 +1,7 @@
 // Lo que el panel de ayuda calcula sin pantalla (DEC-127): el historial que se envía, a dónde lleva cada fuente, el
 // texto de la respuesta en bloques y las preguntas sugeridas de cada rol.
 import type { MensajeAnterior, RespuestaAsistente } from '../api/asistente'
+import { OPCIONES } from '../navegacion'
 import type { Rol } from '../sesion/roles'
 
 /** Lo más largo que acepta el backend (`PreguntaRequest.pregunta`). */
@@ -67,6 +68,34 @@ export function rutaDeFuente(pantalla: string, rutaActual: string): string | nul
   return pantalla.replace('{codigo}', codigo)
 }
 
+/**
+ * Qué se hace con una fuente, para que solo parezca enlace lo que lleva a otra pantalla:
+ * - `pantalla`: lleva a su pantalla.
+ * - `aqui`: es la pantalla donde ya está la persona; un enlace no la movería.
+ * - `desde`: la pantalla es de una reserva (lleva `{codigo}`) y no se está en ninguna: se llega desde la lista que
+ *   las abre («Reservas»), si el rol la tiene. `aqui` dice que esa lista es la pantalla actual.
+ * - `ninguno`: no hay a dónde llevar; va como texto.
+ */
+export type DestinoFuente =
+  | { tipo: 'pantalla'; ruta: string }
+  | { tipo: 'aqui' }
+  | { tipo: 'desde'; ruta: string; nombre: string; aqui: boolean }
+  | { tipo: 'ninguno' }
+
+const sinBarraFinal = (ruta: string) => (ruta.length > 1 ? ruta.replace(/\/+$/, '') : ruta)
+
+export function destinoDeFuente(pantalla: string, rutaActual: string, rol: Rol): DestinoFuente {
+  const actual = sinBarraFinal(rutaActual)
+  const ruta = rutaDeFuente(pantalla, rutaActual)
+  if (ruta) return sinBarraFinal(ruta) === actual ? { tipo: 'aqui' } : { tipo: 'pantalla', ruta }
+  const posicion = pantalla.indexOf('{codigo}')
+  if (!pantalla.startsWith('/') || posicion < 0) return { tipo: 'ninguno' }
+  const lista = sinBarraFinal(pantalla.slice(0, posicion))
+  const opcion = OPCIONES.find((o) => o.ruta === lista && o.roles.includes(rol))
+  if (!opcion) return { tipo: 'ninguno' }
+  return { tipo: 'desde', ruta: opcion.ruta, nombre: opcion.titulo, aqui: opcion.ruta === actual }
+}
+
 /** La pregunta que manda el «¿Por qué?» de un rechazo. */
 export function preguntaDelRechazo(asunto: string, mensaje: string): string {
   const dice = `${asunto}: ${mensaje}`.replace(/\s+/g, ' ').trim().replace(/[.:]$/, '')
@@ -115,13 +144,41 @@ export function bloques(texto: string): Bloque[] {
   return resultado
 }
 
-/** Los trozos de una línea: lo que va entre `**` es negrita. */
-export function trozos(linea: string): { texto: string; negrita: boolean }[] {
+export interface Trozo {
+  texto: string
+  negrita: boolean
+  /** Solo si el trozo era un enlace de Markdown a una pantalla del PMS: su ruta. */
+  ruta?: string
+}
+
+const NEGRITA = /(\*\*[^*]+\*\*)/
+const ENLACE = /(\[[^\]\n]+\]\([^)\s]*\))/
+const PARTES_ENLACE = /^\[([^\]\n]+)\]\(([^)\s]*)\)$/
+/** Una ruta del PMS: empieza por una sola barra y no trae nada que la saque de la aplicación. */
+const RUTA_INTERNA = /^\/(?!\/)[\w\-/]*(\?[\w\-=&.,%]*)?$/
+
+/**
+ * Los trozos de una línea: lo que va entre `**` es negrita y `[texto](/ruta)` es un enlace a una pantalla del PMS.
+ * Un enlace a cualquier otro sitio (otra web, `javascript:`…) se queda en su texto: el asistente solo explica el PMS
+ * y su respuesta nunca saca a nadie de él.
+ */
+export function trozos(linea: string): Trozo[] {
   return linea
-    .split(/(\*\*[^*]+\*\*)/)
+    .split(ENLACE)
     .filter(Boolean)
-    .map((trozo) =>
-      trozo.startsWith('**') && trozo.endsWith('**') && trozo.length > 4
-        ? { texto: trozo.slice(2, -2), negrita: true }
-        : { texto: trozo, negrita: false })
+    .flatMap((parte): Trozo[] => {
+      const enlace = PARTES_ENLACE.exec(parte)
+      if (enlace) {
+        const [, texto, destino] = enlace
+        const limpio = texto.replace(/\*\*/g, '')
+        return [RUTA_INTERNA.test(destino) ? { texto: limpio, negrita: false, ruta: destino } : { texto: limpio, negrita: false }]
+      }
+      return parte
+        .split(NEGRITA)
+        .filter(Boolean)
+        .map((trozo) =>
+          trozo.startsWith('**') && trozo.endsWith('**') && trozo.length > 4
+            ? { texto: trozo.slice(2, -2), negrita: true }
+            : { texto: trozo, negrita: false })
+    })
 }

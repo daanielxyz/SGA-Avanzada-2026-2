@@ -43,7 +43,13 @@
     #17313f 80%,
     #0a1e2b 100%
   );
-  --fondo-lema: rgb(8 32 44 / 62%);
+  /* Pantallas sin sesión: el formulario va en un panel más opaco que transparente, con el video desenfocado detrás.
+     Medido contra un cuadro blanco, el peor que puede dar el video: texto 11:1, texto suave 5,6:1 */
+  --entrada-panel: rgb(7 25 35 / 86%);
+  --entrada-panel-borde: rgb(232 230 225 / 20%);
+  --entrada-campo: rgb(3 13 20 / 55%);
+  --entrada-desenfoque: blur(22px) saturate(130%);
+  --entrada-sombra: 0 24px 60px rgb(3 13 20 / 45%);
 
   /* Texto y acento */
   --texto: var(--marca-piedra);
@@ -148,24 +154,234 @@
   --seleccion: rgb(217 201 176 / 32%);
   --sombra-menu: 8px 0 24px rgb(3 13 20 / 45%);
   --sombra-dialogo: 0 24px 60px rgb(0 0 0 / 50%);
+  --sombra-lista: 0 12px 32px rgb(0 0 0 / 40%);
+
+  /* Botones glass (DEC-138): los colores de siempre, translúcidos, con un brillo interior y un borde de luz.
+     Sobre un panel liso es solo un acabado; el desenfoque se enciende donde el fondo cambia (--vidrio-desenfoque).
+     Medido sobre cada capa: Medianoche sobre el primario, 7,2:1 (oprimido, 5,8:1); el borde del secundario, 3,3:1 */
+  --boton-fondo: rgb(217 201 176 / 88%);
+  --boton-fondo-encima: rgb(230 217 196 / 94%);
+  --boton-fondo-oprimido: rgb(217 201 176 / 78%);
+  --boton-borde: rgb(244 236 222 / 80%);
+  --boton-tinta: var(--sobre-acento);
+  --boton-brillo: inset 0 1px 0 rgb(255 255 255 / 42%), inset 0 10px 12px -10px rgb(255 255 255 / 30%),
+    0 1px 2px rgb(3 13 20 / 35%);
+  --boton-suave-fondo: rgb(232 230 225 / 6%);
+  --boton-suave-fondo-encima: rgb(232 230 225 / 12%);
+  --boton-suave-fondo-oprimido: rgb(3 13 20 / 22%);
+  --boton-suave-borde: rgb(232 230 225 / 46%);
+  --boton-suave-brillo: inset 0 1px 0 rgb(255 255 255 / 12%), inset 0 10px 12px -10px rgb(255 255 255 / 8%);
+  --boton-hundido: inset 0 2px 5px rgb(3 13 20 / 32%);
+  --vidrio-desenfoque: none;
+
+  /* La barra de arriba se queda fija y deja entrever lo que pasa por debajo. Su alto lo usan el menú, el asistente y
+     todo lo que se pega arriba; en el celular son dos renglones (44 + 10 + 18) más el relleno y la línea */
+  --cabecera-fondo: rgb(6 21 30 / 82%);
+  --cabecera-linea: var(--borde);
+  --cabecera-desenfoque: blur(16px) saturate(140%);
+  --alto-cabecera: calc(81px + max(var(--espacio-2), env(safe-area-inset-top)));
+
+  /* Menú lateral: un gris pizarra translúcido, distinto del azul del contenido y de la barra; cada grupo va en una
+     caja un poco más opaca. En el computador es un riel de íconos que se abre encima del contenido, sin moverlo */
+  --menu-fondo: rgb(38 46 54 / 90%);
+  --menu-desenfoque: blur(18px) saturate(140%);
+  --menu-borde: rgb(232 230 225 / 12%);
+  --menu-caja: rgb(232 230 225 / 5%);
+  --menu-caja-borde: rgb(232 230 225 / 8%);
+  --menu-encima: rgb(232 230 225 / 9%);
+  --menu-activo: rgb(217 201 176 / 17%);
+  --ancho-riel: 68px;
+  --ancho-menu: 296px;
+  --curva-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  --curva-cajon: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Barras de desplazamiento: sin flechas y sin color propio; el pulgar es un velo claro sobre el fondo de su caja
+     (3,3:1, para que se note que hay más) y se hace más opaco al pasar el cursor y mientras se arrastra */
+  --barra-pulgar: rgb(232 230 225 / 40%);
+  --barra-pulgar-encima: rgb(232 230 225 / 56%);
+  --barra-pulgar-arrastre: rgb(232 230 225 / 78%);
+
+  /* Lo que cambia con el tema además de los colores: el esquema del navegador (calendarios, listas), el color del
+     logo (su PNG es solo la forma: se pinta con una máscara) y la letra sobre un sello de color */
+  /* El calendario: el día elegido y las noches entre la entrada y la salida */
+  --calendario-elegido: var(--acento);
+  --calendario-sobre-elegido: var(--sobre-acento);
+  --calendario-rango: rgb(217 201 176 / 22%);
+
+  --esquema: dark;
+  --campo-fondo: var(--fondo-pagina);
+  --logo-color: var(--marca-arena);
+  --sobre-estado: var(--marca-medianoche);
 
   font-family: var(--letra-interfaz);
   font-size: 16px;
   line-height: 24px;
   color: var(--texto);
   background: var(--fondo-pagina);
-  color-scheme: dark;
+  color-scheme: var(--esquema);
   caret-color: var(--acento);
   accent-color: var(--acento);
-  scrollbar-color: var(--borde-fuerte) var(--fondo-pagina);
+  /* Lo que recibe el foco o un salto no queda escondido bajo la barra fija */
+  scroll-padding-top: calc(var(--alto-cabecera) + var(--espacio-2));
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Tema día (DEC-139): la misma interfaz en una escala de Arena, sin azul. La página es Arena media, las
+   tarjetas un tono más claras, la barra de arriba notoriamente más oscura y el botón primario en Arena oscura con
+   letra Carbón. El acento (enlaces, lo elegido, íconos activos) es un Arena tostado. Solo se dan otros valores a las
+   variables; se elige en «Mi perfil → Apariencia» y `index.html` lo aplica antes de pintar. Todo se volvió a medir
+   sobre los fondos reales (pms/DISENO.md). Oliva y Terracota del brandbook siguen sin ser texto: los estados usan
+   versiones oscuras hechas para fondo claro. */
+:root[data-tema='dia'] {
+  /* De día, el día elegido va en Arena oscura con letra Carbón, como el botón primario */
+  --calendario-elegido: #b79c72;
+  --calendario-sobre-elegido: #1f1f1f;
+  --calendario-rango: rgb(183 156 114 / 38%);
+
+  --esquema: light;
+  --campo-fondo: #f9f2e4;
+  --logo-color: #2a2118;
+  --sobre-estado: #fff8ec;
+
+  --fondo-pagina: #e2d5bd;
+  --fondo-marco: #d6c6a9;
+  --superficie: #efe5d1;
+  --superficie-2: #e5d8c0;
+  --superficie-fila: #eadfca;
+  --borde: #cab997;
+  --borde-fuerte: #7d6c50;
+  --velo: rgb(38 30 18 / 48%);
+
+  --texto: #1f1f1f;
+  --texto-suave: #45423c;
+  --texto-pista: #4d4a43;
+  --acento: #5c4626;
+  --acento-encima: #6f5630;
+  --enlace-encima: #3f2f17;
+  --sobre-acento: #fbf5e9;
+  --foco: #8a3d12;
+
+  --error: #8f2a22;
+  --error-fondo: #f3d9d1;
+  --error-texto: #5f1a13;
+  --error-campo: #8a271f;
+  --error-encima: #7c231c;
+  --info: #1d5c66;
+  --info-fondo: #cfe2df;
+  --info-texto: #103d44;
+  --advertencia: #7c4320;
+  --advertencia-fondo: #f0d9c2;
+  --advertencia-texto: #522a12;
+  --barra-pendiente: #e3cd92;
+  --barra-confirmada: #bfd8b9;
+  --barra-en-curso: #b9d6d2;
+  --barra-debe: #ecc0b2;
+  --barra-salio: #cfccc0;
+  --barra-bloqueo-1: #cdc5b3;
+  --barra-bloqueo-2: #c0b7a3;
+  --ocupacion-hoy: rgb(92 70 38 / 10%);
+  --ocupacion-hoy-cabecera: #cdbd9c;
+  --exito: #33592f;
+  --exito-fondo: #d6e5cb;
+  --exito-texto: #213d1e;
+  --fondo-reverso: #dccfb5;
+  --estado-pendiente: #6a5010;
+  --estado-confirmada: #33592f;
+  --estado-no-show: #7c4320;
+
+  --seleccion: rgb(92 70 38 / 26%);
+  --sombra-menu: 8px 0 24px rgb(38 30 18 / 20%);
+  --sombra-dialogo: 0 24px 60px rgb(38 30 18 / 28%);
+  --sombra-lista: 0 12px 32px rgb(38 30 18 / 22%);
+
+  /* Botones glass sobre claro: el primario, Arena oscura con letra Carbón; el secundario, un vidrio claro */
+  --boton-fondo: rgb(183 156 114 / 94%);
+  --boton-fondo-encima: rgb(197 172 131 / 96%);
+  --boton-fondo-oprimido: rgb(165 139 98 / 96%);
+  --boton-borde: #7d6644;
+  --boton-tinta: #1f1f1f;
+  --boton-brillo: inset 0 1px 0 rgb(255 255 255 / 40%), inset 0 10px 12px -10px rgb(255 255 255 / 30%),
+    0 1px 2px rgb(38 30 18 / 24%);
+  --boton-suave-fondo: rgb(255 250 240 / 42%);
+  --boton-suave-fondo-encima: rgb(255 250 240 / 80%);
+  --boton-suave-fondo-oprimido: rgb(92 70 38 / 16%);
+  --boton-suave-borde: rgb(60 46 26 / 64%);
+  --boton-suave-brillo: inset 0 1px 0 rgb(255 255 255 / 70%), 0 1px 1px rgb(38 30 18 / 10%);
+  --boton-hundido: inset 0 2px 5px rgb(38 30 18 / 26%);
+
+  /* La barra de arriba, en Arena oscura: es la franja más honda de la pantalla */
+  --cabecera-fondo: rgb(184 160 120 / 92%);
+  /* La línea que la separa de la página: café, para que la barra no se funda con lo de abajo */
+  --cabecera-linea: #7a6440;
+
+  --entrada-panel: rgb(232 221 198 / 90%);
+  --entrada-panel-borde: rgb(255 250 240 / 55%);
+  --entrada-campo: rgb(249 242 228 / 86%);
+  --entrada-sombra: 0 24px 60px rgb(38 30 18 / 34%);
+
+  /* El menú, en gris claro translúcido (Piedra) */
+  --menu-fondo: rgb(226 222 213 / 90%);
+  --menu-borde: rgb(60 46 26 / 22%);
+  --menu-caja: rgb(255 252 245 / 46%);
+  --menu-caja-borde: rgb(60 46 26 / 10%);
+  --menu-encima: rgb(60 46 26 / 8%);
+  --menu-activo: rgb(92 70 38 / 19%);
+
+  --barra-pulgar: rgb(60 46 26 / 62%);
+  --barra-pulgar-encima: rgb(60 46 26 / 76%);
+  --barra-pulgar-arrastre: rgb(60 46 26 / 90%);
+}
+
+/* Sobre la barra oscura del día, la letra secundaria (el rol, el alojamiento en el celular), el borde de sus
+   botones y el foco van más hondos, para pasar 4,5:1 y 3:1 también ahí */
+:root[data-tema='dia'] .cabecera {
+  --texto-suave: #2f2c26;
+  --boton-suave-borde: rgb(38 30 18 / 80%);
+  --foco: #6e2f0c;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Barras de desplazamiento del menú, de la página y de toda caja que se desplace. Chrome, Edge y Safari usan las
+   reglas ::-webkit; Firefox, scrollbar-color (ponérselo a los primeros apagaría las ::-webkit, y con ellas el «arrastre») */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--barra-pulgar);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--barra-pulgar-encima);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--barra-pulgar-arrastre);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  :root {
+    scrollbar-color: var(--barra-pulgar) transparent;
+  }
 }
 
 body {
@@ -241,40 +457,89 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
-/* Botones. Encogen un poco al oprimirlos para que se sienta la respuesta. */
+/* Botones glass. Encogen un poco y se hunden al oprimirlos para que se sienta la respuesta. Cada variante solo da
+   valores a estas variables: así «encima» y «oprimido» salen de una sola regla y ninguna variante pisa a otra */
 .boton {
+  --fondo: var(--boton-fondo);
+  --fondo-encima: var(--boton-fondo-encima);
+  --fondo-oprimido: var(--boton-fondo-oprimido);
+  --tinta: var(--boton-tinta);
+  --brillo: var(--boton-brillo);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--espacio-2);
   min-height: 44px;
   padding: 0 var(--espacio-5);
-  border: 1px solid var(--acento);
+  border: 1px solid var(--boton-borde);
   border-radius: var(--radio-chico);
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--fondo);
+  box-shadow: var(--brillo);
+  -webkit-backdrop-filter: var(--vidrio-desenfoque);
+  backdrop-filter: var(--vidrio-desenfoque);
+  color: var(--tinta);
   font: inherit;
   font-size: var(--tamano-control);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: transform 160ms ease-out, background-color 160ms ease-out;
+  transition: transform 160ms ease-out, background-color 160ms ease-out, border-color 160ms ease-out,
+    box-shadow 160ms ease-out;
 }
 
+/* En un celular el «encima» se quedaría pegado después de tocar */
+@media (hover: hover) and (pointer: fine) {
+  .boton:hover:not(:disabled) {
+    background: var(--fondo-encima);
+    color: var(--tinta);
+  }
+}
+
+/* Después de «encima»: con el cursor puesto, oprimir tiene que notarse */
 .boton:active:not(:disabled) {
+  background: var(--fondo-oprimido);
+  box-shadow: var(--boton-hundido);
+  color: var(--tinta);
   transform: scale(0.97);
 }
 
+/* Apagado: sin brillo y a media tinta. Ocupado (`aria-busy`): sigue encendido y gira un aro junto al texto */
 .boton:disabled {
+  box-shadow: none;
   opacity: 0.55;
   cursor: not-allowed;
 }
 
+.boton[aria-busy='true'] {
+  opacity: 0.85;
+  cursor: progress;
+}
+
+.boton[aria-busy='true']::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: boton-ocupado 700ms linear infinite;
+}
+
+@keyframes boton-ocupado {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 .boton-secundario {
-  background: transparent;
-  border-color: var(--borde-fuerte);
-  color: var(--texto);
+  --fondo: var(--boton-suave-fondo);
+  --fondo-encima: var(--boton-suave-fondo-encima);
+  --fondo-oprimido: var(--boton-suave-fondo-oprimido);
+  --tinta: var(--texto);
+  --brillo: var(--boton-suave-brillo);
+  border-color: var(--boton-suave-borde);
 }
 
 .boton-bloque {
@@ -314,7 +579,7 @@ button {
   padding: 0 var(--espacio-3-medio);
   border: 1px solid var(--borde-fuerte);
   border-radius: var(--radio-chico);
-  background: var(--fondo-pagina);
+  background: var(--campo-fondo);
   color: var(--texto);
   font: inherit;
   font-size: var(--tamano-base);
@@ -418,6 +683,11 @@ button {
   border-radius: var(--radio-chico);
   font-size: var(--tamano-chico);
   line-height: var(--interlinea-chica);
+  overflow-wrap: anywhere;
+}
+
+.aviso > :not(.aviso-sello) {
+  min-width: 0;
 }
 
 .aviso ul {
@@ -433,7 +703,7 @@ button {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  color: var(--marca-medianoche);
+  color: var(--sobre-estado);
   font-size: var(--tamano-pista);
   font-weight: 700;
 }
@@ -567,17 +837,33 @@ button {
   text-decoration: none;
 }
 
-.logo img {
+/* El logo se pinta con su PNG como máscara: así toma el color del tema (Arena de noche, Medianoche de día) */
+.logo-simbolo,
+.logo-palabra {
   display: block;
-  width: auto;
+  flex: none;
+  background: var(--logo-color);
+  -webkit-mask: var(--logo-forma) center / contain no-repeat;
+  mask: var(--logo-forma) center / contain no-repeat;
 }
 
 .logo-simbolo {
+  --logo-forma: url('/marca/simbolo.png');
   height: 28px;
+  aspect-ratio: 346 / 408;
 }
 
 .logo-palabra {
+  --logo-forma: url('/marca/palabra.png');
   height: 11px;
+  aspect-ratio: 964 / 117;
+}
+
+@media (forced-colors: active) {
+  .logo-simbolo,
+  .logo-palabra {
+    background: CanvasText;
+  }
 }
 
 .logo-apilado {
@@ -623,8 +909,14 @@ button {
   align-items: center;
   gap: var(--espacio-2-medio);
   padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
-  border-bottom: 1px solid var(--borde);
-  background: var(--fondo-marco);
+  border-bottom: 1px solid var(--cabecera-linea);
+  background: var(--cabecera-fondo);
+  -webkit-backdrop-filter: var(--cabecera-desenfoque);
+  backdrop-filter: var(--cabecera-desenfoque);
+  /* Fija al bajar: sobre lo que se pega dentro de la página (5) y bajo el velo del cajón (10) */
+  position: sticky;
+  top: 0;
+  z-index: 6;
 }
 
 .cabecera-separador,
@@ -713,8 +1005,10 @@ button {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: env(safe-area-inset-bottom);
-  border-right: 1px solid var(--borde);
-  background: var(--fondo-marco);
+  border-right: 1px solid var(--menu-borde);
+  background: var(--menu-fondo);
+  -webkit-backdrop-filter: var(--menu-desenfoque);
+  backdrop-filter: var(--menu-desenfoque);
   box-shadow: var(--sombra-menu);
   visibility: hidden;
   transform: translateX(-100%);
@@ -736,7 +1030,7 @@ button {
   align-items: center;
   gap: var(--espacio-2-medio);
   padding: max(var(--espacio-2), env(safe-area-inset-top)) var(--espacio-2) var(--espacio-2);
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--menu-borde);
 }
 
 .menu-persona {
@@ -744,7 +1038,7 @@ button {
   align-items: center;
   gap: var(--espacio-3);
   padding: var(--espacio-4);
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--menu-borde);
 }
 
 .menu-persona > div {
@@ -763,8 +1057,22 @@ button {
   line-height: var(--interlinea-pista);
 }
 
+/* Cada grupo («Recepción», «Operación»…) en su caja, un poco más opaca que el fondo del menú */
+.menu-grupo {
+  flex: none;
+  margin: var(--espacio-2) var(--espacio-2) 0;
+  padding: var(--espacio-1);
+  border: 1px solid var(--menu-caja-borde);
+  border-radius: var(--radio);
+  background: var(--menu-caja);
+}
+
+.menu-grupo:last-of-type {
+  margin-bottom: var(--espacio-2);
+}
+
 .menu h2 {
-  padding: var(--espacio-5) var(--espacio-4) var(--espacio-2);
+  padding: var(--espacio-2) var(--espacio-3) var(--espacio-1-medio);
   color: var(--texto-suave);
   font-family: var(--letra-interfaz);
   font-size: var(--tamano-rotulo);
@@ -785,23 +1093,29 @@ button {
   align-items: center;
   gap: var(--espacio-3);
   min-height: 48px;
-  padding: 0 var(--espacio-4);
-  border-left: 3px solid transparent;
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio-chico);
   color: var(--texto);
   font-size: var(--tamano-base);
   text-decoration: none;
 }
 
+/* La caja recorta lo que sobresale: el foco se dibuja por dentro */
+.menu li a:focus-visible {
+  outline-offset: -3px;
+}
+
 .menu li a .icono {
+  flex: none;
   width: 22px;
   height: 22px;
   color: var(--texto-suave);
 }
 
+/* La pantalla abierta: un recuadro Arena tenue, el ícono en Arena y la letra más gruesa (no solo el color) */
 .menu li a.active {
-  border-left-color: var(--acento);
-  background: var(--superficie-2);
-  font-weight: 500;
+  background: var(--menu-activo);
+  font-weight: 600;
 }
 
 .menu li a.active .icono {
@@ -811,7 +1125,7 @@ button {
 .menu-pie {
   margin-top: auto;
   padding: var(--espacio-4);
-  border-top: 1px solid var(--borde);
+  border-top: 1px solid var(--menu-borde);
 }
 
 .contenido {
@@ -1117,25 +1431,17 @@ button {
   container-type: inline-size;
 }
 
+/* «Nueva reserva» va debajo del título, no a su lado */
 .reservas-titulo {
   display: flex;
   flex-direction: column;
-  gap: var(--espacio-4);
-}
-
-.ir-a-reserva {
-  display: flex;
   align-items: flex-start;
-  gap: var(--espacio-2);
+  gap: var(--espacio-3);
 }
 
-.ir-a-reserva > div {
-  flex: 1;
-  min-width: 0;
-}
-
-.ir-a-reserva .boton {
-  margin-top: var(--alto-rotulo);
+/* La pista del código: en el celular, pegada a su campo */
+.filtros-codigo-pista {
+  margin-top: calc(-1 * var(--espacio-2));
 }
 
 .filtros {
@@ -1158,14 +1464,25 @@ button {
   list-style: none;
 }
 
+.filtros-activos li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Un valor larguísimo (un código mal pegado en la dirección) se parte en vez de ensanchar la página */
 .filtro-activo {
+  max-width: 100%;
   min-height: 44px;
   padding: 0 var(--espacio-3);
   font-family: inherit;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
 .filtro-activo .icono {
+  flex: none;
   width: 14px;
   height: 14px;
 }
@@ -1355,7 +1672,7 @@ button {
 /* En un detalle largo, volver al listado queda a la mano sin subir */
 .barra-volver {
   position: sticky;
-  top: 0;
+  top: var(--alto-cabecera);
   z-index: 5;
   /* El hueco de .detalle ya separa: aquí se descuenta para que el título siga igual de cerca */
   margin-bottom: calc(var(--espacio-6) * -1 + var(--espacio-1));
@@ -1539,18 +1856,64 @@ button {
 }
 
 @media (min-width: 800px) {
+  :root {
+    --alto-cabecera: 68px;
+    --columna-menu: 240px;
+  }
+
   h1 {
     font-size: var(--tamano-titulo-grande);
     line-height: var(--interlinea-titulo-grande);
   }
 
+  /* Entrada (DEC-138): el video cubre la pantalla y el formulario va al centro, en un panel translúcido.
+     El fondo conserva los colores de noche en los dos temas: lo que va sobre el video (logo, botón de pausa) es claro */
+  .entrada {
+    position: relative;
+    isolation: isolate;
+    background: var(--fondo-entrada);
+  }
+
   .entrada-arte {
-    flex: 1 1 50%;
+    --logo-color: var(--marca-arena);
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     justify-content: space-between;
     padding: var(--espacio-8);
-    background: var(--fondo-entrada);
+    overflow: hidden;
+  }
+
+  .entrada-fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* El video aparece sobre el póster cuando ya tiene cuadros que mostrar, sin un salto */
+  .entrada-video {
+    opacity: 0;
+    transition: opacity 400ms ease-out;
+  }
+
+  .entrada-video.listo {
+    opacity: 1;
+  }
+
+  /* Un velo solo arriba, donde va el logo: el resto del video queda nítido */
+  .entrada-arte::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, rgb(3 13 20 / 62%) 0%, rgb(3 13 20 / 0%) 24%);
+    pointer-events: none;
   }
 
   .entrada-arte .logo-simbolo {
@@ -1561,28 +1924,26 @@ button {
     height: 14px;
   }
 
-  .entrada-lema {
-    max-width: 420px;
-    padding: var(--espacio-5) var(--espacio-6);
-    border-radius: var(--radio);
-    background: var(--fondo-lema);
-    color: var(--marca-piedra);
-  }
-
-  .entrada-lema-titulo {
-    font-family: var(--letra-titulo);
-    font-size: var(--tamano-lema);
-    line-height: var(--interlinea-lema);
-    font-weight: 500;
-  }
-
-  .entrada-lema-texto {
-    margin-top: var(--espacio-1-medio);
-  }
-
+  /* El panel va al centro: el video se ve a los dos lados */
   .entrada-formulario {
+    flex: 1 1 100%;
     align-items: center;
     padding: var(--espacio-8);
+  }
+
+  .entrada .formulario {
+    max-width: 464px;
+    padding: var(--espacio-8) var(--espacio-7);
+    border: 1px solid var(--entrada-panel-borde);
+    border-radius: 20px;
+    background: var(--entrada-panel);
+    -webkit-backdrop-filter: var(--entrada-desenfoque);
+    backdrop-filter: var(--entrada-desenfoque);
+    box-shadow: var(--entrada-sombra);
+  }
+
+  .entrada .campo-control {
+    background: var(--entrada-campo);
   }
 
   .entrada-titulo {
@@ -1606,23 +1967,16 @@ button {
     height: 18px;
   }
 
-  /* El menú queda fijo y mide lo que su contenido: el fondo y la línea de su columna los pinta el panel, de arriba
-     abajo, para que no se corten donde termina el menú */
+  /* El menú queda fijo en su columna y la ocupa de arriba abajo, con su fondo y su línea */
   .panel {
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: var(--columna-menu) minmax(0, 1fr);
     grid-template-areas: 'cabecera cabecera' 'menu contenido';
-    background: linear-gradient(
-      to right,
-      var(--fondo-marco) 0 239px,
-      var(--borde) 239px 240px,
-      var(--fondo-pagina) 240px
-    );
   }
 
   .cabecera {
     flex-wrap: nowrap;
     gap: var(--espacio-4);
-    height: 68px;
+    height: var(--alto-cabecera);
     padding: 0 var(--espacio-6);
   }
 
@@ -1691,40 +2045,36 @@ button {
     flex: none;
   }
 
-  /* El menú queda quieto mientras la página baja */
+  /* El menú queda quieto bajo la barra mientras la página baja. Sin el «inset» del cajón del celular: su «bottom: 0»
+     lo subía sobre la barra (y tapaba el nombre del alojamiento) cuando la ventana era más baja que el menú */
   .menu {
     position: sticky;
-    top: 0;
+    inset: auto;
+    top: var(--alto-cabecera);
     align-self: start;
-    max-height: 100dvh;
+    height: calc(100dvh - var(--alto-cabecera));
     grid-area: menu;
     width: auto;
-    padding: var(--espacio-3) var(--espacio-3) var(--espacio-6);
+    padding: 0 0 var(--espacio-2);
     box-shadow: none;
     visibility: visible;
     transform: none;
     transition: none;
   }
 
-  .menu section:first-of-type h2 {
-    padding-top: var(--espacio-3);
-  }
-
-  .menu h2 {
-    padding-right: var(--espacio-3);
-    padding-left: var(--espacio-3);
+  .menu-grupo {
+    margin-right: var(--espacio-1-medio);
+    margin-left: var(--espacio-1-medio);
   }
 
   .menu li a {
     min-height: 44px;
-    padding: 0 var(--espacio-3);
-    border-radius: var(--radio-chico);
     font-size: var(--tamano-control);
   }
 
   .menu li a .icono {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .contenido {
@@ -1768,19 +2118,12 @@ button {
     gap: var(--espacio-5);
   }
 
-  .reservas-titulo {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-
-  .ir-a-reserva {
-    flex: none;
-  }
-
-  .ir-a-reserva .campo-control {
-    width: 210px;
+  /* El código abre el recuadro en su propio renglón: es otra forma de buscar, y su pista lo explica al lado */
+  .filtros-codigo-pista {
+    grid-column: 2 / -1;
+    align-self: end;
+    max-width: 52ch;
+    margin: 0 0 var(--espacio-3);
   }
 
   .boton-filtros,
@@ -1918,15 +2261,20 @@ button {
 }
 
 .boton-peligro {
+  --fondo: var(--error);
+  --fondo-encima: var(--error-encima);
+  --fondo-oprimido: var(--error);
+  --tinta: var(--sobre-estado);
   border-color: var(--error);
-  background: var(--error);
-  color: var(--sobre-acento);
 }
 
 .boton-peligro-borde {
+  --fondo: transparent;
+  --fondo-encima: var(--error-fondo);
+  --fondo-oprimido: var(--error-fondo);
+  --tinta: var(--error-campo);
+  --brillo: var(--boton-suave-brillo);
   border-color: var(--error);
-  background: transparent;
-  color: var(--error-campo);
 }
 
 .acciones-reserva {
@@ -2206,6 +2554,7 @@ button {
 }
 
 /* Crear reserva (sprint 2) */
+/* Título con su acción al lado (Usuarios, Novedades) */
 .reservas-encabezado {
   display: flex;
   flex-wrap: wrap;
@@ -4463,35 +4812,17 @@ button.barra {
     filter: brightness(1.15);
   }
 
-  .boton-peligro:hover:not(:disabled) {
-    background: var(--error-encima);
-  }
-
-  .boton-peligro-borde:hover:not(:disabled) {
-    background: var(--error-fondo);
-  }
-
   a:hover {
     color: var(--enlace-encima);
   }
 
-  .boton:hover:not(:disabled) {
-    background: var(--acento-encima);
-    color: var(--sobre-acento);
-  }
-
-  .boton-secundario:hover:not(:disabled) {
-    background: var(--superficie-2);
-    color: var(--texto);
-  }
-
   .menu li a:hover {
-    background: var(--superficie);
+    background: var(--menu-encima);
     color: var(--texto);
   }
 
   .menu li a.active:hover {
-    background: var(--superficie-2);
+    background: var(--menu-activo);
   }
 
   .filtro-activo:hover {
@@ -4517,7 +4848,6 @@ button.barra {
 
 @media (prefers-reduced-motion: reduce) {
   .boton,
-  .menu,
   .acceso,
   .reserva-tarjeta {
     transition: none;
@@ -4525,6 +4855,104 @@ button.barra {
 
   .boton:active:not(:disabled) {
     transform: none;
+  }
+
+  .boton[aria-busy='true']::before {
+    animation: none;
+  }
+}
+
+/* El riel. Con cursor (computador), el menú es una columna angosta de íconos que se abre encima del contenido al
+   acercar el cursor o al llegarle el foco del teclado, y se cierra al salir. En una pantalla táctil de ese ancho no
+   hay «acercar el cursor»: ahí queda abierto como siempre. Abre con una pausa corta, para que cruzarlo de paso no lo
+   despliegue, y lo que cambia de ancho es solo el menú: nada del contenido se mueve */
+@media (min-width: 800px) and (hover: hover) and (pointer: fine) {
+  :root {
+    --columna-menu: var(--ancho-riel);
+  }
+
+  /* Un cajón: el borde derecho se despliega y va destapando los nombres, que ya están en su sitio (no aparecen ni
+     se mueven: los descubre el cajón). Arranca decidido y se posa suave; cierra un poco más rápido. Por decisión del
+     equipo (DEC-139) esta animación no se apaga con «reducir movimiento»: es corta y no desplaza el contenido */
+  .menu {
+    z-index: 6;
+    justify-self: start;
+    width: var(--ancho-riel);
+    overflow-x: hidden;
+    transition: width 300ms var(--curva-cajon) 120ms, box-shadow 300ms ease-out 120ms;
+  }
+
+  .menu:hover,
+  .menu:has(:focus-visible) {
+    width: var(--ancho-menu);
+    box-shadow: var(--sombra-menu);
+    transition-duration: 440ms;
+    transition-delay: 60ms;
+  }
+
+  /* Cerrado no muestra su barra (la rueda sigue desplazándolo): le quitaría un quinto del ancho a los íconos */
+  .menu:not(:hover, :has(:focus-visible))::-webkit-scrollbar {
+    width: 0;
+  }
+
+  /* Cada caja recorta lo suyo: con el riel cerrado, el nombre queda justo detrás del borde */
+  .menu-grupo {
+    overflow: hidden;
+  }
+
+  .menu li a {
+    gap: var(--espacio-5);
+    white-space: nowrap;
+  }
+
+  /* El rótulo del grupo, cerrado, es una raya corta sobre sus íconos: ocupa lo mismo, así nada salta al abrir */
+  .menu h2 {
+    position: relative;
+    color: transparent;
+    white-space: nowrap;
+    transition: color 120ms ease-out;
+  }
+
+  .menu h2::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--borde-fuerte);
+    transition: opacity 120ms ease-out;
+  }
+
+  .menu:hover h2,
+  .menu:has(:focus-visible) h2 {
+    color: var(--texto-suave);
+    transition: color 200ms ease-out 120ms;
+  }
+
+  .menu:hover h2::after,
+  .menu:has(:focus-visible) h2::after {
+    opacity: 0;
+  }
+}
+
+/* Quien pide menos transparencia ve los botones, la barra de arriba y el menú macizos */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --menu-fondo: #262e36;
+    --menu-desenfoque: none;
+    --boton-fondo: var(--acento);
+    --boton-fondo-encima: var(--acento-encima);
+    --boton-fondo-oprimido: var(--acento);
+    --boton-suave-fondo: transparent;
+    --boton-suave-fondo-encima: var(--superficie-2);
+    --vidrio-desenfoque: none;
+    --cabecera-fondo: var(--fondo-marco);
+    --cabecera-desenfoque: none;
+    --entrada-panel: var(--superficie);
+    --entrada-campo: var(--campo-fondo);
+    --entrada-desenfoque: none;
   }
 }
 
@@ -4577,6 +5005,7 @@ button.barra {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
+  scrollbar-color: var(--barra-pulgar) transparent;
 }
 
 .alojamiento-pestanas [role='tab']:focus-visible {
@@ -4806,7 +5235,7 @@ button.barra {
 .campos-bloque .campo > div:not(.campo-unidad) > input[inputmode='numeric'],
 .campo input[type='time'] {
   max-width: 260px;
-  color-scheme: dark;
+  color-scheme: var(--esquema);
 }
 
 .opciones {
@@ -4827,7 +5256,7 @@ button.barra {
 }
 
 .opciones .casilla input {
-  color-scheme: dark;
+  color-scheme: var(--esquema);
 }
 
 .grupo-reglas {
@@ -5342,7 +5771,7 @@ button.barra {
 
   .vista-previa {
     position: sticky;
-    top: var(--espacio-4);
+    top: calc(var(--alto-cabecera) + var(--espacio-4));
   }
 }
 
@@ -5570,7 +5999,7 @@ button.barra {
 
   .vista-previa-politica {
     position: sticky;
-    top: var(--espacio-4);
+    top: calc(var(--alto-cabecera) + var(--espacio-4));
   }
 }
 
@@ -6156,9 +6585,10 @@ button.barra {
   min-height: 44px;
 }
 
-/* Calendario del bloqueo: el de la web con la marca de Meridian. Lo elegido va en Arena; los bloqueos con las rayas
-   del tablero de ocupación y las noches con reserva tachadas, para que se lean igual en todo el PMS */
-.calendario-bloqueo {
+/* El calendario del PMS (componentes/Calendario.tsx): nació en los bloqueos y ahora lo usan todas las fechas. Lo
+   elegido va en el color del tema; los bloqueos con las rayas del tablero de ocupación y las noches con reserva
+   tachadas, para que se lean igual en todo el PMS */
+.calendario {
   display: flex;
   flex-direction: column;
   gap: var(--espacio-2-medio);
@@ -6168,12 +6598,12 @@ button.barra {
   background: var(--fondo-pagina);
 }
 
-.calendario-bloqueo:focus-visible {
+.calendario:focus-visible {
   outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 
-.calendario-bloqueo.invalido {
+.calendario.invalido {
   border-color: var(--error);
 }
 
@@ -6194,6 +6624,47 @@ button.barra {
 
 .calendario-cabecera .boton {
   min-width: 44px;
+}
+
+/* Con dos meses, cada nombre va sobre su mes, entre las dos flechas */
+.calendario-cabecera .calendario-mes-nombre {
+  flex: 1;
+  text-align: center;
+}
+
+.calendario-saltos {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: var(--espacio-1-medio);
+  min-width: 0;
+}
+
+.calendario-saltos .campo-control {
+  height: 36px;
+  padding: 0 var(--espacio-1);
+  font-size: var(--tamano-chico);
+}
+
+.calendario-saltos .campo-control:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.calendario-saltos .campo-control:last-child {
+  flex: none;
+  width: 78px;
+}
+
+/* En un campo suelto las flechas son más angostas, para que quepan el mes y el año */
+.calendario-compacto .calendario-cabecera {
+  gap: var(--espacio-1-medio);
+}
+
+.calendario-compacto .calendario-cabecera .boton {
+  min-width: 36px;
+  width: 36px;
+  padding: 0;
 }
 
 .calendario-mes-nombre {
@@ -6261,12 +6732,12 @@ button.barra {
 
 .calendario-tabla .dia.en-rango {
   border-radius: 0;
-  background: color-mix(in srgb, var(--acento) 22%, var(--superficie));
+  background: var(--calendario-rango);
 }
 
 .calendario-tabla .dia.extremo {
-  background: var(--acento);
-  color: var(--sobre-acento);
+  background: var(--calendario-elegido);
+  color: var(--calendario-sobre-elegido);
   font-weight: 700;
 }
 
@@ -6275,6 +6746,163 @@ button.barra {
     border-color: var(--acento);
   }
 }
+
+/* Entrada y salida de una reserva nueva: dos botones con aspecto de campo que abren el calendario de la web, con la
+   marca del PMS. El panel se abre dentro de la tarjeta, bajo los campos (no flota: así la página crece con él y nada
+   queda tapado), y toma los colores del tema: azul oscuro de noche, Arena de día */
+.selector-estancia {
+  display: grid;
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
+.fecha-disparador {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fecha-disparador[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.fecha-disparador[aria-expanded='true'] {
+  border-color: var(--acento);
+}
+
+.fecha-valor {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.fecha-vacia {
+  color: var(--texto-pista);
+}
+
+.fecha-disparador .icono {
+  color: var(--texto-suave);
+}
+
+.fechas-panel {
+  grid-column: 1 / -1;
+  animation: fechas-abrir 180ms var(--curva-salida);
+}
+
+@keyframes fechas-abrir {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.calendario-meses {
+  display: grid;
+  gap: var(--espacio-5);
+}
+
+.fechas-acciones {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  padding-top: var(--espacio-2-medio);
+  border-top: 1px solid var(--borde);
+}
+
+/* Un campo de fecha con el calendario del PMS: el del navegador no se usa. La fecha se sigue pudiendo escribir */
+.campo-fecha {
+  position: relative;
+  min-width: 0;
+}
+
+.campo-fecha > .campo-control {
+  padding-right: 48px;
+}
+
+.campo-fecha input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.campo-fecha-boton {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 var(--radio-chico) var(--radio-chico) 0;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.campo-fecha-boton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.campo-fecha-boton[aria-expanded='true'] {
+  color: var(--acento);
+}
+
+.campo-fecha-boton:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Flota sobre todo (también dentro de un diálogo), pegado al campo */
+.campo-fecha-panel {
+  position: fixed;
+  z-index: 40;
+  width: 312px;
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-dialogo);
+  animation: fechas-abrir 160ms var(--curva-salida);
+}
+
+.campo-fecha-panel .calendario {
+  border-color: var(--borde-fuerte);
+  background: var(--superficie);
+}
+
+/* En un campo suelto el calendario es más chico: días de 36 px, aún cómodos para el dedo con el espacio de alrededor */
+.calendario-compacto {
+  gap: var(--espacio-2);
+}
+
+.calendario-compacto .calendario-tabla .dia {
+  min-height: 36px;
+  font-size: var(--tamano-pista);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .campo-fecha-boton:not(:disabled):hover {
+    color: var(--acento);
+  }
+}
+
+@media (min-width: 800px) {
+  /* En el computador ocupa las dos primeras columnas del paso, con sus dos campos lado a lado */
+  .paso-campos-3 > .selector-estancia {
+    grid-column: span 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .calendario-meses[data-meses='2'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espacio-7);
+  }
+}
+
 
 .calendario-leyenda {
   display: flex;
@@ -6310,8 +6938,8 @@ button.barra {
 }
 
 .muestra-elegida {
-  border-color: var(--acento);
-  background: var(--acento);
+  border-color: var(--calendario-elegido);
+  background: var(--calendario-elegido);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6516,8 +7144,8 @@ button.barra {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--marca-terracota);
-  color: var(--marca-medianoche);
+  background: var(--advertencia);
+  color: var(--sobre-estado);
   font-size: var(--tamano-mini);
   font-weight: 700;
 }
@@ -6894,7 +7522,7 @@ button.barra {
   align-items: flex-start;
   gap: var(--espacio-3);
   padding: var(--espacio-3);
-  border-left: 3px solid transparent;
+  border-radius: var(--radio-chico);
   cursor: pointer;
 }
 
@@ -6921,8 +7549,8 @@ button.barra {
 }
 
 .rol-opcion.elegido {
-  border-left-color: var(--acento);
   background: var(--superficie-2);
+  box-shadow: inset 0 0 0 1px var(--acento);
 }
 
 .resumen-usuario {
@@ -6961,6 +7589,121 @@ button.barra {
 
 .perfil-bloque-cuerpo h2 {
   margin: 0;
+}
+
+/* Apariencia: Noche o Día, cada una con una muestra de sus colores */
+.apariencia {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.apariencia-opciones {
+  display: grid;
+  gap: var(--espacio-3);
+}
+
+.apariencia-opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: 64px;
+  padding: var(--espacio-3) var(--espacio-4);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-chico);
+  cursor: pointer;
+}
+
+.apariencia-opcion:has(input:checked) {
+  border-color: var(--acento);
+  background: var(--superficie-2);
+  box-shadow: inset 0 0 0 1px var(--acento);
+}
+
+.apariencia-opcion:has(input:focus-visible) {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+.apariencia-opcion input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--acento);
+}
+
+.apariencia-opcion input:focus-visible {
+  outline: none;
+}
+
+.apariencia-textos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.apariencia-textos .campo-pista {
+  margin: 0;
+}
+
+/* La muestra lleva los colores de su tema, sea cual sea el que está puesto: por eso van escritos aquí */
+.apariencia-muestra {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 56px;
+  height: 36px;
+  padding: 6px;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 6px;
+}
+
+.apariencia-muestra::before,
+.apariencia-muestra::after {
+  content: '';
+  flex: 1;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.apariencia-muestra::after {
+  flex: none;
+  width: 14px;
+  height: 10px;
+}
+
+.apariencia-muestra-noche {
+  background: #071923;
+}
+
+.apariencia-muestra-noche::before {
+  background: #0f2a3a;
+}
+
+.apariencia-muestra-noche::after {
+  background: #d9c9b0;
+}
+
+.apariencia-muestra-dia {
+  background: #e2d5bd;
+}
+
+.apariencia-muestra-dia::before {
+  background: #efe5d1;
+}
+
+.apariencia-muestra-dia::after {
+  background: #b79c72;
+}
+
+@container (min-width: 560px) {
+  .apariencia-opciones {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .perfil-bloque-pie {
@@ -7132,7 +7875,7 @@ button.barra {
     min-width: 100%;
     width: max-content;
     max-width: 320px;
-    box-shadow: 0 12px 32px rgb(0 0 0 / 40%);
+    box-shadow: var(--sombra-lista);
   }
 }
 
@@ -7182,9 +7925,9 @@ button.barra {
   text-decoration: line-through;
 }
 
-/* ===== Asistente: la ayuda del PMS (DEC-127, mockups S5Asistente) ===== */
+/* ===== Asistente de IA del PMS (DEC-127, mockups S5Asistente) ===== */
 
-/* «Ayuda» en la cabecera: en el celular, solo el ícono, junto a quien entró */
+/* «Asistente de IA» en la cabecera: en el celular, solo el ícono, junto a quien entró */
 .boton-ayuda {
   order: 2;
   flex: none;
@@ -7209,7 +7952,7 @@ button.barra {
 
 .boton-ayuda[aria-expanded='true'] {
   border-color: var(--acento);
-  background: var(--superficie-2);
+  --fondo: var(--superficie-2);
 }
 
 /* El panel: en el celular tapa todo; en el computador va al lado del PMS, sin velo */
@@ -7420,10 +8163,28 @@ button.barra {
   color: var(--texto-suave);
 }
 
-.asistente-fuentes a {
+.asistente-fuentes a,
+.asistente-texto a {
   color: var(--acento);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* Una fuente que no lleva a otra pantalla no se parece a un enlace: sin ícono ni flecha, en el color del texto,
+   con una línea debajo que dice por qué (y por dónde se llega, si se puede) */
+.asistente-fuentes .asistente-fuente-texto {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  padding: var(--espacio-1) 0;
+  color: var(--texto);
+}
+
+.asistente-fuente-nota {
+  color: var(--texto-suave);
+  font-size: var(--tamano-pista);
+  line-height: var(--interlinea-pista);
 }
 
 .asistente-espera {
@@ -7533,7 +8294,7 @@ button.barra {
 
   /* Con el panel abierto, el PMS y la ayuda quedan lado a lado */
   .panel:has(> .asistente) {
-    grid-template-columns: 240px minmax(0, 1fr) 400px;
+    grid-template-columns: var(--columna-menu) minmax(0, 1fr) 400px;
     grid-template-areas: 'cabecera cabecera cabecera' 'menu contenido asistente';
   }
 
@@ -7541,11 +8302,11 @@ button.barra {
   .asistente {
     position: sticky;
     inset: auto;
-    top: 0;
+    top: var(--alto-cabecera);
     z-index: auto;
     grid-area: asistente;
     align-self: start;
-    height: calc(100dvh - 68px);
+    height: calc(100dvh - var(--alto-cabecera));
     padding-top: 0;
     border-left: 1px solid var(--borde-fuerte);
   }
@@ -7657,7 +8418,9 @@ button.barra {
   grid-template-areas: 'cabecera' 'datos' 'motivo' 'accion';
   gap: var(--espacio-3);
   padding: var(--espacio-4);
-  border-left: 4px solid var(--error);
+  /* Como los avisos (DEC-138): borde de 1 px en su color y fondo tintado, no una franja gruesa a la izquierda */
+  border-color: var(--error);
+  background: var(--error-fondo);
 }
 
 .conflicto-cabecera {
@@ -7743,8 +8506,8 @@ button.barra {
   font-size: var(--tamano-rotulo);
   line-height: var(--interlinea-rotulo);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--rotulo-espaciado);
+  text-transform: var(--rotulo-mayusculas);
 }
 
 .conflicto-telefono {
@@ -8135,8 +8898,8 @@ button.barra {
     font-size: var(--tamano-rotulo);
     line-height: var(--interlinea-rotulo);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: var(--rotulo-espaciado);
+    text-transform: var(--rotulo-mayusculas);
   }
 
   .conflicto-telefono {
@@ -8191,8 +8954,8 @@ button.barra {
     font-size: var(--tamano-rotulo);
     line-height: var(--interlinea-rotulo);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: var(--encabezado-espaciado);
+    text-transform: var(--encabezado-mayusculas);
   }
 
   .eventos {
@@ -9136,7 +9899,9 @@ button.barra {
   flex-direction: column;
   gap: var(--espacio-minimo);
   padding: var(--espacio-2) var(--espacio-3);
-  border-left: 3px solid var(--borde-fuerte);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  background: var(--superficie-2);
 }
 
 @container (min-width: 760px) {

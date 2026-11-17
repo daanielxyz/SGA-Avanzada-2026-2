@@ -28,6 +28,36 @@ function abrir(rutas: Parameters<typeof laApiRespondePorRuta>[0]) {
 const bloque = async (nombre: string) => screen.findByRole('region', { name: nombre })
 
 describe('mi perfil', () => {
+  it('en «Apariencia» se cambia entre noche y día, al momento y recordándolo en el navegador', async () => {
+    const { persona } = abrir({})
+    const apariencia = await bloque('Apariencia')
+    const noche = within(apariencia).getByRole('radio', { name: /Noche/ })
+    const dia = within(apariencia).getByRole('radio', { name: /Día/ })
+    expect(noche).toBeChecked()
+    expect(document.documentElement.dataset.tema).toBeUndefined()
+
+    await persona.click(dia)
+
+    expect(dia).toBeChecked()
+    expect(document.documentElement.dataset.tema).toBe('dia')
+    expect(localStorage.getItem('sga.pms.tema')).toBe('dia')
+
+    await persona.click(noche)
+
+    expect(noche).toBeChecked()
+    expect(document.documentElement.dataset.tema).toBeUndefined()
+    expect(localStorage.getItem('sga.pms.tema')).toBe('noche')
+  })
+
+  it('«Apariencia» abre con el tema que quedó guardado, y está aunque el perfil no cargue', async () => {
+    localStorage.setItem('sga.pms.tema', 'dia')
+    abrir({ '/api/usuarios/perfil': [500, { estado: 500, codigo: 'ERROR', mensaje: 'Falló', detalles: [] }] })
+
+    const apariencia = await bloque('Apariencia')
+    expect(within(apariencia).getByRole('radio', { name: /Día/ })).toBeChecked()
+    expect(await screen.findByText(/No pudimos cargar tus datos/)).toBeInTheDocument()
+  })
+
   it('guarda los datos propios; el correo y el rol solo se leen, y la cabecera toma el nombre nuevo', async () => {
     const { fetch, persona } = abrir({
       '/api/usuarios/perfil': (metodo) => [200, metodo === 'PUT' ? { ...MARIA, nombre: 'Ana María Gómez' } : MARIA],

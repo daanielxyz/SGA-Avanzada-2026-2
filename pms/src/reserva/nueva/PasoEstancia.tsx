@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import Aviso from '../../componentes/Aviso'
-import { cantidad, fechaHoy, noches } from '../../formato'
+import { cantidad, noches } from '../../formato'
 import Campo from './Campo'
 import { sinError, validarEstancia, type DatosEstancia, type Errores } from './formulario'
+import SelectorEstancia from './SelectorEstancia'
 
 /** Paso 1: cuándo y cuántos. */
 export default function PasoEstancia({ datos, alCambiar, alSeguir }: {
@@ -11,7 +12,6 @@ export default function PasoEstancia({ datos, alCambiar, alSeguir }: {
   alSeguir: () => void
 }) {
   const [errores, setErrores] = useState<Errores>({})
-  const hoy = fechaHoy()
   const validas = datos.entrada && datos.salida > datos.entrada
   const hayErrorDeFechas = Boolean(errores.entrada || errores.salida)
 
@@ -30,24 +30,15 @@ export default function PasoEstancia({ datos, alCambiar, alSeguir }: {
   return (
     <form className="tarjeta paso-tarjeta" onSubmit={enviar} noValidate>
       <h2 tabIndex={-1}>¿Cuándo y cuántos?</h2>
-      {hayErrorDeFechas && <Aviso tipo="error" asunto="Revisa las fechas marcadas" mensaje="Los errores están junto a cada fecha." />}
+      {hayErrorDeFechas && <Aviso tipo="error" asunto="Faltan las fechas" mensaje="Elígelas en el calendario: el aviso está junto a cada una." />}
       <div className="paso-campos-3">
-        <Campo
-          etiqueta="Entrada"
-          type="date"
-          min={hoy}
-          value={datos.entrada}
-          error={errores.entrada}
-          onChange={(evento) => cambiar('entrada', evento.target.value)}
-        />
-        <Campo
-          etiqueta="Salida"
-          type="date"
-          min={datos.entrada || hoy}
-          value={datos.salida}
-          error={errores.salida}
-          pista="La noche de salida no se cobra."
-          onChange={(evento) => cambiar('salida', evento.target.value)}
+        <SelectorEstancia
+          estancia={{ entrada: datos.entrada, salida: datos.salida }}
+          errores={errores}
+          alCambiar={({ entrada, salida }) => {
+            setErrores((actuales) => sinError(sinError(actuales, 'entrada'), 'salida'))
+            alCambiar({ ...datos, entrada, salida })
+          }}
         />
         <Campo
           etiqueta="Número de ocupantes"

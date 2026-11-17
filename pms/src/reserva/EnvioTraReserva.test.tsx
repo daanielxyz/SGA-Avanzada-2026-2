@@ -45,8 +45,9 @@ describe('el TRA de una reserva (DEC-130)', () => {
     // «Reintentar» va dentro del aviso que dice el motivo
     const aviso = screen.getByText('El Ministerio respondió 401: revisa el token').closest('.aviso') as HTMLElement
     await usuario.click(within(aviso).getByRole('button', { name: 'Reintentar' }))
-    expect(await screen.findByText('Enviado')).toBeInTheDocument()
-    expect(screen.getByText('TRA enviado')).toBeInTheDocument()
+    // Recién enviado lo dice el aviso grande; la etiqueta «Enviado» no lo repite encima
+    expect(await screen.findByText('TRA enviado')).toBeInTheDocument()
+    expect(screen.queryByText('Enviado')).not.toBeInTheDocument()
     expect(llamada(fetch, 1)).toMatchObject({ url: `${RUTA}/enviar`, metodo: 'PUT' })
     // El botón ya no está: el foco vuelve al título del bloque
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Reporte al Ministerio (TRA)' })).toHaveFocus())
