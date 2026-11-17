@@ -45,6 +45,32 @@ class CorsTest {
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS));
     }
 
+    // DEC-140: quien reserva sin cuenta paga o suelta su reserva con la clave en X-Reserva-Clave (DEC-93)
+    @Test
+    void laWebPuedeEnviarLaClaveDeLaReservaParaPagarOSoltarla() throws Exception {
+        for (String[] accion : new String[][]{{"pago", "POST"}, {"liberar", "PUT"}}) {
+            mvc.perform(options("/api/portal/reservas/RES-2026-00001/" + accion[0])
+                            .with(SesionDePrueba.sinSesion())
+                            .header(HttpHeaders.ORIGIN, WEB)
+                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, accion[1])
+                            .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "content-type, x-reserva-clave"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, WEB))
+                    .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                            containsString("x-reserva-clave")));
+        }
+    }
+
+    @Test
+    void unaCabeceraQueLaApiNoUsaSeRechaza() throws Exception {
+        mvc.perform(options("/api/portal/reservas/RES-2026-00001/pago")
+                        .with(SesionDePrueba.sinSesion())
+                        .header(HttpHeaders.ORIGIN, WEB)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "x-canal-clave"))
+                .andExpect(status().isForbidden());
+    }
+
     @Test
     void laRespuestaLeDiceAlFrontendQuePuedeLeerlaYVerElLocation() throws Exception {
         mvc.perform(get("/api/apartamentos").header(HttpHeaders.ORIGIN, WEB))
