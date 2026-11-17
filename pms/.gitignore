@@ -31,3 +31,6 @@ diseno/
 
 # La licencia de Satoshi no permite publicarla en un repositorio: cada clon la baja de Fontshare (pms/DISENO.md)
 public/fuentes/Satoshi-*
+
+# Prompts de trabajo con Claude (Claude Design / Claude Code): se quedan en cada clon
+prompts/
