@@ -32,5 +32,8 @@ diseno/
 # La licencia de Satoshi no permite publicarla en un repositorio: cada clon la baja de Fontshare (pms/DISENO.md)
 public/fuentes/Satoshi-*
 
-# El video del inicio de sesión y su póster son pesados y de prueba: cada clon los deja aquí (pms/DISENO.md)
-public/video/
+# Videos de la entrada: solo van a git el definitivo y su póster, comprimidos y sin audio (pms/DISENO.md); otros de
+# prueba se quedan en el clon
+public/video/*
+!public/video/entrada.mp4
+!public/video/entrada.jpg
