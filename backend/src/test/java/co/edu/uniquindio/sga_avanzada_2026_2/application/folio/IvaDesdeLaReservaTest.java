@@ -66,6 +66,25 @@ class IvaDesdeLaReservaTest {
     }
 
     @Test
+    @Tag("DEC-141")
+    void conLasTarifasConIvaElTotalEsElDeLasNochesYElFolioCargaElAlojamientoSinEl() {
+        Alojamiento alojamiento = escenario.alojamientos.buscarPorId(new AlojamientoId("ALO-1")).orElseThrow();
+        alojamiento.cambiarImpuesto(new ImpuestoAlojamiento(true, new Porcentaje(19), true));
+        escenario.alojamientos.guardar(alojamiento);
+        String codigo = escenario.reservaPendiente();
+
+        Reserva reserva = escenario.reserva(codigo);
+        ReservaResult resultado = ReservaResult.de(reserva);
+        assertEquals(reserva.valorTotal(), reserva.valorEstancia());
+        assertEquals(reserva.valorAlojamiento(), escenario.folio(codigo).cargos().stream()
+                .filter(c -> c.tipo() == TipoCargo.HOSPEDAJE).findFirst().orElseThrow().valor());
+        assertEquals(reserva.iva(), ivas(codigo).getFirst().valor());
+        assertTrue(resultado.valor().ivaIncluido());
+        assertEquals(reserva.valorAlojamiento().monto(), resultado.valor().alojamiento());
+        assertEquals(reserva.valorTotal().monto(), resultado.valor().totalConIva());
+    }
+
+    @Test
     void laRespuestaTraeLaBaseElIvaYElTotalConIva() {
         cobrarIva(true);
         Reserva reserva = escenario.reserva(escenario.reservaPendiente());

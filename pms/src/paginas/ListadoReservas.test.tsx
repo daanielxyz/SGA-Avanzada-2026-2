@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -24,6 +24,37 @@ function consultasAlListado(fetch: ReturnType<typeof laApiRespondePorRuta>) {
 }
 
 describe('listado de reservas (CU-25)', () => {
+  it('una reserva que entra por la web aparece sola, sin recargar la página', async () => {
+    const listas = [[reservaDePrueba()], [reservaDePrueba(), reservaDePrueba({ codigo: 'RES-2026-00099' })]]
+    laApiRespondePorRuta({ '/api/reservas': () => [200, paginaDe(listas.length > 1 ? listas.shift()! : listas[0])] })
+    abrir()
+    const tabla = await screen.findByRole('table', { name: 'Reservas' })
+    expect(within(tabla).queryByRole('row', { name: /RES-2026-00099/ })).not.toBeInTheDocument()
+
+    // usePulso vuelve a leer cada 20 s y al volver a la pestaña; aquí, al volver a ella
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    expect(await within(tabla).findByRole('row', { name: /RES-2026-00099/ })).toBeInTheDocument()
+    expect(within(tabla).getByRole('row', { name: /RES-2026-00042/ })).toBeInTheDocument()
+  })
+
+  it('si una relectura de fondo falla, la lista que se veía se queda', async () => {
+    const respuestas: [number, unknown][] = [[200, paginaDe([reservaDePrueba()])], [500, { estado: 500, codigo: 'ERROR', mensaje: 'x', detalles: [] }]]
+    laApiRespondePorRuta({ '/api/reservas': () => respuestas.length > 1 ? respuestas.shift()! : respuestas[0] })
+    abrir()
+    const tabla = await screen.findByRole('table', { name: 'Reservas' })
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+
+    await waitFor(() => expect(respuestas).toHaveLength(1))
+    expect(within(tabla).getByRole('row', { name: /RES-2026-00042/ })).toBeInTheDocument()
+    expect(screen.queryByText('No pudimos cargar las reservas')).not.toBeInTheDocument()
+  })
+
   it('muestra cada reserva con el nombre del titular, sus fechas, su estado y su total', async () => {
     laApiRespondePorRuta({ '/api/reservas': [200, paginaDe([reservaDePrueba()])] })
     abrir()

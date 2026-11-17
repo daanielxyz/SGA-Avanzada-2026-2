@@ -27,7 +27,21 @@ public class ImpuestoEstanciaDomainService {
     // DEC-134
     public void congelarAlCrear(Reserva reserva, Folio folio, ImpuestoAlojamiento impuesto,
                                 Documento documentoTitular, LocalDate fecha) {
+        congelar(reserva, impuesto, documentoTitular);
+        cargarAlCrear(reserva, folio, fecha);
+    }
+
+    /**
+     * Congela el IVA de una reserva nueva, antes de abrir su folio: si las tarifas ya lo incluyen, el cargo del
+     * alojamiento es su base ({@link Reserva#valorAlojamiento()}, DEC-141).
+     */
+    // DEC-134 · DEC-141
+    public void congelar(Reserva reserva, ImpuestoAlojamiento impuesto, Documento documentoTitular) {
         reserva.congelarIva(IvaReserva.para(impuesto, documentoQueDecide(reserva.ocupantes(), documentoTitular)));
+    }
+
+    /** El cargo del IVA congelado en el folio recién abierto, si la reserva lo paga (DEC-134). */
+    public void cargarAlCrear(Reserva reserva, Folio folio, LocalDate fecha) {
         if (reserva.iva().esPositivo()) {
             folio.cargarIva(reserva.iva(), reserva.ivaReserva().porcentaje(), fecha);
         }

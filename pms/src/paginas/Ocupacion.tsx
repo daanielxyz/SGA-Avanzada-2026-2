@@ -7,6 +7,7 @@ import { NOMBRE_DEL_CANAL, NOMBRE_DEL_ESTADO, type Pagina } from '../api/reserva
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
 import Dialogo from '../componentes/Dialogo'
+import { usePulso } from '../componentes/usePulso'
 import EstadoApartamento from '../componentes/EstadoApartamento'
 import MotivoFueraDeServicio from '../componentes/MotivoFueraDeServicio'
 import { FormaEstado } from '../componentes/EtiquetaEstado'
@@ -60,6 +61,8 @@ export default function Ocupacion() {
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [abierta, setAbierta] = useState<ReservaOcupada | null>(null)
   const clave = `${desde}|${hasta}|${apartamento}|${numero}|${intento}`
+  // Las reservas que entran por la web o por otra persona aparecen solas, sin recargar la página
+  const pulso = usePulso()
 
   useEffect(() => {
     let vigente = true
@@ -89,14 +92,15 @@ export default function Ocupacion() {
         setResultado({ clave, pagina })
       })
       .catch((error: unknown) => {
-        if (vigente) setResultado({ clave, error })
+        // Si falla una relectura de fondo, el tablero que ya se veía se queda
+        if (vigente) setResultado((previo) => (previo?.clave === clave && 'pagina' in previo ? previo : { clave, error }))
       })
     return () => {
       vigente = false
     }
     // Los parámetros solo se leen al llegar la respuesta: la consulta depende de la clave
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apartamento, clave, desde, hasta, numero, rangoInvalido])
+  }, [apartamento, clave, desde, hasta, numero, rangoInvalido, pulso])
 
   function cambiar(cambios: { desde?: string; ultima?: string; apartamento?: string; pagina?: number }) {
     const nuevos = { desde, ultima, apartamento, pagina: 0, ...cambios }

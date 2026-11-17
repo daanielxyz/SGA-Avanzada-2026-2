@@ -3,6 +3,7 @@ import type { ApartamentoPublico, Estadia, Grupo } from '../api/apartamentos'
 import { enPesos, fechaCorta, noches } from '../formato'
 import { enlaceAlApartamento } from './enlace'
 import Foto from './Foto'
+import { tarifaConIva, valorEstancia } from './iva'
 
 interface Props {
   apartamento: ApartamentoPublico
@@ -66,15 +67,15 @@ function PrecioDeLaTarjeta({ apartamento: { precio }, busqueda }: Props) {
   if (busqueda) {
     return (
       <div className="tarjeta-precio">
-        <strong>{enPesos(precio.total)}</strong>
+        <strong>{enPesos(valorEstancia(precio))}</strong>
         <span className="suave">{grupoYNoches(busqueda)}</span>
-        <span className="suave">{enPesos(llegada.tarifa)} por adulto y noche</span>
+        <span className="suave">{enPesos(tarifaConIva(precio, llegada.tarifa))} por adulto y noche</span>
       </div>
     )
   }
   return (
     <div className="tarjeta-precio">
-      <strong>{enPesos(llegada.tarifa)}</strong>
+      <strong>{enPesos(tarifaConIva(precio, llegada.tarifa))}</strong>
       <span className="suave">por adulto y noche</span>
       <span className="suave">libre desde el {fechaCorta(llegada.noche)}</span>
     </div>

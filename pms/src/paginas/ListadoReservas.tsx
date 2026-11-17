@@ -20,6 +20,7 @@ import Icono from '../componentes/Icono'
 import { textoDeEleccion, type Atajo } from '../componentes/eleccion'
 import Paginador from '../componentes/Paginador'
 import SeleccionVarios from '../componentes/SeleccionVarios'
+import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
 import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
 import { totalConIva } from '../reserva/valor'
@@ -113,6 +114,8 @@ export default function ListadoReservas() {
   const codigo = valores.codigo.trim().toUpperCase()
   const consultaListado = consultaAlListado(parametros)
   useTitulo('Reservas')
+  // Las reservas que entran por la web o por otra persona aparecen solas, sin recargar la página
+  const pulso = usePulso()
 
   useEffect(() => {
     let vigente = true
@@ -122,12 +125,13 @@ export default function ListadoReservas() {
         if (vigente) setResultado({ clave, pagina })
       })
       .catch((error: unknown) => {
-        if (vigente) setResultado({ clave, error })
+        // Si falla una relectura de fondo, la lista que ya se veía se queda: el error solo reemplaza a la carga
+        if (vigente) setResultado((previo) => (previo?.clave === clave && 'pagina' in previo ? previo : { clave, error }))
       })
     return () => {
       vigente = false
     }
-  }, [codigo, consultaListado, clave])
+  }, [codigo, consultaListado, clave, pulso])
 
   const hayFiltros = Object.values(valores).some(Boolean)
   const actual = resultado?.clave === clave ? resultado : null

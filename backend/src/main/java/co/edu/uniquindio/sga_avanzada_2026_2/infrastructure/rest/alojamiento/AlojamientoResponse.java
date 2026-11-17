@@ -18,8 +18,8 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                                   List<ServicioResponse> serviciosAdicionales, List<String> mediosPago,
                                   MarcaResponse marca, String rnt, ImpuestoResponse impuesto) {
 
-    /** DEC-133: si cobra el IVA de la estancia (las tarifas son la base) y su porcentaje. */
-    public record ImpuestoResponse(boolean cobraIva, int porcentaje) {
+    /** DEC-133 · DEC-141: si cobra el IVA de la estancia, su porcentaje y si las tarifas ya lo incluyen. */
+    public record ImpuestoResponse(boolean cobraIva, int porcentaje, boolean incluidoEnTarifa) {
     }
 
 
@@ -52,6 +52,7 @@ public record AlojamientoResponse(String id, String nombre, String descripcion, 
                 r.mediosPago(),
                 MarcaResponse.de(r.marca()),
                 r.rnt(),
-                new ImpuestoResponse(r.impuesto().cobraIva(), r.impuesto().porcentaje()));
+                new ImpuestoResponse(r.impuesto().cobraIva(), r.impuesto().porcentaje(),
+                        r.impuesto().incluidoEnTarifa()));
     }
 }

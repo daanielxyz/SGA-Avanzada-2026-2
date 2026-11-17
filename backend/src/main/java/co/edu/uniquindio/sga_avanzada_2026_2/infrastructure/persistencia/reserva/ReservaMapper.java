@@ -73,7 +73,8 @@ final class ReservaMapper {
                                 new UsuarioId(c.getAutor()), c.getFechaHora(), c.isTitular()))
                         .toList());
         // DEC-134
-        reserva.congelarIva(new IvaReserva(new Porcentaje(jpa.getIvaPorcentaje()), jpa.isIvaExento()));
+        reserva.congelarIva(new IvaReserva(new Porcentaje(jpa.getIvaPorcentaje()), jpa.isIvaExento(),
+                jpa.isIvaIncluido()));
         return reserva;
     }
 
@@ -102,6 +103,7 @@ final class ReservaMapper {
         jpa.setMascotas(reserva.mascotas());
         jpa.setIvaPorcentaje(reserva.ivaReserva().porcentaje().valor());
         jpa.setIvaExento(reserva.ivaReserva().exento());
+        jpa.setIvaIncluido(reserva.ivaReserva().incluido());
         jpa.getRegistros().clear();
         reserva.registros().forEach(r -> jpa.getRegistros().add(new RegistroJpa(r.id().valor(), r.fechaHora(),
                 r.autor().valor(), r.anulado(), r.motivoCorreccion(), r.motivoSinPago())));

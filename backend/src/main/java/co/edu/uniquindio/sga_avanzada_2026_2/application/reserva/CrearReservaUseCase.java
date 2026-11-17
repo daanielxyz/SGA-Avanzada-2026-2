@@ -114,11 +114,13 @@ public class CrearReservaUseCase {
                 parametros.cupoParqueadero());
         reserva.declararExtras(comando.carros(), comando.motos(), comando.mascotas(), parametros.calcularExtras(
                 comando.carros(), comando.motos(), comando.mascotas(), estancia.noches().size()));
+        // DEC-134: el IVA desde la reserva, para que el huésped vea el total y el anticipo con IVA. Se congela antes
+        // de abrir el folio: si las tarifas ya lo traen, el alojamiento se carga sin él (DEC-141)
+        impuestos.congelar(reserva, alojamiento.impuesto(), titular.documento());
         Folio folio = Folio.abrir(new FolioId(codigos.siguiente(SerieCodigo.FOLIO)), reserva.codigo(),
-                reserva.valorTotal(), ahora.toLocalDate());
+                reserva.valorAlojamiento(), ahora.toLocalDate());
         folio.cargarExtras(reserva.extras(), ahora.toLocalDate());
-        // DEC-134: el IVA desde la reserva, para que el huésped vea el total y el anticipo con IVA
-        impuestos.congelarAlCrear(reserva, folio, alojamiento.impuesto(), titular.documento(), ahora.toLocalDate());
+        impuestos.cargarAlCrear(reserva, folio, ahora.toLocalDate());
 
         titulares.guardar(titular);
         reservas.guardar(reserva);

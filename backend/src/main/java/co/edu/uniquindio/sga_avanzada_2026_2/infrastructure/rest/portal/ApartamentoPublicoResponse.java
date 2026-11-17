@@ -34,18 +34,21 @@ public record ApartamentoPublicoResponse(String codigo, String nombre, String de
     /**
      * El desglose noche por noche y el total (COT-02), sin los ids internos de las temporadas.
      *
-     * @param total         la suma de las noches, sin IVA
+     * @param total         la suma de las noches, con las tarifas tal cual
+     * @param alojamiento   {@code total} sin el IVA que traen dentro las tarifas (DEC-141)
      * @param ivaPorcentaje el del alojamiento; 0 si no cobra IVA (DEC-134)
-     * @param iva           el IVA sobre {@code total}; quien llega con pasaporte no lo paga
+     * @param iva           el IVA; quien llega con pasaporte no lo paga
+     * @param ivaIncluido   si las tarifas ya traen el IVA (DEC-141)
      * @param totalConIva   el precio que se muestra
      */
-    public record PrecioResponse(List<NocheResponse> desglose, BigDecimal total, int ivaPorcentaje, BigDecimal iva,
-                                 BigDecimal totalConIva) {
+    public record PrecioResponse(List<NocheResponse> desglose, BigDecimal total, BigDecimal alojamiento,
+                                 int ivaPorcentaje, BigDecimal iva, boolean ivaIncluido, BigDecimal totalConIva) {
 
         static PrecioResponse de(CotizacionResult r) {
             return r == null ? null : new PrecioResponse(r.desglose().stream()
                     .map(n -> new NocheResponse(n.noche(), n.tarifa(), n.ocupantesFacturables(), n.subtotal()))
-                    .toList(), r.total(), r.ivaPorcentaje(), r.iva(), r.totalConIva());
+                    .toList(), r.total(), r.alojamiento(), r.ivaPorcentaje(), r.iva(), r.ivaIncluido(),
+                    r.totalConIva());
         }
     }
 

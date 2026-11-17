@@ -4,6 +4,7 @@ import { consultarApartamento, type ApartamentoPublico, type Pagina } from '../a
 import { explicar } from '../api/mensajes'
 import { ESTADOS, listarMisReservas, type ReservaDelHuesped } from '../api/cuenta'
 import Foto from '../busqueda/Foto'
+import { valorEstancia } from '../busqueda/iva'
 import Paginacion from '../busqueda/Paginacion'
 import { enPesos, fechaCorta } from '../formato'
 
@@ -89,7 +90,7 @@ function FilaReserva({ reserva, apartamento }: { reserva: ReservaDelHuesped; apa
         </div>
         {/* Una cancelada o sin llegada ya no se cobra: su total confundiría; lo retenido está en su detalle */}
         {reserva.estado !== 'CANCELADA' && reserva.estado !== 'NO_SHOW' && (
-          <strong className="fila-reserva-total">{enPesos(reserva.valor.total + reserva.extras.total)}</strong>
+          <strong className="fila-reserva-total">{enPesos(valorEstancia(reserva.valor) + reserva.extras.total)}</strong>
         )}
       </Link>
     </li>

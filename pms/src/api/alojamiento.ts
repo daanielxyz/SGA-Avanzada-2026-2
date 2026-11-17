@@ -75,7 +75,7 @@ export interface Alojamiento {
   marca?: Marca | null
   /** Registro Nacional de Turismo, con el que se envía el TRA (DEC-130); null si no se ha escrito. */
   rnt?: string | null
-  /** El IVA de la estancia (DEC-133): las tarifas son la base sin IVA. Puede faltar en respuestas viejas. */
+  /** El IVA de la estancia (DEC-133 · DEC-141). Puede faltar en respuestas viejas. */
   impuesto?: Impuesto | null
 }
 
@@ -83,6 +83,8 @@ export interface Alojamiento {
 export interface Impuesto {
   cobraIva: boolean
   porcentaje: number
+  /** DEC-141: si las tarifas ya traen el IVA; si no, se les suma. Puede faltar en respuestas viejas. */
+  incluidoEnTarifa?: boolean
 }
 
 export interface DatosAlojamiento {

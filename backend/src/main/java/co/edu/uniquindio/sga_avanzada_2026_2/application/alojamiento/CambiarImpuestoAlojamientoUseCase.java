@@ -28,12 +28,14 @@ public class CambiarImpuestoAlojamientoUseCase {
      *         fuera de 0 a 100, o es 0 y se pide cobrarlo
      */
     @Transactional
-    public AlojamientoResult ejecutar(String alojamientoId, boolean cobraIva, int porcentaje) {
+    public AlojamientoResult ejecutar(String alojamientoId, boolean cobraIva, int porcentaje,
+                                      boolean incluidoEnTarifa) {
         AlojamientoId id = new AlojamientoId(alojamientoId);
         Alojamiento alojamiento = alojamientos.buscarPorId(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("el alojamiento", id.valor()));
 
-        alojamiento.cambiarImpuesto(new ImpuestoAlojamiento(cobraIva, new Porcentaje(porcentaje)));
+        alojamiento.cambiarImpuesto(
+                new ImpuestoAlojamiento(cobraIva, new Porcentaje(porcentaje), incluidoEnTarifa));
 
         alojamientos.guardar(alojamiento);
         return AlojamientoResult.de(alojamiento);

@@ -1,6 +1,6 @@
 import type { Valor } from '../api/reservas'
 import { dinero, fechaCorta } from '../formato'
-import { lineaIva, totalConIva } from '../reserva/valor'
+import { lineaIva, totalConIva, valorAlojamiento } from '../reserva/valor'
 
 /**
  * Valor por noche y total de una estancia. En pantallas angostas la tarifa y los ocupantes pasan debajo de la fecha:
@@ -53,7 +53,7 @@ export default function TablaDesglose({ idTitulo, valor }: { idTitulo: string; v
         <dl className="desglose-iva">
           <div>
             <dt>Alojamiento</dt>
-            <dd className="codigo">{dinero(valor.total)}</dd>
+            <dd className="codigo">{dinero(valorAlojamiento(valor))}</dd>
           </div>
           <div>
             <dt>{iva.texto}</dt>

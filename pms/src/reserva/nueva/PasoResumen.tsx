@@ -7,7 +7,7 @@ import Aviso from '../../componentes/Aviso'
 import Dato from '../../componentes/Dato'
 import TablaDesglose from '../../componentes/TablaDesglose'
 import { cantidad, dinero, fechaCorta, fechaHoy, horaEnPalabras, noches } from '../../formato'
-import { lineaIva, totalConIva } from '../valor'
+import { lineaIva, totalConIva, valorAlojamiento } from '../valor'
 import Campo from './Campo'
 import {
   estimarExtras,
@@ -338,7 +338,7 @@ export default function PasoResumen({ estancia, apartamento, titular, grupo, tit
               <strong className="codigo">{dinero(totalConIva(valor) + extras.total)}</strong>
               {(extras.total > 0 || ivaDeLaCotizacion > 0) && (
                 <span className="paso-total-extra">
-                  Alojamiento <span className="codigo">{dinero(valor.total)}</span>
+                  Alojamiento <span className="codigo">{dinero(valorAlojamiento(valor))}</span>
                   {ivaDeLaCotizacion > 0 && <> + IVA <span className="codigo">{dinero(ivaDeLaCotizacion)}</span></>}
                   {extras.parqueadero > 0 && <> + parqueadero <span className="codigo">{dinero(extras.parqueadero)}</span></>}
                   {extras.mascotas > 0 && <> + mascotas <span className="codigo">{dinero(extras.mascotas)}</span></>}.{' '}

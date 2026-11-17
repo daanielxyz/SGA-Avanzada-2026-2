@@ -101,8 +101,9 @@ public class ModificarReservaUseCase {
         // DEC-89 · BL-23: modificar recalcula los extras, porque el parqueadero puede cobrarse por noche
         reserva.declararExtras(carros, motos, mascotas,
                 parametros.calcularExtras(carros, motos, mascotas, estancia.noches().size()));
-        folio.ajustarPorModificacion(valorAnterior, reserva.valorSinIvaConExtras(), hoy);
+        // DEC-141: primero el IVA, porque decide si el alojamiento se carga con su base o con el valor de las noches
         impuestos.recalcularAlModificar(reserva, folio, alojamiento.impuesto(), titular.documento(), hoy);
+        folio.ajustarPorModificacion(valorAnterior, reserva.valorSinIvaConExtras(), hoy);
 
         reservas.guardar(reserva);
         folios.guardar(folio);

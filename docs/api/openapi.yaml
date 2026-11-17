@@ -3969,7 +3969,10 @@ components:
             "$ref": "#/components/schemas/NocheResponse"
         total:
           type: number
-          description: "La suma de las noches: la base, sin IVA."
+          description: "La suma de las noches, con las tarifas tal cual."
+        alojamiento:
+          type: number
+          description: "total sin el IVA que traen dentro las tarifas; igual a total si el IVA se suma (DEC-141)."
         ivaPorcentaje:
           type: integer
           description: "El IVA del alojamiento; 0 si no lo cobra (DEC-134)."
@@ -3978,10 +3981,13 @@ components:
           description: "La reserva no paga IVA porque decide un pasaporte; en una cotización, siempre falso."
         iva:
           type: number
-          description: "El IVA sobre total, redondeado al peso."
+          description: "El IVA que se cobra, redondeado al peso; 0 si está exenta."
+        ivaIncluido:
+          type: boolean
+          description: "Si las tarifas ya traen el IVA (DEC-141)."
         totalConIva:
           type: number
-          description: "total más iva: lo que ve el huésped como valor de la estancia."
+          description: "alojamiento más iva: lo que ve el huésped como valor de la estancia."
     NocheResponse:
       type: object
       properties:
@@ -4706,6 +4712,8 @@ components:
           type: boolean
         porcentaje:
           type: integer
+        incluidoEnTarifa:
+          type: boolean
           format: int32
     ImpuestoRequest:
       type: object
@@ -4717,6 +4725,9 @@ components:
           format: int32
           maximum: 100
           minimum: 0
+        incluidoEnTarifa:
+          type: boolean
+          description: "Si la tarifa ya trae el IVA; si no llega, se suma (DEC-141)."
       required:
         - cobraIva
         - porcentaje
@@ -5967,13 +5978,19 @@ components:
             "$ref": "#/components/schemas/NocheResponse"
         total:
           type: number
-          description: "La suma de las noches, sin IVA."
+          description: "La suma de las noches, con las tarifas tal cual."
+        alojamiento:
+          type: number
+          description: "total sin el IVA que traen dentro las tarifas; igual a total si el IVA se suma (DEC-141)."
         ivaPorcentaje:
           type: integer
           description: "El IVA del alojamiento; 0 si no lo cobra (DEC-134)."
         iva:
           type: number
-          description: "El IVA sobre total; quien llega con pasaporte no lo paga."
+          description: "El IVA; quien llega con pasaporte no lo paga."
+        ivaIncluido:
+          type: boolean
+          description: "Si las tarifas ya traen el IVA (DEC-141)."
         totalConIva:
           type: number
           description: "El precio que se muestra."

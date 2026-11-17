@@ -6,7 +6,7 @@ import type { Reserva } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import Dato from '../componentes/Dato'
 import { dinero } from '../formato'
-import { lineaIva } from './valor'
+import { lineaIva, valorAlojamiento } from './valor'
 import { estaTerminada, faltaParaAnticipo, otrosCargos, puedeRegistrarPago, valorRetenido } from './pago'
 import type { DatosDePago, useDatosDePago } from './useDatosDePago'
 
@@ -99,7 +99,7 @@ function Contenido({ reserva, datos, alRegistrarPago }: {
       </div>
       <dl className="tarjeta datos datos-pago">
         <Dato nombre="Estancia" codigo>
-          {dinero(reserva.valor.total)}
+          {dinero(valorAlojamiento(reserva.valor))}
         </Dato>
         {iva && (
           <Dato nombre={iva.texto} codigo>

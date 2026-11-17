@@ -106,11 +106,14 @@ public class AlojamientoController {
         return AlojamientoResponse.de(registrarRnt.ejecutar(alojamiento.id(), solicitud.rnt()));
     }
 
-    /** Enciende o apaga el IVA de la estancia y su porcentaje (DEC-133). Solo el administrador. */
+    /**
+     * Enciende o apaga el IVA de la estancia, su porcentaje y si las tarifas ya lo incluyen (DEC-133 · DEC-141).
+     * Solo el administrador.
+     */
     @PutMapping("/iva")
     public AlojamientoResponse cambiarImpuesto(@Valid @RequestBody ImpuestoRequest solicitud) {
         return AlojamientoResponse.de(cambiarImpuesto.ejecutar(alojamiento.id(), solicitud.cobraIva(),
-                solicitud.porcentaje()));
+                solicitud.porcentaje(), Boolean.TRUE.equals(solicitud.incluidoEnTarifa())));
     }
 
     @PutMapping("/ubicacion")

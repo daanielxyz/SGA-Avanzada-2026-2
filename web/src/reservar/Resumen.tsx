@@ -1,6 +1,8 @@
 import type { ApartamentoPublico, Estadia, Grupo, Precio } from '../api/apartamentos'
 import type { Extras } from '../api/reservas'
 import Foto from '../busqueda/Foto'
+import { llevaIva, valorEstancia } from '../busqueda/iva'
+import LineasIva, { NotaIva } from '../busqueda/LineasIva'
 import { enPesos, fechaCorta, noches } from '../formato'
 
 interface Props {
@@ -35,7 +37,8 @@ export default function Resumen({ apartamento, estadia, grupo, precio, extras }:
           {grupo.adultos} {grupo.adultos === 1 ? 'adulto' : 'adultos'}
           {ninos}
         </dd>
-        {precio && extras.total > 0 && (
+        {precio && llevaIva(precio) && <LineasIva precio={precio} />}
+        {precio && !llevaIva(precio) && extras.total > 0 && (
           <>
             <dt>Alojamiento</dt>
             <dd>{enPesos(precio.total)}</dd>
@@ -56,8 +59,9 @@ export default function Resumen({ apartamento, estadia, grupo, precio, extras }:
       </dl>
       <p className="total-estancia">
         Total {n} {n === 1 ? 'noche' : 'noches'}:{' '}
-        <strong>{precio ? enPesos(precio.total + extras.total) : '…'}</strong>
+        <strong>{precio ? enPesos(valorEstancia(precio) + extras.total) : '…'}</strong>
       </p>
+      {precio && llevaIva(precio) && <NotaIva precio={precio} />}
     </aside>
   )
 }

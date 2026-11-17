@@ -14,6 +14,8 @@ import CamposEstancia from '../busqueda/CamposEstancia'
 import type { ControlFechas } from '../fechas/SelectorFechas'
 import { problemaDeEstadia } from '../busqueda/estadia'
 import DesglosePrecio from '../busqueda/DesglosePrecio'
+import { llevaIva, tarifaConIva, valorEstancia } from '../busqueda/iva'
+import { NotaIva } from '../busqueda/LineasIva'
 import Foto from '../busqueda/Foto'
 import { enPesos, fechaCorta, fechaDesdeHoy, masDias, noches } from '../formato'
 
@@ -232,11 +234,12 @@ function PrecioDeLaEstancia({ apartamento, estadia, grupo, alCambiar, alPedirFec
     // Mientras llega el nuevo, el precio anterior se queda atenuado: la página no salta
     <div className="precio" aria-live="polite" aria-busy={calculando}>
       <p className="total-estancia">
-        Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{enPesos(precio.total)}</strong>
+        Total {n} {n === 1 ? 'noche' : 'noches'}: <strong>{enPesos(valorEstancia(precio))}</strong>
       </p>
       <p className="por-noche suave">
-        {enPesos(precio.desglose[0].tarifa)} por adulto, noche del {fechaCorta(estadia.entrada)}
+        {enPesos(tarifaConIva(precio, precio.desglose[0].tarifa))} por adulto, noche del {fechaCorta(estadia.entrada)}
       </p>
+      {llevaIva(precio) && <NotaIva precio={precio} />}
       {/* Con una noche el detalle repite el total. Las estadías largas lo abren a pedido, para que el panel no crezca
           más que la pantalla */}
       {n > 1 && (

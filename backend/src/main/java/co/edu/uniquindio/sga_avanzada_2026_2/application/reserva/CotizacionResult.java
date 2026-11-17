@@ -14,14 +14,17 @@ import java.util.List;
  * Salida de {@link CotizarEstanciaUseCase}: el desglose noche por noche y el total (COT-02). También es el valor
  * congelado de una reserva.
  *
- * @param total         la suma de las noches: la base, sin IVA (RN-05)
+ * @param total         la suma de las noches, con las tarifas tal cual (RN-05)
+ * @param alojamiento   {@code total} sin el IVA que traen dentro las tarifas; igual a {@code total} si el IVA se
+ *                      suma (DEC-141)
  * @param ivaPorcentaje el del alojamiento; 0 si no cobra IVA (DEC-134)
  * @param ivaExento     la reserva no paga IVA porque decide un pasaporte; en una cotización, siempre falso
- * @param iva           el IVA sobre {@code total}, redondeado al peso
- * @param totalConIva   {@code total} más {@code iva}: lo que ve el huésped como valor de la estancia
+ * @param iva           el IVA que se cobra, redondeado al peso; 0 si está exenta
+ * @param ivaIncluido   si las tarifas ya traen el IVA (DEC-141)
+ * @param totalConIva   {@code alojamiento} más {@code iva}: lo que ve el huésped como valor de la estancia
  */
-public record CotizacionResult(List<NocheResult> desglose, BigDecimal total, int ivaPorcentaje, boolean ivaExento,
-                               BigDecimal iva, BigDecimal totalConIva) {
+public record CotizacionResult(List<NocheResult> desglose, BigDecimal total, BigDecimal alojamiento, int ivaPorcentaje,
+                               boolean ivaExento, BigDecimal iva, boolean ivaIncluido, BigDecimal totalConIva) {
 
     /**
      * @param temporada       id de la temporada de esa noche
@@ -47,8 +50,10 @@ public record CotizacionResult(List<NocheResult> desglose, BigDecimal total, int
     }
 
     private static CotizacionResult de(List<LineaCotizacion> desglose, Dinero total, IvaReserva iva) {
+        Dinero alojamiento = total.restar(iva.incluidoEn(total));
         Dinero valorIva = iva.sobre(total);
         return new CotizacionResult(desglose.stream().map(NocheResult::de).toList(), total.monto(),
-                iva.porcentaje().valor(), iva.exento(), valorIva.monto(), total.sumar(valorIva).monto());
+                alojamiento.monto(), iva.porcentaje().valor(), iva.exento(), valorIva.monto(), iva.incluido(),
+                alojamiento.sumar(valorIva).monto());
     }
 }
