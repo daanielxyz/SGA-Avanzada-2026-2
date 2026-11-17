@@ -268,12 +268,16 @@ export function valorServicio(texto: string): number | null {
 
 // ---- IVA de la estancia (DEC-133) ----
 
-export type FormIva = { cobraIva: boolean; porcentaje: string }
+export type FormIva = { cobraIva: boolean; porcentaje: string; incluidoEnTarifa: boolean }
 
-/** Un alojamiento sin el dato (respuesta vieja) se muestra como uno nuevo: apagado, con el 19 %. */
+/** Un alojamiento sin el dato (respuesta vieja) se muestra como uno nuevo: apagado, con el 19 %, sumado a la tarifa. */
 export function formIva(alojamiento: Alojamiento): FormIva {
   const impuesto = alojamiento.impuesto ?? { cobraIva: false, porcentaje: 19 }
-  return { cobraIva: impuesto.cobraIva, porcentaje: String(impuesto.porcentaje) }
+  return {
+    cobraIva: impuesto.cobraIva,
+    porcentaje: String(impuesto.porcentaje),
+    incluidoEnTarifa: impuesto.incluidoEnTarifa ?? false,
+  }
 }
 
 // Los mismos límites de `ImpuestoRequest` (0 a 100) y de `ImpuestoAlojamiento` (si se cobra, más de 0)
@@ -285,5 +289,5 @@ export function validarIva(form: FormIva): Errores<keyof FormIva> {
 }
 
 export function cuerpoIva(form: FormIva): Impuesto {
-  return { cobraIva: form.cobraIva, porcentaje: Number(form.porcentaje.trim()) }
+  return { cobraIva: form.cobraIva, porcentaje: Number(form.porcentaje.trim()), incluidoEnTarifa: form.incluidoEnTarifa }
 }

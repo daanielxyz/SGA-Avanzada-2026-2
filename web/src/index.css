@@ -2827,3 +2827,10 @@ main:not(.presentacion) + .pie {
 .politicas ul {
   padding-inline-start: 20px;
 }
+
+/* La aclaración del IVA bajo un total (DEC-134 · DEC-141) */
+.nota-iva {
+  margin: 4px 0 0;
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+}

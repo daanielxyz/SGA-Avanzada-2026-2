@@ -5,6 +5,7 @@ import { listarApartamentos, type ApartamentoPublico, type Estadia, type Grupo, 
 import { consultarPolitica, type PoliticaCancelacion } from '../api/reservas'
 import { enlaceAlApartamento } from '../busqueda/enlace'
 import Foto from '../busqueda/Foto'
+import { tarifaConIva } from '../busqueda/iva'
 import FormularioBusqueda from '../busqueda/FormularioBusqueda'
 import { enPesos, horaDelDia } from '../formato'
 import { ListaCondiciones } from '../reservar/Condiciones'
@@ -154,7 +155,8 @@ function Destacados({ pagina }: { pagina: Pagina<ApartamentoPublico> }) {
 function Destacado({ apartamento }: { apartamento: ApartamentoPublico }) {
   const foto = apartamento.imagenes.find((i) => i.principal) ?? apartamento.imagenes[0]
   const id = `destacado-${apartamento.codigo}`
-  const tarifa = apartamento.precio?.desglose[0]?.tarifa
+  const { precio } = apartamento
+  const tarifa = precio?.desglose[0] ? tarifaConIva(precio, precio.desglose[0].tarifa) : undefined
   return (
     <article className="destacado" aria-labelledby={id}>
       <Foto url={foto?.url} alt={`Foto de ${apartamento.nombre}`} />

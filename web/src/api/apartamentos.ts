@@ -11,7 +11,20 @@ export interface Precio {
     ocupantesFacturables: number
     subtotal: number
   }[]
+  /** La suma de las noches, con las tarifas tal cual. */
   total: number
+  /** `total` sin el IVA que traen dentro las tarifas (DEC-141); igual a `total` si el IVA se suma. */
+  alojamiento?: number
+  /** El IVA del alojamiento; 0 si no lo cobra (DEC-134). */
+  ivaPorcentaje?: number
+  /** Lo que se paga de IVA; 0 si no se cobra o la reserva está exenta. */
+  iva?: number
+  /** Si las tarifas ya traen el IVA (DEC-141). */
+  ivaIncluido?: boolean
+  /** Solo en una reserva: no paga IVA porque decide un pasaporte. */
+  ivaExento?: boolean
+  /** `alojamiento` más `iva`: lo que se paga por las noches. */
+  totalConIva?: number
 }
 
 /** `ApartamentoPublicoResponse`: solo lo que ve el público de un apartamento. */

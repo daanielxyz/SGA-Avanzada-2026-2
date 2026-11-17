@@ -5,6 +5,7 @@ import type { Estadia, Grupo, Precio } from '../api/apartamentos'
 import { explicarConDetalles } from '../api/mensajes'
 import { consultarCuenta, type Cuenta } from '../api/cuenta'
 import { cotizar, reservar, type Extras, type ReservaApartada, type TipoDocumento } from '../api/reservas'
+import { valorEstancia } from '../busqueda/iva'
 import { enPesos, fechaDesdeHoy, horaDelDia, noches } from '../formato'
 import { leerSesion } from '../sesion/almacen'
 import CampoTelefono from './CampoTelefono'
@@ -161,7 +162,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
     }
   }
 
-  const cambio = precioReal && precioReal.total !== precioBuscado.total ? precioReal : null
+  const cambio = precioReal && valorEstancia(precioReal) !== valorEstancia(precioBuscado) ? precioReal : null
   const pagan = cambio?.desglose[0]?.ocupantesFacturables
   const hayExtras = (parametros?.cupoParqueadero ?? 0) > 0 || limiteMascotas > 0
   const horaEntrada = parametros?.horaEntrada
@@ -290,7 +291,7 @@ export default function PasoDatos({ codigo, estadia, grupo, alojamiento, limiteM
 
       {cambio && (
         <p className="aviso-cambio" role="status">
-          Tu total cambió a <strong>{enPesos(cambio.total + totalExtras)}</strong>: según las fechas de
+          Tu total cambió a <strong>{enPesos(valorEstancia(cambio) + totalExtras)}</strong>: según las fechas de
           nacimiento, pagan {pagan} {pagan === 1 ? 'persona' : 'personas'}. La edad que cuenta es la del día de
           llegada.
         </p>

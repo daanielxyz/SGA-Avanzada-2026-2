@@ -30,6 +30,21 @@ class ImpuestoAlojamientoControllerTest extends PruebaRestDeReservas {
     }
 
     @Test
+    @Tag("DEC-141")
+    void elAdministradorDiceSiLasTarifasYaIncluyenElIva() throws Exception {
+        mvc.perform(get("/api/alojamiento")).andExpect(jsonPath("$.impuesto.incluidoEnTarifa").value(false));
+
+        enviar(put("/api/alojamiento/iva"), "{\"cobraIva\": true, \"porcentaje\": 19, \"incluidoEnTarifa\": true}")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.impuesto.incluidoEnTarifa").value(true));
+        mvc.perform(get("/api/alojamiento")).andExpect(jsonPath("$.impuesto.incluidoEnTarifa").value(true));
+
+        // Sin el dato, el IVA se suma, como antes de DEC-141
+        enviar(put("/api/alojamiento/iva"), "{\"cobraIva\": true, \"porcentaje\": 19}")
+                .andExpect(jsonPath("$.impuesto.incluidoEnTarifa").value(false));
+    }
+
+    @Test
     void unPorcentajeFueraDeRangoEs400YCobrarConCeroEs409() throws Exception {
         enviar(put("/api/alojamiento/iva"), "{\"cobraIva\": true, \"porcentaje\": 120}")
                 .andExpect(status().isBadRequest())

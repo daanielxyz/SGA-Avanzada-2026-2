@@ -16,8 +16,8 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                                 List<ServicioResult> serviciosAdicionales, List<String> mediosPago, MarcaDatos marca,
                                 String rnt, ImpuestoResult impuesto) {
 
-    /** DEC-133: si cobra el IVA de la estancia y su porcentaje. */
-    public record ImpuestoResult(boolean cobraIva, int porcentaje) {
+    /** DEC-133 · DEC-141: si cobra el IVA de la estancia, su porcentaje y si las tarifas ya lo incluyen. */
+    public record ImpuestoResult(boolean cobraIva, int porcentaje, boolean incluidoEnTarifa) {
     }
 
 
@@ -59,6 +59,7 @@ public record AlojamientoResult(String id, String nombre, String descripcion, St
                 alojamiento.mediosPago().stream().map(MedioPago::nombre).toList(),
                 MarcaDatos.de(alojamiento.marca()),
                 alojamiento.rnt(),
-                new ImpuestoResult(alojamiento.impuesto().cobraIva(), alojamiento.impuesto().porcentaje().valor()));
+                new ImpuestoResult(alojamiento.impuesto().cobraIva(), alojamiento.impuesto().porcentaje().valor(),
+                        alojamiento.impuesto().incluidoEnTarifa()));
     }
 }

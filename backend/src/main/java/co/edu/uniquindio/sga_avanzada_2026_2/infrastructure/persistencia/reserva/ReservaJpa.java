@@ -65,6 +65,7 @@ public class ReservaJpa {
     private BigDecimal extrasMascotas;
     private int ivaPorcentaje;  // DEC-134
     private boolean ivaExento;
+    private boolean ivaIncluido; // DEC-141
 
     private int mascotas;
 

@@ -72,7 +72,8 @@ final class AlojamientoMapper {
                                 jpa.getMarcaRadioGrande()),
                         jpa.getMarcaLogoUrl(), jpa.getMarcaPortadaUrl()));
         alojamiento.registrarRnt(jpa.getRnt());
-        alojamiento.cambiarImpuesto(new ImpuestoAlojamiento(jpa.isCobraIva(), new Porcentaje(jpa.getPorcentajeIva())));
+        alojamiento.cambiarImpuesto(new ImpuestoAlojamiento(jpa.isCobraIva(), new Porcentaje(jpa.getPorcentajeIva()),
+                jpa.isIvaIncluido()));
         return alojamiento;
     }
 
@@ -92,6 +93,7 @@ final class AlojamientoMapper {
         jpa.setRnt(alojamiento.rnt());
         jpa.setCobraIva(alojamiento.impuesto().cobraIva());
         jpa.setPorcentajeIva(alojamiento.impuesto().porcentaje().valor());
+        jpa.setIvaIncluido(alojamiento.impuesto().incluidoEnTarifa());
         jpa.setUmbralEdadFacturable(p.umbralEdadFacturable());
         jpa.setHoraEntrada(p.horaEntrada());
         jpa.setHoraSalida(p.horaSalida());

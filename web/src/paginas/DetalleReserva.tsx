@@ -18,6 +18,8 @@ import {
   type SimulacionCancelacion,
 } from '../api/cuenta'
 import Foto from '../busqueda/Foto'
+import { llevaIva, valorEstancia } from '../busqueda/iva'
+import LineasIva from '../busqueda/LineasIva'
 import { enPesos, fechaCorta, horaDelDia, noches } from '../formato'
 import PasoPago from '../reservar/PasoPago'
 
@@ -174,8 +176,10 @@ export default function DetalleReserva({ alojamiento }: { alojamiento: Alojamien
           {sinCobro ? (
             <>
               <dt>Valor de la reserva, que ya no se cobra</dt>
-              <dd className="tachado">{enPesos(reserva.valor.total + reserva.extras.total)}</dd>
+              <dd className="tachado">{enPesos(valorEstancia(reserva.valor) + reserva.extras.total)}</dd>
             </>
+          ) : llevaIva(reserva.valor) ? (
+            <LineasIva precio={reserva.valor} alojamiento={`Alojamiento, ${n} ${n === 1 ? 'noche' : 'noches'}`} />
           ) : (
             <>
               <dt>Alojamiento, {n} {n === 1 ? 'noche' : 'noches'}</dt>

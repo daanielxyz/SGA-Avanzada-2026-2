@@ -122,7 +122,31 @@ describe('alojamiento (CU-50 · CU-51 · CU-53)', () => {
 
     expect(await screen.findByText('IVA guardado')).toBeInTheDocument()
     expect(envios(fetch)).toEqual([
-      expect.objectContaining({ url: '/api/alojamiento/iva', metodo: 'PUT', cuerpo: { cobraIva: true, porcentaje: 19 } }),
+      expect.objectContaining({
+        url: '/api/alojamiento/iva', metodo: 'PUT', cuerpo: { cobraIva: true, porcentaje: 19, incluidoEnTarifa: false },
+      }),
+    ])
+  })
+
+  it('DEC-141: dice si las tarifas ya incluyen el IVA, con un ejemplo de lo que paga el huésped', async () => {
+    const fetch = apiCon({ inicial: alojamientoDePrueba({ impuesto: { cobraIva: true, porcentaje: 19 } }) })
+    const usuario = abrir()
+    await usuario.click(await screen.findByRole('tab', { name: 'Reglas de la estancia' }))
+    const tarifas = screen.getByRole('group', { name: 'Las tarifas que escribes' })
+    // Sin el dato, como antes: el IVA se suma
+    expect(within(tarifas).getByRole('radio', { name: 'Son sin IVA: se les suma' })).toBeChecked()
+    expect(tarifas).toHaveTextContent('el huésped paga $ 119.000 ($ 100.000 de alojamiento y $ 19.000 de IVA)')
+
+    await usuario.click(within(tarifas).getByRole('radio', { name: 'Ya incluyen el IVA' }))
+    expect(tarifas).toHaveTextContent('el huésped paga $ 100.000 ($ 84.034 de alojamiento y $ 15.966 de IVA)')
+    expect(tarifas).toHaveTextContent('Con pasaporte paga $ 84.034.')
+    await usuario.click(screen.getByRole('button', { name: 'Guardar IVA' }))
+
+    expect(await screen.findByText('IVA guardado')).toBeInTheDocument()
+    expect(envios(fetch)).toEqual([
+      expect.objectContaining({
+        url: '/api/alojamiento/iva', metodo: 'PUT', cuerpo: { cobraIva: true, porcentaje: 19, incluidoEnTarifa: true },
+      }),
     ])
   })
 

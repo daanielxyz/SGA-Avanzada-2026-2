@@ -126,7 +126,7 @@ public class CancelacionDomainService {
 
     // DEC-43 · DEC-89 · DEC-134: el alojamiento, su IVA y los extras dejan de cobrarse, cada uno en su cargo
     private static void anular(Reserva reserva, Folio folio, Dinero retenido, String motivo, LocalDateTime ahora) {
-        folio.liquidarPenalidad(reserva.valorTotal(), retenido, motivo, ahora.toLocalDate());
+        folio.liquidarPenalidad(reserva.valorAlojamiento(), retenido, motivo, ahora.toLocalDate());
         folio.anularIva(motivo, ahora.toLocalDate());
         folio.anularExtras(reserva.extras(), motivo, ahora.toLocalDate());
     }

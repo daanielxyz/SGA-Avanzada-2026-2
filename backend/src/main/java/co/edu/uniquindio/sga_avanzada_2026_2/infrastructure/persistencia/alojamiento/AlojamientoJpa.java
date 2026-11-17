@@ -48,6 +48,7 @@ public class AlojamientoJpa {
     private String rnt; // DEC-130
     private boolean cobraIva;    // DEC-133
     private int porcentajeIva;
+    private boolean ivaIncluido; // DEC-141
 
     private int umbralEdadFacturable;
     private LocalTime horaEntrada;

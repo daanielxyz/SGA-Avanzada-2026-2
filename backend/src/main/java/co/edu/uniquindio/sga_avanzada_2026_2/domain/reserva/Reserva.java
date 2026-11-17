@@ -245,9 +245,17 @@ public class Reserva {
         return iva.sobre(valorTotal);
     }
 
-    /** Las noches con su IVA: lo que el huésped ve como el valor de la estancia y la base «valor total» (DEC-134). */
+    /**
+     * Las noches sin el IVA que traen dentro las tarifas (DEC-141): el cargo del alojamiento en el folio. Si el IVA
+     * se suma, son las noches tal cual; si ya va incluido, su base, también para quien está exento.
+     */
+    public Dinero valorAlojamiento() {
+        return valorTotal.restar(iva.incluidoEn(valorTotal));
+    }
+
+    /** El alojamiento con su IVA: lo que el huésped ve como la estancia y la base «valor total» (DEC-134). */
     public Dinero valorEstancia() {
-        return valorTotal.sumar(iva());
+        return valorAlojamiento().sumar(iva());
     }
 
     /** La estancia con su IVA y los extras: la base del anticipo y del pago en línea (RES-15 · DEC-89 · DEC-134). */
@@ -257,7 +265,7 @@ public class Reserva {
 
     /** Sin el IVA: lo que se ajusta en el folio al modificar, porque el IVA se ajusta en su propio cargo (DEC-134). */
     public Dinero valorSinIvaConExtras() {
-        return valorTotal.sumar(extras.total());
+        return valorAlojamiento().sumar(extras.total());
     }
 
     /**

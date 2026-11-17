@@ -7,6 +7,7 @@ import {
   type PoliticaCancelacion,
   type ReservaApartada,
 } from '../api/reservas'
+import { valorEstancia } from '../busqueda/iva'
 import { enPesos, fechaHora } from '../formato'
 import Condiciones from './Condiciones'
 
@@ -32,7 +33,7 @@ export default function PasoPago({ apartada, alPagar, yaPagado = 0, condiciones 
   const [pagando, setPagando] = useState(false)
   const [problema, setProblema] = useState<string | null>(null)
   const { reserva, montoAPagar, pagarAntesDe, clave } = apartada
-  const resto = reserva.valor.total + reserva.extras.total - yaPagado - montoAPagar
+  const resto = valorEstancia(reserva.valor) + reserva.extras.total - yaPagado - montoAPagar
 
   useEffect(() => {
     if (conoceCondiciones) return

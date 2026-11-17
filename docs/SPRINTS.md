@@ -139,6 +139,7 @@ Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el h
 - **web**
   - [x] Rediseño de la web, adelantado (`feature/web/rediseno`, DEC-137; `web/DISENO.md`, «Presentación del hotel»): una presentación con la portada que rota, el buscador y lo que conviene saber antes de reservar, todo con datos de la API; el listado pasa a «Apartamentos» y abre ya filtrado desde la presentación; página de políticas (cancelación, datos personales, cookies y RNT) y pie en columnas. Falta el contacto del hotel, que la API no trae.
   - [x] La web publicada no dejaba pagar ni volver del pago a quien reservaba sin cuenta: CORS no permitía la cabecera con la clave de la reserva (`feature/nucleo/cors-clave-reserva`, DEC-140).
+  - [x] IVA incluido o sumado y su desglose (pedido el 17 nov, DEC-141): el administrador dice en «Alojamiento» si las tarifas ya traen el IVA (`feature/nucleo/iva-incluido`); la web muestra alojamiento, IVA y total al buscar, reservar, pagar y en «Mis reservas» (`feature/web/iva-desglose`), y el PMS el alojamiento sin IVA en el desglose (`feature/pms/iva-incluido`). Además, «Reservas» y «Ocupación» del PMS se actualizan solas cada 20 s, sin recargar, para que se vean las reservas que entran por la web.
   - [ ] B4c Channex: cuenta sandbox, mapeo de apartamentos y tarifas (decisión con el cliente) y entrada de reservas desde Channex.
   - [ ] B4c Channex: publicar disponibilidad y tarifas, reintentos y bitácora; prueba de punta a punta en el sandbox. Si no alcanza, el cierre 4 decide si pasa al MVP2.
 - **pms**

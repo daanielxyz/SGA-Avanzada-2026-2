@@ -22,7 +22,7 @@ import { usePulso } from '../componentes/usePulso'
 import { useTitulo } from '../componentes/useTitulo'
 import CampoMotivo from '../folio/CampoMotivo'
 import { cantidad, dinero, fechaCorta, fechaHoy, noches, textoEdad } from '../formato'
-import { lineaIva, totalConIva } from '../reserva/valor'
+import { lineaIva, totalConIva, valorAlojamiento } from '../reserva/valor'
 import FormularioPago from '../reserva/FormularioPago'
 import NotasTurno from '../reserva/NotasTurno'
 import DialogoTra from '../reserva/llegada/DialogoTra'
@@ -366,7 +366,7 @@ export default function Llegada() {
             )}
             <dl className="lineas">
               <dt>Estancia ({cantidad(totalNoches, 'noche', 'noches')})</dt>
-              <dd>{dinero(datosReserva.valor.total)}</dd>
+              <dd>{dinero(valorAlojamiento(datosReserva.valor))}</dd>
               {iva && (
                 <>
                   <dt>{iva.texto}</dt>

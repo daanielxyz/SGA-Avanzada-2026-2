@@ -438,17 +438,22 @@ export function registrarSalida(codigo: string, motivoAutorizacion?: string): Pr
 
 /**
  * `CotizacionResponse`: el valor de una estancia, el de una cotización o el congelado en la reserva. `total` es la
- * suma de las noches, sin IVA; el IVA va aparte (DEC-134). Los campos del IVA pueden faltar en respuestas viejas.
+ * suma de las noches; el IVA se les suma (DEC-134) o ya va dentro de las tarifas (DEC-141). Los campos del IVA pueden
+ * faltar en respuestas viejas.
  */
 export interface Valor {
   desglose: Noche[]
   total: number
+  /** `total` sin el IVA que traen dentro las tarifas (DEC-141); igual a `total` si el IVA se suma. */
+  alojamiento?: number
   /** El del alojamiento al crearla; 0 si no cobra IVA. */
   ivaPorcentaje?: number
   /** No paga IVA porque decide un pasaporte; en una cotización, siempre falso. */
   ivaExento?: boolean
   iva?: number
-  /** `total` más `iva`: lo que ve el huésped como valor de la estancia. */
+  /** Si las tarifas ya traían el IVA al crearla (DEC-141). */
+  ivaIncluido?: boolean
+  /** `alojamiento` más `iva`: lo que ve el huésped como valor de la estancia. */
   totalConIva?: number
 }
 
