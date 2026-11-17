@@ -16,14 +16,11 @@ export default function LineasIva({ precio, alojamiento = 'Alojamiento' }: { pre
   )
 }
 
-/** La aclaración bajo un total con IVA: cuánto lleva y quién no lo paga. */
+/** Bajo un total con IVA, quién no lo paga: el cuánto ya está en las líneas de arriba. */
 export function NotaIva({ precio }: { precio: Precio }) {
-  if (precio.ivaExento) {
-    return <p className="nota-iva suave">Sin IVA: quien llega con pasaporte no lo paga.</p>
-  }
   return (
     <p className="nota-iva suave">
-      Incluye {enPesos(precio.iva ?? 0)} de IVA ({precio.ivaPorcentaje} %). Quien llega con pasaporte no lo paga.
+      {precio.ivaExento ? 'Sin IVA: quien llega con pasaporte no lo paga.' : 'Quien llega con pasaporte no paga IVA.'}
     </p>
   )
 }

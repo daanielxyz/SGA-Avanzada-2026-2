@@ -5,7 +5,7 @@ import { listarApartamentos, type ApartamentoPublico, type Estadia, type Grupo, 
 import { consultarPolitica, type PoliticaCancelacion } from '../api/reservas'
 import { enlaceAlApartamento } from '../busqueda/enlace'
 import Foto from '../busqueda/Foto'
-import { tarifaConIva } from '../busqueda/iva'
+import { llevaIva, tarifaSinIva } from '../busqueda/iva'
 import FormularioBusqueda from '../busqueda/FormularioBusqueda'
 import { enPesos, horaDelDia } from '../formato'
 import { ListaCondiciones } from '../reservar/Condiciones'
@@ -156,7 +156,8 @@ function Destacado({ apartamento }: { apartamento: ApartamentoPublico }) {
   const foto = apartamento.imagenes.find((i) => i.principal) ?? apartamento.imagenes[0]
   const id = `destacado-${apartamento.codigo}`
   const { precio } = apartamento
-  const tarifa = precio?.desglose[0] ? tarifaConIva(precio, precio.desglose[0].tarifa) : undefined
+  // Para comparar, sin IVA; al abrir el apartamento se desglosa (DEC-141)
+  const tarifa = precio?.desglose[0] ? tarifaSinIva(precio, precio.desglose[0].tarifa) : undefined
   return (
     <article className="destacado" aria-labelledby={id}>
       <Foto url={foto?.url} alt={`Foto de ${apartamento.nombre}`} />
@@ -172,7 +173,11 @@ function Destacado({ apartamento }: { apartamento: ApartamentoPublico }) {
         </p>
         {tarifa === undefined
           ? <p className="suave">Sin fechas libres por ahora</p>
-          : <p className="destacado-precio"><strong>{enPesos(tarifa)}</strong> por adulto y noche</p>}
+          : (
+            <p className="destacado-precio">
+              <strong>{enPesos(tarifa)}</strong> por adulto y noche{precio && llevaIva(precio) ? ' + IVA' : ''}
+            </p>
+          )}
       </div>
     </article>
   )

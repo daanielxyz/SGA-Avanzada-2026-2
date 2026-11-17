@@ -2834,3 +2834,8 @@ main:not(.presentacion) + .pie {
   font-size: var(--texto-sm);
   line-height: 1.45;
 }
+
+/* En la ficha del apartamento, el desglose del IVA va justo encima del total */
+.cuentas-iva {
+  margin: 0;
+}

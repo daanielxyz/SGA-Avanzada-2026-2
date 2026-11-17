@@ -4,7 +4,9 @@ import type { ApartamentoPublico, Precio } from '../api/apartamentos'
 import { SIN_EXTRAS } from '../api/reservas'
 import Resumen from '../reservar/Resumen'
 import DesglosePrecio from './DesglosePrecio'
-import { tarifaConIva, valorEstancia } from './iva'
+import { MemoryRouter } from 'react-router'
+import TarjetaApartamento from './TarjetaApartamento'
+import { tarifaSinIva, valorEstancia, valorSinIva } from './iva'
 
 // Dos noches de un adulto a 100.000 cada una
 const NOCHES = [
@@ -44,17 +46,19 @@ function valorDe(caja: HTMLElement, nombre: string) {
 describe('el IVA en el precio', () => {
   it('sin IVA, lo que se paga es la suma de las noches', () => {
     expect(valorEstancia(SIN_IVA)).toBe(200000)
-    expect(tarifaConIva(SIN_IVA, 100000)).toBe(100000)
+    expect(tarifaSinIva(SIN_IVA, 100000)).toBe(100000)
   })
 
-  it('si se suma, la tarifa por adulto y el total lo llevan', () => {
+  it('si se suma, el total lo lleva y sin IVA quedan las tarifas', () => {
     expect(valorEstancia(SUMADO)).toBe(238000)
-    expect(tarifaConIva(SUMADO, 100000)).toBe(119000)
+    expect(valorSinIva(SUMADO)).toBe(200000)
+    expect(tarifaSinIva(SUMADO, 100000)).toBe(100000)
   })
 
-  it('si ya va incluido, la tarifa y el total quedan como los escribió el hotel', () => {
+  it('si ya va incluido, el total es el de las tarifas y sin IVA se les quita', () => {
     expect(valorEstancia(INCLUIDO)).toBe(200000)
-    expect(tarifaConIva(INCLUIDO, 100000)).toBe(100000)
+    expect(valorSinIva(INCLUIDO)).toBe(168067)
+    expect(tarifaSinIva(INCLUIDO, 100000)).toBe(84034)
   })
 
   it('el resumen dice cuánto es alojamiento, cuánto IVA y el total', () => {
@@ -63,7 +67,7 @@ describe('el IVA en el precio', () => {
     expect(valorDe(caja, 'Alojamiento')).toBe('$ 200.000')
     expect(valorDe(caja, 'IVA (19 %)')).toBe('$ 38.000')
     expect(within(caja).getByText(/Total 2 noches/)).toHaveTextContent('$ 238.000')
-    expect(within(caja).getByText(/Quien llega con pasaporte no lo paga/)).toBeInTheDocument()
+    expect(within(caja).getByText('Quien llega con pasaporte no paga IVA.')).toBeInTheDocument()
   })
 
   it('con el IVA incluido, el alojamiento va sin él y el total es el precio de las tarifas', () => {
@@ -99,5 +103,38 @@ describe('el IVA en el precio', () => {
     expect(screen.getByRole('rowheader', { name: 'Total' }).nextElementSibling).toHaveTextContent('$ 200.000')
     expect(screen.getByRole('rowheader', { name: 'Incluye IVA (19 %)' }).nextElementSibling)
       .toHaveTextContent('$ 31.933')
+  })
+})
+
+describe('mientras se comparan apartamentos, el precio va sin IVA (DEC-141)', () => {
+  function tarjeta(precio: Precio, conBusqueda = false) {
+    render(
+      <MemoryRouter>
+        <TarjetaApartamento apartamento={{ ...SUITE, precio }} busqueda={conBusqueda
+          ? { estadia: { entrada: '2026-12-10', salida: '2026-12-12' }, grupo: { adultos: 1, ninos: 0 } }
+          : undefined} />
+      </MemoryRouter>,
+    )
+    return screen.getByRole('article')
+  }
+
+  it('la tarifa por adulto sale sin el IVA que trae dentro, con «+ IVA»', () => {
+    const fila = tarjeta(INCLUIDO)
+
+    expect(fila).toHaveTextContent('$ 84.034')
+    expect(fila).toHaveTextContent('por adulto y noche + IVA')
+    expect(fila).not.toHaveTextContent('$ 100.000')
+  })
+
+  it('con fechas, el total del grupo también va sin IVA', () => {
+    const fila = tarjeta(SUMADO, true)
+
+    expect(fila).toHaveTextContent('$ 200.000')
+    expect(fila).toHaveTextContent('+ IVA')
+    expect(fila).not.toHaveTextContent('$ 238.000')
+  })
+
+  it('si el alojamiento no cobra IVA, no dice nada del IVA', () => {
+    expect(tarjeta(SIN_IVA)).not.toHaveTextContent('IVA')
   })
 })
