@@ -102,6 +102,25 @@ describe('Apartamento', () => {
       '/api/portal/apartamentos/APT-101/estancia?entrada=2026-12-14&salida=2026-12-16&ocupantes=3&ninos=1')
   })
 
+  it('DEC-141: al abrir el apartamento, el precio se desglosa en alojamiento, IVA y total', async () => {
+    const conIva: EstanciaPortal = {
+      disponible: true,
+      precio: {
+        desglose: [{ noche: '2026-12-14', tarifa: 119000, ocupantesFacturables: 1, subtotal: 119000 }],
+        total: 119000, alojamiento: 100000, ivaPorcentaje: 19, iva: 19000, ivaIncluido: true, totalConIva: 119000,
+      },
+      proximaNocheLibre: '2026-12-14',
+    }
+    laApiResponde([200, SUITE], [200, conIva])
+    abrir('/apartamentos/APT-101?entrada=2026-12-14&salida=2026-12-15&adultos=1&ninos=0')
+
+    const alojamiento = await screen.findByText('Alojamiento', { selector: 'dt' })
+    expect(alojamiento.nextElementSibling).toHaveTextContent(/\$\s*100\.000/)
+    expect(screen.getByText('IVA (19 %)', { selector: 'dt' }).nextElementSibling).toHaveTextContent(/\$\s*19\.000/)
+    expect(screen.getByText(/Total 1 noche/)).toHaveTextContent(/\$\s*119\.000/)
+    expect(screen.getByText(/por adulto, noche del/)).toHaveTextContent(/\$\s*100\.000.*sin IVA/)
+  })
+
   it('si no está libre lo dice y ofrece correr las fechas a la próxima noche libre', async () => {
     const ocupada: EstanciaPortal = { ...UNA_NOCHE_LIBRE, disponible: false, proximaNocheLibre: '2026-12-20' }
     const fetch = laApiResponde([200, SUITE], [200, ocupada], [200, UNA_NOCHE_LIBRE])
