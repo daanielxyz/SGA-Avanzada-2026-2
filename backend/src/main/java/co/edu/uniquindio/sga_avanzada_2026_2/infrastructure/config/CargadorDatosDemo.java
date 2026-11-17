@@ -47,30 +47,39 @@ public class CargadorDatosDemo implements ApplicationRunner {
     /** Si este existe, los datos de ejemplo ya se cargaron (o alguien creó apartamentos a mano): no se toca nada. */
     static final String PRIMERO = "APT-101";
 
-    // Fotos de relleno de picsum.photos (una imagen fija por semilla); las reales las sube el administrador
-    private static final String FOTOS = "https://picsum.photos/seed/";
+    // Fotos libres de Pexels (pexels.com/license: uso gratis, sin atribución), recortadas a 16:9 por su CDN; las
+    // reales las sube el administrador. Solo cambia el número de la foto
+    static String foto(long pexels) {
+        return "https://images.pexels.com/photos/" + pexels + "/pexels-photo-" + pexels
+                + ".jpeg?auto=compress&cs=tinysrgb&w=1200&h=675&fit=crop";
+    }
 
     /**
      * Capacidades distintas a propósito: la Ficha exige variedad entre los activos (CAP-05).
      *
-     * @param base valor por ocupante y noche en la temporada base; en temporada alta se cobra un 30 % más
+     * @param base  valor por ocupante y noche en la temporada base; en temporada alta se cobra un 30 % más
+     * @param fotos números de Pexels: la primera es la principal
      */
     record Ejemplo(String codigo, String nombre, String descripcion, int capacidad, int dormitorios, long base,
-                   List<String> dotacion) {
+                   List<String> dotacion, List<Long> fotos) {
     }
 
     static final List<Ejemplo> EJEMPLOS = List.of(
             new Ejemplo(PRIMERO, "Estudio Cafetal", "Estudio para dos, con ventanal hacia los cafetales y "
-                    + "desayunador.", 2, 1, 120_000, List.of("Wifi", "Cocina", "Ventanal", "Agua caliente")),
+                    + "desayunador.", 2, 1, 120_000, List.of("Wifi", "Cocina", "Ventanal", "Agua caliente"),
+                    List.of(7501132L, 29148452L)),
             new Ejemplo("APT-102", "Suite Guadua", "Dos habitaciones con techos en guadua y balcón con hamaca, a "
                     + "pocos pasos del parque principal.", 4, 2, 100_000,
-                    List.of("Wifi", "Cocina", "Balcón", "Hamaca", "Agua caliente", "Televisor")),
+                    List.of("Wifi", "Cocina", "Balcón", "Hamaca", "Agua caliente", "Televisor"),
+                    List.of(7329929L, 6284232L)),
             new Ejemplo("APT-103", "Casa Palma de Cera", "La más amplia: tres habitaciones, patio con zona de "
                     + "asados y parqueadero cubierto para un carro.", 6, 3, 90_000,
                     List.of("Wifi", "Cocina", "Patio", "Zona de asados", "Lavadora", "Parqueadero", "Agua caliente",
-                            "Televisor")),
+                            "Televisor"),
+                    List.of(3771267L, 6752281L)),
             new Ejemplo("APT-104", "Mirador del Valle", null, 3, 2, 110_000,
-                    List.of("Wifi", "Vista al valle", "Agua caliente")));
+                    List.of("Wifi", "Vista al valle", "Agua caliente"),
+                    List.of(23203313L, 5028910L)));
 
     private final ApartamentoRepository apartamentos;
     private final AlojamientoRepository alojamientos;
@@ -124,8 +133,8 @@ public class CargadorDatosDemo implements ApplicationRunner {
     private void cargar(String alojamientoId) {
         EJEMPLOS.forEach(e -> crearApartamento.ejecutar(new CrearApartamentoCommand(e.codigo(), alojamientoId,
                 e.nombre(), e.descripcion(), e.capacidad(), e.dormitorios(),
-                List.of(new ImagenCommand(FOTOS + e.codigo() + "-a/1200/675", true),
-                        new ImagenCommand(FOTOS + e.codigo() + "-b/1200/675", false)),
+                List.of(new ImagenCommand(foto(e.fotos().get(0)), true),
+                        new ImagenCommand(foto(e.fotos().get(1)), false)),
                 e.dotacion())));
 
         String base = consultarCalendario.ejecutar(alojamientoId).temporadas().stream()
