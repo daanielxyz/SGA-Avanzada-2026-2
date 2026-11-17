@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link, useLocation } from 'react-router'
-import type { RespuestaAsistente } from '../api/asistente'
+import type { FuenteRespuesta, RespuestaAsistente } from '../api/asistente'
 import Icono from '../componentes/Icono'
 import { useSesion } from '../sesion/contexto'
 import { ID_BOTON_AYUDA, ID_PANEL_AYUDA } from './BotonAyuda'
 import { useAsistente, type ValorAsistente } from './contexto'
-import { errorDePregunta, LARGO_CONTADOR, LARGO_MAXIMO, rutaDeFuente, SUGERENCIAS, type Intercambio } from './logica'
+import { destinoDeFuente, errorDePregunta, LARGO_CONTADOR, LARGO_MAXIMO, SUGERENCIAS, type Intercambio } from './logica'
 import TextoRespuesta from './TextoRespuesta'
 
 const MILES = new Intl.NumberFormat('es-CO')
@@ -15,7 +15,7 @@ const ESPERA_LARGA_MS = 4000
 const CELULAR = '(max-width: 799.98px)'
 
 /**
- * El panel de ayuda del PMS (DEC-127, mockups S5Asistente): a la derecha del PMS en el computador, sin velo, y a
+ * El panel del asistente de IA del PMS (DEC-127, mockups S5Asistente): a la derecha del PMS en el computador, sin velo, y a
  * pantalla completa en el celular. Solo explica: preguntar, empezar de nuevo y cerrar.
  */
 export default function PanelAsistente() {
@@ -31,7 +31,7 @@ function Contenido({ asistente }: { asistente: ValorAsistente }) {
   const [enfoque, setEnfoque] = useState(0)
   const idTitulo = useId()
 
-  // Al cerrar, el foco vuelve a donde estaba (por ejemplo, «Ayuda» o «¿Por qué?»); al abrir lo toma el campo (Pie)
+  // Al cerrar, el foco vuelve a donde estaba (por ejemplo, «Asistente de IA» o «¿Por qué?»); al abrir lo toma el campo (Pie)
   useEffect(() => {
     const antes = document.activeElement instanceof HTMLElement ? document.activeElement : null
     return () => {
@@ -60,7 +60,7 @@ function Contenido({ asistente }: { asistente: ValorAsistente }) {
   return (
     <aside id={ID_PANEL_AYUDA} className="asistente" aria-labelledby={idTitulo} onKeyDown={alTeclear}>
       <div className="asistente-cabecera">
-        <h2 id={idTitulo}>Ayuda del PMS</h2>
+        <h2 id={idTitulo}>Asistente de IA</h2>
         {intercambios.length > 0 && (
           <button type="button" className="boton boton-secundario boton-chico" onClick={() => {
             empezarDeNuevo()
@@ -69,7 +69,7 @@ function Contenido({ asistente }: { asistente: ValorAsistente }) {
             Empezar de nuevo
           </button>
         )}
-        <button type="button" className="boton boton-secundario boton-chico asistente-cerrar" aria-label="Cerrar la ayuda"
+        <button type="button" className="boton boton-secundario boton-chico asistente-cerrar" aria-label="Cerrar el asistente"
           onClick={cerrar}>
           <Icono nombre="cerrar" />
           <span className="asistente-cerrar-texto" aria-hidden="true">Cerrar</span>
@@ -150,7 +150,6 @@ function Esperando() {
 }
 
 function Respuesta({ respuesta, alSeguirFuente }: { respuesta: RespuestaAsistente; alSeguirFuente: () => void }) {
-  const { pathname } = useLocation()
   return (
     <div className="asistente-respuesta">
       <span className="solo-lectores">Respuesta: </span>
@@ -160,30 +159,56 @@ function Respuesta({ respuesta, alSeguirFuente }: { respuesta: RespuestaAsistent
           <p>{respuesta.aviso}</p>
         </div>
       )}
-      <TextoRespuesta texto={respuesta.respuesta} />
+      <TextoRespuesta texto={respuesta.respuesta} alSeguirEnlace={alSeguirFuente} />
       {respuesta.fuentes.length > 0 && (
         <div className="asistente-fuentes">
           <p className="asistente-fuentes-titulo">Según el manual:</p>
           <ul>
-            {respuesta.fuentes.map((fuente) => {
-              const ruta = rutaDeFuente(fuente.pantalla, pathname)
-              return (
-                <li key={fuente.id}>
-                  <Icono nombre="documento" />
-                  {ruta ? (
-                    <Link to={ruta} onClick={alSeguirFuente}>
-                      {fuente.titulo} <span aria-hidden="true">→</span>
-                    </Link>
-                  ) : (
-                    <span>{fuente.titulo}</span>
-                  )}
-                </li>
-              )
-            })}
+            {respuesta.fuentes.map((fuente) => (
+              <Fuente key={fuente.id} fuente={fuente} alSeguir={alSeguirFuente} />
+            ))}
           </ul>
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Una sección del manual en que se basó la respuesta. Solo es enlace (ícono, subrayado y flecha) si lleva a otra
+ * pantalla; si no puede llevar, va como texto, con una línea que dice por qué y, cuando se puede, por dónde se llega.
+ */
+function Fuente({ fuente, alSeguir }: { fuente: FuenteRespuesta; alSeguir: () => void }) {
+  const { pathname } = useLocation()
+  const { sesion } = useSesion()
+  const destino = sesion ? destinoDeFuente(fuente.pantalla, pathname, sesion.rol) : { tipo: 'ninguno' as const }
+
+  if (destino.tipo === 'pantalla') {
+    return (
+      <li>
+        <Icono nombre="documento" />
+        <Link to={destino.ruta} onClick={alSeguir}>
+          {fuente.titulo} <span aria-hidden="true">→</span>
+        </Link>
+      </li>
+    )
+  }
+  return (
+    <li className="asistente-fuente-texto">
+      <span>{fuente.titulo}</span>
+      {destino.tipo === 'aqui' && <span className="asistente-fuente-nota">Es la pantalla donde estás.</span>}
+      {destino.tipo === 'desde' && destino.aqui && (
+        <span className="asistente-fuente-nota">Se abre desde esta pantalla, eligiendo una de la lista.</span>
+      )}
+      {destino.tipo === 'desde' && !destino.aqui && (
+        <span className="asistente-fuente-nota">
+          Se abre desde «{destino.nombre}».{' '}
+          <Link to={destino.ruta} onClick={alSeguir}>
+            Ir a {destino.nombre} <span aria-hidden="true">→</span>
+          </Link>
+        </span>
+      )}
+    </li>
   )
 }
 

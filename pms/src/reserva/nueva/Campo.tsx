@@ -1,4 +1,5 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
+import CampoFecha from '../../componentes/CampoFecha'
 import { FECHA_MAXIMA } from '../../formato'
 
 /**
@@ -44,6 +45,8 @@ export default function Campo({ etiqueta, nota, marca, pista, error, invalido = 
             </option>
           ))}
         </select>
+      ) : control.type === 'date' || control.type === 'datetime-local' ? (
+        <CampoFecha {...control} {...comunes} type={control.type as 'date' | 'datetime-local'} etiqueta={etiqueta} />
       ) : (
         <input {...control} {...comunes} />
       )}

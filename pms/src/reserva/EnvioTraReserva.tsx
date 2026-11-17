@@ -83,12 +83,15 @@ export default function EnvioTraReserva({ codigo, faltanDatos, clave }: {
       )}
       {actual && 'envio' in actual && (
         <div className="tarjeta envio-tra">
-          <p className="envio-tra-estado">
-            <span className="solo-lectores">Estado: </span>
-            <span className={`etiqueta envio-tra-${estado.toLowerCase()}`}>
-              <span aria-hidden="true">{ESTADOS[estado].simbolo}</span> {ESTADOS[estado].texto}
-            </span>
-          </p>
+          {/* Recién enviado, el aviso «TRA enviado» de abajo ya lo dice en grande: la etiqueta no lo repite encima */}
+          {!enviado && (
+            <p className="envio-tra-estado">
+              <span className="solo-lectores">Estado: </span>
+              <span className={`etiqueta envio-tra-${estado.toLowerCase()}`}>
+                <span aria-hidden="true">{ESTADOS[estado].simbolo}</span> {ESTADOS[estado].texto}
+              </span>
+            </p>
+          )}
           <dl className="datos">
             {estado === 'ENVIADO' && envio?.enviadoEn && (
               <Dato nombre="Fecha de envío">

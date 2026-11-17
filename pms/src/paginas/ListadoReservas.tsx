@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Link, useLocation, useSearchParams } from 'react-router'
 import { listarCodigosDeApartamentos } from '../api/apartamentos'
 import { ErrorApi } from '../api/cliente'
 import {
+  consultarReserva,
   listarReservas,
   NOMBRE_DEL_CANAL,
   NOMBRE_DEL_ESTADO,
@@ -13,6 +14,7 @@ import {
 } from '../api/reservas'
 import Aviso from '../componentes/Aviso'
 import BloqueVacio from '../componentes/BloqueVacio'
+import CampoFecha from '../componentes/CampoFecha'
 import EtiquetaEstado from '../componentes/EtiquetaEstado'
 import Icono from '../componentes/Icono'
 import { textoDeEleccion, type Atajo } from '../componentes/eleccion'
@@ -23,11 +25,12 @@ import { cantidad, dinero, FECHA_MAXIMA, fechaCorta, noches } from '../formato'
 import { totalConIva } from '../reserva/valor'
 import EnviosTraConError from '../reserva/EnviosTraConError'
 
-const FILTROS = ['desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
+const FILTROS = ['codigo', 'desde', 'hasta', 'estado', 'apartamento', 'canal', 'titular'] as const
 type Filtro = (typeof FILTROS)[number]
 type ValoresFiltro = Record<Filtro, string>
 
 const ROTULOS: Record<Filtro, string> = {
+  codigo: 'Código',
   desde: 'Desde',
   hasta: 'Hasta',
   estado: 'Estado',
@@ -79,10 +82,26 @@ function parametrosDe(valores: ValoresFiltro): URLSearchParams {
 
 type Resultado = { clave: string; pagina: Pagina<Reserva> } | { clave: string; error: unknown }
 
+/** Los parámetros que entiende `GET /api/reservas`: todos menos el código, que el listado del backend no filtra. */
+function consultaAlListado(parametros: URLSearchParams): string {
+  const sinCodigo = new URLSearchParams(parametros)
+  sinCodigo.delete('codigo')
+  return sinCodigo.toString()
+}
+
+/** La reserva que se buscó por código, con la forma de una página para mostrarla en la misma tabla. */
+function paginaDeUna(reserva: Reserva): Pagina<Reserva> {
+  return { contenido: [reserva], numero: 0, tamano: 1, totalElementos: 1, totalPaginas: 1 }
+}
+
 // Dónde iba la persona al abrir una reserva, para dejarla ahí mismo al volver al listado
 let posicionAlSalir: { busqueda: string; y: number } | null = null
 
-/** Listado de reservas de recepción (CU-25 · DEC-72). Los filtros y la página viven en la dirección de la pantalla. */
+/**
+ * Listado de reservas de recepción (CU-25 · DEC-72). Los filtros y la página viven en la dirección de la pantalla.
+ * El código es un filtro más, pero el listado del backend no lo tiene: con un código se pide esa reserva
+ * (`GET /api/reservas/{codigo}`) y se muestra sola en la misma tabla; mientras esté, los demás filtros no se aplican.
+ */
 export default function ListadoReservas() {
   const [parametros, setParametros] = useSearchParams()
   const { search } = useLocation()
@@ -90,11 +109,15 @@ export default function ListadoReservas() {
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const consulta = parametros.toString()
   const clave = `${consulta}#${intento}`
+  const valores = valoresDe(parametros)
+  const codigo = valores.codigo.trim().toUpperCase()
+  const consultaListado = consultaAlListado(parametros)
   useTitulo('Reservas')
 
   useEffect(() => {
     let vigente = true
-    listarReservas(consulta)
+    const pedido = codigo ? consultarReserva(codigo).then(paginaDeUna) : listarReservas(consultaListado)
+    pedido
       .then((pagina) => {
         if (vigente) setResultado({ clave, pagina })
       })
@@ -104,14 +127,15 @@ export default function ListadoReservas() {
     return () => {
       vigente = false
     }
-  }, [consulta, clave])
+  }, [codigo, consultaListado, clave])
 
-  const valores = valoresDe(parametros)
   const hayFiltros = Object.values(valores).some(Boolean)
   const actual = resultado?.clave === clave ? resultado : null
   const error = actual && 'error' in actual ? actual.error : null
   // Un filtro mal puesto se explica junto a los filtros; lo demás, en lugar de la tabla
   const errorDeFiltro = error instanceof ErrorApi && (error.estado === 400 || error.estado === 409) ? error : null
+  // Un código que no existe no es un fallo de la pantalla: se dice en el lugar de la lista
+  const noExiste = Boolean(codigo) && error instanceof ErrorApi && error.estado === 404
 
   const limpiar = () => setParametros(new URLSearchParams())
   const quitar = (filtro: Filtro) => {
@@ -127,13 +151,10 @@ export default function ListadoReservas() {
   return (
     <div className="reservas">
       <div className="reservas-titulo">
-        <div className="reservas-encabezado">
-          <h1>Reservas</h1>
-          <Link to="/reservas/nueva" className="boton">
-            <span aria-hidden="true">+</span> Nueva reserva
-          </Link>
-        </div>
-        <IrALaReserva />
+        <h1>Reservas</h1>
+        <Link to="/reservas/nueva" className="boton">
+          <span aria-hidden="true">+</span> Nueva reserva
+        </Link>
       </div>
 
       <EnviosTraConError />
@@ -143,13 +164,26 @@ export default function ListadoReservas() {
         key={parametrosDe(valores).toString()}
         valores={valores}
         errorDeFiltro={errorDeFiltro}
-        alAplicar={(nuevos) => setParametros(parametrosDe(nuevos))}
+        alAplicar={(nuevos) => setParametros(parametrosDe({ ...nuevos, codigo: nuevos.codigo.trim().toUpperCase() }))}
         alLimpiar={limpiar}
         alQuitar={quitar}
       />
 
       {!actual && <Cargando />}
-      {error !== null && !errorDeFiltro && (
+      {noExiste && (
+        <BloqueVacio
+          icono="buscar"
+          titulo={`No existe la reserva ${codigo}`}
+          accion={
+            <button type="button" className="boton boton-secundario" onClick={() => quitar('codigo')}>
+              Quitar el código
+            </button>
+          }
+        >
+          Revisa que esté completo, como RES-2026-00042.
+        </BloqueVacio>
+      )}
+      {error !== null && !errorDeFiltro && !noExiste && (
         <Aviso
           tipo="error"
           asunto="No pudimos cargar las reservas"
@@ -171,52 +205,6 @@ export default function ListadoReservas() {
         />
       )}
     </div>
-  )
-}
-
-/** Abre una reserva directo por su código: el listado no busca por código (DEC-72). */
-function IrALaReserva() {
-  const navegar = useNavigate()
-  const [codigo, setCodigo] = useState('')
-  const [falta, setFalta] = useState(false)
-
-  function enviar(evento: FormEvent) {
-    evento.preventDefault()
-    const limpio = codigo.trim().toUpperCase()
-    setFalta(!limpio)
-    if (limpio) navegar(`/reservas/${encodeURIComponent(limpio)}`)
-  }
-
-  return (
-    <form className="ir-a-reserva" onSubmit={enviar} noValidate>
-      <div>
-        <label className="campo-rotulo" htmlFor="ir-a-reserva">
-          Ir a la reserva
-        </label>
-        <input
-          id="ir-a-reserva"
-          className="campo-control codigo"
-          type="text"
-          placeholder="RES-2026-00042"
-          autoComplete="off"
-          value={codigo}
-          aria-invalid={falta}
-          aria-describedby={falta ? 'ir-a-reserva-falta' : undefined}
-          onChange={(e) => {
-            setCodigo(e.target.value)
-            setFalta(false)
-          }}
-        />
-        {falta && (
-          <p id="ir-a-reserva-falta" className="campo-mensaje">
-            Escribe el código de la reserva.
-          </p>
-        )}
-      </div>
-      <button type="submit" className="boton boton-secundario">
-        Ir
-      </button>
-    </form>
   )
 }
 
@@ -310,13 +298,34 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
       >
         <div className="filtros-campos">
           <div>
+            <label className="campo-rotulo" htmlFor="filtro-codigo">
+              {ROTULOS.codigo}
+            </label>
+            <input
+              id="filtro-codigo"
+              className="campo-control codigo"
+              type="text"
+              placeholder="RES-2026-00042"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={40}
+              value={borrador.codigo}
+              aria-describedby="filtro-codigo-pista"
+              onChange={cambiar('codigo')}
+            />
+          </div>
+          <p id="filtro-codigo-pista" className="campo-pista filtros-codigo-pista">
+            Con un código se muestra solo esa reserva: los demás filtros no se aplican hasta que lo quites.
+          </p>
+          <div>
             <label className="campo-rotulo" htmlFor="filtro-desde">
               {ROTULOS.desde}
             </label>
-            <input
+            <CampoFecha
+              etiqueta={ROTULOS.desde}
               id="filtro-desde"
               className="campo-control"
-              type="date"
               max={FECHA_MAXIMA}
               value={borrador.desde}
               aria-invalid={rangoInvalido}
@@ -328,10 +337,10 @@ function Filtros({ valores, errorDeFiltro, alAplicar, alLimpiar, alQuitar }: {
             <label className="campo-rotulo" htmlFor="filtro-hasta">
               {ROTULOS.hasta}
             </label>
-            <input
+            <CampoFecha
+              etiqueta={ROTULOS.hasta}
               id="filtro-hasta"
               className="campo-control"
-              type="date"
               max={FECHA_MAXIMA}
               value={borrador.hasta}
               onChange={cambiar('hasta')}

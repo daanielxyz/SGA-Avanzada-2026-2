@@ -1,10 +1,11 @@
 // Lo común de «Activar mi cuenta» y «Olvidé mi contraseña»: la plantilla de «Iniciar sesión» y los campos del código.
 import { useEffect, useId, useRef, type FormEventHandler, type ReactNode } from 'react'
 import { Link } from 'react-router'
+import FondoEntrada from '../componentes/FondoEntrada'
 import Logo from '../componentes/Logo'
 import { codigoAlEscribir, MAXIMO_CORREO } from './logica'
 
-/** La misma plantilla de «Iniciar sesión»: el arte a la izquierda en el computador y el formulario centrado. */
+/** La misma plantilla de «Iniciar sesión»: el video de fondo en el computador y el formulario en su panel. */
 export function PaginaSinSesion({ titulo, texto, paso, ocupado, alEnviar, children }: {
   titulo: string
   texto?: ReactNode
@@ -23,13 +24,7 @@ export function PaginaSinSesion({ titulo, texto, paso, ocupado, alEnviar, childr
   }, [paso])
   return (
     <main className="entrada">
-      <div className="entrada-arte">
-        <Logo decorativo />
-        <div className="entrada-lema">
-          <p className="entrada-lema-titulo">Cada detalle bajo control.</p>
-          <p className="entrada-lema-texto">La operación en su punto más alto.</p>
-        </div>
-      </div>
+      <FondoEntrada />
       <div className="entrada-formulario">
         <form className="formulario" onSubmit={alEnviar} noValidate aria-busy={ocupado}>
           <Logo apilado />

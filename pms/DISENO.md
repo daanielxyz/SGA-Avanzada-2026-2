@@ -49,7 +49,7 @@ El PMS lleva la marca del **producto**, Meridian, «software de gestión hoteler
   - Medianoche y Carbón sirven para texto sobre Arena, Piedra o blanco (más de 9:1).
   - Oliva y Terracota **no** sirven como color de texto sobre fondos claros. Se usan como relleno de etiquetas de estado o de botones con texto Medianoche o Carbón encima (5,4:1 y 6:1 con Terracota; con Oliva, Carbón da solo 3,8:1, así que no sirve para texto pequeño). También pueden ir como texto sobre Medianoche (Terracota 5,4:1).
   - El rojo de error y los colores de estado de la reserva no salen del brandbook: se definen en la base y se revisan con `impeccable audit`.
-- **Tema**: por ahora solo oscuro, con los colores de los mockups; más adelante se agrega el claro. Los componentes usan variables semánticas (`--superficie`, `--texto`, `--acento`…), así que agregarlo será dar otros valores a esas variables. Sobre el fondo oscuro, **Oliva como texto da 3,45:1 y no sirve**; Terracota (5,4:1), Arena (9,15:1) y Piedra (11,9:1) sí sobre Medianoche.
+- **Tema**: noche (el de los mockups) y día, que se elige en «Mi perfil → Apariencia» (DEC-139; «Sprint 5: rediseño visual»). Los componentes usan variables semánticas (`--superficie`, `--texto`, `--acento`…), así que agregarlo será dar otros valores a esas variables. Sobre el fondo oscuro, **Oliva como texto da 3,45:1 y no sirve**; Terracota (5,4:1), Arena (9,15:1) y Piedra (11,9:1) sí sobre Medianoche.
 - **Archivos**: el logo está en `public/marca/` (símbolo y palabra, en Arena y con fondo transparente; falta el SVG). Las fuentes se sirven desde `public/fuentes/`. **Inter** (licencia OFL) va en git con su licencia. **Satoshi** no: su licencia (ITF FFL) permite usarla en nuestra aplicación, pero no publicarla en un repositorio ni modificarla o convertirla. Cada clon la descarga de [Fontshare](https://www.fontshare.com/fonts/satoshi) y deja `Fonts/WEB/fonts/Satoshi-Variable.woff2` en `public/fuentes/`; sin ella, los títulos salen con la fuente del sistema y `vite build` avisa que no la encontró. Al publicar el PMS, el archivo hay que ponerlo en el servidor. La foto genérica del inicio de sesión todavía no existe: se usa el degradado de prueba (`--fondo-entrada`).
 
 ## Mockups
@@ -517,6 +517,49 @@ La IA (B4d) quedó integrada (PR #98 y #100) y encendida en Render. Lo que falta
 **El rediseño de Daniel no cambia el flujo de Arias ni de Reyes**: sus pantallas se diseñan y programan con el diseño de hoy, con las clases y variables de `src/index.css`. Daniel rediseña lo que ya existe, sobre todo desde las variables de `:root` y los componentes comunes, y cuando se integre cada pantalla nueva le aplica el rediseño en un PR aparte. Lo decidido queda como `DEC-nn` en su rama (DEC-84 pide decidirlo en equipo antes de usar los comandos de `impeccable` que rediseñan).
 
 **Pendiente de la IA**, sin código: confirmar que la clave de Gemini esté en Bitwarden (colección `SGA demo`) y que el proyecto «Meridian Asistente» de Google AI Studio sea de la cuenta del equipo; presentar el asistente al cliente en el cierre 4 (vie 20 nov); y, cuando entren titulares, novedades y canales, poner al día `general`, `novedades` y `casos-servicio` del manual.
+
+## Sprint 5: rediseño visual (`feature/pms/rediseno`, Daniel)
+**DEC-138** (aspecto) y **DEC-139** (textos y comportamiento), números tentativos. Se trabaja en un worktree aparte (`../SGA-rediseno`, puerto 5175) para comparar con el PMS de `develop` y se integra en un solo PR. Skills de las dos fases, según el documento de playbooks (Playbook 2, la app): `impeccable` como única dirección visual (sin su ejecutable; `shape`, `harden`, `adapt`, y al final `audit`, `critique` y `polish`), `emil-design-eng` para el acabado de los componentes, `break-ui` con datos extremos en las pruebas y `mobile-native` para el celular. No se agregaron `animate` ni `prototype`.
+
+### Fase 1 (15 nov): ajustes de la base
+**Auditoría** (capturas a 1280 y 390 px de 14 pantallas; `impeccable critique` y `audit` leídos a mano): todo texto pasaba AA (el par más bajo, `--texto-pista` sobre `--superficie-2`, 5,15:1); sin desbordes; casi sin colores fuera de variables. Lo que se corrige:
+
+| # | Problema | Cambio | Riesgo |
+|---|---|---|---|
+| 1 | Todo en un plano: página y tarjeta a 1,10:1, tarjeta y panel a 1,14:1; solo los bordes separaban | `--fondo-pagina #0b2230 → #071923`, `--fondo-marco #08202c → #06151e`, `--superficie-2 #153448 → #17384c`, `--superficie-fila #123246 → #13324a`; la tarjeta sigue en Medianoche. Ahora 1,2:1 entre capas | Medio: se volvió a medir todo texto; el más bajo queda en 4,88:1 (`--texto-pista` sobre panel) |
+| 2 | Dinero en monoespaciada en unas pantallas e Inter en otras; el código de la reserva en Consolas a 32 px | `--letra-codigo` = Inter. Las cifras de ancho fijo de Inter ensanchan el guion («RES - 2026»), así que van solo en `.derecha`, `.importe` y `.numero`; en una tabla, un código no se parte | Bajo |
+| 3 | El navegador pintaba con sus colores la selección, el cursor, las casillas y las barras | `::selection` (`--seleccion`), `caret-color`, `accent-color` y `scrollbar-color` desde la paleta | Muy bajo |
+| 4 | Borde izquierdo grueso de color (salidas vencidas, notas, preparación empezada) | Borde de 1 px en su color y fondo tintado (`--advertencia-fondo`, `--info-fondo`); el «!» y los textos siguen | Bajo |
+| 5 | Formas | `--radio 10 → 12`, `--radio-chico 6 → 8`; las etiquetas siguen como píldora | Bajo |
+| 6 | 22 rótulos en mayúsculas espaciadas compitiendo | `--rotulo-mayusculas: none` en los rótulos de un dato; mayúsculas solo en encabezados de tabla (`--encabezado-*`, 0,04em). El menú y el código de color de la marca no cambian | Bajo; las pruebas leen el texto del DOM |
+| 7 | Enlace de salto de 40 px; los códigos de salidas vencidas, 20 px de alto | Salto de 44 px; el código crece su área de toque por fuera (`::after`) sin mover el renglón | Muy bajo |
+| 8 | El avatar quedaba solo en el centro de la cabecera | `.quien` ya no toma 270 px fijos: el avatar queda junto al nombre | Bajo |
+
+### Fase 2 (16 nov): lo nuevo
+
+| Parte | Qué cambió | Dónde |
+|---|---|---|
+| Botones | *Glass* con los colores de siempre: primario Arena (Arena oscura de día), secundario de borde. Brillo interior y borde de luz; el desenfoque solo donde hay fondo con variación (sobre el video). Seis estados distintos; el «ocupado» con un aro (`aria-busy`) | `--boton-*`, `.boton` |
+| Barra de arriba | Fija (`sticky`) y translúcida. El menú, el asistente, «Volver» y las vistas previas se pegan debajo (`--alto-cabecera`). De día, Arena oscura con una línea café debajo | `.cabecera`, `--cabecera-*` |
+| Bug | El menú subía sobre la barra y tapaba «Puerta al Sol» en ventanas bajas: heredaba el `bottom: 0` del cajón | `.menu` en el computador |
+| Cerrar sesión | Pide confirmación con el diálogo de la base | `Panel.tsx` |
+| Asistente | «Ayuda» → «Asistente de IA». Las fuentes solo parecen enlace si llevan a otra pantalla; los enlaces internos del texto se siguen | `asistente/` |
+| Menú | Gris pizarra translúcido, grupos en cajas. En el computador con cursor, un riel de íconos de 68 px que se abre como un cajón (296 px, ~440 ms) al acercar el cursor o con el foco; se superpone, no mueve el contenido. Cada ícono con su nombre y `title`. En tabletas táctiles y en el celular, como antes | `--menu-*`, `.menu` |
+| Barras de desplazamiento | Sin flechas; pulgar translúcido (3:1 o más), más opaco encima y al arrastrar | `::-webkit-scrollbar-*`, `scrollbar-color` |
+| Reservas | «Nueva reserva» bajo el título; el código como filtro dentro del recuadro (`?codigo=`, pide `GET /api/reservas/{codigo}`); un 404 se dice en la lista | `ListadoReservas.tsx` |
+| Día y noche | `:root[data-tema='dia']`: una escala de Arena sin azul. Se elige en «Mi perfil → Apariencia», se guarda en el navegador y `index.html` lo aplica antes de pintar. El logo se pinta con su PNG como máscara para tomar el color del tema | `tema.ts`, `Perfil.tsx` |
+| Calendarios | Uno solo, el de los bloqueos (`componentes/Calendario.tsx`): en bloqueos, en «Nueva reserva» (dos meses) y en todo campo de fecha (`CampoFecha`, flotante, con mes y año en listas) | `componentes/` |
+| Inicio de sesión | Video de fondo (sin el lema), formulario centrado en un panel translúcido; en el celular no se descarga. Lo comparten «Activar mi cuenta» y «Olvidé mi contraseña» | `FondoEntrada.tsx` |
+| TRA | Recién enviado, solo el aviso grande | `EnvioTraReserva.tsx` |
+| Pantallas de otros | La tarjeta de conflicto, los pasos de una novedad y el rol elegido pierden la franja gruesa a la izquierda; sus rótulos usan `--rotulo-*` y `--encabezado-*`; la sombra de las listas sale del tema | `index.css` |
+
+**Decisiones de Daniel que no son las recomendadas** (DEC-139): el video se reproduce siempre y sin botón de pausa (WCAG 2.2.2), y el menú se anima aunque el sistema pida «reducir movimiento». En su equipo Windows tiene apagados los «Efectos de animación», así que ahí es donde más se nota.
+
+**El video**: el de prueba está en `pms/public/video/entrada.mp4` con su póster `entrada.jpg`, que **no van a git** (`pms/.gitignore`). Sin ellos se ve el degradado de siempre. Para el final, `VITE_VIDEO_ENTRADA` y `VITE_POSTER_ENTRADA` apuntan a donde se sirva; dónde, se decide cuando exista. Las referencias de la fase (botones *glass*, la página con video) están en `pms/diseno/inspiraciones-rediseno/`, también fuera de git.
+
+**Comprobado**: 559 pruebas del PMS pasan (`tsc -b` y `lint` limpios). Un guion mide el contraste de cada texto visible contra su fondo real en 21 pantallas, el asistente, el menú y un diálogo, de día y de noche, a 1280 y 390 px: ningún texto bajo AA y sin desbordes. Lo que no es texto se midió con la fórmula (bordes de controles, foco, pulgares, sellos de estado). Las capturas antes y después quedaron en el scratchpad de la sesión (no van a git).
+
+**Auditoría final** (`impeccable audit`, leída a mano): accesibilidad 3/4 (el video sin pausa y el menú que ignora «reducir movimiento», por decisión); rendimiento 4; tema 4 (todo color sale de variables, salvo las muestras de «Apariencia», que muestran el otro tema a propósito); adaptable 4; integridad 4. **16/20, bueno**. Queda para después: los botones que cargan siguen diciendo «Guardando…» apagados en vez de usar el aro; en Firefox se ve su ícono de calendario junto al nuestro; Novedades y Usuarios llevan la acción al lado del título y Reservas debajo.
 
 ## Sprint 5 adelantado: asistente de IA (`feature/pms/asistente-ia`, Daniel)
 Decidido el 13 nov con el equipo, tras una lluvia de ideas: **DEC-127** (el número es tentativo). Lo que sigue es el detalle para programarlo.

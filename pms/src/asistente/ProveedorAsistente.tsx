@@ -8,7 +8,7 @@ import { historialPara, type Intercambio } from './logica'
 const SIN_CONEXION = 'No se pudo enviar. Revisa tu conexión.'
 
 /**
- * La conversación con la ayuda del PMS (DEC-127). Vive en la memoria de esta pestaña mientras dure la sesión: cerrar
+ * La conversación con el asistente de IA del PMS (DEC-127). Vive en la memoria de esta pestaña mientras dure la sesión: cerrar
  * el panel no la borra, pero recargar, cerrar sesión o «Empezar de nuevo» sí. No se guarda en el navegador, porque
  * puede traer datos de la operación.
  */

@@ -9,6 +9,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
   localStorage.clear()
   sessionStorage.clear()
+  delete document.documentElement.dataset.tema
 })
 
 // jsdom todavía no trae las ventanas modales del navegador

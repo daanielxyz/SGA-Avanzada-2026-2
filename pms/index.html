@@ -4,9 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/marca/simbolo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="theme-color" content="#08202c" />
+    <meta name="theme-color" content="#06151e" />
     <meta name="color-scheme" content="dark" />
     <title>Meridian · Gestión hotelera</title>
+    <!-- El tema día se aplica antes de pintar, para que la pantalla no parpadee en noche al abrir (src/tema.ts) -->
+    <script>
+      try {
+        if (localStorage.getItem('sga.pms.tema') === 'dia') {
+          document.documentElement.dataset.tema = 'dia'
+          document.querySelector('meta[name="theme-color"]').content = '#b8a078'
+          document.querySelector('meta[name="color-scheme"]').content = 'light'
+        }
+      } catch (error) {
+        // Sin almacenamiento, el tema de siempre
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -61,9 +61,9 @@ export const OCUPANTE_VACIO: DatosOcupante = {
 // EST-01 · RN-02: la entrada no es pasada, la salida es posterior y hay al menos un ocupante
 export function validarEstancia({ entrada, salida, ocupantes }: DatosEstancia, hoy = fechaHoy()): Errores {
   const errores: Errores = {}
-  if (!entrada) errores.entrada = 'Escribe la fecha de entrada.'
+  if (!entrada) errores.entrada = 'Elige la fecha de entrada.'
   else if (entrada < hoy) errores.entrada = `La entrada no puede ser anterior a hoy (${fechaCorta(hoy)}).`
-  if (!salida) errores.salida = 'Escribe la fecha de salida.'
+  if (!salida) errores.salida = 'Elige la fecha de salida.'
   else if (entrada && salida <= entrada) errores.salida = 'La salida debe ser posterior a la entrada.'
   if (!(Number(ocupantes) >= 1)) errores.ocupantes = 'Debe haber al menos un ocupante.'
   return errores

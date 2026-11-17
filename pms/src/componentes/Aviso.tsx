@@ -18,7 +18,7 @@ const TIPOS = {
  * @param accion   lo que se puede hacer ahí mismo, como reintentar
  *
  * Un rechazo de una acción (error con asunto y sin acción, como «No se registró la salida») ofrece «¿Por qué?», que
- * le pregunta a la ayuda del PMS (DEC-127). Los errores al cargar traen «Reintentar» y no lo ofrecen.
+ * le pregunta al asistente de IA (DEC-127). Los errores al cargar traen «Reintentar» y no lo ofrecen.
  */
 export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: {
   tipo: keyof typeof TIPOS
@@ -41,7 +41,7 @@ export default function Aviso({ tipo, asunto, mensaje, detalles = [], accion }: 
         <strong>{encabezado}</strong>
         <p>{mensaje}</p>
         {porQue && asunto && (
-          <button type="button" className="enlace aviso-por-que" aria-label="¿Por qué? Preguntarle a la ayuda del PMS"
+          <button type="button" className="enlace aviso-por-que" aria-label="¿Por qué? Preguntarle al asistente de IA"
             onClick={() => porQue.preguntar(preguntaDelRechazo(asunto, mensaje))}>
             ¿Por qué?
           </button>

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { ErrorApi } from '../api/cliente'
 import { registrarDevolucion, registrarPago, type Folio } from '../api/folio'
 import Aviso from '../componentes/Aviso'
+import CampoFecha from '../componentes/CampoFecha'
 import { fechaCorta, fechaHoy, nombreLegible } from '../formato'
 import { mensajeDeRechazo } from './mensajes'
 
@@ -135,9 +136,9 @@ export default function FormularioPago({
           <label className="campo-rotulo" htmlFor="pago-fecha">
             Fecha
           </label>
-          <input
+          <CampoFecha
+            etiqueta="Fecha"
             id="pago-fecha"
-            type="date"
             className="campo-control"
             max={hoy}
             value={fecha}

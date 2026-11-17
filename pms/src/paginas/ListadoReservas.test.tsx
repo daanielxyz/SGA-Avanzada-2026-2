@@ -236,28 +236,80 @@ describe('listado de reservas (CU-25)', () => {
     expect(await screen.findByRole('navigation', { name: 'Paginación' })).toHaveTextContent('1 reserva')
   })
 
-  it('«Ir a la reserva» abre el detalle aunque el código se escriba en minúsculas', async () => {
-    laApiRespondePorRuta({
-      '/api/reservas': [200, paginaDe([])],
-      '/api/reservas/RES-2026-00042': [200, reservaDePrueba()],
+  it('el código es un filtro más: muestra esa única reserva en la lista, sin ir al detalle', async () => {
+    const fetch = laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([reservaDePrueba({ codigo: 'RES-2026-00001' }), reservaDePrueba({ codigo: 'RES-2026-00002' })])],
+      '/api/reservas/RES-2026-00042': [200, reservaDePrueba({ codigo: 'RES-2026-00042' })],
     })
     abrir()
     const usuario = userEvent.setup()
+    const filtros = screen.getByRole('search', { name: 'Filtros' })
 
-    await usuario.type(screen.getByLabelText('Ir a la reserva'), 'res-2026-00042')
-    await usuario.click(screen.getByRole('button', { name: 'Ir' }))
+    await usuario.type(within(filtros).getByLabelText('Código'), ' res-2026-00042 ')
+    await usuario.click(within(filtros).getByRole('button', { name: 'Filtrar' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'RES-2026-00042' })).toBeInTheDocument()
+    const tabla = await screen.findByRole('table', { name: 'Reservas' })
+    await waitFor(() => expect(within(tabla).getAllByRole('row')).toHaveLength(2))
+    expect(within(tabla).getByRole('link', { name: 'RES-2026-00042' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Paginación' })).toHaveTextContent('1 reserva')
+    expect(screen.getByRole('button', { name: 'Quitar filtro Código: RES-2026-00042' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
+    expect(consultasAlListado(fetch)).toContain('/api/reservas/RES-2026-00042')
   })
 
-  it('«Ir a la reserva» sin código avisa sin salir del listado', async () => {
+  it('con un código los demás filtros no se aplican, y el campo lo dice', async () => {
+    const fetch = laApiRespondePorRuta({
+      '/api/reservas/RES-2026-00042': [200, reservaDePrueba({ codigo: 'RES-2026-00042' })],
+    })
+    abrir('/reservas?estado=CANCELADA&codigo=RES-2026-00042&pagina=3')
+
+    expect(await screen.findByRole('link', { name: 'RES-2026-00042' })).toBeInTheDocument()
+    expect(consultasAlListado(fetch)).toEqual(['/api/reservas/RES-2026-00042'])
+    expect(screen.getByLabelText('Código')).toHaveAccessibleDescription(
+      'Con un código se muestra solo esa reserva: los demás filtros no se aplican hasta que lo quites.',
+    )
+  })
+
+  it('un código que no existe se dice en la lista, no como página de error (404)', async () => {
+    laApiRespondePorRuta({ '/api/reservas': [200, paginaDe([reservaDePrueba()])] })
+    abrir('/reservas?codigo=RES-2026-99999')
+
+    expect(await screen.findByRole('heading', { name: 'No existe la reserva RES-2026-99999' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
+    expect(screen.getByRole('search', { name: 'Filtros' })).toBeInTheDocument()
+    expect(screen.queryByText('No pudimos cargar las reservas')).not.toBeInTheDocument()
+  })
+
+  it('quitar el código vuelve a la lista con los filtros que ya estaban', async () => {
+    const fetch = laApiRespondePorRuta({
+      '/api/reservas': [200, paginaDe([reservaDePrueba({ codigo: 'RES-2026-00001' })])],
+      '/api/reservas/RES-2026-00042': [200, reservaDePrueba({ codigo: 'RES-2026-00042' })],
+    })
+    abrir('/reservas?codigo=RES-2026-00042&canal=PORTAL')
+    await screen.findByRole('link', { name: 'RES-2026-00042' })
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Quitar filtro Código: RES-2026-00042' }))
+
+    expect(await screen.findByRole('link', { name: 'RES-2026-00001' })).toBeInTheDocument()
+    expect(consultasAlListado(fetch)).toContain('/api/reservas?canal=PORTAL')
+    expect(screen.queryByRole('button', { name: /Quitar filtro Código/ })).not.toBeInTheDocument()
+  })
+
+  it('desde «No existe la reserva», «Quitar el código» vuelve a la lista', async () => {
+    laApiRespondePorRuta({ '/api/reservas': [200, paginaDe([reservaDePrueba({ codigo: 'RES-2026-00001' })])] })
+    abrir('/reservas?codigo=RES-2026-99999')
+
+    await userEvent.setup().click(await screen.findByRole('button', { name: 'Quitar el código' }))
+
+    expect(await screen.findByRole('link', { name: 'RES-2026-00001' })).toBeInTheDocument()
+  })
+
+  it('«Nueva reserva» sigue a la mano, debajo del título', async () => {
     laApiRespondePorRuta({ '/api/reservas': [200, paginaDe([])] })
     abrir()
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Ir' }))
-
-    expect(screen.getByLabelText('Ir a la reserva')).toHaveAccessibleDescription('Escribe el código de la reserva.')
-    expect(screen.getByRole('heading', { level: 1, name: 'Reservas' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Nueva reserva/ })).toHaveAttribute('href', '/reservas/nueva')
+    expect(screen.queryByLabelText('Ir a la reserva')).not.toBeInTheDocument()
   })
 
   it('el personal de servicio no puede abrir el listado', () => {

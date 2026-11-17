@@ -4,6 +4,7 @@ import { alCambiarNombre, consultarAlojamiento } from '../api/alojamiento'
 import BotonAyuda from '../asistente/BotonAyuda'
 import PanelAsistente from '../asistente/PanelAsistente'
 import ProveedorAsistente from '../asistente/ProveedorAsistente'
+import Dialogo from '../componentes/Dialogo'
 import Icono from '../componentes/Icono'
 import Logo from '../componentes/Logo'
 import ProteccionErrores from '../componentes/ProteccionErrores'
@@ -13,14 +14,16 @@ import type { Sesion } from '../sesion/almacen'
 import { useSesion } from '../sesion/contexto'
 import { NOMBRE_DEL_ROL } from '../sesion/roles'
 
-// Desde este ancho el menú queda fijo a la izquierda (el mismo valor de src/index.css)
+// Desde este ancho el menú deja de ser un cajón: queda a la izquierda, como riel de íconos donde hay cursor (el mismo valor de src/index.css)
 const ANCHO_MENU_FIJO = 800
 
-/** Marco de todas las pantallas con sesión: el alojamiento, quién entró, el menú de su rol y el botón para salir. */
+/** Marco de todas las pantallas con sesión: el alojamiento, quién entró, el menú de su rol y el botón para salir (que se confirma). */
 export default function Panel({ sesion }: { sesion: Sesion }) {
   const { salir } = useSesion()
   const [alojamiento, setAlojamiento] = useState('')
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const [confirmaSalida, setConfirmaSalida] = useState(false)
+  const [saliendo, setSaliendo] = useState(false)
   const abrirMenu = useRef<HTMLButtonElement>(null)
   const cerrarMenu = useRef<HTMLButtonElement>(null)
   const contenido = useRef<HTMLElement>(null)
@@ -62,6 +65,19 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
       botonParaVolver?.focus()
     }
   }, [menuAbierto])
+
+  // Salir se confirma: un toque de más en la barra no saca a nadie a mitad de una llegada. Desde el cajón del celular,
+  // primero se cierra el cajón: así, si se cancela, el foco vuelve a «Abrir menú»
+  function pedirSalida() {
+    setMenuAbierto(false)
+    setConfirmaSalida(true)
+  }
+
+  // Al terminar, la sesión ya no existe y este marco se desmonta: no hay que apagar «saliendo»
+  function confirmarSalida() {
+    setSaliendo(true)
+    void salir()
+  }
 
   // Al cambiar de pantalla el foco pasa al contenido nuevo; sin esto, quien usa teclado o lector se queda en el menú
   useEffect(() => {
@@ -110,7 +126,7 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
           <span className="quien-rol">{rol}</span>
         </p>
         <BotonAyuda />
-        <button type="button" className="boton boton-secundario boton-chico cabecera-salir" onClick={() => void salir()}>
+        <button type="button" className="boton boton-secundario boton-chico cabecera-salir" onClick={pedirSalida}>
           Cerrar sesión
         </button>
       </header>
@@ -146,14 +162,15 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
         )}
 
         {menuPara(sesion.rol).map(({ grupo, opciones }) => (
-          <section key={grupo}>
+          <section key={grupo} className="menu-grupo">
             <h2>{grupo}</h2>
             <ul>
               {opciones.map((opcion) => (
                 <li key={opcion.ruta}>
-                  <NavLink to={opcion.ruta} onClick={() => setMenuAbierto(false)}>
+                  {/* En el computador el menú es un riel de íconos: el nombre queda para lectores y como `title` */}
+                  <NavLink to={opcion.ruta} title={opcion.titulo} onClick={() => setMenuAbierto(false)}>
                     <Icono nombre={opcion.icono} />
-                    {opcion.titulo}
+                    <span className="menu-texto">{opcion.titulo}</span>
                   </NavLink>
                 </li>
               ))}
@@ -166,7 +183,7 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
             <button
               type="button"
               className="boton boton-secundario boton-bloque boton-grande"
-              onClick={() => void salir()}
+              onClick={pedirSalida}
             >
               Cerrar sesión
             </button>
@@ -183,6 +200,25 @@ export default function Panel({ sesion }: { sesion: Sesion }) {
       </main>
 
       <PanelAsistente />
+
+      {confirmaSalida && (
+        <Dialogo titulo="¿Cerrar sesión?" ocupado={saliendo} alCerrar={() => setConfirmaSalida(false)}>
+          <div className="dialogo-cuerpo">
+            <p className="dialogo-texto">
+              Vas a salir del PMS en este navegador. Lo que no hayas guardado en la pantalla abierta se pierde.
+            </p>
+          </div>
+          <div className="dialogo-pie">
+            <button type="button" className="boton boton-secundario" disabled={saliendo}
+              onClick={() => setConfirmaSalida(false)}>
+              Cancelar
+            </button>
+            <button type="button" className="boton" disabled={saliendo} aria-busy={saliendo} onClick={confirmarSalida}>
+              {saliendo ? 'Cerrando sesión…' : 'Cerrar sesión'}
+            </button>
+          </div>
+        </Dialogo>
+      )}
     </div>
     </ProveedorAsistente>
   )
