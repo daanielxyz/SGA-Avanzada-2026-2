@@ -107,20 +107,24 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
     static final String CORREO_HUESPED_ANA = "ana.demo@example.com";
     static final String CORREO_HUESPED_LUIS = "luis.demo@example.com";
 
-    private static final String FOTOS = "https://picsum.photos/seed/";
-
     private record Nuevo(String codigo, String nombre, int capacidad, int dormitorios, long base,
-                         List<String> dotacion) {
+                         List<String> dotacion, List<Long> fotos) {
     }
 
     // TODO(equipo): reemplazar por el inventario de la Ficha del Alojamiento (A.2)
     private static final List<Nuevo> NUEVOS = List.of(
-            new Nuevo("APT-105", "Loft Yarumo", 2, 1, 115_000, List.of("Wifi", "Cocina", "Agua caliente")),
-            new Nuevo("APT-106", "Terraza Cafetal", 3, 2, 105_000, List.of("Wifi", "Terraza", "Agua caliente")),
-            new Nuevo("APT-107", "Balcón del Parque", 4, 2, 100_000, List.of("Wifi", "Balcón", "Televisor")),
-            new Nuevo("APT-108", "Estudio Bahareque", 2, 1, 110_000, List.of("Wifi", "Cocina", "Televisor")),
-            new Nuevo("APT-109", "Patio de los Guayacanes", 4, 2, 95_000, List.of("Wifi", "Patio", "Lavadora")),
-            new Nuevo(ULTIMO, "Mirador del Cocora", 3, 2, 125_000, List.of("Wifi", "Vista al valle", "Chimenea")));
+            new Nuevo("APT-105", "Loft Yarumo", 2, 1, 115_000, List.of("Wifi", "Cocina", "Agua caliente"),
+                    List.of(5824522L, 21287221L)),
+            new Nuevo("APT-106", "Terraza Cafetal", 3, 2, 105_000, List.of("Wifi", "Terraza", "Agua caliente"),
+                    List.of(4915594L, 9566053L)),
+            new Nuevo("APT-107", "Balcón del Parque", 4, 2, 100_000, List.of("Wifi", "Balcón", "Televisor"),
+                    List.of(8266829L, 9565729L)),
+            new Nuevo("APT-108", "Estudio Bahareque", 2, 1, 110_000, List.of("Wifi", "Cocina", "Televisor"),
+                    List.of(35776702L, 39836709L)),
+            new Nuevo("APT-109", "Patio de los Guayacanes", 4, 2, 95_000, List.of("Wifi", "Patio", "Lavadora"),
+                    List.of(30355548L, 18801080L)),
+            new Nuevo(ULTIMO, "Mirador del Cocora", 3, 2, 125_000, List.of("Wifi", "Vista al valle", "Chimenea"),
+                    List.of(13706836L, 2480608L)));
 
     static final String DESAYUNO = "Desayuno";
 
@@ -294,8 +298,8 @@ public class CargadorEscenarioDemo implements ApplicationRunner {
         NUEVOS.forEach(n -> {
             crearApartamento.ejecutar(new CrearApartamentoCommand(n.codigo(), alojamientoId, n.nombre(),
                     "Apartamento " + n.nombre() + " en Puerta al Sol.", n.capacidad(), n.dormitorios(),
-                    List.of(new ImagenCommand(FOTOS + n.codigo() + "-a/1200/675", true),
-                            new ImagenCommand(FOTOS + n.codigo() + "-b/1200/675", false)),
+                    List.of(new ImagenCommand(CargadorDatosDemo.foto(n.fotos().get(0)), true),
+                            new ImagenCommand(CargadorDatosDemo.foto(n.fotos().get(1)), false)),
                     n.dotacion()));
             temporadas.forEach(t -> definirTarifa.ejecutar(new DefinirTarifaCommand(n.codigo(), t.id(),
                     BigDecimal.valueOf(t.esBase() ? n.base() : n.base() * 13 / 10))));

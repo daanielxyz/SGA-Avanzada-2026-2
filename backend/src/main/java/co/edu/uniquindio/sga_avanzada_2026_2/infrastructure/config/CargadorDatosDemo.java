@@ -79,7 +79,7 @@ public class CargadorDatosDemo implements ApplicationRunner {
                     List.of(3771267L, 6752281L)),
             new Ejemplo("APT-104", "Mirador del Valle", null, 3, 2, 110_000,
                     List.of("Wifi", "Vista al valle", "Agua caliente"),
-                    List.of(13706836L, 5028910L)));
+                    List.of(23203313L, 5028910L)));
 
     private final ApartamentoRepository apartamentos;
     private final AlojamientoRepository alojamientos;
