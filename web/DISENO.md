@@ -16,6 +16,14 @@ La web es un solo esqueleto para todos los hoteles (DEC-83). Lo lee el equipo we
 - Las pruebas buscan por rol y por texto, nunca por estilos, salvo las de las fotos y la portada.
 - Campos de 16 px y controles de 44 px como mínimo. El hover solo con `(hover: hover) and (pointer: fine)`.
 
+## Presentación del hotel
+La web abre en `/` con la presentación (DEC-137); el listado es `/apartamentos` y las políticas, `/politicas`.
+- Orden: portada que rota → buscador → «Dónde te puedes quedar» → «Sobre el hotel» (banda de color) → «Antes de reservar» (fichas) → «¿Ya sabes cuándo vienes?» con cómo llegar (banda) → pie.
+- El buscador de la presentación lleva a `/apartamentos` con las fechas en la dirección, y la página abre ya filtrada y arriba del todo.
+- Las bandas que van de borde a borde (`box-shadow` + `clip-path`) marcan dónde empieza y termina cada sección; el fondo de banda es `--banda`, una mezcla del texto con el fondo de la marca.
+- La portada cambia de foto cada 6 s con un fundido; tiene puntos y «Pausar» (WCAG 2.2.2), no avanza con la pestaña oculta y queda quieta con `prefers-reduced-motion`.
+- Solo se muestra lo que el hotel escribió: un dato vacío o «Por definir» no aparece (`escrito()`).
+
 ## Qué necesita un hotel para tener su marca
 Los valores de `marca` en `GET /api/alojamiento`, que se cambian con `PUT /api/alojamiento/marca` sin desplegar código (BL-05 · DEC-87). Todos son opcionales: lo que falte queda neutro.
 
@@ -54,4 +62,6 @@ Valores finales de la marca de ejemplo:
 ## Pendiente
 - La pantalla de marca en el PMS (`PUT /api/alojamiento/marca` ya existe, DEC-87), y el logo y la portada definitivos de la marca de ejemplo.
 - Una barra fija con el total y «Reservar» en el celular, en la página del apartamento.
+- El contacto del hotel (teléfono, correo, WhatsApp) en la presentación y en el pie, cuando la API lo traiga.
+- Restilar la página del apartamento, la reserva y el pago, y las filas del listado, con la misma línea de la presentación.
 - Quitar los botones de pago de prueba cuando llegue la pasarela real (BL-01).

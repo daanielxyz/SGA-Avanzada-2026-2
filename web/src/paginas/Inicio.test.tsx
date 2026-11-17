@@ -1,295 +1,234 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Alojamiento } from '../api/alojamiento'
 import type { ApartamentoPublico, Pagina } from '../api/apartamentos'
-import { fechaDesdeHoy } from '../formato'
+import type { PoliticaCancelacion } from '../api/reservas'
 import Inicio from './Inicio'
 
-/** En el listado: un adulto, su próxima noche libre. */
-const SUITE: ApartamentoPublico = {
-  codigo: 'APT-101',
-  nombre: 'Suite Jardín',
-  descripcion: 'Vista a las montañas',
-  capacidad: 4,
-  dormitorios: 2,
-  imagenes: [
-    { url: 'https://cdn.sga.co/otra.jpg', principal: false },
-    { url: 'https://cdn.sga.co/suite.jpg', principal: true },
-  ],
-  caracteristicas: ['Balcón', 'Cocina', 'Wifi', 'Jacuzzi', 'Parqueadero'],
-  precio: {
-    desglose: [{ noche: '2026-12-14', tarifa: 100000, ocupantesFacturables: 1, subtotal: 100000 }],
-    total: 100000,
-  },
-  proximaNocheLibre: '2026-12-14',
-}
-
-/** En la búsqueda por fechas: dos noches, la segunda en temporada alta; pagan los 2 adultos. */
-const SUITE_PARA_EL_GRUPO: ApartamentoPublico = {
-  ...SUITE,
-  precio: {
-    desglose: [
-      { noche: '2026-12-14', tarifa: 100000, ocupantesFacturables: 2, subtotal: 200000 },
-      { noche: '2026-12-15', tarifa: 130000, ocupantesFacturables: 2, subtotal: 260000 },
-    ],
-    total: 460000,
-  },
-  proximaNocheLibre: null,
-}
-
-/** Una página del listado (`PaginaResponse`) con esos apartamentos. */
-function pagina(...contenido: ApartamentoPublico[]): Pagina<ApartamentoPublico> {
-  return { contenido, numero: 0, tamano: 10, totalElementos: contenido.length, totalPaginas: 1 }
-}
-
-/** La API simulada responde, en orden, lo que se le pase: un cuerpo JSON y su estado HTTP. */
-function laApiResponde(...respuestas: [number, unknown][]) {
-  const fetch = vi.fn()
-  for (const [estado, cuerpo] of respuestas) {
-    fetch.mockResolvedValueOnce(new Response(JSON.stringify(cuerpo), { status: estado }))
+function apartamento(codigo: string, nombre: string, foto?: string): ApartamentoPublico {
+  return {
+    codigo, nombre, descripcion: null, capacidad: 4, dormitorios: 2,
+    imagenes: foto ? [{ url: foto, principal: true }] : [], caracteristicas: [],
+    precio: { desglose: [{ noche: '2026-12-14', tarifa: 100000, ocupantesFacturables: 1, subtotal: 100000 }], total: 100000 },
+    proximaNocheLibre: '2026-12-14',
   }
+}
+
+function pagina(contenido: ApartamentoPublico[], totalElementos = contenido.length): Pagina<ApartamentoPublico> {
+  return { contenido, numero: 0, tamano: 10, totalElementos, totalPaginas: 1 }
+}
+
+const POLITICA: PoliticaCancelacion = {
+  tramos: [
+    { antelacionMinHoras: 48, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 0, montoFijo: null } },
+    { antelacionMinHoras: 0, penalizacion: { base: 'VALOR_TOTAL', porcentaje: 50, montoFijo: null } },
+  ],
+  penalizacionNoShow: { base: 'VALOR_TOTAL', porcentaje: 100, montoFijo: null },
+}
+
+const HOTEL: Alojamiento = {
+  nombre: 'Hotel de Prueba', ciudad: 'Salento', descripcion: 'Descansa entre cafetales', direccion: 'Calle 5 # 3-10',
+  latitud: 4.637, longitud: -75.571, normas: 'No fumar en las habitaciones', mediosPago: ['EFECTIVO', 'PAGO_EN_LINEA'],
+  rnt: '12345',
+  serviciosAdicionales: [
+    { id: 'SRV-1', nombre: 'Parqueadero', generaCargo: false, valor: 0, activo: true },
+    { id: 'SRV-2', nombre: 'Desayuno', generaCargo: true, valor: 25000, activo: true },
+    { id: 'SRV-3', nombre: 'Lavandería', generaCargo: true, valor: 15000, activo: false },
+  ],
+  parametros: {
+    umbralEdadFacturable: 12, horaEntrada: '15:00:00', horaSalida: '11:00:00', cupoParqueadero: 8,
+    cobroParqueadero: 'POR_NOCHE', cargoCarro: 0, cargoMoto: 0, aceptaMascotas: true, limiteMascotas: 2,
+    cargoMascota: 30000,
+  },
+}
+
+/** La API simulada por ruta: los apartamentos y la política; con `null`, esa llamada falla. */
+function laApiResponde(apartamentos: Pagina<ApartamentoPublico> | null, politica: PoliticaCancelacion | null = POLITICA) {
+  const fetch = vi.fn((ruta: string) => {
+    const cuerpo = ruta.startsWith('/api/portal/politica') ? politica : apartamentos
+    return Promise.resolve(cuerpo === null
+      ? new Response(JSON.stringify({ estado: 500, mensaje: 'falla' }), { status: 500 })
+      : new Response(JSON.stringify(cuerpo), { status: 200 }))
+  })
   vi.stubGlobal('fetch', fetch)
   return fetch
 }
 
-function urlDeLaLlamada(fetch: ReturnType<typeof vi.fn>, n: number) {
-  return (fetch.mock.calls[n] as [string])[0]
+function DondeQuedo() {
+  const { pathname, search } = useLocation()
+  return <p>En {pathname}{search}</p>
 }
 
-function alojamiento(umbral: number, datos: Partial<Alojamiento> = {}): Alojamiento {
-  return { nombre: 'Hotel de Prueba', parametros: { umbralEdadFacturable: umbral }, ...datos }
-}
-
-function abrirInicio(umbral = 12) {
+function abrir(alojamiento: Alojamiento | null = HOTEL) {
   render(
     <MemoryRouter>
-      <Inicio alojamiento={alojamiento(umbral)} />
+      <Routes>
+        <Route path="/" element={<Inicio alojamiento={alojamiento} />} />
+        <Route path="*" element={<DondeQuedo />} />
+      </Routes>
     </MemoryRouter>,
   )
+  return userEvent.setup()
 }
 
 afterEach(() => vi.unstubAllGlobals())
 
-describe('Inicio', () => {
-  it('al abrir muestra todos los apartamentos, con lo que paga un adulto su próxima noche libre', async () => {
-    const fetch = laApiResponde([200, pagina(SUITE)])
-    abrirInicio()
-
-    const tarjeta = await screen.findByRole('article', { name: 'Suite Jardín' })
-    expect(urlDeLaLlamada(fetch, 0)).toBe('/api/portal/apartamentos?pagina=0')
-    expect(within(tarjeta).getByRole('img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
-    expect(within(tarjeta).getByText('Hasta 4 personas · 2 dormitorios')).toBeInTheDocument()
-    expect(within(tarjeta).getByRole('list', { name: 'Qué incluye' })).toHaveTextContent('BalcónCocinaWifiJacuzzi+1')
-    expect(within(tarjeta).getByText(/\$\s*100\.000/)).toBeInTheDocument()
-    expect(within(tarjeta).getByText('por adulto y noche')).toBeInTheDocument()
-    expect(within(tarjeta).getByText(/libre desde el/)).toBeInTheDocument()
-    expect(within(tarjeta).queryByText(/Total/)).not.toBeInTheDocument()
-  })
-
-  it('abre con el hotel: su nombre, ciudad y descripción, y su portada o la foto de un apartamento (DEC-83)', async () => {
-    laApiResponde([200, pagina(SUITE)])
-    const { rerender } = render(
-      <MemoryRouter>
-        <Inicio alojamiento={alojamiento(12, { ciudad: 'Salento', descripcion: 'Descansa entre cafetales' })} />
-      </MemoryRouter>,
-    )
+describe('Presentación del hotel', () => {
+  it('abre con el hotel: su nombre, ciudad, descripción y su portada (DEC-83)', async () => {
+    laApiResponde(pagina([apartamento('APT-101', 'Suite Jardín', 'https://cdn.sga.co/suite.jpg')]))
+    abrir({ ...HOTEL, marca: { portadaUrl: 'https://cdn.sga.co/portada.jpg' } })
 
     expect(screen.getByRole('heading', { level: 1, name: 'Hotel de Prueba' })).toBeInTheDocument()
-    expect(screen.getByText('Salento')).toBeInTheDocument()
+    expect(screen.getAllByText('Salento')[0]).toBeInTheDocument()
     expect(screen.getByText('Descansa entre cafetales')).toBeInTheDocument()
     await screen.findByRole('article', { name: 'Suite Jardín' })
-    expect(document.querySelector('.portada img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
-
-    rerender(
-      <MemoryRouter>
-        <Inicio alojamiento={alojamiento(12, { marca: { portadaUrl: 'https://cdn.sga.co/portada.jpg' } })} />
-      </MemoryRouter>,
-    )
     expect(document.querySelector('.portada img')).toHaveAttribute('src', 'https://cdn.sga.co/portada.jpg')
   })
 
-  it('no le muestra al huésped los valores iniciales que el hotel todavía no escribe', async () => {
-    laApiResponde([200, pagina()])
-    render(
-      <MemoryRouter>
-        <Inicio alojamiento={alojamiento(12, { ciudad: 'Por definir', descripcion: 'Por definir' })} />
-      </MemoryRouter>,
-    )
-
-    await screen.findByRole('heading', { level: 2 })
-    expect(screen.queryByText('Por definir')).not.toBeInTheDocument()
-    expect(screen.getByText(/Elige un apartamento/)).toBeInTheDocument()
-  })
-
-  it('el resumen de la búsqueda se despliega y, al buscar, muestra las fechas', async () => {
-    laApiResponde([200, pagina(SUITE)], [200, pagina(SUITE)])
-    abrirInicio()
-    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
-
-    const resumen = screen.getByRole('button', { name: /¿Cuándo vienes\?/ })
-    expect(resumen).toHaveAttribute('aria-expanded', 'false')
-    await userEvent.click(resumen)
-    expect(resumen).toHaveAttribute('aria-expanded', 'true')
-
-    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
-    await screen.findByRole('heading', { name: '1 apartamento libre' })
-    expect(resumen).toHaveAttribute('aria-expanded', 'false')
-    expect(resumen).not.toHaveTextContent('¿Cuándo vienes?')
-  })
-
-  it('el botón dice Buscando solo cuando alguien busca, no mientras carga la lista al abrir', () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
-    abrirInicio()
-
-    expect(screen.getByRole('button', { name: 'Buscar' })).toBeEnabled()
-    expect(screen.getByText('Cargando apartamentos…')).toBeInTheDocument()
-  })
-
-  it('las fechas se eligen en el mismo calendario desplegable de la página del apartamento', async () => {
-    laApiResponde([200, pagina()])
-    abrirInicio()
-
-    await userEvent.click(screen.getByRole('button', { name: /^Salida/ }))
-
-    expect(screen.getByRole('dialog', { name: 'Elegir fechas' })).toBeInTheDocument()
-  })
-
-  it('sin la edad todavía, los campos de personas no muestran ayuda', () => {
-    laApiResponde([200, pagina()])
-    render(
-      <MemoryRouter>
-        <Inicio alojamiento={null} />
-      </MemoryRouter>,
-    )
-
-    expect(screen.getByLabelText('Niños')).toHaveAccessibleDescription('')
-  })
-
-  it('cada tarjeta lleva a la página del apartamento con la noche de su precio', async () => {
-    laApiResponde([200, pagina(SUITE)])
-    abrirInicio()
-
-    expect(await screen.findByRole('link', { name: 'Suite Jardín' }))
-      .toHaveAttribute('href', '/apartamentos/APT-101?entrada=2026-12-14&salida=2026-12-15')
-  })
-
-  it('sin foto, o si la foto no carga, queda un recuadro en su lugar y la fila no se desarma', async () => {
-    laApiResponde([200, pagina({ ...SUITE, codigo: 'APT-7', nombre: 'A1', imagenes: [] }, SUITE)])
-    abrirInicio()
-
-    const [sinFoto, conFoto] = await screen.findAllByRole('article')
-    expect(sinFoto.firstElementChild).toHaveClass('sin-foto')
-    expect(sinFoto.children).toHaveLength(3)
-
-    fireEvent.error(within(conFoto).getByRole('img'))
-    expect(within(conFoto).queryByRole('img')).not.toBeInTheDocument()
-    expect(conFoto.firstElementChild).toHaveClass('sin-foto')
-  })
-
-  it('el +N de la dotación dice cuáles faltan', async () => {
-    laApiResponde([200, pagina(SUITE)])
-    abrirInicio()
-
-    expect(await screen.findByText('+1')).toHaveAttribute('title', 'Parqueadero')
-  })
-
-  it('un apartamento sin noches libres en el año se muestra sin precio', async () => {
-    laApiResponde([200, pagina({ ...SUITE, precio: null, proximaNocheLibre: null })])
-    abrirInicio()
-
-    expect(await screen.findByText('Sin fechas libres por ahora')).toBeInTheDocument()
-  })
-
-  it('la edad desde la que se paga sale del alojamiento, no del código (DEC-83)', () => {
-    laApiResponde([200, pagina()])
-    abrirInicio(10)
-
-    expect(screen.getByLabelText('Adultos')).toHaveAccessibleDescription('10 años o más')
-    expect(screen.getByLabelText('Niños')).toHaveAccessibleDescription('Menores de 10')
-  })
-
-  it('el filtro deja solo los libres, con el total del grupo, y se puede volver a ver todos', async () => {
-    const fetch = laApiResponde([200, pagina(SUITE)], [200, pagina(SUITE_PARA_EL_GRUPO)], [200, pagina(SUITE)])
-    abrirInicio()
-    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
-
-    fireEvent.change(screen.getByLabelText('Niños'), { target: { value: '1' } })
-    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
-
-    const tarjeta = await screen.findByRole('article', { name: 'Suite Jardín' })
-    expect(screen.getByRole('heading', { name: '1 apartamento libre' })).toBeInTheDocument()
-    expect(urlDeLaLlamada(fetch, 1)).toBe(`/api/portal/apartamentos/disponibles?entrada=${fechaDesdeHoy(1)}`
-      + `&salida=${fechaDesdeHoy(3)}&ocupantes=3&ninos=1&pagina=0`)
-    expect(within(tarjeta).getByText(/\$\s*460\.000/)).toBeInTheDocument()
-    expect(within(tarjeta).getByText('Total 2 noches, 2 adultos y 1 niño')).toBeInTheDocument()
-    expect(within(tarjeta).getByText(/por adulto y noche/)).toHaveTextContent(/\$\s*100\.000 por adulto y noche/)
-    expect(within(tarjeta).getByRole('link', { name: 'Suite Jardín' })).toHaveAttribute('href',
-      `/apartamentos/APT-101?entrada=${fechaDesdeHoy(1)}&salida=${fechaDesdeHoy(3)}&adultos=2&ninos=1`)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Ver todos los apartamentos' }))
-    expect(await screen.findByRole('heading', { name: 'Nuestros apartamentos' })).toBeInTheDocument()
-  })
-
-  it('con más de 10 apartamentos pasa de página en página (DEC-18)', async () => {
-    const primera = { ...pagina(SUITE), totalElementos: 12, totalPaginas: 2 }
-    const segunda = { ...pagina({ ...SUITE, codigo: 'APT-112', nombre: 'Loft Doce' }), numero: 1, totalElementos: 12,
-      totalPaginas: 2 }
-    const fetch = laApiResponde([200, primera], [200, segunda])
-    abrirInicio()
-
-    expect(await screen.findByText('Página 1 de 2')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '← Anterior' })).toBeDisabled()
-    await userEvent.click(screen.getByRole('button', { name: 'Siguiente →' }))
-
-    expect(await screen.findByRole('article', { name: 'Loft Doce' })).toBeInTheDocument()
-    expect(screen.getByText('Página 2 de 2')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Siguiente →' })).toBeDisabled()
-    expect(urlDeLaLlamada(fetch, 1)).toBe('/api/portal/apartamentos?pagina=1')
-  })
-
-  it('con una sola página no muestra la paginación', async () => {
-    laApiResponde([200, pagina(SUITE)])
-    abrirInicio()
+  it('sin portada propia usa la foto de un apartamento, y no muestra los valores que el hotel no ha escrito', async () => {
+    laApiResponde(pagina([apartamento('APT-101', 'Suite Jardín', 'https://cdn.sga.co/suite.jpg')]))
+    abrir({ ...HOTEL, ciudad: 'Por definir', descripcion: 'Por definir', direccion: 'Por definir', latitud: 0, longitud: 0 })
 
     await screen.findByRole('article', { name: 'Suite Jardín' })
-    expect(screen.queryByRole('navigation', { name: 'Páginas' })).not.toBeInTheDocument()
+    expect(document.querySelector('.portada img')).toHaveAttribute('src', 'https://cdn.sga.co/suite.jpg')
+    expect(screen.queryByText('Por definir')).not.toBeInTheDocument()
+    expect(screen.getByText(/Elige tus fechas y mira qué apartamentos están libres/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Cómo llegar' })).not.toBeInTheDocument()
   })
 
-  it('si no hay libres lo dice y sugiere cambiar la búsqueda', async () => {
-    laApiResponde([200, pagina(SUITE)], [200, pagina()])
-    abrirInicio()
-    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
+  it('el buscador lleva a los apartamentos libres con las fechas y el grupo en la dirección', async () => {
+    laApiResponde(pagina([]))
+    const persona = abrir()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
+    await persona.click(screen.getByRole('button', { name: /¿Cuándo vienes\?/ }))
+    await persona.click(screen.getByRole('button', { name: 'Ver apartamentos libres' }))
 
-    expect(await screen.findByRole('heading', { name: 'No hay apartamentos libres' })).toBeInTheDocument()
-    expect(screen.getByText(/Prueba con otras fechas/)).toBeInTheDocument()
+    const destino = await screen.findByText(/^En \/apartamentos\?/)
+    expect(destino.textContent).toMatch(/entrada=\d{4}-\d{2}-\d{2}&salida=\d{4}-\d{2}-\d{2}&adultos=2&ninos=0$/)
   })
 
-  it('muestra el mensaje del backend cuando la búsqueda falla', async () => {
-    laApiResponde([200, pagina(SUITE)],
-      [409, { estado: 409, codigo: 'REGLA_NEGOCIO', mensaje: 'La estancia no es válida', detalles: [] }])
-    abrirInicio()
-    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
+  it('muestra hasta tres apartamentos, con su precio, y ofrece ver todos', async () => {
+    const cuatro = ['A', 'B', 'C', 'D'].map((n, i) => apartamento(`APT-10${i}`, `Apartamento ${n}`))
+    laApiResponde(pagina(cuatro, 12))
+    abrir()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('La estancia no es válida')
+    const destacados = await screen.findByRole('region', { name: 'Dónde te puedes quedar' })
+    expect(within(destacados).getAllByRole('article')).toHaveLength(3)
+    expect(within(destacados).getAllByText(/\$\s*100\.000/)).toHaveLength(3)
+    expect(within(destacados).getByRole('link', { name: 'Apartamento A' }))
+      .toHaveAttribute('href', '/apartamentos/APT-100?entrada=2026-12-14&salida=2026-12-15')
+    expect(within(destacados).getByRole('link', { name: 'Ver los 12 apartamentos' })).toHaveAttribute('href', '/apartamentos')
   })
 
-  it('no busca sin las dos fechas', async () => {
-    const fetch = laApiResponde([200, pagina(SUITE)])
-    abrirInicio()
-    await screen.findByRole('heading', { name: 'Nuestros apartamentos' })
+  it('sin apartamentos, o si la lista falla, esa sección no aparece y se puede seguir reservando', async () => {
+    laApiResponde(null, null)
+    abrir()
 
-    await userEvent.click(screen.getByRole('button', { name: /^Llegada/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Limpiar fechas' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Cerrar' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Buscar' }))
+    expect(await screen.findByRole('link', { name: 'Ver apartamentos' })).toHaveAttribute('href', '/apartamentos')
+    expect(screen.queryByRole('region', { name: 'Dónde te puedes quedar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Si cambian tus planes' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /¿Cuándo vienes\?/ })).toBeInTheDocument()
+  })
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Elige la llegada y la salida.')
-    expect(fetch).toHaveBeenCalledTimes(1)
+
+  it('presenta el hotel: su descripción, sus cifras, lo más común en sus apartamentos y fotos que no salieron arriba', async () => {
+    const conCosas = (a: ApartamentoPublico, capacidad: number, caracteristicas: string[]) =>
+      ({ ...a, capacidad, caracteristicas })
+    laApiResponde(pagina([
+      conCosas(apartamento('APT-1', 'Uno', 'https://cdn.sga.co/1.jpg'), 2, ['Wifi', 'Cocina']),
+      conCosas(apartamento('APT-2', 'Dos', 'https://cdn.sga.co/2.jpg'), 6, ['Wifi', 'Balcón']),
+      conCosas(apartamento('APT-3', 'Tres', 'https://cdn.sga.co/3.jpg'), 4, ['Wifi', 'Cocina']),
+      conCosas(apartamento('APT-4', 'Cuatro', 'https://cdn.sga.co/4.jpg'), 3, ['Jacuzzi']),
+    ], 12))
+    abrir()
+
+    const sobre = await screen.findByRole('region', { name: 'Sobre Hotel de Prueba' })
+    expect(within(sobre).getByText('Descansa entre cafetales')).toBeInTheDocument()
+    expect(within(sobre).getByText('apartamentos').nextSibling).toHaveTextContent('12')
+    expect(within(sobre).getByText('personas en un apartamento').nextSibling).toHaveTextContent('Hasta 6')
+    expect(within(sobre).getByText('ubicación').nextSibling).toHaveTextContent('Salento')
+    expect(within(sobre).getAllByRole('listitem').map((li) => li.textContent))
+      .toEqual(['Wifi', 'Cocina', 'Balcón', 'Jacuzzi'])
+    // La del cuarto apartamento va primero: los tres primeros ya se vieron en «Dónde te puedes quedar»
+    expect(within(sobre).getAllByRole('img').map((i) => i.getAttribute('src')))
+      .toEqual(['https://cdn.sga.co/4.jpg', 'https://cdn.sga.co/1.jpg', 'https://cdn.sga.co/2.jpg'])
+  })
+
+  it('antes de reservar, una ficha por tema con los datos del hotel y solo sus servicios activos', async () => {
+    laApiResponde(pagina([]))
+    abrir()
+
+    const antes = screen.getByRole('region', { name: 'Antes de reservar' })
+    await within(antes).findByRole('region', { name: 'Si cambian tus planes' })
+    const fichas = within(antes).getAllByRole('region').map((f) => f.getAttribute('aria-label'))
+    expect(fichas).toEqual(['Llegada y salida', 'Si cambian tus planes', 'Formas de pago', 'Parqueadero', 'Mascotas',
+      'Servicios del alojamiento', 'Normas de la casa'])
+    const ficha = (nombre: string) => within(antes).getByRole('region', { name: nombre })
+    expect(ficha('Llegada y salida')).toHaveTextContent(/Llegada desde3:00\sp\.\sm\.Salida hasta11:00\sa\.\sm\./)
+    expect(ficha('Si cambian tus planes')).toHaveTextContent('Con 48 horas o más de antelación: no se retiene nada.')
+    expect(ficha('Si cambian tus planes')).toHaveTextContent('Si no llegas: se retiene el 100 % del total de la reserva.')
+    expect(ficha('Formas de pago')).toHaveTextContent('EfectivoPago en línea')
+    expect(ficha('Parqueadero')).toHaveTextContent('Sin costo, sujeto a cupo.')
+    expect(ficha('Mascotas')).toHaveTextContent(/Son bienvenidas, hasta 2 por reserva\. Cada una suma \$\s*30\.000/)
+    // El parqueadero del catálogo ya tiene su ficha y la lavandería está inactiva
+    expect(ficha('Servicios del alojamiento')).toHaveTextContent(/^Servicios del alojamientoDesayuno: \$\s*25\.000$/)
+    expect(ficha('Normas de la casa')).toHaveTextContent('No fumar en las habitaciones')
+  })
+
+  it('un hotel que no recibe mascotas lo dice', () => {
+    laApiResponde(pagina([]))
+    abrir({ ...HOTEL, parametros: { ...HOTEL.parametros, aceptaMascotas: false } })
+
+    expect(screen.getByRole('region', { name: 'Mascotas' })).toHaveTextContent('Este alojamiento no recibe mascotas.')
+  })
+
+  it('cómo llegar abre Google Maps en las coordenadas del hotel, junto al último llamado a reservar', () => {
+    laApiResponde(pagina([]))
+    abrir()
+
+    const cierre = screen.getByRole('region', { name: '¿Ya sabes cuándo vienes?' })
+    expect(within(cierre).getByRole('link', { name: 'Ver apartamentos' })).toHaveAttribute('href', '/apartamentos')
+    expect(within(cierre).getByText('Calle 5 # 3-10, Salento')).toBeInTheDocument()
+    expect(within(cierre).getByRole('link', { name: /Abrir en Google Maps/ }))
+      .toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=4.637%2C-75.571')
+  })
+
+  it('la portada turna la foto del hotel y las de los apartamentos cada 6 s, y se puede pausar o elegir', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    laApiResponde(pagina([apartamento('APT-1', 'Uno', 'https://cdn.sga.co/1.jpg'),
+      apartamento('APT-2', 'Dos', 'https://cdn.sga.co/2.jpg')]))
+    const persona = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <Inicio alojamiento={{ ...HOTEL, marca: { portadaUrl: 'https://cdn.sga.co/portada.jpg' } }} />
+      </MemoryRouter>,
+    )
+    const fotos = await screen.findByRole('group', { name: 'Fotos de la portada' })
+    const activa = () => document.querySelector('.portada img[data-activa="true"]')?.getAttribute('src')
+    expect(within(fotos).getAllByRole('button', { name: /^Foto \d de 3$/ })).toHaveLength(3)
+    expect(activa()).toBe('https://cdn.sga.co/portada.jpg')
+
+    act(() => vi.advanceTimersByTime(6000))
+    expect(activa()).toBe('https://cdn.sga.co/1.jpg')
+    expect(within(fotos).getByRole('button', { name: 'Foto 2 de 3' })).toHaveAttribute('aria-current', 'true')
+
+    await persona.click(within(fotos).getByRole('button', { name: 'Pausar' }))
+    act(() => vi.advanceTimersByTime(20000))
+    expect(activa()).toBe('https://cdn.sga.co/1.jpg')
+    expect(within(fotos).getByRole('button', { name: 'Seguir' })).toHaveAttribute('aria-pressed', 'true')
+
+    await persona.click(within(fotos).getByRole('button', { name: 'Foto 3 de 3' }))
+    expect(activa()).toBe('https://cdn.sga.co/2.jpg')
+    vi.useRealTimers()
+  })
+
+  it('con una sola foto no hay puntos ni pausa', async () => {
+    laApiResponde(pagina([apartamento('APT-1', 'Uno')]))
+    abrir({ ...HOTEL, marca: { portadaUrl: 'https://cdn.sga.co/portada.jpg' } })
+
+    await screen.findByRole('article', { name: 'Uno' })
+    expect(screen.queryByRole('group', { name: 'Fotos de la portada' })).not.toBeInTheDocument()
   })
 })
