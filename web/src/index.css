@@ -29,7 +29,9 @@
   --texto-lg: 1.25rem;
   --texto-xl: clamp(1.5rem, 1.25rem + 1vw, 1.75rem);
   --texto-2xl: clamp(2.25rem, 1.5rem + 3.5vw, 3.5rem);
-  --ancho: 1040px;
+  --ancho: 1120px;
+  --alto-encabezado: 64px;
+  --texto-3xl: clamp(2.75rem, 1.5rem + 5.5vw, 6rem);
   --margen: 16px;
   --sombra: 0 2px 8px rgb(0 0 0 / 8%);
   --sombra-alta: 0 8px 24px rgb(0 0 0 / 12%);
@@ -295,8 +297,8 @@ button.secundario {
   position: relative;
   display: flex;
   align-items: flex-end;
-  min-height: clamp(320px, 52svh, 480px);
-  padding: 32px var(--margen) 72px;
+  min-height: clamp(440px, 82svh, 780px);
+  padding: 96px var(--margen) 120px;
   overflow: hidden;
   background: var(--texto);
   color: #ffffff;
@@ -332,7 +334,9 @@ button.secundario {
 }
 
 .portada-texto h1 {
-  font-size: clamp(1.75rem, 1rem + 4vw, 3.5rem);
+  font-size: var(--texto-3xl);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
@@ -350,7 +354,7 @@ button.secundario {
 }
 
 /* La búsqueda se monta sobre el borde de la portada */
-.inicio {
+.presentacion {
   padding-top: 0;
 }
 
@@ -794,7 +798,7 @@ button.leer-mas {
     grid-row: 1 / span 2;
     align-self: start;
     position: sticky;
-    top: 16px;
+    top: calc(var(--alto-encabezado) + 16px);
   }
 }
 
@@ -1302,7 +1306,7 @@ label.casilla input {
   .resumen {
     order: 0;
     position: sticky;
-    top: 16px;
+    top: calc(var(--alto-encabezado) + 16px);
   }
 }
 
@@ -2020,4 +2024,806 @@ button.boton-cerrar {
 .paso-actual .paso-nombre {
   color: var(--texto);
   font-weight: 600;
+}
+
+/* ===== Rediseño: cabecera fija, presentación del hotel y página de apartamentos =====
+   Lo memorable es la portada: el nombre grande y el buscador montado sobre su borde. El resto va tranquilo: fotos
+   grandes, poco adorno y una sola acción por bloque. Todo color sale de las variables de la marca. */
+
+/* La cabecera queda arriba al bajar: «Reservar» siempre a mano */
+.encabezado {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-height: var(--alto-encabezado);
+}
+
+.encabezado-acciones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-inline-start: auto;
+}
+
+.boton-reservar {
+  min-height: 44px;
+  padding-inline: 18px;
+  font-size: var(--texto-sm);
+}
+
+/* En el celular, «Reservar» ya lleva a los apartamentos */
+@media (max-width: 719px) {
+  .menu-cuenta .solo-ancho {
+    display: none;
+  }
+
+  .encabezado-acciones {
+    gap: 12px;
+  }
+}
+
+/* Portada: el nombre del hotel grande, abajo a la izquierda, alineado con el contenido */
+.portada-texto .portada-ciudad {
+  margin: 0 0 12px;
+  font-size: var(--texto-md);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.portada-texto h1 + p {
+  margin-top: 16px;
+  max-width: 46ch;
+  font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.3125rem);
+  opacity: 0.92;
+}
+
+/* La entrada de la portada: el único movimiento que no pide el visitante */
+@media (prefers-reduced-motion: no-preference) {
+  .portada-texto > * {
+    animation: aparecer 600ms var(--salida-suave) both;
+  }
+
+  .portada-texto > :nth-child(2) {
+    animation-delay: 80ms;
+  }
+
+  .portada-texto > :nth-child(3) {
+    animation-delay: 160ms;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* El buscador montado sobre el borde de la portada */
+.presentacion {
+  max-width: var(--ancho);
+  padding-bottom: 0;
+}
+
+.presentacion-busqueda {
+  scroll-margin-top: calc(var(--alto-encabezado) + 16px);
+}
+
+.presentacion .busqueda {
+  margin: -64px 0 0;
+  padding: 16px;
+  border-radius: var(--radio-grande);
+}
+
+/* En el celular el resumen es la invitación: se ve como un botón grande */
+.presentacion .busqueda-resumen {
+  min-height: 56px;
+  padding-inline: 8px;
+  font-size: var(--texto-lg);
+}
+
+@media (min-width: 720px) {
+  .presentacion .busqueda {
+    padding: 20px;
+  }
+}
+
+/* Cada bloque de la presentación respira: mucho aire entre uno y otro, poco dentro */
+.presentacion > section {
+  padding-block: clamp(56px, 4rem + 3vw, 104px) 0;
+}
+
+.presentacion h2 {
+  font-size: clamp(1.75rem, 1.25rem + 2vw, 2.625rem);
+  letter-spacing: -0.01em;
+  margin-bottom: 24px;
+}
+
+.seccion-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  column-gap: 24px;
+}
+
+.enlace-fuerte {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enlace-fuerte:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* Apartamentos destacados: en el celular se deslizan de lado; en pantallas anchas, uno grande y dos a su lado */
+.destacados-lista {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 82%;
+  gap: 16px;
+  margin-inline: calc(-1 * var(--margen));
+  padding-inline: var(--margen);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--margen);
+  scrollbar-width: none;
+}
+
+.destacados-lista::-webkit-scrollbar {
+  display: none;
+}
+
+.destacado {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.destacado img,
+.destacado .sin-foto {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radio-grande);
+  background: var(--relleno);
+}
+
+.destacado h3 {
+  margin: 0;
+  font-size: var(--texto-lg);
+  overflow-wrap: anywhere;
+}
+
+.destacado-cuerpo p {
+  margin: 4px 0 0;
+}
+
+.destacado-precio strong {
+  font-size: var(--texto-lg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .destacado img {
+    transition: filter 200ms ease;
+  }
+
+  .destacado:hover img {
+    filter: brightness(0.94);
+  }
+}
+
+@media (min-width: 720px) {
+  .destacados-lista {
+    grid-auto-flow: row;
+    grid-template-columns: 7fr 5fr;
+    grid-auto-columns: auto;
+    gap: 24px 32px;
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+
+  .destacado:first-child {
+    grid-row: span 2;
+  }
+
+  .destacado:first-child img,
+  .destacado:first-child .sin-foto {
+    aspect-ratio: 5 / 4;
+  }
+
+  .destacado:not(:first-child) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 16px;
+  }
+
+  .destacado:not(:first-child) img,
+  .destacado:not(:first-child) .sin-foto {
+    aspect-ratio: 1;
+  }
+
+  /* Con uno o dos apartamentos, todos del mismo tamaño */
+  .destacado:first-child:nth-last-child(-n + 2),
+  .destacado:first-child:nth-last-child(-n + 2) ~ .destacado {
+    grid-row: auto;
+    display: flex;
+  }
+}
+
+/* Página de apartamentos: su título arriba y el buscador debajo, sin portada */
+.cabeza-pagina {
+  margin: 16px 0 24px;
+}
+
+.cabeza-pagina h1 {
+  font-size: clamp(2rem, 1.5rem + 2.5vw, 3.25rem);
+}
+
+.cabeza-pagina p {
+  margin: 8px 0 0;
+}
+
+.apartamentos .busqueda {
+  margin: 0 0 32px;
+}
+
+/* Pie de todas las páginas */
+.pie {
+  margin-top: 72px;
+  padding: 40px max(var(--margen), calc((100% - var(--ancho)) / 2 + var(--margen))) 48px;
+  border-top: 1px solid var(--borde);
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+}
+
+.pie-contenido {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.pie p {
+  margin: 0 0 4px;
+}
+
+.pie-nombre {
+  color: var(--texto);
+  font-family: var(--fuente-titulos);
+  font-size: var(--texto-lg);
+}
+
+.pie nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+}
+
+.pie nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* Sobre el hotel: el texto y sus cifras a un lado, un mosaico de fotos al otro */
+.sobre {
+  display: grid;
+  gap: 32px;
+}
+
+.sobre-descripcion {
+  margin: 0 0 24px;
+  max-width: 56ch;
+  font-size: var(--texto-lg);
+  line-height: 1.55;
+}
+
+.cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  align-items: end;
+  gap: 16px;
+  margin: 0 0 32px;
+  padding-block: 20px;
+  border-block: 1px solid var(--borde);
+}
+
+/* La cifra arriba y lo que es abajo: se lee «10 / apartamentos» */
+.cifras div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.cifras dt {
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+}
+
+.cifras dd {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: var(--texto-xl);
+  font-variant-numeric: lining-nums;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.sobre h3 {
+  margin: 0 0 12px;
+  font-size: var(--texto-lg);
+}
+
+.comodidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comodidades li {
+  padding: 6px 14px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: var(--superficie);
+  font-size: var(--texto-sm);
+}
+
+/* Una foto alta y dos apiladas; con menos fotos, las que haya ocupan el espacio */
+.mosaico {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  min-height: 320px;
+}
+
+.mosaico img,
+.mosaico .sin-foto {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  border-radius: var(--radio-grande);
+  background: var(--relleno);
+}
+
+.mosaico > :first-child {
+  grid-row: span 2;
+}
+
+.mosaico[data-fotos='1'] {
+  grid-template-columns: 1fr;
+}
+
+.mosaico[data-fotos='2'] > :first-child {
+  grid-row: auto;
+}
+
+.mosaico[data-fotos='2'] {
+  grid-template-rows: 1fr;
+}
+
+@media (min-width: 900px) {
+  .sobre {
+    grid-template-columns: 6fr 5fr;
+    gap: 56px;
+    align-items: stretch;
+  }
+
+  .mosaico {
+    min-height: 420px;
+  }
+}
+
+/* Antes de reservar: fichas iguales en una cuadrícula, cada una con su título y su contenido */
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+}
+
+.ficha-info {
+  padding: 24px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-mediano);
+}
+
+.ficha-info h3 {
+  margin: 0 0 12px;
+  font-size: var(--texto-lg);
+}
+
+.ficha-info p {
+  margin: 0;
+}
+
+.ficha-info ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.ficha-info .normas {
+  white-space: pre-line;
+}
+
+.horarios {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+  margin: 0;
+}
+
+.horarios dt {
+  color: var(--texto-suave);
+  font-size: var(--texto-sm);
+}
+
+.horarios dd {
+  margin: 2px 0 0;
+  font-family: var(--fuente-titulos);
+  font-size: var(--texto-xl);
+  font-variant-numeric: lining-nums;
+}
+
+/* El último llamado: franja con el color del texto de la marca; a su lado, cómo llegar */
+.presentacion > .cierre {
+  display: grid;
+  gap: 40px;
+  margin-top: clamp(56px, 4rem + 3vw, 104px);
+  margin-inline: calc(-1 * var(--margen));
+  padding: clamp(40px, 2.5rem + 3vw, 80px) var(--margen);
+  background: var(--texto);
+  color: var(--fondo);
+}
+
+.cierre h2 {
+  margin-bottom: 8px;
+}
+
+.cierre-llamado p {
+  margin: 0 0 24px;
+  max-width: 40ch;
+  opacity: 0.88;
+}
+
+.cierre .boton {
+  min-height: 52px;
+  padding-inline: 28px;
+}
+
+.cierre-lugar h3 {
+  margin: 0 0 8px;
+  font-size: var(--texto-lg);
+}
+
+.cierre-lugar address {
+  font-style: normal;
+  opacity: 0.88;
+}
+
+.cierre :focus-visible {
+  outline-color: var(--fondo);
+}
+
+@media (min-width: 720px) {
+  .presentacion > .cierre {
+    margin-inline: 0;
+    padding-inline: clamp(32px, 2rem + 3vw, 72px);
+    border-radius: var(--radio-grande);
+  }
+
+  .cierre[data-con-lugar='true'] {
+    grid-template-columns: 3fr 2fr;
+    align-items: end;
+  }
+
+  .cierre-lugar {
+    padding-inline-start: 32px;
+    border-inline-start: 1px solid color-mix(in srgb, var(--fondo) 30%, transparent);
+  }
+}
+
+/* Secciones en franjas de lado a lado: cada una con su fondo, así se ve dónde empieza y dónde termina. La franja
+   teñida sale del color del texto de la marca, muy suave, para que se distinga del fondo y de las fichas blancas. */
+:root {
+  --banda: color-mix(in srgb, var(--texto) 7%, var(--fondo));
+  --borde-ficha: color-mix(in srgb, var(--texto) 16%, transparent);
+}
+
+.presentacion > section {
+  padding-block: clamp(56px, 3.5rem + 3vw, 96px);
+}
+
+/* El fondo se estira a los dos lados sin que el contenido pierda su ancho */
+.presentacion > .sobre,
+.presentacion > .cierre {
+  box-shadow: 0 0 0 100vmax var(--fondo-banda);
+  clip-path: inset(0 -100vmax);
+  background: var(--fondo-banda);
+}
+
+.presentacion > .sobre {
+  --fondo-banda: var(--banda);
+}
+
+.presentacion > .cierre {
+  --fondo-banda: var(--texto);
+  margin: 0;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+.entrada-seccion {
+  margin: -16px 0 28px;
+  max-width: 60ch;
+  color: var(--texto-suave);
+}
+
+.seccion-cabeza .entrada-seccion {
+  margin-bottom: 0;
+}
+
+.seccion-cabeza {
+  align-items: end;
+  row-gap: 8px;
+  margin-bottom: 28px;
+}
+
+.seccion-cabeza h2 {
+  margin-bottom: 16px;
+}
+
+/* Fichas y comodidades: un borde que se ve sobre el fondo claro y una sombra leve que las levanta */
+.ficha-info {
+  border-color: var(--borde-ficha);
+  box-shadow: var(--sombra);
+}
+
+.ficha-info h3 {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.comodidades li {
+  border-color: var(--borde-ficha);
+}
+
+.cifras {
+  border-color: var(--borde-ficha);
+}
+
+/* El buscador no se pega a la primera sección */
+.presentacion-busqueda + section {
+  padding-top: clamp(64px, 4rem + 3vw, 104px);
+}
+
+/* El pie, en la franja teñida: cierra la página */
+.pie {
+  margin-top: 0;
+  background: var(--banda);
+  border-top: none;
+}
+
+/* En las demás páginas, el pie no se pega al contenido */
+main:not(.presentacion) + .pie {
+  margin-top: 72px;
+}
+
+@media (min-width: 720px) {
+  .presentacion > .cierre {
+    padding-inline: 0;
+  }
+
+  .cierre-lugar {
+    padding-inline-start: 40px;
+  }
+}
+
+/* Portada que rota: las fotos se apilan y la activa aparece con un fundido. Mientras se ve, se acerca muy despacio;
+   al salir espera a desvanecerse para volver a su tamaño, así no salta. */
+.portada img {
+  transform: scale(1.08);
+  transition: opacity 1200ms ease, transform 0s linear 1200ms;
+}
+
+.portada img[data-cargada='true'] {
+  opacity: 0;
+}
+
+.portada img[data-cargada='true'][data-activa='true'] {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 1200ms ease, transform 9s linear;
+}
+
+/* Los puntos y la pausa, abajo a la derecha, sobre el velo oscuro */
+.portada-controles {
+  position: absolute;
+  z-index: 1;
+  right: max(var(--margen), calc((100% - var(--ancho)) / 2 + var(--margen)));
+  bottom: 84px;
+  display: flex;
+  align-items: center;
+}
+
+/* El área que se toca es de 44 px; el punto que se ve, pequeño */
+.portada-punto {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+}
+
+.portada-punto::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  opacity: 0.5;
+  transition: width 200ms var(--salida-suave), opacity 200ms ease;
+}
+
+.portada-punto[aria-current='true']::before {
+  width: 22px;
+  opacity: 1;
+}
+
+.portada-pausa {
+  margin-inline-start: 8px;
+  min-height: 44px;
+  padding: 4px 14px;
+  background: rgb(0 0 0 / 35%);
+  color: #ffffff;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 999px;
+  font-size: var(--texto-sm);
+}
+
+.portada :focus-visible {
+  outline-color: #ffffff;
+}
+
+/* En el celular el texto ocupa todo el ancho: los controles van arriba, en la esquina, para no taparlo */
+@media (max-width: 719px) {
+  .portada-controles {
+    top: 12px;
+    bottom: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portada img,
+  .portada img[data-cargada='true'][data-activa='true'] {
+    transform: none;
+    transition: opacity 240ms ease;
+  }
+}
+
+/* Pie en columnas: el hotel, las reservas y las políticas */
+.pie-contenido {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 32px;
+}
+
+.pie-hotel {
+  grid-column: span 2;
+}
+
+.pie address {
+  font-style: normal;
+  margin-bottom: 4px;
+}
+
+.pie nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.pie nav h2 {
+  margin: 0 0 4px;
+  color: var(--texto);
+  font-family: var(--fuente-texto);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+}
+
+.pie nav a {
+  min-height: 36px;
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pie nav a:hover {
+    color: var(--texto);
+    text-decoration: underline;
+  }
+}
+
+.pie-derechos {
+  max-width: calc(var(--ancho) - 2 * var(--margen));
+  margin: 32px auto 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--borde-ficha);
+}
+
+@media (max-width: 559px) {
+  .pie-hotel {
+    grid-column: 1 / -1;
+  }
+
+  .pie nav a {
+    min-height: 44px;
+  }
+}
+
+/* Políticas: texto para leer, con un índice arriba */
+.politicas {
+  max-width: 760px;
+}
+
+.politicas-indice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--borde-ficha);
+}
+
+.politicas-indice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
+}
+
+.politicas section {
+  padding-block: 24px;
+  border-bottom: 1px solid var(--borde);
+  scroll-margin-top: calc(var(--alto-encabezado) + 16px);
+}
+
+.politicas section:last-child {
+  border-bottom: none;
+}
+
+.politicas h3 {
+  margin: 20px 0 6px;
+  font-size: var(--texto-md);
+}
+
+.politicas p,
+.politicas li {
+  max-width: 68ch;
+  line-height: 1.6;
+}
+
+.politicas ul {
+  padding-inline-start: 20px;
 }
