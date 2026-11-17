@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import Logo from './Logo'
 
 /**
- * Dónde están el video y su póster. Son archivos pesados y de prueba: no van a git (`pms/.gitignore`), cada clon los
- * deja en `public/video/`. Al publicar, `VITE_VIDEO_ENTRADA` y `VITE_POSTER_ENTRADA` apuntan a donde se sirvan.
+ * Dónde están el video y su póster: en `public/video/`, en git y publicados con el PMS (4 MB, sin audio). Si algún día
+ * se sirven desde otro lugar, `VITE_VIDEO_ENTRADA` y `VITE_POSTER_ENTRADA` apuntan allí al construir.
  */
 const VIDEO: string = import.meta.env.VITE_VIDEO_ENTRADA ?? '/video/entrada.mp4'
 const POSTER: string = import.meta.env.VITE_POSTER_ENTRADA ?? '/video/entrada.jpg'
