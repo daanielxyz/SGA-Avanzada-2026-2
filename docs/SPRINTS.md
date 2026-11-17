@@ -138,6 +138,7 @@ Hipótesis: el administrador deja el hotel listo para vender sin ayuda técnica.
 Hipótesis: una reserva de Booking o Airbnb entra sola y sin doble venta, y el hotel cumple con el reporte de TRA.
 - **web**
   - [x] Rediseño de la web, adelantado (`feature/web/rediseno`, DEC-137; `web/DISENO.md`, «Presentación del hotel»): una presentación con la portada que rota, el buscador y lo que conviene saber antes de reservar, todo con datos de la API; el listado pasa a «Apartamentos» y abre ya filtrado desde la presentación; página de políticas (cancelación, datos personales, cookies y RNT) y pie en columnas. Falta el contacto del hotel, que la API no trae.
+  - [x] La web publicada no dejaba pagar ni volver del pago a quien reservaba sin cuenta: CORS no permitía la cabecera con la clave de la reserva (`feature/nucleo/cors-clave-reserva`, DEC-140).
   - [ ] B4c Channex: cuenta sandbox, mapeo de apartamentos y tarifas (decisión con el cliente) y entrada de reservas desde Channex.
   - [ ] B4c Channex: publicar disponibilidad y tarifas, reintentos y bitácora; prueba de punta a punta en el sandbox. Si no alcanza, el cierre 4 decide si pasa al MVP2.
 - **pms**

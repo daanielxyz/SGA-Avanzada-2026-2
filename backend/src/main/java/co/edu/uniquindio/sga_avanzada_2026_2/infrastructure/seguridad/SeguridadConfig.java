@@ -79,7 +79,10 @@ public class SeguridadConfig {
         CorsConfiguration configuracion = new CorsConfiguration();
         configuracion.setAllowedOrigins(cors.origenes());
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT"));
-        configuracion.setAllowedHeaders(List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE));
+        // DEC-140: X-Reserva-Clave, con la que quien reserva sin cuenta paga o suelta su reserva (DEC-93).
+        // X-Canal-Clave no: los canales externos llaman desde su servidor, nunca desde un navegador
+        configuracion.setAllowedHeaders(
+                List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE, "X-Reserva-Clave"));
         configuracion.setExposedHeaders(List.of(HttpHeaders.LOCATION));
         configuracion.setAllowCredentials(false);
         configuracion.setMaxAge(Duration.ofHours(1));
